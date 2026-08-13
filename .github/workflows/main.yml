@@ -3,115 +3,58 @@ name: Recover Atlas source
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   recover:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Recover source from old Atlas deployment
+      - name: Test current Vercel file API
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           DEPLOYMENT_ID: dpl_CmQfdFrTFCZJCE5GrhdjjdkXactR
+          FILE_ID: 1043867a536c617de96b67751532e7f88aef2999
         run: |
           set -euo pipefail
 
-          python3 <<'PY'
-          import json
-          import os
-          import pathlib
-          import urllib.request
+          STATUS=$(curl -sS \
+            -o response.bin \
+            -w "%{http_code}" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v8/deployments/$DEPLOYMENT_ID/files/$FILE_ID?teamId=$VERCEL_ORG_ID")
 
-          token = os.environ["VERCEL_TOKEN"]
-          team = os.environ["VERCEL_ORG_ID"]
-          deployment = os.environ["DEPLOYMENT_ID"]
+          echo "HTTP status: $STATUS"
+          echo "Response bytes: $(wc -c < response.bin)"
 
-          headers = {
-              "Authorization": f"Bearer {token}"
-          }
-
-          base = f"https://api.vercel.com/v6/deployments/{deployment}/files"
-          root_url = f"{base}?teamId={team}"
-
-          def get_json(url):
-              req = urllib.request.Request(url, headers=headers)
-              with urllib.request.urlopen(req) as r:
-                  return json.load(r)
-
-          tree = get_json(root_url)
-
-          # The deployment contains both the original source tree and
-          # generated build output. Recover only the original source tree.
-          source = None
-          for item in tree:
-              if item.get("name") == "src" and item.get("type") == "directory":
-                  source = item
-                  break
-
-          if source is None:
-              raise SystemExit("Could not find the src source tree.")
-
-          def safe_path(path):
-              p = pathlib.PurePosixPath(path)
-              if p.is_absolute() or ".." in p.parts:
-                  raise ValueError(f"Unsafe path: {path}")
-              return pathlib.Path(*p.parts)
-
-          def recover(children, prefix=pathlib.Path(".")):
-              for item in children:
-                  name = item["name"]
-                  typ = item["type"]
-                  target = prefix / safe_path(name)
-
-                  if typ == "directory":
-                      target.mkdir(parents=True, exist_ok=True)
-                      recover(item.get("children", []), target)
-
-                  elif typ == "file":
-                      target.parent.mkdir(parents=True, exist_ok=True)
-                      uid = item["uid"]
-
-                      url = (
-                          f"{base}/{uid}"
-                          f"?teamId={team}"
-                      )
-
-                      req = urllib.request.Request(url, headers=headers)
-                      with urllib.request.urlopen(req) as r:
-                          target.write_bytes(r.read())
-
-                      print(f"Recovered {target}")
-
-          recover(source.get("children", []))
-
-          print("Source recovery completed.")
-          PY
-
-      - name: Show recovered files
-        run: |
-          find . -type f \
-            -not -path "./.git/*" \
-            -not -path "./.github/workflows/main.yml" \
-            | sort
-
-      - name: Commit recovered source
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add -A
-          git reset -- .github/workflows/main.yml
-
-          if git diff --cached --quiet; then
-            echo "No recovered files were added."
+          if [ "$STATUS" != "200" ]; then
+            cat response.bin
             exit 1
           fi
 
-          git commit -m "Recover Atlas source from Vercel deployment"
-          git push
+          python3 <<'PY'
+          import json
+          import base64
+          from pathlib import Path
+
+          raw = Path("response.bin").read_bytes()
+
+          try:
+              data = json.loads(raw)
+              print("Response is JSON")
+
+              if isinstance(data, dict):
+                  print("Response keys:", sorted(data.keys()))
+
+                  if isinstance(data.get("content"), str):
+                      decoded = base64.b64decode(data["content"])
+                      print("Decoded file bytes:", len(decoded))
+                      print("File content successfully retrieved.")
+                  else:
+                      print("No content field found; inspect response shape.")
+              else:
+                  print("JSON type:", type(data).__name__)
+
+          except Exception:
+              print("Response is raw file data.")
+              print("File content successfully retrieved.")
+          PY
