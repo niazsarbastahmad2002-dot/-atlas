@@ -3,58 +3,30 @@ name: Recover Atlas source
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   recover:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout empty repository
-        uses: actions/checkout@v4
-
-      - name: Install tools
-        run: sudo apt-get update && sudo apt-get install -y jq curl
-
-      - name: Find latest production deployment
+      - name: Test old Atlas deployment files
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          DEPLOYMENT_ID: dpl_CmQfdFrTFCZJCE5GrhdjjdkXactR
         run: |
           set -euo pipefail
 
-          curl -fsSL \
+          STATUS=$(curl -sS \
+            -o files.json \
+            -w "%{http_code}" \
             -H "Authorization: Bearer $VERCEL_TOKEN" \
-            "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&target=production&limit=1&teamId=$VERCEL_ORG_ID" \
-            > deployments.json
+            "https://api.vercel.com/v6/deployments/$DEPLOYMENT_ID/files?teamId=$VERCEL_ORG_ID")
 
-          DEPLOYMENT_ID="$(jq -r '.deployments[0].uid // .deployments[0].id // empty' deployments.json)"
+          echo "HTTP status: $STATUS"
 
-          if [ -z "$DEPLOYMENT_ID" ]; then
-            echo "Could not find a production deployment."
-            cat deployments.json
+          if [ "$STATUS" != "200" ]; then
+            cat files.json
             exit 1
           fi
 
-          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> "$GITHUB_ENV"
-
-      - name: List deployment source files
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        run: |
-          set -euo pipefail
-
-          curl -fsSL \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            "https://api.vercel.com/v6/deployments/$DEPLOYMENT_ID/files?teamId=$VERCEL_ORG_ID" \
-            > files.json
-
-          jq . files.json
-
-      - name: Stop after inventory
-        run: |
-          echo "Source inventory retrieved successfully."
-          echo "Do not overwrite the repository yet."
+          python -m json.tool files.json
