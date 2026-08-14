@@ -9,7 +9,7 @@ import { appLocale, baghdadDate, baghdadDateTime } from "@/lib/i18n/config";
 import { getDashboardMessage } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
-import { createAppointment, createClinic, signOut } from "./actions";
+import { createAppointment, createClinic, createDoctor, signOut } from "./actions";
 import { AppointmentActions } from "./appointment-actions";
 
 export const dynamic = "force-dynamic";
@@ -82,10 +82,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ? getDashboardMessage("clinic_unavailable")
     : null;
 
-  const [{ data: appointments, error: appointmentError }, { data: reminderSettings }] = await Promise.all([
+  const [{ data: appointments, error: appointmentError }, { data: reminderSettings },{ data: doctors, error: doctorsError },] = await Promise.all([
     supabase
       .from("appointments")
-      .select("id, patient_name, patient_phone, doctor_name, appointment_at, status, reminder_status")
+      .select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, status, reminder_status")
       .eq("clinic_id", clinic.id)
       .order("appointment_at", { ascending: true })
       .limit(500),
@@ -93,11 +93,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .from("clinic_reminder_settings")
       .select("enabled, lead_minutes")
       .eq("clinic_id", clinic.id)
-      .maybeSingle(),
+      .maybeSingle(),,
+    supabase
+  .from("doctors")
+  .select("id, name, active, display_order")
+  .eq("clinic_id", clinic.id)
+  .eq("active", true)
+  .order("display_order", { ascending: true })
+  .order("name", { ascending: true }),
   ]);
 
-  if (appointmentError) return <DashboardError />;
-
+  if (appointmentError || doctorsError) return <DashboardError />;
+  const doctorRows = doctors ?? [];
   const rows = appointments ?? [];
   const today = baghdadDate.format(new Date());
   const todayRows = rows.filter((row) => baghdadDate.format(new Date(row.appointment_at)) === today);
@@ -143,6 +150,35 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <p className="privacy-note">
         Collect only the details needed for scheduling. Do not enter medical notes in Atlas.
       </p>
+      <section className="panel">
+  <div className="panel-heading">
+    <div>
+      <div className="eyebrow">Clinic settings</div>
+      <h1>Doctors</h1>
+    </div>
+  </div>
+
+  <form action={createDoctor} className="stack-form">
+    <input type="hidden" name="clinic_id" value={clinic.id} />
+    <label htmlFor="new_doctor_name">Doctor name</label>
+    <input
+      id="new_doctor_name"
+      name="doctor_name"
+      minLength={2}
+      maxLength={120}
+      required
+    />
+    <SubmitButton pendingLabel="Adding…">Add doctor</SubmitButton>
+  </form>
+
+  {doctorRows.length > 0 ? (
+    <p className="field-help">
+      {doctorRows.map((doctor) => doctor.name).join(", ")}
+    </p>
+  ) : (
+    <p className="field-help">Add a doctor before creating appointments.</p>
+  )}
+</section>
 
       <div className="dashboard-grid">
         <section className="panel">
@@ -173,8 +209,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <span>The patient agreed to receive a WhatsApp appointment reminder.</span>
             </label>
             <p className="field-help">A reminder is queued only after consent and clinic messaging approval.</p>
-            <label htmlFor="doctor_name">Doctor</label>
-            <input id="doctor_name" name="doctor_name" minLength={2} maxLength={120} autoComplete="off" required />
+            <label htmlFor="doctor_id">Doctor</label>
+<select
+  id="doctor_id"
+  name="doctor_id"
+  defaultValue={doctorRows.length === 1 ? doctorRows[0].id : ""}
+  required
+  disabled={doctorRows.length === 0}
+>
+  {doctorRows.length !== 1 ? <option value="">Choose doctor</option> : null}
+  {doctorRows.map((doctor) => (
+    <option key={doctor.id} value={doctor.id}>
+      {doctor.name}
+    </option>
+  ))}
+</select>
             <label htmlFor="appointment_at">Date and time ({appLocale.timeZoneLabel})</label>
             <input
               id="appointment_at"
