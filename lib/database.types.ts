@@ -97,7 +97,6 @@ export type Database = {
           appointment_at: string
           appointment_revision: number
           clinic_id: string
-          doctor_id: string | null
           created_at: string
           doctor_name: string
           id: string
@@ -160,31 +159,24 @@ export type Database = {
         }
         Insert: {
           clinic_id: string
-          doctor_id?: string | null
           role?: string
           user_id: string
         }
         Update: {
           clinic_id?: string
-          doctor_id?: string | null
           role?: string
           user_id?: string
         }
-        Relationships:    {
-        
-            foreignKeyName: "appointments_doctor_tenant_fkey"
-            columns: ["clinic_id", "doctor_id"]
-            isOneToOne: false
-            referencedRelation: "doctors"
-            referencedColumns: ["clinic_id", "id"]
-          },‎{
-         foreignKeyName: "clinic_members_clinic_id_fkey"
+        Relationships: [
+          {
+            foreignKeyName: "clinic_members_clinic_id_fkey"
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
-          ‎}    ‎
-      ‎
+          },
+        ]
+      }
       clinic_reminder_settings: {
         Row: {
           clinic_id: string
@@ -246,48 +238,7 @@ export type Database = {
           owner_id?: string
         }
         Relationships: []
-      },
-        doctors: {
-  Row: {
-    active: boolean
-    clinic_id: string
-    created_at: string
-    created_by: string | null
-    display_order: number
-    id: string
-    name: string
-    updated_at: string
-  }
-  Insert: {
-    active?: boolean
-    clinic_id: string
-    created_at?: string
-    created_by?: string | null
-    display_order?: number
-    id?: string
-    name: string
-    updated_at?: string
-  }
-  Update: {
-    active?: boolean
-    clinic_id?: string
-    created_at?: string
-    created_by?: string | null
-    display_order?: number
-    id?: string
-    name?: string
-    updated_at?: string
-  }
-  Relationships: [
-    {
-      foreignKeyName: "doctors_clinic_id_fkey"
-      columns: ["clinic_id"]
-      isOneToOne: false
-      referencedRelation: "clinics"
-      referencedColumns: ["id"]
-    },
-  ]
-}
+      }
       pending_reminder_delivery_events: {
         Row: {
           error_code: string | null
