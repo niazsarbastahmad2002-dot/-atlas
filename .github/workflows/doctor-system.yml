@@ -1,0 +1,499 @@
+name: Add Atlas doctor system
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  doctor-system:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Atlas
+        uses: actions/checkout@v4
+
+      - name: Add doctor system
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          # ------------------------------------------------------------
+          # 1. DATABASE TYPES
+          # ------------------------------------------------------------
+          path = Path("lib/database.types.ts")
+          text = path.read_text()
+
+          start = text.index("      appointments: {")
+          end = text.index("      clinic_members: {", start)
+          appointments = text[start:end]
+
+          if "doctor_id:" not in appointments:
+              appointments = appointments.replace(
+                  "          created_at: string\n          doctor_name: string",
+                  "          created_at: string\n          doctor_id: string | null\n          doctor_name: string",
+                  1,
+              )
+
+              appointments = appointments.replace(
+                  "          created_at?: string\n          doctor_name",
+                  "          created_at?: string\n          doctor_id?: string | null\n          doctor_name",
+              )
+
+              relationship_marker = '''        Relationships: [
+          {
+            foreignKeyName: "appointments_clinic_id_fkey"'''
+
+              relationship_replacement = '''        Relationships: [
+          {
+            foreignKeyName: "appointments_doctor_tenant_fkey"
+            columns: ["clinic_id", "doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["clinic_id", "id"]
+          },
+          {
+            foreignKeyName: "appointments_clinic_id_fkey"'''
+
+              if relationship_marker not in appointments:
+                  raise SystemExit("Could not locate appointment Relationships block.")
+
+              appointments = appointments.replace(
+                  relationship_marker,
+                  relationship_replacement,
+                  1,
+              )
+
+              text = text[:start] + appointments + text[end:]
+
+          if "      doctors: {" not in text:
+              marker = "      pending_reminder_delivery_events: {"
+
+              doctors = '''      doctors: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+'''
+
+              if marker not in text:
+                  raise SystemExit("Could not locate insertion point for doctors type.")
+
+              text = text.replace(marker, doctors + marker, 1)
+
+          path.write_text(text)
+
+          # ------------------------------------------------------------
+          # 2. SERVER ACTIONS
+          # ------------------------------------------------------------
+          path = Path("app/dashboard/actions.ts")
+          text = path.read_text()
+
+          if "export async function addDoctor(" not in text:
+              marker = "export async function createAppointment(formData: FormData) {"
+
+              action = '''export async function addDoctor(formData: FormData) {
+            const clinicId = String(formData.get("clinic_id") ?? "");
+            const rawName = String(formData.get("name") ?? "");
+            const name = cleanDisplayName(rawName);
+
+            const settingsUrl = (key: "error" | "notice", value: string) => {
+              const params = new URLSearchParams({ clinic: clinicId, [key]: value });
+              return `/dashboard/settings?${params}`;
+            };
+
+            if (!isUuid(clinicId) || !isValidDisplayName(rawName)) {
+              redirect(settingsUrl("error", "doctor_invalid"));
+            }
+
+            const supabase = await authorizeClinic(clinicId);
+            const { error } = await supabase.from("doctors").insert({
+              clinic_id: clinicId,
+              name,
+            });
+
+            if (error) {
+              console.error("Atlas doctor creation failed", {
+                code: error.code ?? "unknown",
+              });
+              redirect(settingsUrl("error", "doctor_create_failed"));
+            }
+
+            revalidatePath("/dashboard");
+            revalidatePath("/dashboard/settings");
+            redirect(settingsUrl("notice", "doctor_added"));
+          }
+
+          '''
+
+              if marker not in text:
+                  raise SystemExit("Could not locate createAppointment action.")
+
+              text = text.replace(marker, action + marker, 1)
+
+          start = text.index("export async function createAppointment(formData: FormData) {")
+          end = text.index("export async function updateAppointmentStatus", start)
+          block = text[start:end]
+
+          block = re.sub(
+              r'''  const rawDoctorName = String\(formData\.get\("doctor_name"\) \?\? ""\);\n  const doctorName = cleanDisplayName\(rawDoctorName\);\n''',
+              '''  const doctorId = String(formData.get("doctor_id") ?? "");\n''',
+              block,
+              count=1,
+          )
+
+          block = block.replace(
+              "    || !isValidDisplayName(rawDoctorName)\n",
+              "    || !isUuid(doctorId)\n",
+              1,
+          )
+
+          auth_marker = '''  const supabase = await authorizeClinic(clinicId);
+
+          const { error } = await supabase.from("appointments").insert({'''
+
+          if "const { data: doctor, error: doctorError }" not in block:
+              auth_replacement = '''  const supabase = await authorizeClinic(clinicId);
+
+          const { data: doctor, error: doctorError } = await supabase
+            .from("doctors")
+            .select("id, name")
+            .eq("clinic_id", clinicId)
+            .eq("id", doctorId)
+            .eq("active", true)
+            .maybeSingle();
+
+          if (doctorError || !doctor) {
+            redirect(dashboardUrl("error", "appointment_invalid", clinicId));
+          }
+
+          const doctorName = doctor.name;
+
+          const { error } = await supabase.from("appointments").insert({'''
+
+              if auth_marker not in block:
+                  raise SystemExit("Could not locate appointment insert.")
+
+              block = block.replace(auth_marker, auth_replacement, 1)
+
+          if "      doctor_id: doctor.id," not in block:
+              block = block.replace(
+                  "      clinic_id: clinicId,\n      patient_name:",
+                  "      clinic_id: clinicId,\n      doctor_id: doctor.id,\n      patient_name:",
+                  1,
+              )
+
+          text = text[:start] + block + text[end:]
+          path.write_text(text)
+
+          # ------------------------------------------------------------
+          # 3. DASHBOARD
+          # ------------------------------------------------------------
+          path = Path("app/dashboard/page.tsx")
+          text = path.read_text()
+
+          if 'import Link from "next/link";' not in text:
+              text = 'import Link from "next/link";\n' + text
+
+          old = '''  const [{ data: appointments, error: appointmentError }, { data: reminderSettings }] = await Promise.all([
+            supabase
+              .from("appointments")
+              .select("id, patient_name, patient_phone, doctor_name, appointment_at, status, reminder_status")
+              .eq("clinic_id", clinic.id)
+              .order("appointment_at", { ascending: true })
+              .limit(500),
+            supabase
+              .from("clinic_reminder_settings")
+              .select("enabled, lead_minutes")
+              .eq("clinic_id", clinic.id)
+              .maybeSingle(),
+          ]);'''
+
+          new = '''  const [
+            { data: appointments, error: appointmentError },
+            { data: reminderSettings },
+            { data: doctors, error: doctorsError },
+          ] = await Promise.all([
+            supabase
+              .from("appointments")
+              .select("id, patient_name, patient_phone, doctor_name, appointment_at, status, reminder_status")
+              .eq("clinic_id", clinic.id)
+              .order("appointment_at", { ascending: true })
+              .limit(500),
+            supabase
+              .from("clinic_reminder_settings")
+              .select("enabled, lead_minutes")
+              .eq("clinic_id", clinic.id)
+              .maybeSingle(),
+            supabase
+              .from("doctors")
+              .select("id, name, active, display_order")
+              .eq("clinic_id", clinic.id)
+              .eq("active", true)
+              .order("display_order", { ascending: true })
+              .order("name", { ascending: true }),
+          ]);'''
+
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif "doctorsError" not in text:
+              raise SystemExit("Could not locate dashboard Promise.all block.")
+
+          text = text.replace(
+              "  if (appointmentError) return <DashboardError />;",
+              "  if (appointmentError || doctorsError) return <DashboardError />;",
+              1,
+          )
+
+          if "const activeDoctors = doctors ?? [];" not in text:
+              text = text.replace(
+                  "  const rows = appointments ?? [];",
+                  "  const rows = appointments ?? [];\n  const activeDoctors = doctors ?? [];",
+                  1,
+              )
+
+          if ">Settings</Link>" not in text:
+              text = text.replace(
+                  "        <form action={signOut}>",
+                  '''        <Link
+                    className="button button-ghost button-small"
+                    href={`/dashboard/settings?clinic=${clinic.id}`}
+                  >
+                    Settings
+                  </Link>
+                  <form action={signOut}>''',
+                  1,
+              )
+
+          doctor_pattern = re.compile(
+              r'''          <label htmlFor="doctor_name">Doctor</label>\n\s*<input id="doctor_name" name="doctor_name"[^>]*/>'''
+          )
+
+          doctor_ui = '''          <label htmlFor="doctor_id">Doctor</label>
+          <select
+            id="doctor_id"
+            name="doctor_id"
+            defaultValue={activeDoctors.length === 1 ? activeDoctors[0].id : ""}
+            disabled={activeDoctors.length === 0}
+            required
+          >
+            <option value="" disabled>
+              {activeDoctors.length === 0 ? "Add a doctor in Settings first" : "Choose doctor"}
+            </option>
+            {activeDoctors.map((doctor) => (
+              <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
+            ))}
+          </select>
+          {activeDoctors.length === 0 ? (
+            <p className="field-help">
+              <Link href={`/dashboard/settings?clinic=${clinic.id}`}>Add a doctor in Settings</Link> before booking.
+            </p>
+          ) : null}'''
+
+          if 'name="doctor_id"' not in text:
+              text, count = doctor_pattern.subn(doctor_ui, text, count=1)
+              if count != 1:
+                  raise SystemExit("Could not locate dashboard Doctor input.")
+
+          path.write_text(text)
+
+          # ------------------------------------------------------------
+          # 4. SETTINGS PAGE
+          # ------------------------------------------------------------
+          settings = Path("app/dashboard/settings/page.tsx")
+          settings.parent.mkdir(parents=True, exist_ok=True)
+
+          settings.write_text('''import Link from "next/link";
+          import { redirect } from "next/navigation";
+          import { SubmitButton } from "@/app/components/submit-button";
+          import { createClient } from "@/lib/supabase/server";
+          import { addDoctor } from "../actions";
+
+          export const dynamic = "force-dynamic";
+
+          type SettingsPageProps = {
+            searchParams: Promise<{
+              clinic?: string;
+              error?: string;
+              notice?: string;
+            }>;
+          };
+
+          const errorMessages: Record<string, string> = {
+            doctor_invalid: "Enter a valid doctor name.",
+            doctor_create_failed: "The doctor could not be saved. Please try again.",
+          };
+
+          const noticeMessages: Record<string, string> = {
+            doctor_added: "Doctor saved.",
+          };
+
+          export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+            const params = await searchParams;
+            const supabase = await createClient();
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !userData.user) redirect("/login");
+
+            const { data: clinics, error: clinicsError } = await supabase
+              .from("clinics")
+              .select("id, name")
+              .order("created_at", { ascending: true });
+
+            if (clinicsError || !clinics?.length) redirect("/dashboard");
+
+            const clinic =
+              clinics.find((item) => item.id === params.clinic) ?? clinics[0];
+
+            const { data: doctors, error: doctorsError } = await supabase
+              .from("doctors")
+              .select("id, name, active, display_order")
+              .eq("clinic_id", clinic.id)
+              .order("display_order", { ascending: true })
+              .order("name", { ascending: true });
+
+            const errorMessage = params.error ? errorMessages[params.error] : null;
+            const noticeMessage = params.notice ? noticeMessages[params.notice] : null;
+
+            return (
+              <main className="dashboard shell">
+                <header className="dashboard-header">
+                  <div>
+                    <div className="brand">Atlas</div>
+                    <p className="quiet">{clinic.name} · Settings</p>
+                  </div>
+                  <Link className="button button-ghost button-small" href={`/dashboard?clinic=${clinic.id}`}>
+                    Back to schedule
+                  </Link>
+                </header>
+
+                {errorMessage ? (
+                  <p className="notice notice-error" role="alert">{errorMessage}</p>
+                ) : null}
+
+                {noticeMessage ? (
+                  <p className="notice notice-success" role="status">{noticeMessage}</p>
+                ) : null}
+
+                <section className="panel">
+                  <div className="panel-heading">
+                    <div>
+                      <div className="eyebrow">Clinic settings</div>
+                      <h1>Doctors</h1>
+                    </div>
+                  </div>
+
+                  <p className="quiet">
+                    Save each doctor once. Reception can then choose the doctor from the appointment form.
+                  </p>
+
+                  <form action={addDoctor} className="stack-form">
+                    <input type="hidden" name="clinic_id" value={clinic.id} />
+                    <label htmlFor="name">Doctor name</label>
+                    <input
+                      id="name"
+                      name="name"
+                      minLength={2}
+                      maxLength={120}
+                      autoComplete="off"
+                      required
+                    />
+                    <SubmitButton pendingLabel="Saving...">Add doctor</SubmitButton>
+                  </form>
+
+                  <div className="appointment-list">
+                    {doctorsError ? (
+                      <p className="notice notice-error">Doctors could not be loaded.</p>
+                    ) : doctors?.length ? (
+                      doctors.map((doctor) => (
+                        <article className="appointment-row" key={doctor.id}>
+                          <div className="appointment-primary">
+                            <div className="patient-cell">
+                              <strong>{doctor.name}</strong>
+                              <span>{doctor.active ? "Active" : "Inactive"}</span>
+                            </div>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="empty-state">
+                        <div>
+                          <strong>No doctors saved yet.</strong>
+                          <span>Add the clinic's first doctor above.</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </main>
+            );
+          }
+          ''')
+
+          print("Doctor system patch complete.")
+          PY
+
+      - name: Typecheck Atlas
+        run: npm run typecheck
+
+      - name: Commit doctor system
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app/dashboard/actions.ts \
+                  app/dashboard/page.tsx \
+                  app/dashboard/settings/page.tsx \
+                  lib/database.types.ts
+
+          if git diff --cached --quiet; then
+            echo "Doctor system already applied."
+            exit 0
+          fi
+
+          git commit -m "Add saved clinic doctor system"
+          git push
