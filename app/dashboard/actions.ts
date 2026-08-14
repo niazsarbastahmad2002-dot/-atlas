@@ -97,29 +97,36 @@ export async function createAppointment(formData: FormData) {
   const patientName = cleanDisplayName(rawPatientName);
   const patientPhone = normalizeIraqiMobile(String(formData.get("patient_phone") ?? ""));
   const doctorId = String(formData.get("doctor_id") ?? "");
-  const rawDoctorName = String(formData.get("doctor_name") ?? "");
-  const doctorName = cleanDisplayName(rawDoctorName);
   const appointmentAt = parseBaghdadDateTime(String(formData.get("appointment_at") ?? ""));
   const reminderConsent = formData.get("reminder_consent") === "on";
 
   if (
     !isUuid(clinicId)
-    || !isUuid(doctorId
+    || !isUuid(doctorId)
     || !isUuid(idempotencyKey)
     || !isValidDisplayName(rawPatientName)
-    || !isValidDisplayName(rawDoctorName)
   ) redirect(dashboardUrl("error", "appointment_invalid", clinicId));
   if (!patientPhone) redirect(dashboardUrl("error", "appointment_phone_invalid", clinicId));
   if (!appointmentAt) redirect(dashboardUrl("error", "appointment_time_invalid", clinicId));
 
   const supabase = await authorizeClinic(clinicId);
+  const { data: doctor, error: doctorError } = await supabase
+  .from("doctors")
+  .select("id, name")
+  .eq("clinic_id", clinicId)
+  .eq("id", doctorId)
+  .eq("active", true)
+  .maybeSingle();
+  if (doctorError || !doctor) {
+  redirect(dashboardUrl("error", "appointment_invalid", clinicId));
+}
 
   const { error } = await supabase.from("appointments").insert({
     clinic_id: clinicId,
     patient_name: patientName,
     patient_phone: patientPhone,
-    doctor_name: doctorName,
-    doctor_id: doctorId,
+    doctor_name: doctor.name,
+    doctor_id: doctor.id,
     appointment_at: appointmentAt.toISOString(),
     idempotency_key: idempotencyKey,
     reminder_consent: reminderConsent,
