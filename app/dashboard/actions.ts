@@ -101,11 +101,13 @@ export async function createAppointment(formData: FormData) {
   const reminderConsent = formData.get("reminder_consent") === "on";
 
   if (
-    !isUuid(clinicId)
-    || !isUuid(doctorId)
-    || !isUuid(idempotencyKey)
-    || !isValidDisplayName(rawPatientName)
-  ) redirect(dashboardUrl("error", "appointment_invalid", clinicId));
+  !isUuid(clinicId) ||
+  !isUuid(doctorId) ||
+  !isUuid(idempotencyKey) ||
+  !isValidDisplayName(rawPatientName)
+) {
+  redirect(dashboardUrl("error", "appointment_invalid", clinicId));
+}
   if (!patientPhone) redirect(dashboardUrl("error", "appointment_phone_invalid", clinicId));
   if (!appointmentAt) redirect(dashboardUrl("error", "appointment_time_invalid", clinicId));
 
