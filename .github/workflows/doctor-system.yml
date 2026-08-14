@@ -44,22 +44,37 @@ jobs:
                   "          created_at?: string\n          doctor_name",
                   "          created_at?: string\n          doctor_id?: string | null\n          doctor_name",
               )
+          relationship_marker = "\n".join([
+              "        Relationships: [",
+              "          {",
+              '            foreignKeyName: "appointments_clinic_id_fkey"',
+              '            columns: ["clinic_id"]',
+              "            isOneToOne: false",
+              '            referencedRelation: "clinics"',
+              '            referencedColumns: ["id"]',
+              "          },",
+              "        ]",
+          ])
 
-              relationship_marker = '''        Relationships: [
-          {
-            foreignKeyName: "appointments_clinic_id_fkey"'''
-
-              relationship_replacement = '''        Relationships: [
-          {
-            foreignKeyName: "appointments_doctor_tenant_fkey"
-            columns: ["clinic_id", "doctor_id"]
-            isOneToOne: false
-            referencedRelation: "doctors"
-            referencedColumns: ["clinic_id", "id"]
-          },
-          {
-            foreignKeyName: "appointments_clinic_id_fkey"'''
-
+                       relationship_replacement = "\n".join([
+              "        Relationships: [",
+              "          {",
+              '            foreignKeyName: "appointments_doctor_tenant_fkey"',
+              '            columns: ["clinic_id", "doctor_id"]',
+              "            isOneToOne: false",
+              '            referencedRelation: "doctors"',
+              '            referencedColumns: ["clinic_id", "id"]',
+              "          },",
+              "          {",
+              '            foreignKeyName: "appointments_clinic_id_fkey"',
+              '            columns: ["clinic_id"]',
+              "            isOneToOne: false",
+              '            referencedRelation: "clinics"',
+              '            referencedColumns: ["id"]',
+              "          },",
+              "        ]",
+          ])
+              
               if relationship_marker not in appointments:
                   raise SystemExit("Could not locate appointment Relationships block.")
 
