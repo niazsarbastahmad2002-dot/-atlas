@@ -93,7 +93,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .from("clinic_reminder_settings")
       .select("enabled, lead_minutes")
       .eq("clinic_id", clinic.id)
-      .maybeSingle(),,
+      .maybeSingle(),
     supabase
   .from("doctors")
   .select("id, name, active, display_order")
@@ -104,7 +104,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   ]);
 
   if (appointmentError || doctorsError) return <DashboardError />;
-  const doctorRows = doctors ?? [];
+  const doctorRows = (doctors ?? []) as Array<{
+  id: string;
+  name: string;
+  active: boolean;
+  display_order: number;
+}>;
   const rows = appointments ?? [];
   const today = baghdadDate.format(new Date());
   const todayRows = rows.filter((row) => baghdadDate.format(new Date(row.appointment_at)) === today);
