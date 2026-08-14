@@ -65,12 +65,38 @@ export async function createClinic(formData: FormData) {
   redirect(dashboardUrl("notice", "clinic_created", clinic.id));
 }
 
+export async function createDoctor(formData: FormData) {
+  const clinicId = String(formData.get("clinic_id") ?? "");
+  const rawName = String(formData.get("doctor_name") ?? "");
+  const name = cleanDisplayName(rawName);
+
+  if (!isUuid(clinicId) || !isValidDisplayName(rawName)) {
+    return;
+  }
+
+  const supabase = await authorizeClinic(clinicId);
+
+  const { error } = await supabase.from("doctors").insert({
+    clinic_id: clinicId,
+    name,
+    active: true,
+  });
+
+  if (error) {
+    console.error("Atlas doctor creation failed", { code: error.code });
+    return;
+  }
+
+  revalidatePath("/dashboard");
+}
+
 export async function createAppointment(formData: FormData) {
   const clinicId = String(formData.get("clinic_id") ?? "");
   const idempotencyKey = String(formData.get("idempotency_key") ?? "");
   const rawPatientName = String(formData.get("patient_name") ?? "");
   const patientName = cleanDisplayName(rawPatientName);
   const patientPhone = normalizeIraqiMobile(String(formData.get("patient_phone") ?? ""));
+  const doctorId = String(formData.get("doctor_id") ?? "");
   const rawDoctorName = String(formData.get("doctor_name") ?? "");
   const doctorName = cleanDisplayName(rawDoctorName);
   const appointmentAt = parseBaghdadDateTime(String(formData.get("appointment_at") ?? ""));
@@ -78,6 +104,7 @@ export async function createAppointment(formData: FormData) {
 
   if (
     !isUuid(clinicId)
+    || !isUuid(doctorId
     || !isUuid(idempotencyKey)
     || !isValidDisplayName(rawPatientName)
     || !isValidDisplayName(rawDoctorName)
@@ -92,6 +119,7 @@ export async function createAppointment(formData: FormData) {
     patient_name: patientName,
     patient_phone: patientPhone,
     doctor_name: doctorName,
+    doctor_id: doctorId,
     appointment_at: appointmentAt.toISOString(),
     idempotency_key: idempotencyKey,
     reminder_consent: reminderConsent,
