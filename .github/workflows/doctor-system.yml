@@ -89,7 +89,49 @@ jobs:
           if "      doctors: {" not in text:
               marker = "      pending_reminder_delivery_events: {"
 
-              doctors = '''      doctors: {
+                        doctors = "\n".join([
+              "        doctors: {",
+              "          Row: {",
+              "            active: boolean",
+              "            clinic_id: string",
+              "            created_at: string",
+              "            created_by: string | null",
+              "            display_order: number",
+              "            id: string",
+              "            name: string",
+              "            updated_at: string",
+              "          }",
+              "          Insert: {",
+              "            active?: boolean",
+              "            clinic_id: string",
+              "            created_at?: string",
+              "            created_by?: string | null",
+              "            display_order?: number",
+              "            id?: string",
+              "            name: string",
+              "            updated_at?: string",
+              "          }",
+              "          Update: {",
+              "            active?: boolean",
+              "            clinic_id?: string",
+              "            created_at?: string",
+              "            created_by?: string | null",
+              "            display_order?: number",
+              "            id?: string",
+              "            name?: string",
+              "            updated_at?: string",
+              "          }",
+              "          Relationships: [",
+              "            {",
+              '              foreignKeyName: "doctors_clinic_id_fkey"',
+              '              columns: ["clinic_id"]',
+              "              isOneToOne: false",
+              '              referencedRelation: "clinics"',
+              '              referencedColumns: ["id"]',
+              "            },",
+              "          ]",
+              "        }",
+          ])
         Row: {
           active: boolean
           clinic_id: string
