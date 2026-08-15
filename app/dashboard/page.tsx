@@ -9,7 +9,16 @@ import { appLocale, baghdadDate, baghdadDateTime } from "@/lib/i18n/config";
 import { getDashboardMessage } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
-import { createAppointment, createClinic, createDoctor, signOut } from "./actions";
+import {
+  createAppointment,
+  createClinic,
+  createDoctor,
+  moveDoctor,
+  setDoctorActive,
+  signOut,
+  updateClinicInterval,
+  updateDoctor,
+} from "./actions";
 import { AppointmentActions } from "./appointment-actions";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +50,12 @@ const reminderLabels: Record<string, string> = {
   cancelled: "Reminder cancelled",
 };
 
+const reminderLanguageLabels: Record<string, string> = {
+  ku: "Kurdish (Sorani)",
+  ar: "Arabic",
+  en: "English",
+};
+
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
   const messageError = getDashboardMessage(params.error);
@@ -52,7 +67,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const { data: clinics, error: clinicsError } = await supabase
     .from("clinics")
-    .select("id, name")
+    .select("id, name, owner_id, appointment_interval_minutes")
     .order("created_at", { ascending: true });
 
   if (clinicsError) return <DashboardError />;
@@ -82,34 +97,45 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ? getDashboardMessage("clinic_unavailable")
     : null;
 
-  const [{ data: appointments, error: appointmentError }, { data: reminderSettings },{ data: doctors, error: doctorsError },] = await Promise.all([
+  const [
+    { data: appointments, error: appointmentError },
+    { data: reminderSettings },
+    { data: doctors, error: doctorsError },
+    { data: membership },
+  ] = await Promise.all([
     supabase
       .from("appointments")
-      .select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, status, reminder_status")
+      .select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, status, reminder_status, reminder_language")
       .eq("clinic_id", clinic.id)
+      .is("voided_at", null)
       .order("appointment_at", { ascending: true })
       .limit(500),
     supabase
       .from("clinic_reminder_settings")
-      .select("enabled, lead_minutes")
+      .select("enabled, lead_minutes, default_reminder_language")
       .eq("clinic_id", clinic.id)
       .maybeSingle(),
     supabase
-  .from("doctors")
-  .select("id, name, active, display_order")
-  .eq("clinic_id", clinic.id)
-  .eq("active", true)
-  .order("display_order", { ascending: true })
-  .order("name", { ascending: true }),
+      .from("doctors")
+      .select("id, name, active, display_order")
+      .eq("clinic_id", clinic.id)
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+    supabase
+      .from("clinic_members")
+      .select("role")
+      .eq("clinic_id", clinic.id)
+      .eq("user_id", userData.user.id)
+      .maybeSingle(),
   ]);
 
   if (appointmentError || doctorsError) return <DashboardError />;
-  const doctorRows = (doctors ?? []) as Array<{
-  id: string;
-  name: string;
-  active: boolean;
-  display_order: number;
-}>;
+
+  const doctorRows = doctors ?? [];
+  const activeDoctorRows = doctorRows.filter((doctor) => doctor.active);
+  const canManageClinic = clinic.owner_id === userData.user.id
+    || membership?.role === "owner"
+    || membership?.role === "manager";
   const rows = appointments ?? [];
   const today = baghdadDate.format(new Date());
   const todayRows = rows.filter((row) => baghdadDate.format(new Date(row.appointment_at)) === today);
@@ -118,6 +144,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const minimum = new Date(Date.now() + 5 * 60 * 1000);
   minimum.setSeconds(0, 0);
   const maximum = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000);
+  const defaultReminderLanguage = reminderSettings?.default_reminder_language ?? "ku";
 
   return (
     <main className="dashboard shell">
@@ -155,35 +182,83 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <p className="privacy-note">
         Collect only the details needed for scheduling. Do not enter medical notes in Atlas.
       </p>
-      <section className="panel">
-  <div className="panel-heading">
-    <div>
-      <div className="eyebrow">Clinic settings</div>
-      <h1>Doctors</h1>
-    </div>
-  </div>
 
-  <form action={createDoctor} className="stack-form">
-    <input type="hidden" name="clinic_id" value={clinic.id} />
-    <label htmlFor="new_doctor_name">Doctor name</label>
-    <input
-      id="new_doctor_name"
-      name="doctor_name"
-      minLength={2}
-      maxLength={120}
-      required
-    />
-    <SubmitButton pendingLabel="Adding…">Add doctor</SubmitButton>
-  </form>
+      {canManageClinic ? (
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <div className="eyebrow">Clinic settings</div>
+              <h1>Doctors & scheduling</h1>
+            </div>
+          </div>
 
-  {doctorRows.length > 0 ? (
-    <p className="field-help">
-      {doctorRows.map((doctor) => doctor.name).join(", ")}
-    </p>
-  ) : (
-    <p className="field-help">Add a doctor before creating appointments.</p>
-  )}
-</section>
+          <form action={updateClinicInterval} className="stack-form">
+            <input type="hidden" name="clinic_id" value={clinic.id} />
+            <label htmlFor="appointment_interval_minutes">Default appointment interval</label>
+            <select
+              id="appointment_interval_minutes"
+              name="appointment_interval_minutes"
+              defaultValue={String(clinic.appointment_interval_minutes)}
+            >
+              {[5, 10, 15, 20, 30].map((minutes) => (
+                <option value={minutes} key={minutes}>{minutes} minutes</option>
+              ))}
+            </select>
+            <p className="field-help">Used as the clinic’s scheduling default; staff can still choose a custom appointment time.</p>
+            <SubmitButton pendingLabel="Saving…">Save interval</SubmitButton>
+          </form>
+
+          <form action={createDoctor} className="stack-form">
+            <input type="hidden" name="clinic_id" value={clinic.id} />
+            <label htmlFor="new_doctor_name">Add doctor</label>
+            <input
+              id="new_doctor_name"
+              name="doctor_name"
+              minLength={2}
+              maxLength={120}
+              required
+            />
+            <SubmitButton pendingLabel="Adding…">Add doctor</SubmitButton>
+          </form>
+
+          {doctorRows.length > 0 ? (
+            <div className="appointment-list" aria-label="Doctor management">
+              {doctorRows.map((doctor, index) => (
+                <article className="appointment-row" key={doctor.id}>
+                  <form action={updateDoctor} className="stack-form">
+                    <input type="hidden" name="clinic_id" value={clinic.id} />
+                    <input type="hidden" name="doctor_id" value={doctor.id} />
+                    <label htmlFor={`doctor-${doctor.id}`}>Doctor name</label>
+                    <input
+                      id={`doctor-${doctor.id}`}
+                      name="doctor_name"
+                      defaultValue={doctor.name}
+                      minLength={2}
+                      maxLength={120}
+                      required
+                    />
+                    <SubmitButton pendingLabel="Saving…">Save name</SubmitButton>
+                  </form>
+                  <div className="row-actions">
+                    <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}>
+                      <button type="submit" disabled={index === 0}>Move up</button>
+                    </form>
+                    <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}>
+                      <button type="submit" disabled={index === doctorRows.length - 1}>Move down</button>
+                    </form>
+                    <form action={setDoctorActive.bind(null, clinic.id, doctor.id, !doctor.active)}>
+                      <button type="submit">{doctor.active ? "Archive" : "Restore"}</button>
+                    </form>
+                  </div>
+                  <p className="field-help">{doctor.active ? "Available for new appointments." : "Archived; existing appointment history is preserved."}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="field-help">Add a doctor before creating appointments.</p>
+          )}
+        </section>
+      ) : null}
 
       <div className="dashboard-grid">
         <section className="panel">
@@ -209,26 +284,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               required
             />
             <p className="field-help" id="phone-help">Atlas stores this in +964 format for reminders.</p>
-            <label className="checkbox-field" htmlFor="reminder_consent">
-              <input id="reminder_consent" name="reminder_consent" type="checkbox" />
-              <span>The patient agreed to receive a WhatsApp appointment reminder.</span>
-            </label>
-            <p className="field-help">A reminder is queued only after consent and clinic messaging approval.</p>
             <label htmlFor="doctor_id">Doctor</label>
-<select
-  id="doctor_id"
-  name="doctor_id"
-  defaultValue={doctorRows.length === 1 ? doctorRows[0].id : ""}
-  required
-  disabled={doctorRows.length === 0}
->
-  {doctorRows.length !== 1 ? <option value="">Choose doctor</option> : null}
-  {doctorRows.map((doctor) => (
-    <option key={doctor.id} value={doctor.id}>
-      {doctor.name}
-    </option>
-  ))}
-</select>
+            <select
+              id="doctor_id"
+              name="doctor_id"
+              defaultValue={activeDoctorRows.length === 1 ? activeDoctorRows[0].id : ""}
+              required
+              disabled={activeDoctorRows.length === 0}
+            >
+              {activeDoctorRows.length !== 1 ? <option value="">Choose doctor</option> : null}
+              {activeDoctorRows.map((doctor) => (
+                <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
+              ))}
+            </select>
             <label htmlFor="appointment_at">Date and time ({appLocale.timeZoneLabel})</label>
             <input
               id="appointment_at"
@@ -238,7 +306,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               max={toBaghdadInputValue(maximum)}
               required
             />
-            <SubmitButton pendingLabel="Saving…">Save appointment</SubmitButton>
+            <p className="field-help">Clinic default: {clinic.appointment_interval_minutes} minutes. Custom times remain allowed.</p>
+            <label htmlFor="reminder_language">Patient reminder language</label>
+            <select id="reminder_language" name="reminder_language" defaultValue={defaultReminderLanguage}>
+              {Object.entries(reminderLanguageLabels).map(([value, label]) => (
+                <option value={value} key={value}>{label}</option>
+              ))}
+            </select>
+            <label className="checkbox-field" htmlFor="reminder_consent">
+              <input id="reminder_consent" name="reminder_consent" type="checkbox" />
+              <span>The patient agreed to receive a WhatsApp appointment reminder.</span>
+            </label>
+            <p className="field-help">A reminder is queued only after consent and clinic messaging approval.</p>
+            <SubmitButton pendingLabel="Saving…" disabled={activeDoctorRows.length === 0}>Save appointment</SubmitButton>
           </form>
           <p className={`reminder-note ${reminderSettings?.enabled ? "reminder-ready" : ""}`}>
             {reminderSettings?.enabled
@@ -250,7 +330,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <section className="panel appointments-panel">
           <div className="panel-heading">
             <div><div className="eyebrow">Schedule</div><h1>Appointments</h1></div>
-            <span className="count-pill">{rows.length} total</span>
+            <span className="count-pill">{rows.length} active</span>
           </div>
 
           {rows.length === 0 ? (
@@ -276,6 +356,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     <dl className="appointment-details">
                       <div><dt>Doctor</dt><dd>{appointment.doctor_name}</dd></div>
                       <div><dt>Time</dt><dd>{baghdadDateTime.format(new Date(appointment.appointment_at))}</dd></div>
+                      <div><dt>Reminder language</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div>
                     </dl>
                     <AppointmentActions clinicId={clinic.id} appointmentId={appointment.id} status={status} />
                   </article>
