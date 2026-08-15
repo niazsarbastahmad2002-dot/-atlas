@@ -72,10 +72,73 @@
 .patient-actions form, .patient-actions button { width: 100%; }
 .patient-privacy { margin-top: 20px; }
 
-@media (max-width: 620px) {
+/* Product polish: keep Atlas calm, dense enough for reception work, and app-like. */
+@media (min-width: 901px) {
+  .workspace-page { padding-top: 26px; }
+  .workspace-grid { gap: 20px; }
+  .schedule-card { padding: 24px; }
+  .polished-appointment-list { gap: 10px; }
+  .polished-appointment { padding: 17px 18px; }
+}
+
+/* iPad/tablet is a first-class Atlas surface: schedule first, composer stays easy to reach. */
+@media (max-width: 900px) {
+  .workspace-grid { display: flex; flex-direction: column; }
+  .schedule-card { order: 1; }
+  .appointment-composer { order: 2; }
+  .workspace-header { margin-bottom: 16px; }
+  .workspace-stats { margin-bottom: 16px; }
+}
+
+@media (max-width: 720px) {
   .demo-safety-strip { align-items: flex-start; flex-direction: column; gap: 2px; }
   .staff-role-actions { align-items: stretch; flex-direction: column; }
   .staff-role-actions form:first-child { grid-template-columns: 1fr; width: 100%; }
   .staff-role-actions form:last-child, .staff-role-actions form:last-child button { width: 100%; }
   .patient-appointment-details, .patient-actions { grid-template-columns: 1fr; }
+
+  /* Thumb-friendly receptionist UI. */
+  input, select { min-height: 50px; font-size: 16px; }
+  .button { min-height: 48px; }
+  .workspace-page { padding-top: 18px; }
+  .workspace-title-block .eyebrow { margin-bottom: 5px; }
+  .workspace-title-block h1 { line-height: 1.05; }
+  .stats { gap: 7px; }
+  .stat { box-shadow: none; }
+  .panel { box-shadow: 0 1px 2px rgba(20,36,28,.025), 0 10px 28px rgba(20,36,28,.04); }
+  .schedule-card { padding-inline: 14px; }
+  .schedule-heading { margin-bottom: 14px; }
+  .polished-appointment { padding: 15px; }
+  .row-actions { gap: 7px; }
+  .row-actions button, .row-actions a { min-height: 40px; }
+  .appointment-composer { scroll-margin-top: 76px; }
+  .app-bottom-nav > a { min-width: 0; }
+  .app-bottom-nav > a:active { transform: scale(.97); }
+  .app-bottom-add-circle { transition: transform .12s ease, box-shadow .12s ease; }
+  .app-bottom-add:active .app-bottom-add-circle { transform: scale(.94); box-shadow: 0 4px 12px rgba(31,90,67,.18); }
+}
+
+@media (max-width: 430px) {
+  .shell { width: calc(100% - 20px); }
+  .workspace-title-block h1 { font-size: 26px; }
+  .workspace-title-block p { margin-top: 5px; }
+  .workspace-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stat { min-height: 72px; padding: 11px 10px; }
+  .stat span { min-height: 27px; }
+  .stat strong { margin-top: 3px; font-size: 23px; }
+  .panel { padding: 16px; }
+  .schedule-card { padding-inline: 12px; }
+  .appointment-primary { gap: 9px; }
+  .patient-cell strong { font-size: 16px; }
+  .appointment-details { margin-block: 13px 12px; gap: 9px; }
+  .appointment-details dd { font-size: 13px; }
+  .appointment-badges { gap: 4px; }
+  .status { min-height: 23px; }
+}
+
+/* Installed/PWA mode should feel like an app, not a webpage. */
+@media (display-mode: standalone) {
+  .app-topbar { padding-top: env(safe-area-inset-top, 0px); }
+  .app-content { min-height: 100dvh; }
+  body { overscroll-behavior-y: none; }
 }
