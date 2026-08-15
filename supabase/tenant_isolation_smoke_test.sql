@@ -94,14 +94,18 @@ where n.nspname = 'public'
   );
 
 -- 5) An authenticated outsider may call the patient-token RPC, but it must reject
---    an appointment belonging to another clinic. This is the intended reason the
---    function is SECURITY DEFINER: it can write the private token table only after
---    performing its own tenant check.
+--    a real appointment belonging to another clinic. Capture the id before adopting
+--    the outsider role so RLS cannot turn this into a trivial null-id test.
 begin;
+select set_config(
+  'atlas.test.appointment_id',
+  (select id::text from public.appointments order by created_at asc limit 1),
+  true
+);
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000999', true);
 set local role authenticated;
 select 1 / case when public.create_patient_access_token(
-  (select id from public.appointments order by created_at asc limit 1),
+  current_setting('atlas.test.appointment_id')::uuid,
   repeat('a', 64),
   now() + interval '1 day'
 ) = false then 1 else 0 end as outsider_patient_token_rejected;
