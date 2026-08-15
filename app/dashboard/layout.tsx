@@ -4,6 +4,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { AppNavigation } from "./app-navigation";
 import { DashboardScrollContinuity } from "./scroll-continuity";
+import { PasskeySettingsCard } from "./passkey-settings-card";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const locale = await getUiLocale();
@@ -15,7 +16,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <DashboardScrollContinuity />
       </Suspense>
       <AppNavigation locale={locale} />
-      <div className="app-content">{children}</div>
+      <div className="app-content">
+        {children}
+        <PasskeySettingsCard />
+      </div>
     </div>
   );
 }
