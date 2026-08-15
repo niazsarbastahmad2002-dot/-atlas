@@ -7,13 +7,65 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
+      appointment_audit_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          appointment_id: string | null
+          clinic_id: string
+          from_status: string | null
+          id: number
+          occurred_at: string
+          reason: string | null
+          to_status: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type: string
+          appointment_id?: string | null
+          clinic_id: string
+          from_status?: string | null
+          id?: never
+          occurred_at?: string
+          reason?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          appointment_id?: string | null
+          clinic_id?: string
+          from_status?: string | null
+          id?: never
+          occurred_at?: string
+          reason?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_audit_events_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_audit_events_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_reminders: {
         Row: {
           appointment_id: string
@@ -98,6 +150,7 @@ export type Database = {
           appointment_revision: number
           clinic_id: string
           created_at: string
+          doctor_id: string | null
           doctor_name: string
           id: string
           idempotency_key: string
@@ -105,15 +158,20 @@ export type Database = {
           patient_phone: string
           reminder_consent: boolean
           reminder_consent_at: string | null
+          reminder_language: string
           reminder_status: string
           status: string
           updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
         }
         Insert: {
           appointment_at: string
           appointment_revision?: number
           clinic_id: string
           created_at?: string
+          doctor_id?: string | null
           doctor_name: string
           id?: string
           idempotency_key?: string
@@ -121,15 +179,20 @@ export type Database = {
           patient_phone: string
           reminder_consent?: boolean
           reminder_consent_at?: string | null
+          reminder_language?: string
           reminder_status?: string
           status?: string
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Update: {
           appointment_at?: string
           appointment_revision?: number
           clinic_id?: string
           created_at?: string
+          doctor_id?: string | null
           doctor_name?: string
           id?: string
           idempotency_key?: string
@@ -137,9 +200,13 @@ export type Database = {
           patient_phone?: string
           reminder_consent?: boolean
           reminder_consent_at?: string | null
+          reminder_language?: string
           reminder_status?: string
           status?: string
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Relationships: [
           {
@@ -148,6 +215,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_doctor_tenant_fkey"
+            columns: ["clinic_id", "doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["clinic_id", "id"]
           },
         ]
       }
@@ -181,6 +255,7 @@ export type Database = {
         Row: {
           clinic_id: string
           daily_message_limit: number
+          default_reminder_language: string
           enabled: boolean
           lead_minutes: number
           messaging_approved_at: string | null
@@ -191,6 +266,7 @@ export type Database = {
         Insert: {
           clinic_id: string
           daily_message_limit?: number
+          default_reminder_language?: string
           enabled?: boolean
           lead_minutes?: number
           messaging_approved_at?: string | null
@@ -201,6 +277,7 @@ export type Database = {
         Update: {
           clinic_id?: string
           daily_message_limit?: number
+          default_reminder_language?: string
           enabled?: boolean
           lead_minutes?: number
           messaging_approved_at?: string | null
@@ -220,24 +297,68 @@ export type Database = {
       }
       clinics: {
         Row: {
+          appointment_interval_minutes: number
           created_at: string
           id: string
           name: string
           owner_id: string
         }
         Insert: {
+          appointment_interval_minutes?: number
           created_at?: string
           id?: string
           name: string
           owner_id: string
         }
         Update: {
+          appointment_interval_minutes?: number
           created_at?: string
           id?: string
           name?: string
           owner_id?: string
         }
         Relationships: []
+      }
+      doctors: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pending_reminder_delivery_events: {
         Row: {
@@ -314,6 +435,39 @@ export type Database = {
           },
         ]
       }
+      trusted_devices: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          last_seen_at: string
+          revoked_at: string | null
+          session_id: string
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string
+          last_seen_at?: string
+          revoked_at?: string | null
+          session_id: string
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          last_seen_at?: string
+          revoked_at?: string | null
+          session_id?: string
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -342,6 +496,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      consume_patient_link_rate_limit: {
+        Args: { p_bucket_hash: string }
+        Returns: boolean
+      }
+      create_patient_access_token: {
+        Args: {
+          p_appointment_id: string
+          p_expires_at: string
+          p_token_hash: string
+        }
+        Returns: boolean
+      }
       fail_whatsapp_reminder: {
         Args: {
           p_error_code: string
@@ -351,6 +517,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_patient_appointment: {
+        Args: { p_token_hash: string }
+        Returns: {
+          appointment_at: string
+          appointment_status: string
+          clinic_name: string
+          doctor_name: string
+          reminder_language: string
+          token_expires_at: string
+        }[]
+      }
+      patient_update_appointment: {
+        Args: { p_status: string; p_token_hash: string }
+        Returns: string
+      }
       record_whatsapp_delivery_status: {
         Args: {
           p_error_code?: string
@@ -359,6 +540,17 @@ export type Database = {
           p_provider_message_id: string
           p_status: string
         }
+        Returns: boolean
+      }
+      register_trusted_device: {
+        Args: { p_label?: string; p_token_hash: string }
+        Returns: string
+      }
+      revoke_all_trusted_devices: { Args: never; Returns: number }
+      revoke_current_trusted_device: { Args: never; Returns: boolean }
+      revoke_trusted_device: { Args: { p_device_id: string }; Returns: boolean }
+      validate_trusted_device: {
+        Args: { p_token_hash: string }
         Returns: boolean
       }
       validate_whatsapp_reminder_claim: {

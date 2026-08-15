@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       p_event_key: eventKey,
       p_status: event.status,
       p_occurred_at: event.occurredAt,
-      p_error_code: event.errorCode,
+      p_error_code: event.errorCode ?? undefined,
     });
     if (error || data !== true) {
       console.error("Atlas reminder delivery write failed", { code: error?.code ?? "rejected_event" });
