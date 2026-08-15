@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   allowedAppointmentTransitions,
   canTransitionAppointment,
+  classifyAppointmentMutationError,
   cleanDisplayName,
   formatIraqiMobile,
   isUuid,
@@ -49,6 +50,21 @@ test("enforces appointment status transitions", () => {
   assert.equal(canTransitionAppointment("pending", "completed"), false);
   assert.equal(canTransitionAppointment("confirmed", "no_show"), true);
   assert.equal(canTransitionAppointment("completed", "completed"), true);
+});
+
+test("maps appointment constraint failures without weakening database invariants", () => {
+  assert.equal(
+    classifyAppointmentMutationError("23514", "appointment outcome cannot be recorded before its scheduled time"),
+    "too_early",
+  );
+  assert.equal(
+    classifyAppointmentMutationError("23514", "past cancelled appointment cannot be reopened"),
+    "past_cancelled",
+  );
+  assert.equal(classifyAppointmentMutationError("23514", "invalid appointment status transition"), "invalid");
+  assert.equal(classifyAppointmentMutationError("23505", "duplicate key value"), "slot_taken");
+  assert.equal(classifyAppointmentMutationError("55P03", "could not obtain lock"), "busy");
+  assert.equal(classifyAppointmentMutationError("42501", "authenticated actor required"), "invalid");
 });
 
 test("parses and formats Baghdad-local appointment times", () => {
