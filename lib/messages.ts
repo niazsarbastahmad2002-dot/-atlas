@@ -30,6 +30,7 @@ export const dashboardMessages = {
 export const loginMessages = {
   invalid_link: "The sign-in link is invalid or expired. Please request a new one.",
   signed_out: "You have signed out safely.",
+  google_unavailable: "Google sign-in is not activated for this clinic yet. Use the email link below for now.",
 } as const;
 
 export type DashboardMessageCode = keyof typeof dashboardMessages;
