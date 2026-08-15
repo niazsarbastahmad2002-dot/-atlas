@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type AppointmentTimeFieldProps = {
   intervalMinutes: number;
   min: string;
   max: string;
-  occupied: string[];
+  occupiedByDoctor: Record<string, string[]>;
   timeZoneLabel: string;
 };
 
@@ -26,21 +26,47 @@ export function AppointmentTimeField({
   intervalMinutes,
   min,
   max,
-  occupied,
+  occupiedByDoctor,
   timeZoneLabel,
 }: AppointmentTimeFieldProps) {
   const [custom, setCustom] = useState(false);
   const [date, setDate] = useState(min.slice(0, 10));
-  const occupiedSet = useMemo(() => new Set(occupied), [occupied]);
+  const [doctorId, setDoctorId] = useState("");
+  const [time, setTime] = useState("");
   const slots = useMemo(() => slotTimes(intervalMinutes), [intervalMinutes]);
+  const occupiedSet = useMemo(
+    () => new Set(doctorId ? occupiedByDoctor[doctorId] ?? [] : []),
+    [doctorId, occupiedByDoctor],
+  );
+
+  useEffect(() => {
+    const doctorSelect = document.querySelector<HTMLSelectElement>("#doctor_id");
+    if (!doctorSelect) return;
+    const syncDoctor = () => {
+      setDoctorId(doctorSelect.value);
+      setTime("");
+    };
+    syncDoctor();
+    doctorSelect.addEventListener("change", syncDoctor);
+    return () => doctorSelect.removeEventListener("change", syncDoctor);
+  }, []);
+
   const firstAvailable = useMemo(() => {
-    return slots.find((time) => {
-      const candidate = `${date}T${time}`;
+    return slots.find((slot) => {
+      const candidate = `${date}T${slot}`;
       return candidate >= min && candidate <= max && !occupiedSet.has(candidate);
     }) ?? "";
   }, [date, max, min, occupiedSet, slots]);
-  const [time, setTime] = useState("");
-  const selectedTime = time && slots.includes(time) ? time : firstAvailable;
+
+  const requestedCandidate = time ? `${date}T${time}` : "";
+  const requestedTimeValid = Boolean(
+    time
+      && slots.includes(time)
+      && requestedCandidate >= min
+      && requestedCandidate <= max
+      && !occupiedSet.has(requestedCandidate),
+  );
+  const selectedTime = requestedTimeValid ? time : firstAvailable;
   const selectedValue = selectedTime ? `${date}T${selectedTime}` : "";
 
   if (custom) {
@@ -85,9 +111,11 @@ export function AppointmentTimeField({
         value={selectedTime}
         onChange={(event) => setTime(event.target.value)}
         required
+        disabled={!doctorId}
       >
-        {firstAvailable ? null : <option value="">No selectable slots</option>}
-        {slots.map((slot) => {
+        {!doctorId ? <option value="">Choose a doctor first</option> : null}
+        {doctorId && !firstAvailable ? <option value="">No selectable slots</option> : null}
+        {doctorId ? slots.map((slot) => {
           const candidate = `${date}T${slot}`;
           const outsideWindow = candidate < min || candidate > max;
           const booked = occupiedSet.has(candidate);
@@ -96,13 +124,13 @@ export function AppointmentTimeField({
               {slot}{booked ? " — booked" : ""}
             </option>
           );
-        })}
+        }) : null}
       </select>
-      <input type="hidden" name="appointment_at" value={selectedValue} />
+      <input type="hidden" name="appointment_at" value={doctorId ? selectedValue : ""} />
       <button className="button button-ghost button-small" type="button" onClick={() => setCustom(true)}>
         Use custom time
       </button>
-      <p className="field-help">Booked pending/confirmed times are marked unavailable. Custom times remain available when needed.</p>
+      <p className="field-help">Booked pending/confirmed times are checked for the selected doctor. Custom times remain available when needed.</p>
     </>
   );
 }
