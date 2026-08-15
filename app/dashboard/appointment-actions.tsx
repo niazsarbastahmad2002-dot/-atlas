@@ -5,7 +5,7 @@ import {
   allowedAppointmentTransitions,
   type AppointmentStatus,
 } from "@/lib/appointments";
-import { deleteAppointment, updateAppointmentStatus } from "./actions";
+import { archiveAppointment, updateAppointmentStatus } from "./actions";
 
 const actionLabels: Record<AppointmentStatus, string> = {
   pending: "Reopen",
@@ -37,12 +37,12 @@ export function AppointmentActions({
         </form>
       ))}
       <form
-        action={deleteAppointment.bind(null, clinicId, appointmentId)}
+        action={archiveAppointment.bind(null, clinicId, appointmentId)}
         onSubmit={(event) => {
-          if (!window.confirm("Delete this appointment permanently?")) event.preventDefault();
+          if (!window.confirm("Archive this appointment? Its history will be retained.")) event.preventDefault();
         }}
       >
-        <ActionSubmit label="Delete" />
+        <ActionSubmit label="Archive" />
       </form>
     </div>
   );
