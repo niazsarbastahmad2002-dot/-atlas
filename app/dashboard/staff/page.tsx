@@ -4,8 +4,8 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { SubmitButton } from "@/app/components/submit-button";
-import { addStaffMember, removeStaffMember, updateStaffRole } from "./actions";
+import { removeStaffMember, updateStaffRole } from "./actions";
+import { StaffProvisionForm } from "./provision-form";
 
 export const dynamic = "force-dynamic";
 
@@ -18,14 +18,11 @@ const copy: Record<UiLocale, Record<string, string>> = {
     title: "Staff access",
     subtitle: "Keep the front desk simple and give each person only the access they need.",
     ownerOnly: "Owner controls",
-    add: "Add staff member",
-    email: "Staff email",
-    role: "Role",
+    add: "Prepare first access",
     receptionist: "Receptionist",
     manager: "Manager",
     owner: "Owner",
-    signedInFirst: "For safety, the person must sign in to Atlas once before you add them.",
-    adding: "Adding…",
+    signedInFirst: "Enter the staff email and Atlas creates a short one-time setup code. Give the code to the receptionist directly — no email sign-in link is needed.",
     access: "Clinic access",
     protected: "The clinic owner cannot be removed or demoted.",
     saveRole: "Save role",
@@ -38,14 +35,11 @@ const copy: Record<UiLocale, Record<string, string>> = {
     title: "دەسەڵاتی ستاف",
     subtitle: "پێشخانە سادە بهێڵەوە و بە هەر کەسێک تەنها ئەو دەسەڵاتە بدە کە پێویستی پێیە.",
     ownerOnly: "کۆنترۆڵی خاوەن کلینیک",
-    add: "ستاف زیاد بکە",
-    email: "ئیمەیڵی ستاف",
-    role: "ڕۆڵ",
+    add: "ئامادەکردنی چوونەژوورەوەی یەکەم",
     receptionist: "پێشخانە",
     manager: "بەڕێوەبەر",
     owner: "خاوەن کلینیک",
-    signedInFirst: "بۆ پاراستن، ئەم کەسە پێویستە یەک جار بچێتە ناو Atlas پێش زیادکردنی.",
-    adding: "زیاد دەکرێت…",
+    signedInFirst: "ئیمەیڵی ستاف بنووسە؛ Atlas کۆدێکی کورت و یەکجارە دروست دەکات. کۆدەکە ڕاستەوخۆ بدە بە پێشخانە — بەستەری ئیمەیڵ پێویست نییە.",
     access: "دەسەڵاتی کلینیک",
     protected: "خاوەن کلینیک ناتوانرێت بسڕدرێتەوە یان دەسەڵاتی کەم بکرێتەوە.",
     saveRole: "ڕۆڵ پاشەکەوت بکە",
@@ -58,14 +52,11 @@ const copy: Record<UiLocale, Record<string, string>> = {
     title: "صلاحيات الموظفين",
     subtitle: "حافظ على بساطة الاستقبال وامنح كل شخص الصلاحيات التي يحتاجها فقط.",
     ownerOnly: "تحكم مالك العيادة",
-    add: "إضافة موظف",
-    email: "بريد الموظف",
-    role: "الدور",
+    add: "تجهيز الدخول الأول",
     receptionist: "موظف استقبال",
     manager: "مدير",
     owner: "مالك",
-    signedInFirst: "للأمان، يجب أن يسجل الشخص دخوله إلى Atlas مرة واحدة قبل إضافته.",
-    adding: "جارٍ الإضافة…",
+    signedInFirst: "أدخل بريد الموظف وسيُنشئ Atlas رمز إعداد قصيراً لمرة واحدة. أعطِ الرمز للموظف مباشرة — لا حاجة لرابط عبر البريد.",
     access: "صلاحيات العيادة",
     protected: "لا يمكن إزالة مالك العيادة أو خفض صلاحياته.",
     saveRole: "حفظ الدور",
@@ -80,7 +71,7 @@ const errorMessages: Record<string, string> = {
   invalid: "Check the staff details and try again.",
   owner_required: "Only the clinic owner can manage staff.",
   directory_unavailable: "The staff directory is temporarily unavailable.",
-  user_not_found: "That email has not signed in to Atlas yet. Ask the staff member to sign in once, then add them here.",
+  user_not_found: "That Atlas account could not be found.",
   owner_protected: "The clinic owner cannot be removed or demoted.",
   already_member: "That person is already a member of this clinic.",
   save_failed: "The staff change could not be saved.",
@@ -175,17 +166,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             <span className="settings-card-icon" aria-hidden="true">+</span>
             <div><div className="eyebrow">{text.ownerOnly}</div><h2>{text.add}</h2><p>{text.signedInFirst}</p></div>
           </div>
-          <form action={addStaffMember} className="settings-form">
-            <input type="hidden" name="clinic_id" value={clinic.id} />
-            <label htmlFor="email">{text.email}</label>
-            <input id="email" name="email" type="email" autoComplete="email" maxLength={254} dir="ltr" required />
-            <label htmlFor="role">{text.role}</label>
-            <select id="role" name="role" defaultValue="receptionist">
-              <option value="receptionist">{text.receptionist}</option>
-              <option value="manager">{text.manager}</option>
-            </select>
-            <SubmitButton pendingLabel={text.adding}>{text.add}</SubmitButton>
-          </form>
+          <StaffProvisionForm clinicId={clinic.id} />
         </section>
 
         <section className="settings-card">
