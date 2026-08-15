@@ -2,8 +2,37 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import type { UiLocale } from "@/lib/i18n/ui";
 
-export function DeviceSetup() {
+const copy = {
+  en: {
+    button: "Finish setup",
+    waiting: "Waiting for your device…",
+    help: "Approve the secure prompt once. Normal visits open Atlas directly while your session remains active.",
+    cancelled: "The secure prompt was closed before setup finished. Try again, or continue to Atlas for now.",
+    unavailable: "This device could not finish quick access. Your signed-in Atlas session is still protected.",
+    continue: "Continue to Atlas",
+  },
+  ku: {
+    button: "ڕێکخستن تەواو بکە",
+    waiting: "چاوەڕێی ئامێرەکەتە…",
+    help: "یەک جار پشتڕاستکردنەوەی پارێزراو تەواو بکە. تا سێشنەکەت چالاکە، جارەکانی داهاتوو Atlas ڕاستەوخۆ دەکرێتەوە.",
+    cancelled: "پشتڕاستکردنەوە پێش تەواوبوونی ڕێکخستن داخرا. دووبارە هەوڵ بدە، یان فعلاً بەردەوام بە بۆ Atlas.",
+    unavailable: "ئەم ئامێرە نەیتوانی چوونەژوورەوەی خێرا تەواو بکات. سێشنی Atlas ـەکەت هەر پارێزراوە.",
+    continue: "بەردەوام بە بۆ Atlas",
+  },
+  ar: {
+    button: "إنهاء الإعداد",
+    waiting: "بانتظار جهازك…",
+    help: "وافق على التحقق الآمن مرة واحدة. الزيارات العادية تفتح Atlas مباشرة ما دامت جلستك فعالة.",
+    cancelled: "أُغلق التحقق قبل اكتمال الإعداد. حاول مرة أخرى، أو تابع إلى Atlas الآن.",
+    unavailable: "لم يتمكن هذا الجهاز من إكمال الدخول السريع. جلسة Atlas الحالية ما زالت محمية.",
+    continue: "متابعة إلى Atlas",
+  },
+} as const;
+
+export function DeviceSetup({ locale }: { locale: UiLocale }) {
+  const t = copy[locale];
   const [status, setStatus] = useState<"idle" | "working" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -21,38 +50,30 @@ export function DeviceSetup() {
         return;
       }
 
-      const text = error.message?.toLowerCase() ?? "";
-      if (text.includes("cancel") || text.includes("notallowed") || text.includes("not allowed") || text.includes("timed out")) {
-        setMessage("The device prompt was closed before it finished. Tap again and approve the prompt.");
-      } else if (error.code === "passkey_disabled") {
-        setMessage("Device security is temporarily unavailable. You can continue because your Atlas session is already protected.");
-      } else {
-        setMessage("Your device could not finish the security step. Try once more, or continue with this protected session.");
-      }
+      const text = `${error.name ?? ""} ${error.message ?? ""}`.toLowerCase();
+      const cancelled = text.includes("cancel") || text.includes("notallowed") || text.includes("not allowed") || text.includes("timed out") || text.includes("abort");
+      setMessage(cancelled ? t.cancelled : t.unavailable);
       setStatus("error");
     } catch (error) {
-      const name = error instanceof DOMException ? error.name : "";
-      if (name === "NotAllowedError" || name === "AbortError") {
-        setMessage("The device prompt was closed before it finished. Tap again and approve the prompt.");
-      } else {
-        setMessage("This browser could not finish device security. You can continue with your protected Atlas session.");
-      }
+      const text = error instanceof Error ? `${error.name} ${error.message}`.toLowerCase() : "";
+      const cancelled = text.includes("cancel") || text.includes("notallowed") || text.includes("not allowed") || text.includes("abort");
+      setMessage(cancelled ? t.cancelled : t.unavailable);
       setStatus("error");
     }
   }
 
   return (
-    <div className="settings-form">
+    <div className="settings-form device-setup-actions">
       <button className="button" type="button" onClick={secureDevice} disabled={status === "working"} aria-busy={status === "working"}>
-        {status === "working" ? "Waiting for your device…" : "Secure this device"}
+        {status === "working" ? t.waiting : t.button}
       </button>
-      <p className="field-help">Your iPhone, iPad, Android device, or password manager decides whether to use Face ID, fingerprint, PIN, or another local security method.</p>
+      <p className="field-help">{t.help}</p>
 
       {status === "error" ? (
         <div className="notice notice-error" role="alert">
           <p>{message}</p>
-          <div style={{ marginTop: 10 }}>
-            <a className="button button-ghost button-small" href="/dashboard">Continue to Atlas</a>
+          <div className="device-setup-continue">
+            <a className="button button-ghost button-small" href="/dashboard">{t.continue}</a>
           </div>
         </div>
       ) : null}
