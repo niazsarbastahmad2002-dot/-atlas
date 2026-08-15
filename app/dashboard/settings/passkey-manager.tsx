@@ -21,28 +21,28 @@ export function PasskeyManager() {
         const text = error.message?.toLowerCase() ?? "";
 
         if (code === "passkey_disabled") {
-          setMessage("Passkeys need to be enabled in Atlas authentication settings.");
-        } else if (text.includes("already") || text.includes("credential") && text.includes("exist")) {
-          setMessage("A passkey for Atlas is already saved on this account. You can use it the next time you sign in.");
+          setMessage("Passkey recovery is temporarily unavailable in Atlas authentication settings.");
+        } else if (code === "webauthn_credential_exists" || text.includes("already") || text.includes("credential") && text.includes("exist")) {
+          setMessage("This account already has a saved Atlas passkey. Your normal signed-in session will still open Atlas directly.");
           setStatus("success");
           return;
         } else if (text.includes("cancel") || text.includes("notallowed") || text.includes("not allowed") || text.includes("timed out")) {
-          setMessage("Passkey setup was closed before it finished. Tap Set up passkey and approve the Apple Passwords / device prompt.");
+          setMessage("The device prompt was closed before it finished. Tap again and approve the Apple Passwords / device prompt.");
         } else {
-          setMessage("Passkey setup could not finish. Tap Set up passkey once more and approve the device prompt. Your current Atlas session is still safe.");
+          setMessage("Passkey setup could not finish. Your current Atlas session is unchanged, so you can safely try again later.");
         }
         setStatus("error");
         return;
       }
 
-      setMessage(`Passkey ready${data.friendly_name ? `: ${data.friendly_name}` : ""}. Next time, sign in with Face ID, fingerprint, or your device PIN — no email link.`);
+      setMessage(`Recovery passkey ready${data.friendly_name ? `: ${data.friendly_name}` : ""}. Atlas will keep opening directly while this device stays signed in.`);
       setStatus("success");
     } catch (error) {
       const name = error instanceof DOMException ? error.name : "";
       if (name === "NotAllowedError" || name === "AbortError") {
-        setMessage("Passkey setup was closed before it finished. Tap Set up passkey and approve the device prompt.");
+        setMessage("The device prompt was closed before it finished. Tap again and approve the device prompt.");
       } else {
-        setMessage("This device could not finish passkey setup. Your Atlas session is unchanged; you can safely try again.");
+        setMessage("This device could not finish passkey setup. Your Atlas session is unchanged; you can safely try again later.");
       }
       setStatus("error");
     }
@@ -50,9 +50,9 @@ export function PasskeyManager() {
 
   return (
     <div className="settings-form">
-      <p className="field-help">One-time setup on this account. Atlas will open your device's secure passkey prompt; approve it to finish.</p>
+      <p className="field-help">Atlas normally keeps this device signed in, so there is no Face ID, fingerprint, PIN, or passkey prompt on everyday launches. A saved passkey is only a fast recovery method if the session is ever lost.</p>
       <button className="button" type="button" onClick={register} disabled={status === "working"} aria-busy={status === "working"}>
-        {status === "working" ? "Waiting for device…" : status === "success" ? "Passkey ready" : "Set up passkey"}
+        {status === "working" ? "Waiting for device…" : status === "success" ? "Recovery passkey ready" : "Set up recovery passkey"}
       </button>
       {message ? (
         <p className={`notice ${status === "success" ? "notice-success" : "notice-error"}`} role={status === "success" ? "status" : "alert"}>
