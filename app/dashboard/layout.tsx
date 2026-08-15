@@ -10,6 +10,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       >
         <a className="button button-ghost button-small" href="/dashboard">Schedule</a>
         <a className="button button-ghost button-small" href="/dashboard/reminders">Reminder settings</a>
+        <a className="button button-ghost button-small" href="/dashboard/staff">Staff</a>
       </nav>
       {children}
     </>
