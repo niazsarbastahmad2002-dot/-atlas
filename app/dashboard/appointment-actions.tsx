@@ -6,6 +6,7 @@ import {
   type AppointmentStatus,
 } from "@/lib/appointments";
 import { archiveAppointment, updateAppointmentStatus } from "./actions";
+import { PatientLinkButton } from "./patient-link-button";
 
 const actionLabels: Record<AppointmentStatus, string> = {
   pending: "Reopen",
@@ -36,6 +37,7 @@ export function AppointmentActions({
           <ActionSubmit label={actionLabels[nextStatus]} />
         </form>
       ))}
+      <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} />
       <form
         action={archiveAppointment.bind(null, clinicId, appointmentId)}
         onSubmit={(event) => {
