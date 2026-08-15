@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, createMagicLinkClient } from "@/lib/supabase/client";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 
 function normalizeEmail(value: string) {
@@ -60,10 +60,16 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     setBusy(true);
     setError("");
     try {
-      const supabase = createClient();
+      // First-access email links intentionally use the implicit flow. That lets
+      // a fresh link finish sign-in even when an email app opens it in a browser
+      // context that does not have the original Atlas tab's PKCE verifier.
+      const supabase = createMagicLinkClient();
       const { error: sendError } = await supabase.auth.signInWithOtp({
         email: normalized,
-        options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth/finish?next=/dashboard`,
+        },
       });
       setEmail(normalized);
       if (sendError) {
@@ -90,12 +96,11 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     return (
       <div className="receptionist-login-flow">
         <div className="notice notice-success login-notice" role="status">
-          <strong>Your Atlas link is ready.</strong><br />
-          Tap below, open the newest Atlas email, then tap <strong>Open Atlas</strong>.
+          <strong>One last tap.</strong><br />
+          Open the newest Atlas email and tap <strong>Open Atlas</strong>. It will take you straight to the schedule.
         </div>
         {inbox ? <a className="button" href={inbox} target="_blank" rel="noreferrer">Open newest Atlas email</a> : null}
-        <p className="login-method-help">When you return, Atlas opens your schedule automatically. This device stays signed in.</p>
-        {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
+        <p className="login-method-help">After this first sign-in, this device normally opens Atlas directly.</p>
         <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
           <button className="button button-ghost button-small" type="button" disabled={busy || cooldown > 0} onClick={() => void sendLink()}>
             {busy ? "Sending…" : cooldown > 0 ? `New link in ${cooldown}s` : "Send a new link"}
@@ -114,7 +119,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="reception@clinic.com" dir="ltr" required />
         <button className="button" type="submit" disabled={busy}>{busy ? "Sending…" : "Continue"}</button>
       </form>
-      <p className="login-method-help">First time: enter the clinic email once. After that, Atlas remembers this device.</p>
+      <p className="login-method-help">Enter the clinic email once. Atlas remembers this device after sign-in.</p>
     </div>
   );
 }
