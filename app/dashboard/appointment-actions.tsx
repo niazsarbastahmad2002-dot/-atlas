@@ -6,7 +6,8 @@ import {
   type AppointmentStatus,
 } from "@/lib/appointments";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
-import { archiveAppointment, updateAppointmentStatus } from "./actions";
+import { archiveAppointment } from "./actions";
+import { updateAppointmentStatusReliable } from "./status-actions";
 import { PatientLinkButton } from "./patient-link-button";
 
 function ActionSubmit({ label, pendingLabel }: { label: string; pendingLabel: string }) {
@@ -42,7 +43,7 @@ export function AppointmentActions({
   return (
     <div className="row-actions polished-actions" aria-label="Appointment actions">
       {allowedAppointmentTransitions(status).map((nextStatus) => (
-        <form action={updateAppointmentStatus.bind(null, clinicId, appointmentId, nextStatus)} key={nextStatus}>
+        <form action={updateAppointmentStatusReliable.bind(null, clinicId, appointmentId, nextStatus)} key={nextStatus}>
           <ActionSubmit label={labels[nextStatus]} pendingLabel={t.saving} />
         </form>
       ))}
