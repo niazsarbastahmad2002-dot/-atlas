@@ -41,9 +41,15 @@ const pageCopy: Record<UiLocale, { eyebrow: string; title: string; subtitle: str
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error, notice } = await searchParams;
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (data.user) redirect("/dashboard");
+
+  // Test-only rendering switch: it suppresses the login-page session lookup so
+  // Playwright can test the public UI without real staff credentials. Protected
+  // routes remain fully authenticated and production never sets this variable.
+  if (process.env.ATLAS_E2E_NO_AUTH !== "true") {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    if (data.user) redirect("/dashboard");
+  }
 
   const locale = await getUiLocale();
   const t = uiText(locale);
