@@ -13,11 +13,13 @@ export function DashboardPreferenceMemory() {
 
     const doctorKey = `atlas:last-doctor:${clinicId}`;
     const languageKey = `atlas:last-reminder-language:${clinicId}`;
+    let restoredDoctor = false;
 
     if (doctorSelect) {
       const savedDoctor = window.localStorage.getItem(doctorKey);
       if (savedDoctor && Array.from(doctorSelect.options).some((option) => option.value === savedDoctor)) {
         doctorSelect.value = savedDoctor;
+        restoredDoctor = true;
       }
     }
 
@@ -37,6 +39,10 @@ export function DashboardPreferenceMemory() {
 
     doctorSelect?.addEventListener("change", saveDoctor);
     languageSelect?.addEventListener("change", saveLanguage);
+
+    if (restoredDoctor && doctorSelect) {
+      window.setTimeout(() => doctorSelect.dispatchEvent(new Event("change")), 0);
+    }
 
     return () => {
       doctorSelect?.removeEventListener("change", saveDoctor);

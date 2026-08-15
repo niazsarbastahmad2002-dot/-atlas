@@ -20,6 +20,7 @@ import {
   updateDoctor,
 } from "./actions";
 import { AppointmentActions } from "./appointment-actions";
+import { AppointmentTimeField } from "./appointment-time-field";
 
 export const dynamic = "force-dynamic";
 
@@ -144,6 +145,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const minimum = new Date(Date.now() + 5 * 60 * 1000);
   minimum.setSeconds(0, 0);
   const maximum = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000);
+  const minimumInput = toBaghdadInputValue(minimum);
+  const maximumInput = toBaghdadInputValue(maximum);
+  const occupiedByDoctor = rows.reduce<Record<string, string[]>>((result, row) => {
+    if (!row.doctor_id || (row.status !== "pending" && row.status !== "confirmed")) return result;
+    const values = result[row.doctor_id] ?? [];
+    values.push(toBaghdadInputValue(new Date(row.appointment_at)));
+    result[row.doctor_id] = values;
+    return result;
+  }, {});
   const defaultReminderLanguage = reminderSettings?.default_reminder_language ?? "ku";
 
   return (
@@ -297,16 +307,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
               ))}
             </select>
-            <label htmlFor="appointment_at">Date and time ({appLocale.timeZoneLabel})</label>
-            <input
-              id="appointment_at"
-              name="appointment_at"
-              type="datetime-local"
-              min={toBaghdadInputValue(minimum)}
-              max={toBaghdadInputValue(maximum)}
-              required
+            <AppointmentTimeField
+              intervalMinutes={clinic.appointment_interval_minutes}
+              min={minimumInput}
+              max={maximumInput}
+              occupiedByDoctor={occupiedByDoctor}
+              timeZoneLabel={appLocale.timeZoneLabel}
             />
-            <p className="field-help">Clinic default: {clinic.appointment_interval_minutes} minutes. Custom times remain allowed.</p>
             <label htmlFor="reminder_language">Patient reminder language</label>
             <select id="reminder_language" name="reminder_language" defaultValue={defaultReminderLanguage}>
               {Object.entries(reminderLanguageLabels).map(([value, label]) => (
