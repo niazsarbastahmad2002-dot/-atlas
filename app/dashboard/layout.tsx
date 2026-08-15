@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { DashboardPreferenceMemory } from "./preference-memory";
+import { PhoneDisplayFormatting } from "./phone-display";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <DashboardPreferenceMemory />
+      <PhoneDisplayFormatting />
       <nav
         className="shell"
         aria-label="Clinic workspace sections"
