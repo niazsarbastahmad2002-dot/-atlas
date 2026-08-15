@@ -11,6 +11,27 @@ type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
+const passkeySubtitle = {
+  en: "Set up a passkey once, then open Atlas with Face ID, Touch ID, your device PIN, or password manager.",
+  ku: "یەک جار پاسکی ڕێکبخە، پاشان Atlas بە Face ID، Touch ID، PIN ـی ئامێر یان بەڕێوەبەری وشەی نهێنی بکەرەوە.",
+  ar: "أعدّ مفتاح مرور مرة واحدة، ثم افتح Atlas باستخدام Face ID أو Touch ID أو رمز الجهاز أو مدير كلمات المرور.",
+} as const;
+
+const firstTimeCopy = {
+  en: {
+    title: "First time on this device?",
+    body: "Sign in once with your work email, then open Settings and set up a passkey. After that, no email link is needed on this device.",
+  },
+  ku: {
+    title: "یەکەم جارە لەم ئامێرە؟",
+    body: "یەک جار بە ئیمەیڵی کار بچۆ ژوورەوە، پاشان لە ڕێکخستنەکان پاسکی دروست بکە. دوای ئەوە بەستەری ئیمەیڵ پێویست نابێت.",
+  },
+  ar: {
+    title: "أول مرة على هذا الجهاز؟",
+    body: "سجّل الدخول مرة واحدة ببريد العمل، ثم افتح الإعدادات وأنشئ مفتاح مرور. بعد ذلك لن تحتاج إلى رابط بريد على هذا الجهاز.",
+  },
+} as const;
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error } = await searchParams;
   const supabase = await createClient();
@@ -32,7 +53,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="login-copy">
           <div className="eyebrow">{t.loginEyebrow}</div>
           <h1>{t.loginTitle}</h1>
-          <p>{t.loginSubtitle}</p>
+          <p>{passkeySubtitle[locale]}</p>
         </div>
 
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
@@ -40,8 +61,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <PasskeySignIn />
 
         <div className="auth-alternative">
-          <span>First time on this device?</span>
-          <p className="quiet">Sign in once with your work email, then open Settings → Account and set up a passkey. After that, no email link is needed on this device.</p>
+          <span>{firstTimeCopy[locale].title}</span>
+          <p className="quiet">{firstTimeCopy[locale].body}</p>
         </div>
 
         <LoginForm locale={locale} />
