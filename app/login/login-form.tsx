@@ -22,6 +22,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
     if (!sent) return;
@@ -42,9 +43,15 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     };
   }, [sent]);
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldown]);
+
   async function sendLink(event?: FormEvent) {
     event?.preventDefault();
-    if (busy) return;
+    if (busy || cooldown > 0) return;
     const normalized = normalizeEmail(email);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
       setError("Enter your work email address.");
@@ -62,13 +69,15 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
       if (sendError) {
         if (sendError.code === "over_email_send_rate_limit") {
           setSent(true);
-          setError("A link was already sent. Open the newest Atlas email below — no need to request another one.");
+          setCooldown(60);
+          setError("");
         } else {
           setError("Atlas could not send the sign-in link. Check the email or ask the clinic administrator to add this account.");
         }
         return;
       }
       setSent(true);
+      setCooldown(60);
     } catch {
       setError("Atlas could not start sign-in. Check your connection and try again.");
     } finally {
@@ -88,7 +97,9 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         <p className="login-method-help">When you return, Atlas opens your schedule automatically. This device stays signed in.</p>
         {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
         <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => void sendLink()}>{busy ? "Sending…" : "Send a new link"}</button>
+          <button className="button button-ghost button-small" type="button" disabled={busy || cooldown > 0} onClick={() => void sendLink()}>
+            {busy ? "Sending…" : cooldown > 0 ? `New link in ${cooldown}s` : "Send a new link"}
+          </button>
           <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setSent(false); setError(""); }}>Use another email</button>
         </div>
       </div>
