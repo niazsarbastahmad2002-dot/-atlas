@@ -2,15 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  classifyAppointmentMutationError,
   isAppointmentStatus,
   isUuid,
+  type AppointmentMutationFailure,
   type AppointmentStatus,
 } from "@/lib/appointments";
 import { createClient } from "@/lib/supabase/server";
 
 export type InlineAppointmentResult =
   | { ok: true; status?: AppointmentStatus; archived?: boolean }
-  | { ok: false; reason: "invalid" | "busy" | "failed" };
+  | { ok: false; reason: AppointmentMutationFailure };
 
 export async function updateAppointmentStatusInline(
   clinicId: string,
@@ -21,8 +23,8 @@ export async function updateAppointmentStatusInline(
     return { ok: false, reason: "invalid" };
   }
 
-  // One database request only. RLS scopes the appointment to the signed-in clinic user,
-  // while database triggers enforce the allowed transition and timing rules.
+  // Keep the interaction fast with one write. RLS scopes it to the signed-in
+  // clinic user, while database triggers atomically enforce transitions/timing.
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("appointments")
@@ -33,13 +35,12 @@ export async function updateAppointmentStatusInline(
     .select("id")
     .maybeSingle();
 
-  if (error?.code === "55P03") return { ok: false, reason: "busy" };
-  if (error?.code === "23514" || error?.code === "42501") {
-    return { ok: false, reason: "invalid" };
-  }
   if (error) {
-    console.error("Atlas inline appointment status update failed", { code: error.code });
-    return { ok: false, reason: "failed" };
+    const reason = classifyAppointmentMutationError(error.code, error.message);
+    if (reason === "failed") {
+      console.error("Atlas inline appointment status update failed", { code: error.code });
+    }
+    return { ok: false, reason };
   }
   if (!data) return { ok: false, reason: "failed" };
 
@@ -66,13 +67,12 @@ export async function archiveAppointmentInline(
     .select("id")
     .maybeSingle();
 
-  if (error?.code === "55P03") return { ok: false, reason: "busy" };
-  if (error?.code === "23514" || error?.code === "42501") {
-    return { ok: false, reason: "invalid" };
-  }
   if (error) {
-    console.error("Atlas inline appointment archive failed", { code: error.code });
-    return { ok: false, reason: "failed" };
+    const reason = classifyAppointmentMutationError(error.code, error.message);
+    if (reason === "failed") {
+      console.error("Atlas inline appointment archive failed", { code: error.code });
+    }
+    return { ok: false, reason };
   }
   if (!data) return { ok: false, reason: "failed" };
 
