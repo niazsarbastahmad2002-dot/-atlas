@@ -8,7 +8,7 @@ import {
 } from "@/lib/appointments";
 import { baghdadDate } from "@/lib/i18n/config";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { formatBaghdadDateTime, formatBaghdadDay, uiText } from "@/lib/i18n/ui";
+import { formatBaghdadDateTime, formatBaghdadDay, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { getDashboardMessage } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
@@ -18,18 +18,46 @@ import { AppointmentTimeField } from "./appointment-time-field";
 
 export const dynamic = "force-dynamic";
 
+const dayPattern = /^\d{4}-\d{2}-\d{2}$/;
+
 type DashboardPageProps = {
   searchParams: Promise<{
     clinic?: string;
+    day?: string;
     error?: string;
     notice?: string;
   }>;
 };
 
+const dayCopy: Record<UiLocale, { previous: string; today: string; next: string; appointments: string; empty: string }> = {
+  en: { previous: "Previous", today: "Today", next: "Next", appointments: "Appointments", empty: "No appointments on this day." },
+  ku: { previous: "پێشوو", today: "ئەمڕۆ", next: "داهاتوو", appointments: "وادەکان", empty: "لەم ڕۆژە هیچ وادەیەک نییە." },
+  ar: { previous: "السابق", today: "اليوم", next: "التالي", appointments: "المواعيد", empty: "لا توجد مواعيد في هذا اليوم." },
+};
+
+function validBaghdadDay(value: string | undefined, fallback: string) {
+  if (!value || !dayPattern.test(value)) return fallback;
+  const date = new Date(`${value}T12:00:00+03:00`);
+  if (Number.isNaN(date.getTime()) || baghdadDate.format(date) !== value) return fallback;
+  return value;
+}
+
+function shiftBaghdadDay(day: string, amount: number) {
+  const date = new Date(`${day}T12:00:00+03:00`);
+  date.setUTCDate(date.getUTCDate() + amount);
+  return baghdadDate.format(date);
+}
+
+function scheduleHref(clinicId: string, day: string) {
+  const params = new URLSearchParams({ clinic: clinicId, day });
+  return `/dashboard?${params}`;
+}
+
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
   const locale = await getUiLocale();
   const t = uiText(locale);
+  const days = dayCopy[locale];
   const messageError = getDashboardMessage(params.error);
   const notice = getDashboardMessage(params.notice);
   const supabase = await createClient();
@@ -102,9 +130,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const rows = appointments ?? [];
   const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
   const today = baghdadDate.format(new Date());
-  const todayRows = rows.filter((row) => baghdadDate.format(new Date(row.appointment_at)) === today);
-  const confirmed = todayRows.filter((row) => row.status === "confirmed").length;
-  const reminders = todayRows.filter((row) => ["sent", "delivered", "read"].includes(row.reminder_status)).length;
+  const selectedDay = validBaghdadDay(params.day, today);
+  const selectedRows = rows.filter((row) => baghdadDate.format(new Date(row.appointment_at)) === selectedDay);
+  const confirmed = selectedRows.filter((row) => row.status === "confirmed").length;
+  const reminders = selectedRows.filter((row) => ["sent", "delivered", "read"].includes(row.reminder_status)).length;
+  const selectedDate = new Date(`${selectedDay}T12:00:00+03:00`);
+  const previousDay = shiftBaghdadDay(selectedDay, -1);
+  const nextDay = shiftBaghdadDay(selectedDay, 1);
 
   const minimum = new Date(Date.now() + 5 * 60 * 1000);
   minimum.setSeconds(0, 0);
@@ -149,14 +181,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="workspace-title-block">
           <div className="eyebrow">{t.todayHeading}</div>
           <h1>{clinic.name}</h1>
-          <p>{formatBaghdadDay(new Date(), locale)} · {t.erbilTime}</p>
+          <p>{formatBaghdadDay(selectedDate, locale)} · {t.erbilTime}</p>
         </div>
         <a className="button workspace-new-button" href="#new-appointment">+ {t.newAppointment}</a>
       </header>
 
+      <nav className="day-navigation" aria-label={days.appointments}>
+        <a className="button button-ghost button-small" href={scheduleHref(clinic.id, previousDay)} aria-label={days.previous}>‹ <span>{days.previous}</span></a>
+        <a className={`day-current ${selectedDay === today ? "is-today" : ""}`} href={scheduleHref(clinic.id, today)}>
+          <strong>{formatBaghdadDay(selectedDate, locale)}</strong>
+          {selectedDay !== today ? <span>{days.today}</span> : null}
+        </a>
+        <a className="button button-ghost button-small" href={scheduleHref(clinic.id, nextDay)} aria-label={days.next}><span>{days.next}</span> ›</a>
+      </nav>
+
       {clinics.length > 1 ? (
         <form className="clinic-switcher workspace-switcher" method="get">
           <label htmlFor="clinic">{t.clinicWorkspace}</label>
+          <input type="hidden" name="day" value={selectedDay} />
           <select id="clinic" name="clinic" defaultValue={clinic.id}>
             {clinics.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
           </select>
@@ -169,8 +211,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ) : null}
       {notice ? <p className="notice notice-success workspace-notice" role="status">{notice}</p> : null}
 
-      <section className="stats workspace-stats" aria-label={t.todayAppointments}>
-        <Stat label={t.todayAppointments} value={todayRows.length} />
+      <section className="stats workspace-stats" aria-label={days.appointments}>
+        <Stat label={days.appointments} value={selectedRows.length} />
         <Stat label={t.confirmed} value={confirmed} />
         <Stat label={t.remindersSent} value={reminders} />
       </section>
@@ -179,7 +221,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <section className="panel appointment-composer" id="new-appointment">
           <div className="panel-heading composer-heading">
             <div>
-              <div className="eyebrow">{t.today}</div>
+              <div className="eyebrow">{selectedDay === today ? t.today : formatBaghdadDay(selectedDate, locale)}</div>
               <h2>{t.newAppointment}</h2>
             </div>
             <span className="composer-shortcut" aria-hidden="true">+</span>
@@ -187,6 +229,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           <form action={createAppointment} className="stack-form appointment-form">
             <input type="hidden" name="clinic_id" value={clinic.id} />
+            <input type="hidden" name="return_day" value={selectedDay} />
             <input type="hidden" name="idempotency_key" value={randomUUID()} />
 
             <label htmlFor="patient_name">{t.patientName}</label>
@@ -259,19 +302,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <div className="panel-heading schedule-heading">
             <div>
               <div className="eyebrow">{t.schedule}</div>
-              <h2>{t.appointments}</h2>
+              <h2>{formatBaghdadDay(selectedDate, locale)}</h2>
               <p className="panel-subtitle">{t.todaySubheading}</p>
             </div>
-            <span className="count-pill">{rows.length} {t.active}</span>
+            <span className="count-pill">{selectedRows.length}</span>
           </div>
 
-          {rows.length === 0 ? (
+          {selectedRows.length === 0 ? (
             <div className="empty-state compact-empty">
-              <div><strong>{t.noAppointments}</strong><span>{t.noAppointmentsHelp}</span></div>
+              <div><strong>{days.empty}</strong><span>{t.noAppointmentsHelp}</span></div>
             </div>
           ) : (
             <div className="appointment-list polished-appointment-list">
-              {rows.map((appointment) => {
+              {selectedRows.map((appointment) => {
                 const status = isAppointmentStatus(appointment.status) ? appointment.status : "pending";
                 return (
                   <article className="appointment-row polished-appointment" key={appointment.id}>
@@ -290,7 +333,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       <div><dt>{t.time}</dt><dd>{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div>
                       <div><dt>{t.reminderLanguage}</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div>
                     </dl>
-                    <AppointmentActions clinicId={clinic.id} appointmentId={appointment.id} status={status} locale={locale} />
+                    <AppointmentActions
+                      clinicId={clinic.id}
+                      appointmentId={appointment.id}
+                      appointmentAt={appointment.appointment_at}
+                      status={status}
+                      locale={locale}
+                    />
                   </article>
                 );
               })}
