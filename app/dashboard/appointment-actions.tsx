@@ -89,17 +89,13 @@ export function AppointmentActions({
     startTransition(async () => {
       const result = await updateAppointmentStatusInline(clinicId, appointmentId, nextStatus);
       if (!result.ok) {
-        if (result.reason === "auth") {
-          window.location.assign("/login");
-          return;
-        }
         setOptimisticStatus(previousStatus);
         paintStatus(card, previousStatus, statusLabels[previousStatus]);
         setError(inlineError(locale, result.reason));
         return;
       }
 
-      // Refresh server-derived totals and reminder state without navigating or scrolling.
+      // Refresh server-derived totals and reminder state without navigation or scroll reset.
       router.refresh();
     });
   }
@@ -121,10 +117,6 @@ export function AppointmentActions({
         if (card) {
           card.style.visibility = previousVisibility;
           card.style.pointerEvents = previousPointerEvents;
-        }
-        if (result.reason === "auth") {
-          window.location.assign("/login");
-          return;
         }
         setError(inlineError(locale, result.reason));
         return;
