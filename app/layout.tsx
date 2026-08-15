@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
 import "./globals.css";
+import "./polish.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
