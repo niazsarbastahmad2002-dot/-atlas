@@ -3,10 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
+import { createStaffSetupCode, setupCodeExpiry } from "@/lib/staff-onboarding";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const staffRoles = new Set(["manager", "receptionist"]);
+
+export type StaffProvisionState = {
+  status: "idle" | "success" | "error";
+  message: string;
+  email?: string;
+  code?: string;
+};
 
 function staffUrl(clinicId: string, key: "error" | "notice", value: string) {
   const params = new URLSearchParams({ [key]: value });
@@ -51,6 +59,96 @@ async function findUserIdByEmail(email: string) {
     if (data.users.length < perPage) break;
   }
   return null;
+}
+
+export async function provisionStaffMember(
+  _previousState: StaffProvisionState,
+  formData: FormData,
+): Promise<StaffProvisionState> {
+  const clinicId = String(formData.get("clinic_id") ?? "");
+  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const role = String(formData.get("role") ?? "receptionist");
+
+  if (!isUuid(clinicId) || !validEmail(email) || !staffRoles.has(role)) {
+    return { status: "error", message: "Check the staff email and role." };
+  }
+
+  const { supabase, ownerId } = await ownerContext(clinicId);
+  const admin = createAdminClient();
+
+  let userId: string | null = null;
+  try {
+    userId = await findUserIdByEmail(email);
+    if (!userId) {
+      const { data, error } = await admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { atlas_provisioned_by_clinic: clinicId },
+      });
+      if (error || !data.user) throw error ?? new Error("user_create_failed");
+      userId = data.user.id;
+    }
+  } catch (error) {
+    console.error("Atlas staff provisioning failed", { error: error instanceof Error ? error.message : "unknown" });
+    return { status: "error", message: "Atlas could not prepare this staff account. Try again." };
+  }
+
+  if (userId === ownerId) {
+    return { status: "error", message: "The clinic owner already has access." };
+  }
+
+  const { error: memberError } = await supabase.from("clinic_members").upsert({
+    clinic_id: clinicId,
+    user_id: userId,
+    role,
+  }, { onConflict: "clinic_id,user_id" });
+
+  if (memberError) {
+    console.error("Atlas staff membership save failed", { code: memberError.code });
+    return { status: "error", message: "The staff account was prepared, but clinic access could not be saved." };
+  }
+
+  const { code, salt, hash } = createStaffSetupCode();
+  const onboardingAdmin = admin as any;
+  const now = new Date().toISOString();
+
+  const { error: retireError } = await onboardingAdmin
+    .from("staff_onboarding_codes")
+    .update({ used_at: now })
+    .eq("clinic_id", clinicId)
+    .eq("user_id", userId)
+    .is("used_at", null);
+
+  if (retireError) {
+    console.error("Atlas prior setup-code retirement failed", { code: retireError.code });
+    return { status: "error", message: "Atlas could not prepare a new setup code. Try again." };
+  }
+
+  const { error: codeError } = await onboardingAdmin.from("staff_onboarding_codes").insert({
+    clinic_id: clinicId,
+    user_id: userId,
+    email,
+    role,
+    code_salt: salt,
+    code_hash: hash,
+    expires_at: setupCodeExpiry(),
+    created_by: ownerId,
+  });
+
+  if (codeError) {
+    console.error("Atlas staff setup-code creation failed", { code: codeError.code });
+    return { status: "error", message: "Atlas could not prepare a setup code. Try again." };
+  }
+
+  revalidatePath("/dashboard/staff");
+  revalidatePath("/dashboard/settings");
+
+  return {
+    status: "success",
+    message: "Staff access is ready. Give this one-time code to the receptionist. It expires in 30 minutes.",
+    email,
+    code,
+  };
 }
 
 export async function addStaffMember(formData: FormData) {
@@ -138,6 +236,14 @@ export async function removeStaffMember(clinicId: string, userId: string) {
     console.error("Atlas staff removal failed", { code: error?.code ?? "not_found" });
     redirect(staffUrl(clinicId, "error", "save_failed"));
   }
+
+  const onboardingAdmin = createAdminClient() as any;
+  await onboardingAdmin
+    .from("staff_onboarding_codes")
+    .update({ used_at: new Date().toISOString() })
+    .eq("clinic_id", clinicId)
+    .eq("user_id", userId)
+    .is("used_at", null);
 
   revalidatePath("/dashboard/staff");
   redirect(staffUrl(clinicId, "notice", "removed"));
