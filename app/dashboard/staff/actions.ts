@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
-import { createStaffSetupCode, setupCodeExpiry } from "@/lib/staff-onboarding";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -13,7 +12,6 @@ export type StaffProvisionState = {
   status: "idle" | "success" | "error";
   message: string;
   email?: string;
-  code?: string;
 };
 
 function staffUrl(clinicId: string, key: "error" | "notice", value: string) {
@@ -70,7 +68,7 @@ export async function provisionStaffMember(
   const role = String(formData.get("role") ?? "receptionist");
 
   if (!isUuid(clinicId) || !validEmail(email) || !staffRoles.has(role)) {
-    return { status: "error", message: "Check the staff email and role." };
+    return { status: "error", message: "Check the staff email and try again." };
   }
 
   const { supabase, ownerId } = await ownerContext(clinicId);
@@ -90,11 +88,11 @@ export async function provisionStaffMember(
     }
   } catch (error) {
     console.error("Atlas staff provisioning failed", { error: error instanceof Error ? error.message : "unknown" });
-    return { status: "error", message: "Atlas could not prepare this staff account. Try again." };
+    return { status: "error", message: "Atlas could not prepare this receptionist account. Try again." };
   }
 
   if (userId === ownerId) {
-    return { status: "error", message: "The clinic owner already has access." };
+    return { status: "error", message: "This account already owns the clinic." };
   }
 
   const { error: memberError } = await supabase.from("clinic_members").upsert({
@@ -105,39 +103,7 @@ export async function provisionStaffMember(
 
   if (memberError) {
     console.error("Atlas staff membership save failed", { code: memberError.code });
-    return { status: "error", message: "The staff account was prepared, but clinic access could not be saved." };
-  }
-
-  const { code, salt, hash } = createStaffSetupCode();
-  const onboardingAdmin = admin as any;
-  const now = new Date().toISOString();
-
-  const { error: retireError } = await onboardingAdmin
-    .from("staff_onboarding_codes")
-    .update({ used_at: now })
-    .eq("clinic_id", clinicId)
-    .eq("user_id", userId)
-    .is("used_at", null);
-
-  if (retireError) {
-    console.error("Atlas prior setup-code retirement failed", { code: retireError.code });
-    return { status: "error", message: "Atlas could not prepare a new setup code. Try again." };
-  }
-
-  const { error: codeError } = await onboardingAdmin.from("staff_onboarding_codes").insert({
-    clinic_id: clinicId,
-    user_id: userId,
-    email,
-    role,
-    code_salt: salt,
-    code_hash: hash,
-    expires_at: setupCodeExpiry(),
-    created_by: ownerId,
-  });
-
-  if (codeError) {
-    console.error("Atlas staff setup-code creation failed", { code: codeError.code });
-    return { status: "error", message: "Atlas could not prepare a setup code. Try again." };
+    return { status: "error", message: "The account was prepared, but clinic access could not be saved." };
   }
 
   revalidatePath("/dashboard/staff");
@@ -145,9 +111,8 @@ export async function provisionStaffMember(
 
   return {
     status: "success",
-    message: "Staff access is ready. Give this one-time code to the receptionist. It expires in 30 minutes.",
+    message: "Receptionist access is ready. They can open Atlas and sign in with their work email verification code.",
     email,
-    code,
   };
 }
 
@@ -236,14 +201,6 @@ export async function removeStaffMember(clinicId: string, userId: string) {
     console.error("Atlas staff removal failed", { code: error?.code ?? "not_found" });
     redirect(staffUrl(clinicId, "error", "save_failed"));
   }
-
-  const onboardingAdmin = createAdminClient() as any;
-  await onboardingAdmin
-    .from("staff_onboarding_codes")
-    .update({ used_at: new Date().toISOString() })
-    .eq("clinic_id", clinicId)
-    .eq("user_id", userId)
-    .is("used_at", null);
 
   revalidatePath("/dashboard/staff");
   redirect(staffUrl(clinicId, "notice", "removed"));
