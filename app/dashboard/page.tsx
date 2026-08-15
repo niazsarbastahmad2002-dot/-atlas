@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
 import { createAppointment, createClinic } from "./actions";
 import { AppointmentActions } from "./appointment-actions";
+import { AppointmentEditor } from "./appointment-editor";
 import { AppointmentTimeField } from "./appointment-time-field";
 
 export const dynamic = "force-dynamic";
@@ -99,19 +100,36 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const selectionError = params.clinic && requestedClinic !== clinic.id
     ? getDashboardMessage("clinic_unavailable")
     : null;
+  const today = baghdadDate.format(new Date());
+  const selectedDay = validBaghdadDay(params.day, today);
+  const selectedDate = new Date(`${selectedDay}T12:00:00+03:00`);
+  const dayStart = new Date(`${selectedDay}T00:00:00+03:00`).toISOString();
+  const dayEnd = new Date(`${shiftBaghdadDay(selectedDay, 1)}T00:00:00+03:00`).toISOString();
 
   const [
     { data: appointments, error: appointmentError },
+    { data: occupiedAppointments, error: occupiedError },
     { data: reminderSettings },
     { data: doctors, error: doctorsError },
   ] = await Promise.all([
     supabase
       .from("appointments")
-      .select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, status, reminder_status, reminder_language")
+      .select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, status, reminder_status, reminder_language, reminder_consent")
       .eq("clinic_id", clinic.id)
       .is("voided_at", null)
+      .gte("appointment_at", dayStart)
+      .lt("appointment_at", dayEnd)
       .order("appointment_at", { ascending: true })
       .limit(500),
+    supabase
+      .from("appointments")
+      .select("doctor_id, appointment_at")
+      .eq("clinic_id", clinic.id)
+      .is("voided_at", null)
+      .in("status", ["pending", "confirmed"])
+      .gte("appointment_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .order("appointment_at", { ascending: true })
+      .limit(5000),
     supabase
       .from("clinic_reminder_settings")
       .select("enabled, lead_minutes, default_reminder_language")
@@ -125,16 +143,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .order("name", { ascending: true }),
   ]);
 
-  if (appointmentError || doctorsError) return <DashboardError />;
+  if (appointmentError || occupiedError || doctorsError) return <DashboardError />;
 
   const rows = appointments ?? [];
-  const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
-  const today = baghdadDate.format(new Date());
-  const selectedDay = validBaghdadDay(params.day, today);
-  const selectedRows = rows.filter((row) => baghdadDate.format(new Date(row.appointment_at)) === selectedDay);
-  const confirmed = selectedRows.filter((row) => row.status === "confirmed").length;
-  const reminders = selectedRows.filter((row) => ["sent", "delivered", "read"].includes(row.reminder_status)).length;
-  const selectedDate = new Date(`${selectedDay}T12:00:00+03:00`);
+  const doctorRows = doctors ?? [];
+  const activeDoctors = doctorRows.filter((doctor) => doctor.active);
+  const confirmed = rows.filter((row) => row.status === "confirmed").length;
+  const reminders = rows.filter((row) => ["sent", "delivered", "read"].includes(row.reminder_status)).length;
   const previousDay = shiftBaghdadDay(selectedDay, -1);
   const nextDay = shiftBaghdadDay(selectedDay, 1);
 
@@ -143,8 +158,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const maximum = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000);
   const minimumInput = toBaghdadInputValue(minimum);
   const maximumInput = toBaghdadInputValue(maximum);
-  const occupiedByDoctor = rows.reduce<Record<string, string[]>>((result, row) => {
-    if (!row.doctor_id || (row.status !== "pending" && row.status !== "confirmed")) return result;
+  const occupiedByDoctor = (occupiedAppointments ?? []).reduce<Record<string, string[]>>((result, row) => {
+    if (!row.doctor_id) return result;
     const values = result[row.doctor_id] ?? [];
     values.push(toBaghdadInputValue(new Date(row.appointment_at)));
     result[row.doctor_id] = values;
@@ -212,7 +227,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       {notice ? <p className="notice notice-success workspace-notice" role="status">{notice}</p> : null}
 
       <section className="stats workspace-stats" aria-label={days.appointments}>
-        <Stat label={days.appointments} value={selectedRows.length} />
+        <Stat label={days.appointments} value={rows.length} />
         <Stat label={t.confirmed} value={confirmed} />
         <Stat label={t.remindersSent} value={reminders} />
       </section>
@@ -269,6 +284,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               intervalMinutes={clinic.appointment_interval_minutes}
               min={minimumInput}
               max={maximumInput}
+              initialDate={selectedDay}
               occupiedByDoctor={occupiedByDoctor}
               timeZoneLabel={t.erbilTime}
               locale={locale}
@@ -305,17 +321,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <h2>{formatBaghdadDay(selectedDate, locale)}</h2>
               <p className="panel-subtitle">{t.todaySubheading}</p>
             </div>
-            <span className="count-pill">{selectedRows.length}</span>
+            <span className="count-pill">{rows.length}</span>
           </div>
 
-          {selectedRows.length === 0 ? (
+          {rows.length === 0 ? (
             <div className="empty-state compact-empty">
               <div><strong>{days.empty}</strong><span>{t.noAppointmentsHelp}</span></div>
             </div>
           ) : (
             <div className="appointment-list polished-appointment-list">
-              {selectedRows.map((appointment) => {
+              {rows.map((appointment) => {
                 const status = isAppointmentStatus(appointment.status) ? appointment.status : "pending";
+                const editorDoctors = doctorRows
+                  .filter((doctor) => doctor.active || doctor.id === appointment.doctor_id)
+                  .map((doctor) => ({ id: doctor.id, name: doctor.name }));
                 return (
                   <article className="appointment-row polished-appointment" key={appointment.id}>
                     <div className="appointment-primary">
@@ -333,6 +352,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       <div><dt>{t.time}</dt><dd>{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div>
                       <div><dt>{t.reminderLanguage}</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div>
                     </dl>
+                    <AppointmentEditor
+                      clinicId={clinic.id}
+                      appointmentId={appointment.id}
+                      status={status}
+                      patientName={appointment.patient_name}
+                      patientPhone={formatIraqiMobile(appointment.patient_phone)}
+                      doctorId={appointment.doctor_id}
+                      appointmentAt={appointment.appointment_at}
+                      reminderLanguage={appointment.reminder_language}
+                      reminderConsent={appointment.reminder_consent}
+                      doctors={editorDoctors}
+                      min={minimumInput}
+                      max={maximumInput}
+                      locale={locale}
+                    />
                     <AppointmentActions
                       clinicId={clinic.id}
                       appointmentId={appointment.id}
