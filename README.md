@@ -1,11 +1,11 @@
 # Atlas
 
-Atlas is a focused Next.js and Supabase appointment workflow for small clinics. The working interface is English/LTR, with locale, direction, calendar, and timezone settings centralized in `lib/i18n/config.ts` so Sorani Kurdish/RTL can be restored without redesigning the application.
+Atlas is a focused Next.js and Supabase appointment workflow for small clinics. The daily product is designed around the receptionist: open Atlas, see the schedule, make the change, move on.
 
 ## Pilot feature set
 
-- Magic-link authentication with protected clinic workspaces and explicit sign-out.
-- Owner, manager, and receptionist roles with owner-only staff membership controls.
+- Receptionist-first passwordless authentication: first access on a device uses work email + a 6-digit email verification code; a valid session then opens Atlas directly on later visits.
+- Administrative clinic membership controls remain behind Settings and are not part of the receptionist's daily workflow.
 - Doctor add/edit/archive/restore/order management.
 - Iraqi mobile normalization (`0750 123 4567` → `+9647501234567`).
 - Pending, confirmed, cancelled, completed, no-show, and retained-history void/archive appointment semantics.
@@ -15,6 +15,17 @@ Atlas is a focused Next.js and Supabase appointment workflow for small clinics. 
 - WhatsApp reminder queue, retries, idempotency, approved-template gating, signed webhook handling, delivery tracking, consent gating, and clinic reminder settings.
 - Synthetic `/demo` environment that never connects to Supabase.
 - GitHub CI for strict TypeScript, tests, production build, and high-severity production dependency audit.
+
+## Authentication UX
+
+Atlas deliberately avoids presenting receptionists with a menu of authentication methods.
+
+1. A clinic administrator adds the receptionist's work email once in Settings > Staff. This pre-creates the Atlas account and clinic membership.
+2. On a device with no Atlas session, the receptionist enters that work email and receives a 6-digit verification code.
+3. They type the code into the same Atlas screen and enter the schedule.
+4. Supabase's persisted session keeps normal later visits frictionless: opening Atlas goes directly to the workspace until the receptionist explicitly signs out, clears browser data, or the session is otherwise invalidated.
+
+For hosted Supabase, the **Magic Link / OTP** email template must use `{{ .Token }}` rather than `{{ .ConfirmationURL }}` so the email displays the six-digit code. The application requests OTP only for pre-provisioned users (`shouldCreateUser: false`).
 
 ## Safety status
 
@@ -55,9 +66,10 @@ No raw webhook payload, inbound message body, patient name, or medical detail is
 
 These are intentionally not faked in source code:
 
-- A production SMTP provider/credentials for reliable real-staff magic-link delivery.
+- The hosted Supabase Magic Link / OTP template must display `{{ .Token }}` for the receptionist verification-code experience.
+- A production SMTP provider/credentials is still recommended before real-clinic rollout for reliable staff authentication email delivery.
 - Meta/WhatsApp verification, approved production template, provider credentials, webhook registration, and a trusted five-minute scheduler.
-- Real-world validation with Erbil clinic owners/receptionists, including baseline no-show rate and receptionist scheduling workload.
+- Real-world validation with Erbil clinic receptionists, including baseline no-show rate and receptionist scheduling workload.
 
 ## Production
 
