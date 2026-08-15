@@ -1,0 +1,67 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  allowedAppointmentTransitions,
+  canTransitionAppointment,
+  cleanDisplayName,
+  formatIraqiMobile,
+  isUuid,
+  isValidDisplayName,
+  normalizeIraqiMobile,
+  parseBaghdadDateTime,
+  toBaghdadInputValue,
+} from "../lib/appointments.ts";
+
+test("normalizes common Iraqi mobile formats", () => {
+  assert.equal(normalizeIraqiMobile("0750 123 4567"), "+9647501234567");
+  assert.equal(normalizeIraqiMobile("+964 750 123 4567"), "+9647501234567");
+  assert.equal(normalizeIraqiMobile("00964-750-123-4567"), "+9647501234567");
+  assert.equal(normalizeIraqiMobile("9647501234567"), "+9647501234567");
+});
+
+test("rejects invalid Iraqi mobile numbers", () => {
+  assert.equal(normalizeIraqiMobile("12345"), null);
+  assert.equal(normalizeIraqiMobile("+9646501234567"), null);
+  assert.equal(normalizeIraqiMobile("0750123456"), null);
+});
+
+test("formats stored Iraqi mobile numbers for receptionist display", () => {
+  assert.equal(formatIraqiMobile("+9647501234567"), "0750 123 4567");
+  assert.equal(formatIraqiMobile("07501234567"), "0750 123 4567");
+  assert.equal(formatIraqiMobile("not-a-phone"), "not-a-phone");
+});
+
+test("cleans and validates display names", () => {
+  assert.equal(cleanDisplayName("  Dr.   Alan  "), "Dr. Alan");
+  assert.equal(isValidDisplayName("Dr. Alan"), true);
+  assert.equal(isValidDisplayName("A"), false);
+  assert.equal(isValidDisplayName("Bad\u0000Name"), false);
+});
+
+test("validates UUIDs", () => {
+  assert.equal(isUuid("550e8400-e29b-41d4-a716-446655440000"), true);
+  assert.equal(isUuid("not-a-uuid"), false);
+});
+
+test("enforces appointment status transitions", () => {
+  assert.deepEqual(allowedAppointmentTransitions("pending"), ["confirmed", "cancelled"]);
+  assert.equal(canTransitionAppointment("pending", "confirmed"), true);
+  assert.equal(canTransitionAppointment("pending", "completed"), false);
+  assert.equal(canTransitionAppointment("confirmed", "no_show"), true);
+  assert.equal(canTransitionAppointment("completed", "completed"), true);
+});
+
+test("parses and formats Baghdad-local appointment times", () => {
+  const now = new Date("2026-08-15T00:00:00Z");
+  const parsed = parseBaghdadDateTime("2026-08-15T12:30", now);
+  assert.ok(parsed);
+  assert.equal(parsed.toISOString(), "2026-08-15T09:30:00.000Z");
+  assert.equal(toBaghdadInputValue(parsed), "2026-08-15T12:30");
+});
+
+test("rejects malformed, stale, and excessively distant appointment times", () => {
+  const now = new Date("2026-08-15T00:00:00Z");
+  assert.equal(parseBaghdadDateTime("2026-02-30T12:30", now), null);
+  assert.equal(parseBaghdadDateTime("2026-08-14T01:00", now), null);
+  assert.equal(parseBaghdadDateTime("2030-08-15T12:30", now), null);
+});
