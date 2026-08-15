@@ -1,11 +1,41 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = {
   status: "idle" | "sent" | "rate-limited" | "error";
   message: string;
 };
+
+function siteOrigin() {
+  const configuredSiteUrl = process.env.SITE_URL?.trim();
+  try {
+    return new URL(configuredSiteUrl ?? "").origin;
+  } catch {
+    return null;
+  }
+}
+
+export async function signInWithGoogle() {
+  const origin = siteOrigin();
+  if (!origin) redirect("/login?error=google_unavailable");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/callback?next=/dashboard`,
+    },
+  });
+
+  if (error || !data.url) {
+    console.warn("Atlas Google sign-in unavailable", { code: error?.code ?? "missing_oauth_url" });
+    redirect("/login?error=google_unavailable");
+  }
+
+  redirect(data.url);
+}
 
 export async function requestMagicLink(
   _previousState: LoginState,
@@ -17,14 +47,8 @@ export async function requestMagicLink(
     return { status: "error", message: "Enter a valid email address." };
   }
 
-  const configuredSiteUrl = process.env.SITE_URL?.trim();
-  let origin: string;
-
-  try {
-    origin = new URL(configuredSiteUrl ?? "").origin;
-  } catch {
-    return { status: "error", message: "Atlas sign-in is not configured yet." };
-  }
+  const origin = siteOrigin();
+  if (!origin) return { status: "error", message: "Atlas sign-in is not configured yet." };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({

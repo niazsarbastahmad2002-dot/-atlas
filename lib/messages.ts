@@ -19,7 +19,8 @@ export const dashboardMessages = {
   appointment_create_failed: "The appointment could not be saved. Please try again.",
   appointment_created: "Appointment saved.",
   appointment_duplicate: "That appointment was already saved.",
-  appointment_status_invalid: "That appointment status change is not allowed.",
+  appointment_status_invalid: "That appointment status change is not allowed yet.",
+  appointment_update_busy: "A reminder is being processed for this appointment. Try again in a moment.",
   appointment_update_failed: "The appointment could not be updated. Refresh and try again.",
   appointment_updated: "Appointment status updated.",
   appointment_archive_failed: "The appointment could not be archived. Refresh and try again.",
@@ -30,6 +31,7 @@ export const dashboardMessages = {
 export const loginMessages = {
   invalid_link: "The sign-in link is invalid or expired. Please request a new one.",
   signed_out: "You have signed out safely.",
+  google_unavailable: "Google sign-in is not activated for this clinic yet. Use the email link below for now.",
 } as const;
 
 export type DashboardMessageCode = keyof typeof dashboardMessages;

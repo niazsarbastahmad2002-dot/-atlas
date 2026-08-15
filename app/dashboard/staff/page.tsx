@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
+import { getUiLocale } from "@/lib/i18n/ui-server";
+import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
@@ -8,11 +10,70 @@ import { addStaffMember, removeStaffMember, updateStaffRole } from "./actions";
 export const dynamic = "force-dynamic";
 
 type StaffPageProps = {
-  searchParams: Promise<{
-    clinic?: string;
-    error?: string;
-    notice?: string;
-  }>;
+  searchParams: Promise<{ clinic?: string; error?: string; notice?: string }>;
+};
+
+const copy: Record<UiLocale, Record<string, string>> = {
+  en: {
+    title: "Staff access",
+    subtitle: "Keep the front desk simple and give each person only the access they need.",
+    ownerOnly: "Owner controls",
+    add: "Add staff member",
+    email: "Staff email",
+    role: "Role",
+    receptionist: "Receptionist",
+    manager: "Manager",
+    owner: "Owner",
+    signedInFirst: "For safety, the person must sign in to Atlas once before you add them.",
+    adding: "Adding…",
+    access: "Clinic access",
+    protected: "The clinic owner cannot be removed or demoted.",
+    saveRole: "Save role",
+    remove: "Remove",
+    ownerRequired: "Owner access required.",
+    ownerRequiredHelp: "Managers and receptionists can use the clinic workspace, but only the owner can change membership.",
+    unavailable: "Staff directory could not load.",
+  },
+  ku: {
+    title: "دەسەڵاتی ستاف",
+    subtitle: "پێشخانە سادە بهێڵەوە و بە هەر کەسێک تەنها ئەو دەسەڵاتە بدە کە پێویستی پێیە.",
+    ownerOnly: "کۆنترۆڵی خاوەن کلینیک",
+    add: "ستاف زیاد بکە",
+    email: "ئیمەیڵی ستاف",
+    role: "ڕۆڵ",
+    receptionist: "پێشخانە",
+    manager: "بەڕێوەبەر",
+    owner: "خاوەن کلینیک",
+    signedInFirst: "بۆ پاراستن، ئەم کەسە پێویستە یەک جار بچێتە ناو Atlas پێش زیادکردنی.",
+    adding: "زیاد دەکرێت…",
+    access: "دەسەڵاتی کلینیک",
+    protected: "خاوەن کلینیک ناتوانرێت بسڕدرێتەوە یان دەسەڵاتی کەم بکرێتەوە.",
+    saveRole: "ڕۆڵ پاشەکەوت بکە",
+    remove: "سڕینەوە",
+    ownerRequired: "دەسەڵاتی خاوەن کلینیک پێویستە.",
+    ownerRequiredHelp: "بەڕێوەبەر و پێشخانە دەتوانن Atlas بەکاربهێنن، بەڵام تەنها خاوەن کلینیک دەتوانێت ئەندامان بگۆڕێت.",
+    unavailable: "لیستی ستاف بار نەبوو.",
+  },
+  ar: {
+    title: "صلاحيات الموظفين",
+    subtitle: "حافظ على بساطة الاستقبال وامنح كل شخص الصلاحيات التي يحتاجها فقط.",
+    ownerOnly: "تحكم مالك العيادة",
+    add: "إضافة موظف",
+    email: "بريد الموظف",
+    role: "الدور",
+    receptionist: "موظف استقبال",
+    manager: "مدير",
+    owner: "مالك",
+    signedInFirst: "للأمان، يجب أن يسجل الشخص دخوله إلى Atlas مرة واحدة قبل إضافته.",
+    adding: "جارٍ الإضافة…",
+    access: "صلاحيات العيادة",
+    protected: "لا يمكن إزالة مالك العيادة أو خفض صلاحياته.",
+    saveRole: "حفظ الدور",
+    remove: "إزالة",
+    ownerRequired: "صلاحية المالك مطلوبة.",
+    ownerRequiredHelp: "يمكن للمدير وموظف الاستقبال استخدام العيادة، لكن المالك وحده يغيّر العضوية.",
+    unavailable: "تعذر تحميل دليل الموظفين.",
+  },
 };
 
 const errorMessages: Record<string, string> = {
@@ -33,6 +94,9 @@ const noticeMessages: Record<string, string> = {
 
 export default async function StaffPage({ searchParams }: StaffPageProps) {
   const params = await searchParams;
+  const locale = await getUiLocale();
+  const text = copy[locale];
+  const t = uiText(locale);
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) redirect("/login");
@@ -51,10 +115,10 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
     return (
       <main className="center-page">
         <section className="auth-card">
-          <div className="brand">Atlas</div>
-          <h1>Owner access required.</h1>
-          <p className="quiet">Managers and receptionists can use the clinic workspace, but only the owner can change staff membership.</p>
-          <a className="button" href={`/dashboard?clinic=${clinic.id}`}>Back to schedule</a>
+          <div className="app-brand"><span className="app-brand-mark">A</span><span>Atlas</span></div>
+          <h1>{text.ownerRequired}</h1>
+          <p className="quiet">{text.ownerRequiredHelp}</p>
+          <a className="button" href={`/dashboard/settings?clinic=${clinic.id}`}>{t.settings}</a>
         </section>
       </main>
     );
@@ -65,93 +129,93 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
     .select("user_id, role")
     .eq("clinic_id", clinic.id)
     .order("role", { ascending: true });
-  if (membersError) return <DirectoryUnavailable />;
+  if (membersError) return <DirectoryUnavailable label={text.unavailable} back={t.settings} />;
 
   let memberRows: Array<{ user_id: string; role: string; email: string }> = [];
   try {
     const admin = createAdminClient();
     memberRows = await Promise.all((members ?? []).map(async (member) => {
       const { data } = await admin.auth.admin.getUserById(member.user_id);
-      return {
-        ...member,
-        email: data.user?.email ?? "Email unavailable",
-      };
+      return { ...member, email: data.user?.email ?? "Email unavailable" };
     }));
   } catch {
-    return <DirectoryUnavailable />;
+    return <DirectoryUnavailable label={text.unavailable} back={t.settings} />;
   }
 
   const errorMessage = params.error ? errorMessages[params.error] : null;
   const noticeMessage = params.notice ? noticeMessages[params.notice] : null;
 
   return (
-    <main className="dashboard shell">
-      <header className="dashboard-header">
+    <main className="settings-page shell">
+      <header className="page-heading settings-heading">
         <div>
-          <div className="brand">Staff</div>
-          <p className="quiet">{clinic.name}</p>
+          <div className="eyebrow">{t.team}</div>
+          <h1>{text.title}</h1>
+          <p>{text.subtitle}</p>
         </div>
-        <a className="button button-ghost button-small" href={`/dashboard?clinic=${clinic.id}`}>Back to schedule</a>
+        <a className="button button-ghost button-small" href={`/dashboard/settings?clinic=${clinic.id}`}>{t.settings}</a>
       </header>
 
       {clinics.length > 1 ? (
-        <form className="clinic-switcher" method="get">
-          <label htmlFor="clinic">Clinic workspace</label>
+        <form className="clinic-switcher settings-clinic-switcher" method="get">
+          <label htmlFor="clinic">{t.clinicWorkspace}</label>
           <select id="clinic" name="clinic" defaultValue={clinic.id}>
             {clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
-          <button className="button button-ghost button-small" type="submit">Switch</button>
+          <button className="button button-ghost button-small" type="submit">{t.switch}</button>
         </form>
       ) : null}
 
-      {errorMessage ? <p className="notice notice-error" role="alert">{errorMessage}</p> : null}
-      {noticeMessage ? <p className="notice notice-success" role="status">{noticeMessage}</p> : null}
+      {errorMessage ? <p className="notice notice-error settings-notice" role="alert">{errorMessage}</p> : null}
+      {noticeMessage ? <p className="notice notice-success settings-notice" role="status">{noticeMessage}</p> : null}
 
-      <div className="dashboard-grid">
-        <section className="panel">
-          <div className="eyebrow">Owner controls</div>
-          <h1>Add staff</h1>
-          <form action={addStaffMember} className="stack-form">
+      <div className="settings-grid staff-settings-grid">
+        <section className="settings-card">
+          <div className="settings-card-heading">
+            <span className="settings-card-icon" aria-hidden="true">+</span>
+            <div><div className="eyebrow">{text.ownerOnly}</div><h2>{text.add}</h2><p>{text.signedInFirst}</p></div>
+          </div>
+          <form action={addStaffMember} className="settings-form">
             <input type="hidden" name="clinic_id" value={clinic.id} />
-            <label htmlFor="email">Staff email</label>
-            <input id="email" name="email" type="email" autoComplete="email" maxLength={254} required />
-            <label htmlFor="role">Role</label>
+            <label htmlFor="email">{text.email}</label>
+            <input id="email" name="email" type="email" autoComplete="email" maxLength={254} dir="ltr" required />
+            <label htmlFor="role">{text.role}</label>
             <select id="role" name="role" defaultValue="receptionist">
-              <option value="receptionist">Receptionist</option>
-              <option value="manager">Manager</option>
+              <option value="receptionist">{text.receptionist}</option>
+              <option value="manager">{text.manager}</option>
             </select>
-            <p className="field-help">For safety, the person must have signed in to Atlas once before you add them.</p>
-            <SubmitButton pendingLabel="Adding…">Add staff member</SubmitButton>
+            <SubmitButton pendingLabel={text.adding}>{text.add}</SubmitButton>
           </form>
         </section>
 
-        <section className="panel">
-          <div className="panel-heading">
-            <div><div className="eyebrow">Access</div><h1>Clinic staff</h1></div>
-            <span className="count-pill">{memberRows.length}</span>
+        <section className="settings-card">
+          <div className="settings-card-heading">
+            <span className="settings-card-icon" aria-hidden="true">👥</span>
+            <div><div className="eyebrow">{text.access}</div><h2>{t.staff}</h2><p>{clinic.name} · {memberRows.length}</p></div>
           </div>
-          <div className="appointment-list">
+          <div className="doctor-settings-list">
             {memberRows.map((member) => {
               const protectedOwner = member.user_id === clinic.owner_id || member.role === "owner";
+              const roleLabel = protectedOwner ? text.owner : member.role === "manager" ? text.manager : text.receptionist;
               return (
-                <article className="appointment-row" key={member.user_id}>
+                <article className="doctor-settings-row" key={member.user_id}>
                   <div className="patient-cell">
-                    <strong>{member.email}</strong>
-                    <span>{protectedOwner ? "Owner" : member.role === "manager" ? "Manager" : "Receptionist"}</span>
+                    <strong dir="ltr">{member.email}</strong>
+                    <span>{roleLabel}</span>
                   </div>
                   {protectedOwner ? (
-                    <p className="field-help">The clinic owner cannot be removed or demoted.</p>
+                    <p className="field-help staff-protected-note">{text.protected}</p>
                   ) : (
-                    <div className="row-actions" style={{ marginTop: 12 }}>
+                    <div className="staff-role-actions">
                       <form action={updateStaffRole.bind(null, clinic.id, member.user_id)}>
-                        <select name="role" defaultValue={member.role} aria-label={`Role for ${member.email}`}>
-                          <option value="receptionist">Receptionist</option>
-                          <option value="manager">Manager</option>
+                        <select name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.email}`}>
+                          <option value="receptionist">{text.receptionist}</option>
+                          <option value="manager">{text.manager}</option>
                         </select>
-                        <button type="submit">Save role</button>
+                        <button type="submit">{text.saveRole}</button>
                       </form>
                       <form action={removeStaffMember.bind(null, clinic.id, member.user_id)}>
-                        <button type="submit">Remove</button>
+                        <button className="danger-link" type="submit">{text.remove}</button>
                       </form>
                     </div>
                   )}
@@ -165,13 +229,13 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   );
 }
 
-function DirectoryUnavailable() {
+function DirectoryUnavailable({ label, back }: { label: string; back: string }) {
   return (
     <main className="center-page">
       <section className="auth-card">
         <div className="brand">Atlas</div>
-        <h1>Staff directory could not load.</h1>
-        <a className="button" href="/dashboard">Back to schedule</a>
+        <h1>{label}</h1>
+        <a className="button" href="/dashboard/settings">{back}</a>
       </section>
     </main>
   );

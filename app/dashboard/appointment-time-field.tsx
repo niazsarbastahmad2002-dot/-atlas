@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { UiLocale } from "@/lib/i18n/ui";
 
 type AppointmentTimeFieldProps = {
   intervalMinutes: number;
@@ -8,7 +9,47 @@ type AppointmentTimeFieldProps = {
   max: string;
   occupiedByDoctor: Record<string, string[]>;
   timeZoneLabel: string;
+  locale: UiLocale;
 };
+
+const timeCopy = {
+  en: {
+    dateTime: "Date and time",
+    date: "Appointment date",
+    slot: "Available slot",
+    chooseDoctor: "Choose a doctor first",
+    noSlots: "No selectable slots",
+    booked: "booked",
+    custom: "Use custom time",
+    slots: "Use quick slots",
+    customHelp: "Custom time is available when the clinic needs an off-grid appointment.",
+    slotHelp: "Booked pending and confirmed times are hidden for the selected doctor.",
+  },
+  ku: {
+    dateTime: "بەروار و کات",
+    date: "بەرواری وادە",
+    slot: "کاتی بەردەست",
+    chooseDoctor: "سەرەتا پزیشک هەڵبژێرە",
+    noSlots: "کاتی بەردەست نییە",
+    booked: "گیراوە",
+    custom: "کاتی تایبەت",
+    slots: "کاتە خێراکان",
+    customHelp: "ئەگەر کلینیک پێویستی بە کاتێکی دەرەوەی خشتە هەبێت، کاتی تایبەت بەکاربهێنە.",
+    slotHelp: "کاتە گیراوەکانی چاوەڕوان و پشتڕاستکراو بۆ پزیشکی هەڵبژێردراو نیشان نادرێن.",
+  },
+  ar: {
+    dateTime: "التاريخ والوقت",
+    date: "تاريخ الموعد",
+    slot: "الوقت المتاح",
+    chooseDoctor: "اختر الطبيب أولاً",
+    noSlots: "لا توجد أوقات متاحة",
+    booked: "محجوز",
+    custom: "وقت مخصص",
+    slots: "الأوقات السريعة",
+    customHelp: "استخدم وقتاً مخصصاً عندما تحتاج العيادة موعداً خارج الفواصل المعتادة.",
+    slotHelp: "الأوقات المحجوزة قيد الانتظار أو المؤكدة مخفية للطبيب المحدد.",
+  },
+} as const;
 
 function pad(value: number) {
   return String(value).padStart(2, "0");
@@ -28,7 +69,9 @@ export function AppointmentTimeField({
   max,
   occupiedByDoctor,
   timeZoneLabel,
+  locale,
 }: AppointmentTimeFieldProps) {
+  const text = timeCopy[locale];
   const [custom, setCustom] = useState(false);
   const [date, setDate] = useState(min.slice(0, 10));
   const [doctorId, setDoctorId] = useState("");
@@ -71,8 +114,8 @@ export function AppointmentTimeField({
 
   if (custom) {
     return (
-      <>
-        <label htmlFor="appointment_at">Date and time ({timeZoneLabel})</label>
+      <div className="time-field-group">
+        <label htmlFor="appointment_at">{text.dateTime} <span className="label-muted">· {timeZoneLabel}</span></label>
         <input
           id="appointment_at"
           name="appointment_at"
@@ -81,17 +124,17 @@ export function AppointmentTimeField({
           max={max}
           required
         />
-        <button className="button button-ghost button-small" type="button" onClick={() => setCustom(false)}>
-          Use {intervalMinutes}-minute slots
+        <button className="inline-mode-button" type="button" onClick={() => setCustom(false)}>
+          {text.slots} · {intervalMinutes} min
         </button>
-        <p className="field-help">Custom override is allowed when the clinic needs an off-grid appointment time.</p>
-      </>
+        <p className="field-help">{text.customHelp}</p>
+      </div>
     );
   }
 
   return (
-    <>
-      <label htmlFor="appointment_date">Appointment date ({timeZoneLabel})</label>
+    <div className="time-field-group">
+      <label htmlFor="appointment_date">{text.date} <span className="label-muted">· {timeZoneLabel}</span></label>
       <input
         id="appointment_date"
         type="date"
@@ -105,7 +148,7 @@ export function AppointmentTimeField({
         required
       />
 
-      <label htmlFor="appointment_slot">Available {intervalMinutes}-minute slot</label>
+      <label htmlFor="appointment_slot">{text.slot} · {intervalMinutes} min</label>
       <select
         id="appointment_slot"
         value={selectedTime}
@@ -113,24 +156,24 @@ export function AppointmentTimeField({
         required
         disabled={!doctorId}
       >
-        {!doctorId ? <option value="">Choose a doctor first</option> : null}
-        {doctorId && !firstAvailable ? <option value="">No selectable slots</option> : null}
+        {!doctorId ? <option value="">{text.chooseDoctor}</option> : null}
+        {doctorId && !firstAvailable ? <option value="">{text.noSlots}</option> : null}
         {doctorId ? slots.map((slot) => {
           const candidate = `${date}T${slot}`;
           const outsideWindow = candidate < min || candidate > max;
           const booked = occupiedSet.has(candidate);
           return (
             <option key={slot} value={slot} disabled={outsideWindow || booked}>
-              {slot}{booked ? " — booked" : ""}
+              {slot}{booked ? ` — ${text.booked}` : ""}
             </option>
           );
         }) : null}
       </select>
       <input type="hidden" name="appointment_at" value={doctorId ? selectedValue : ""} />
-      <button className="button button-ghost button-small" type="button" onClick={() => setCustom(true)}>
-        Use custom time
+      <button className="inline-mode-button" type="button" onClick={() => setCustom(true)}>
+        {text.custom}
       </button>
-      <p className="field-help">Booked pending/confirmed times are checked for the selected doctor. Custom times remain available when needed.</p>
-    </>
+      <p className="field-help">{text.slotHelp}</p>
+    </div>
   );
 }

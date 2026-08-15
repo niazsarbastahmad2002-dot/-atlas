@@ -1,0 +1,63 @@
+.demo-mode-pill {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #17663f;
+  background: #eaf7ef;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.demo-safety-strip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  border: 1px solid #eadba8;
+  border-radius: 13px;
+  padding: 11px 13px;
+  background: #fff9e8;
+  color: #765400;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.demo-safety-strip strong { flex: none; }
+.demo-delete-action { color: #a43131 !important; background: transparent !important; }
+.demo-setup-card { box-shadow: 0 18px 50px rgba(20,36,28,.08); }
+
+.staff-role-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+.staff-role-actions form:first-child {
+  display: grid;
+  grid-template-columns: minmax(145px, 1fr) auto;
+  gap: 7px;
+  flex: 1;
+}
+.staff-role-actions select { min-height: 36px; height: 36px; padding-block: 5px; font-size: 10.5px; }
+.staff-role-actions button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: #e9efeb;
+  color: #2c3a34;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.staff-role-actions .danger-link { color: #a43131; background: transparent; }
+.staff-protected-note { margin-top: 10px; }
+
+@media (max-width: 620px) {
+  .demo-safety-strip { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .staff-role-actions { align-items: stretch; flex-direction: column; }
+  .staff-role-actions form:first-child { grid-template-columns: 1fr; width: 100%; }
+  .staff-role-actions form:last-child, .staff-role-actions form:last-child button { width: 100%; }
+}

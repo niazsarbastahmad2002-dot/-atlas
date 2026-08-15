@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createPatientAccessLink } from "./patient-link-actions";
 
 const initialPatientLinkState = {
@@ -11,15 +12,21 @@ const initialPatientLinkState = {
 export function PatientLinkButton({
   clinicId,
   appointmentId,
+  locale,
 }: {
   clinicId: string;
   appointmentId: string;
+  locale: UiLocale;
 }) {
+  const t = uiText(locale);
   const [state, action, pending] = useActionState(
     createPatientAccessLink,
     initialPatientLinkState,
   );
   const [copied, setCopied] = useState(false);
+  const creating = locale === "ku" ? "بەستەر دروست دەکرێت…" : locale === "ar" ? "جارٍ إنشاء الرابط…" : "Creating link…";
+  const copy = locale === "ku" ? "کۆپی" : locale === "ar" ? "نسخ" : "Copy";
+  const copiedLabel = locale === "ku" ? "کۆپی کرا" : locale === "ar" ? "تم النسخ" : "Copied";
 
   async function copyLink() {
     if (!state.link) return;
@@ -38,14 +45,14 @@ export function PatientLinkButton({
         <input type="hidden" name="clinic_id" value={clinicId} />
         <input type="hidden" name="appointment_id" value={appointmentId} />
         <button type="submit" disabled={pending}>
-          {pending ? "Creating link…" : "Patient link"}
+          {pending ? creating : t.patientLink}
         </button>
       </form>
       {state.error ? <span className="field-help" role="alert">{state.error}</span> : null}
       {state.link ? (
         <div className="patient-link-result">
-          <input aria-label="Patient self-service link" readOnly value={state.link} />
-          <button type="button" onClick={copyLink}>{copied ? "Copied" : "Copy"}</button>
+          <input aria-label={t.patientLink} readOnly value={state.link} dir="ltr" />
+          <button type="button" onClick={copyLink}>{copied ? copiedLabel : copy}</button>
         </div>
       ) : null}
     </div>
