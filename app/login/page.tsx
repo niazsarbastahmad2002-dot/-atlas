@@ -1,24 +1,55 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { uiText } from "@/lib/i18n/ui";
-import { getLoginMessage } from "@/lib/messages";
+import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./login-form";
 
 type LoginPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string }>;
+};
+
+const pageCopy: Record<UiLocale, { eyebrow: string; title: string; subtitle: string; invalid: string; signedOut: string; confirmed: string; next: string }> = {
+  en: {
+    eyebrow: "Reception",
+    title: "Open Atlas. Start the day.",
+    subtitle: "If this device already knows Atlas, open it directly. Work email is only for a new device or recovery.",
+    invalid: "That email link has expired or was already used. Request one fresh Atlas email below.",
+    signedOut: "You signed out safely.",
+    confirmed: "Patient confirmed",
+    next: "Next appointment",
+  },
+  ku: {
+    eyebrow: "پێشخانە",
+    title: "Atlas بکەرەوە. کار دەستپێبکە.",
+    subtitle: "ئەگەر ئەم ئامێرە پێشتر Atlas ـی بەکارهێناوە، ڕاستەوخۆ بیکەرەوە. ئیمەیڵی کار تەنها بۆ ئامێری نوێ یان گەڕاندنەوەی دەسەڵاتە.",
+    invalid: "ئەم بەستەری ئیمەیڵە بەسەرچووە یان پێشتر بەکارهاتووە. لە خوارەوە ئیمەیڵێکی نوێی Atlas داوا بکە.",
+    signedOut: "بە سەلامەتی چوویتە دەرەوە.",
+    confirmed: "نەخۆش پشتڕاستی کردەوە",
+    next: "وادەی داهاتوو",
+  },
+  ar: {
+    eyebrow: "الاستقبال",
+    title: "افتح Atlas وابدأ يومك.",
+    subtitle: "إذا كان هذا الجهاز قد استخدم Atlas من قبل، افتحه مباشرة. بريد العمل مخصص فقط لجهاز جديد أو لاستعادة الدخول.",
+    invalid: "انتهت صلاحية رابط البريد أو تم استخدامه من قبل. اطلب رسالة Atlas جديدة أدناه.",
+    signedOut: "تم تسجيل الخروج بأمان.",
+    confirmed: "تم تأكيد المريض",
+    next: "الموعد التالي",
+  },
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error } = await searchParams;
+  const { error, notice } = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (data.user) redirect("/dashboard");
 
   const locale = await getUiLocale();
   const t = uiText(locale);
-  const errorMessage = error === "invalid_link" ? null : getLoginMessage(error);
+  const copy = pageCopy[locale];
+  const errorMessage = error === "invalid_link" ? copy.invalid : null;
+  const noticeMessage = notice === "signed_out" ? copy.signedOut : null;
 
   return (
     <main className="login-page">
@@ -29,12 +60,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </Link>
 
         <div className="login-copy">
-          <div className="eyebrow">Reception</div>
-          <h1>Open Atlas. Start the day.</h1>
-          <p>Trusted clinic devices open the schedule directly. Email is only the fallback when a device needs access again.</p>
+          <div className="eyebrow">{copy.eyebrow}</div>
+          <h1>{copy.title}</h1>
+          <p>{copy.subtitle}</p>
         </div>
 
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
+        {noticeMessage ? <p className="notice notice-success login-notice" role="status">{noticeMessage}</p> : null}
 
         <LoginForm locale={locale} />
 
@@ -47,17 +79,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <aside className="login-visual" aria-hidden="true">
         <div className="login-visual-card">
           <span className="login-visual-dot" />
-          <div>
-            <strong>08:30</strong>
-            <span>Patient confirmed</span>
-          </div>
+          <div><strong>08:30</strong><span>{copy.confirmed}</span></div>
         </div>
         <div className="login-visual-card is-secondary">
           <span className="login-visual-dot" />
-          <div>
-            <strong>09:00</strong>
-            <span>Next appointment</span>
-          </div>
+          <div><strong>09:00</strong><span>{copy.next}</span></div>
         </div>
         <div className="login-visual-label">Atlas · {t.schedule}</div>
       </aside>
