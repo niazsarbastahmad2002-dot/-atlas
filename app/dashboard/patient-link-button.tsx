@@ -1,10 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import {
-  createPatientAccessLink,
-  initialPatientLinkState,
-} from "./patient-link-actions";
+import { createPatientAccessLink } from "./patient-link-actions";
+
+const initialPatientLinkState = {
+  link: null as string | null,
+  error: null as string | null,
+};
 
 export function PatientLinkButton({
   clinicId,
@@ -21,9 +23,13 @@ export function PatientLinkButton({
 
   async function copyLink() {
     if (!state.link) return;
-    await navigator.clipboard.writeText(state.link);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(state.link);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
   }
 
   return (
