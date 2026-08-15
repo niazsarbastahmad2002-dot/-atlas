@@ -11,7 +11,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
   const [state, formAction, isPending] = useActionState(requestMagicLink, initialState);
   const isLocked = isPending || state.status === "sent" || state.status === "rate-limited";
 
-  let buttonLabel = t.sendLink;
+  let buttonLabel: string = t.sendLink;
   if (isPending) buttonLabel = t.sending;
   if (state.status === "sent") buttonLabel = t.linkSent;
   if (state.status === "rate-limited") buttonLabel = t.tryLater;
