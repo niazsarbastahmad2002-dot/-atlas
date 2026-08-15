@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   allowedAppointmentTransitions,
   type AppointmentStatus,
@@ -56,6 +56,10 @@ export function AppointmentActions({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const t = uiText(locale);
+
+  useEffect(() => {
+    setOptimisticStatus(status);
+  }, [status]);
 
   const actionLabels: Record<AppointmentStatus, string> = {
     pending: t.reopen,
@@ -140,13 +144,18 @@ export function AppointmentActions({
       <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} />
       <button
         className="archive-action"
+        style={{ marginInlineStart: "auto", color: "var(--danger)", background: "transparent" }}
         type="button"
         disabled={pending}
         onClick={(event) => archive(event.currentTarget)}
       >
         {t.archive}
       </button>
-      {error ? <span className="inline-action-error" role="alert">{error}</span> : null}
+      {error ? (
+        <span style={{ flexBasis: "100%", color: "var(--danger)", fontSize: "10.5px" }} role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }
