@@ -18,8 +18,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const locale = await getUiLocale();
   const t = uiText(locale);
-  // An expired/used magic link should simply return the receptionist to the
-  // normal sign-in action rather than stacking a technical red error above it.
   const errorMessage = error === "invalid_link" ? null : getLoginMessage(error);
 
   return (
@@ -33,7 +31,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="login-copy">
           <div className="eyebrow">Reception</div>
           <h1>Open Atlas. Start the day.</h1>
-          <p>Enter the clinic email once, tap the Atlas email we send, and your schedule opens. Normal days after that start straight inside Atlas.</p>
+          <p>Trusted clinic devices open the schedule directly. Email is only the fallback when a device needs access again.</p>
         </div>
 
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
