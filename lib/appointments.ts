@@ -42,6 +42,13 @@ export function normalizeIraqiMobile(value: string) {
   return /^\+9647\d{9}$/.test(phone) ? phone : null;
 }
 
+export function formatIraqiMobile(value: string) {
+  const normalized = normalizeIraqiMobile(value);
+  if (!normalized) return value;
+  const local = `0${normalized.slice(4)}`;
+  return `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}`;
+}
+
 function baghdadParts(date: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Baghdad",
