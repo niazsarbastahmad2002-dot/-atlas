@@ -7,7 +7,7 @@ export const appointmentStatuses = [
 ] as const;
 
 export type AppointmentStatus = (typeof appointmentStatuses)[number];
-export type AppointmentMutationFailure = "invalid" | "too_early" | "past_cancelled" | "busy" | "failed";
+export type AppointmentMutationFailure = "invalid" | "too_early" | "past_cancelled" | "slot_taken" | "busy" | "failed";
 
 const statusTransitions: Record<AppointmentStatus, readonly AppointmentStatus[]> = {
   pending: ["confirmed", "cancelled"],
@@ -103,12 +103,13 @@ export function canTransitionAppointment(from: AppointmentStatus, to: Appointmen
 }
 
 /**
- * Database triggers remain the source of truth for appointment invariants.
+ * Database triggers/indexes remain the source of truth for appointment invariants.
  * This converts known Postgres failures into receptionist-friendly categories
  * without weakening the underlying constraints.
  */
 export function classifyAppointmentMutationError(code: string | undefined, message = ""): AppointmentMutationFailure {
   if (code === "55P03") return "busy";
+  if (code === "23505") return "slot_taken";
   if (code === "23514") {
     const text = message.toLowerCase();
     if (text.includes("outcome cannot be recorded before")) return "too_early";
