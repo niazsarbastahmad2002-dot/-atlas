@@ -6,6 +6,7 @@ import {
   hashPatientToken,
   patientLinkUrl,
 } from "@/lib/patient-links";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 type PatientLinkState = {
@@ -30,6 +31,7 @@ export async function createPatientAccessLink(
     return { link: null, error: "Sign in again before creating a patient link." };
   }
 
+  // RLS verifies that the signed-in staff member can read this appointment.
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
     .select("id")
@@ -45,8 +47,12 @@ export async function createPatientAccessLink(
   const token = createPatientToken();
   const tokenHash = hashPatientToken(token);
   const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  const admin = createAdminClient();
 
-  const { data, error } = await supabase.rpc("create_patient_access_token", {
+  // This RPC is service-role only and re-checks the actor's clinic membership
+  // inside Postgres before touching any patient token row.
+  const { data, error } = await admin.rpc("create_patient_access_token_server", {
+    p_actor_id: userData.user.id,
     p_appointment_id: appointmentId,
     p_token_hash: tokenHash,
     p_expires_at: expiresAt,
