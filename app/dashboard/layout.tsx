@@ -1,22 +1,16 @@
 import type { ReactNode } from "react";
+import { getUiLocale } from "@/lib/i18n/ui-server";
 import { DashboardPreferenceMemory } from "./preference-memory";
-import { PhoneDisplayFormatting } from "./phone-display";
+import { AppNavigation } from "./app-navigation";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  const locale = await getUiLocale();
+
   return (
-    <>
+    <div className="app-shell">
       <DashboardPreferenceMemory />
-      <PhoneDisplayFormatting />
-      <nav
-        className="shell"
-        aria-label="Clinic workspace sections"
-        style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 16 }}
-      >
-        <a className="button button-ghost button-small" href="/dashboard">Schedule</a>
-        <a className="button button-ghost button-small" href="/dashboard/reminders">Reminder settings</a>
-        <a className="button button-ghost button-small" href="/dashboard/staff">Staff</a>
-      </nav>
-      {children}
-    </>
+      <AppNavigation locale={locale} />
+      <div className="app-content">{children}</div>
+    </div>
   );
 }
