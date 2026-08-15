@@ -19,8 +19,10 @@ function inboxUrl(email: string) {
 export function LoginForm({ locale }: { locale: UiLocale }) {
   const t = uiText(locale);
   const [email, setEmail] = useState("");
+  const [showEmail, setShowEmail] = useState(false);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [deviceBusy, setDeviceBusy] = useState(false);
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
 
@@ -49,6 +51,33 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
+  async function openAtlasOnThisDevice() {
+    if (deviceBusy || busy) return;
+    setDeviceBusy(true);
+    setError("");
+    try {
+      const supabase = createClient();
+      const { data, error: passkeyError } = await supabase.auth.signInWithPasskey();
+      if (passkeyError || !data.session) {
+        const cancelled = passkeyError?.name === "NotAllowedError" || passkeyError?.message?.toLowerCase().includes("cancel");
+        if (!cancelled) {
+          setShowEmail(true);
+          setError("This device could not open Atlas directly. Use the clinic email below instead.");
+        }
+        return;
+      }
+      window.location.replace("/dashboard");
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message.toLowerCase() : "";
+      if (!message.includes("cancel") && !message.includes("notallowed")) {
+        setShowEmail(true);
+        setError("This device could not open Atlas directly. Use the clinic email below instead.");
+      }
+    } finally {
+      setDeviceBusy(false);
+    }
+  }
+
   async function sendLink(event?: FormEvent) {
     event?.preventDefault();
     if (busy || cooldown > 0) return;
@@ -60,27 +89,22 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     setBusy(true);
     setError("");
     try {
-      // First-access email links intentionally use the implicit flow. That lets
-      // a fresh link finish sign-in even when an email app opens it in a browser
-      // context that does not have the original Atlas tab's PKCE verifier.
       const supabase = createMagicLinkClient();
       const { error: sendError } = await supabase.auth.signInWithOtp({
         email: normalized,
         options: {
           shouldCreateUser: false,
-          // Keep using the callback URL already approved in Supabase. For the
-          // implicit flow the callback forwards the URL fragment to /auth/finish.
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
       setEmail(normalized);
       if (sendError) {
         if (sendError.code === "over_email_send_rate_limit") {
-          setSent(true);
+          // Never pretend an email was sent when Supabase rejected the request.
           setCooldown(60);
-          setError("");
+          setError("No new Atlas email was sent because email sign-in is temporarily limited. Try Open Atlas above, or wait a moment and request a fresh email.");
         } else {
-          setError("Atlas could not send the sign-in link. Check the email or ask the clinic administrator to add this account.");
+          setError("Atlas could not send the sign-in email. Check the email address or ask the clinic administrator to add this account.");
         }
         return;
       }
@@ -98,16 +122,20 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     return (
       <div className="receptionist-login-flow">
         <div className="notice notice-success login-notice" role="status">
-          <strong>One last tap.</strong><br />
-          Open the newest Atlas email and tap <strong>Open Atlas</strong>. It will take you straight to the schedule.
+          <strong>Fresh Atlas email sent.</strong><br />
+          Open only the newest Atlas email and tap <strong>Open Atlas</strong>.
         </div>
         {inbox ? <a className="button" href={inbox} target="_blank" rel="noreferrer">Open newest Atlas email</a> : null}
-        <p className="login-method-help">After this first sign-in, this device normally opens Atlas directly.</p>
+        <button className="button button-ghost" type="button" disabled={deviceBusy} onClick={() => void openAtlasOnThisDevice()}>
+          {deviceBusy ? "Opening…" : "Open Atlas on this device"}
+        </button>
+        <p className="login-method-help">Once this device is trusted, normal days open Atlas without another email.</p>
+        {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
         <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
           <button className="button button-ghost button-small" type="button" disabled={busy || cooldown > 0} onClick={() => void sendLink()}>
-            {busy ? "Sending…" : cooldown > 0 ? `New link in ${cooldown}s` : "Send a new link"}
+            {busy ? "Sending…" : cooldown > 0 ? `New email in ${cooldown}s` : "Send a fresh email"}
           </button>
-          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setSent(false); setError(""); }}>Use another email</button>
+          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setSent(false); setShowEmail(true); setError(""); }}>Use another email</button>
         </div>
       </div>
     );
@@ -115,13 +143,26 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
 
   return (
     <div className="receptionist-login-flow">
+      <button className="button" type="button" disabled={deviceBusy || busy} onClick={() => void openAtlasOnThisDevice()}>
+        {deviceBusy ? "Opening Atlas…" : "Open Atlas"}
+      </button>
+      <p className="login-method-help">On a trusted clinic device, this opens the schedule directly with Face ID, Touch ID, or the device unlock.</p>
+
       {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
-      <form className="stack-form login-email-form" onSubmit={sendLink}>
-        <label htmlFor="email">{t.workEmail}</label>
-        <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="reception@clinic.com" dir="ltr" required />
-        <button className="button" type="submit" disabled={busy}>{busy ? "Sending…" : "Continue"}</button>
-      </form>
-      <p className="login-method-help">Enter the clinic email once. Atlas remembers this device after sign-in.</p>
+
+      {!showEmail ? (
+        <button className="button button-ghost" type="button" onClick={() => { setShowEmail(true); setError(""); }}>
+          Use clinic email instead
+        </button>
+      ) : (
+        <form className="stack-form login-email-form" onSubmit={sendLink}>
+          <label htmlFor="email">{t.workEmail}</label>
+          <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="reception@clinic.com" dir="ltr" required />
+          <button className="button button-ghost" type="submit" disabled={busy || cooldown > 0}>
+            {busy ? "Sending…" : cooldown > 0 ? `Try again in ${cooldown}s` : "Send fresh Atlas email"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }
