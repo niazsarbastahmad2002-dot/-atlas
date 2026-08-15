@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
   allowedAppointmentTransitions,
+  type AppointmentMutationFailure,
   type AppointmentStatus,
 } from "@/lib/appointments";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
@@ -24,30 +25,38 @@ function paintStatus(card: HTMLElement | null, status: AppointmentStatus, label:
   badge.textContent = label;
 }
 
-function inlineError(locale: UiLocale, reason: string) {
+function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
   if (locale === "ku") {
-    return reason === "busy"
-      ? "وادەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە."
-      : "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.";
+    if (reason === "busy") return "وادەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.";
+    if (reason === "too_early") return "هێشتا کاتی وادەکە نەهاتووە. دوای کاتی وادە دۆخی کۆتایی تۆمار بکە.";
+    if (reason === "past_cancelled") return "وادەی هەڵوەشێنراوی ڕابردوو ناتوانرێت بکرێتەوە؛ وادەیەکی نوێ دروست بکە.";
+    if (reason === "invalid") return "ئەم گۆڕانکارییە بۆ ئەم وادەیە ڕێگەپێدراو نییە.";
+    return "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.";
   }
   if (locale === "ar") {
-    return reason === "busy"
-      ? "الموعد قيد التحديث. حاول مرة أخرى."
-      : "لم يتم حفظ التغيير. حاول مرة أخرى.";
+    if (reason === "busy") return "الموعد قيد التحديث. حاول مرة أخرى.";
+    if (reason === "too_early") return "لم يحن وقت الموعد بعد. سجّل النتيجة بعد وقت الموعد.";
+    if (reason === "past_cancelled") return "لا يمكن إعادة فتح موعد ملغي مضى وقته. أنشئ موعداً جديداً.";
+    if (reason === "invalid") return "هذا التغيير غير متاح لهذا الموعد.";
+    return "لم يتم حفظ التغيير. حاول مرة أخرى.";
   }
-  return reason === "busy"
-    ? "This appointment is still updating. Try again."
-    : "The change was not saved. Try again.";
+  if (reason === "busy") return "This appointment is still updating. Try again.";
+  if (reason === "too_early") return "It is too early to record the appointment outcome. Try again after the appointment time.";
+  if (reason === "past_cancelled") return "A past cancelled appointment cannot be reopened. Create a new appointment instead.";
+  if (reason === "invalid") return "That change is not available for this appointment.";
+  return "The change was not saved. Try again.";
 }
 
 export function AppointmentActions({
   clinicId,
   appointmentId,
+  appointmentAt,
   status,
   locale,
 }: {
   clinicId: string;
   appointmentId: string;
+  appointmentAt: string;
   status: AppointmentStatus;
   locale: UiLocale;
 }) {
@@ -80,9 +89,23 @@ export function AppointmentActions({
     : locale === "ar"
       ? "أرشفة هذا الموعد؟ سيتم الاحتفاظ بسجله."
       : "Archive this appointment? Its history will be retained.";
+  const scheduledAt = new Date(appointmentAt).getTime();
+  const tooEarlyForOutcome = Number.isFinite(scheduledAt) && scheduledAt > Date.now() + 5 * 60 * 1000;
+  const tooLateToReopen = Number.isFinite(scheduledAt) && scheduledAt < Date.now() - 5 * 60 * 1000;
+
+  function unavailableReason(nextStatus: AppointmentStatus) {
+    if ((nextStatus === "completed" || nextStatus === "no_show") && tooEarlyForOutcome) return "too_early" as const;
+    if (nextStatus === "pending" && optimisticStatus === "cancelled" && tooLateToReopen) return "past_cancelled" as const;
+    return null;
+  }
 
   function changeStatus(nextStatus: AppointmentStatus, target: EventTarget | null) {
     if (pending || nextStatus === optimisticStatus) return;
+    const blocked = unavailableReason(nextStatus);
+    if (blocked) {
+      setError(actionFeedback(locale, blocked));
+      return;
+    }
 
     const previousStatus = optimisticStatus;
     const card = findAppointmentCard(target);
@@ -95,11 +118,10 @@ export function AppointmentActions({
       if (!result.ok) {
         setOptimisticStatus(previousStatus);
         paintStatus(card, previousStatus, statusLabels[previousStatus]);
-        setError(inlineError(locale, result.reason));
+        setError(actionFeedback(locale, result.reason));
         return;
       }
 
-      // Refresh server-derived totals and reminder state without navigation or scroll reset.
       router.refresh();
     });
   }
@@ -122,7 +144,7 @@ export function AppointmentActions({
           card.style.visibility = previousVisibility;
           card.style.pointerEvents = previousPointerEvents;
         }
-        setError(inlineError(locale, result.reason));
+        setError(actionFeedback(locale, result.reason));
         return;
       }
       router.refresh();
@@ -131,16 +153,20 @@ export function AppointmentActions({
 
   return (
     <div className="row-actions polished-actions" aria-label="Appointment actions" aria-busy={pending}>
-      {allowedAppointmentTransitions(optimisticStatus).map((nextStatus) => (
-        <button
-          type="button"
-          disabled={pending}
-          key={nextStatus}
-          onClick={(event) => changeStatus(nextStatus, event.currentTarget)}
-        >
-          {actionLabels[nextStatus]}
-        </button>
-      ))}
+      {allowedAppointmentTransitions(optimisticStatus).map((nextStatus) => {
+        const blocked = unavailableReason(nextStatus);
+        return (
+          <button
+            type="button"
+            disabled={pending || Boolean(blocked)}
+            key={nextStatus}
+            title={blocked ? actionFeedback(locale, blocked) : undefined}
+            onClick={(event) => changeStatus(nextStatus, event.currentTarget)}
+          >
+            {actionLabels[nextStatus]}
+          </button>
+        );
+      })}
       <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} />
       <button
         className="archive-action"
@@ -152,7 +178,7 @@ export function AppointmentActions({
         {t.archive}
       </button>
       {error ? (
-        <span style={{ flexBasis: "100%", color: "var(--danger)", fontSize: "10.5px" }} role="alert">
+        <span className="appointment-action-feedback" role="alert">
           {error}
         </span>
       ) : null}
