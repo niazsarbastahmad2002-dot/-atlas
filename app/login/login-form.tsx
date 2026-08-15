@@ -1,8 +1,73 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { createClient, createMagicLinkClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
+
+const COOLDOWN_KEY = "atlas-email-recovery-cooldown";
+
+const authCopy = {
+  en: {
+    open: "Open Atlas",
+    opening: "Opening Atlas…",
+    deviceHelp: "Use the secure prompt on this device.",
+    deviceCancelled: "Opening Atlas was cancelled. Try again, or use work email on a new device.",
+    deviceUnavailable: "Quick access is not available on this device yet. Use the clinic work email below.",
+    emailFallback: "New device or recovery",
+    emailHint: "Use the work email already prepared for this clinic.",
+    send: "Send Atlas email",
+    sentTitle: "Atlas email sent.",
+    sentHelp: "Open only the newest Atlas email and tap Open Atlas.",
+    openInbox: "Open newest Atlas email",
+    returnHelp: "After sign-in, Atlas will help secure this device once, then open the schedule.",
+    resend: "Send a fresh email",
+    another: "Use another email",
+    invalidEmail: "Enter the clinic work email.",
+    rateLimited: "No new email was sent. Email recovery is temporarily limited. If you already requested one, use only the newest Atlas email; otherwise try again later.",
+    notReady: "Atlas could not send a sign-in email for that account. Check the address or ask the clinic to prepare this account.",
+    network: "Atlas could not start sign-in. Check the connection and try again.",
+  },
+  ku: {
+    open: "Atlas بکەرەوە",
+    opening: "Atlas دەکرێتەوە…",
+    deviceHelp: "پشتڕاستکردنەوەی پارێزراوی ئەم ئامێرە تەواو بکە.",
+    deviceCancelled: "کردنەوەی Atlas هەڵوەشێنرایەوە. دووبارە هەوڵ بدە، یان لە ئامێری نوێ ئیمەیڵی کار بەکاربهێنە.",
+    deviceUnavailable: "چوونەژوورەوەی خێرا لەم ئامێرە ئامادە نییە. ئیمەیڵی کاری کلینیک بەکاربهێنە.",
+    emailFallback: "ئامێری نوێ یان گەڕاندنەوەی دەسەڵات",
+    emailHint: "ئەو ئیمەیڵەی کار بەکاربهێنە کە پێشتر بۆ ئەم کلینیکە ئامادە کراوە.",
+    send: "ئیمەیڵی Atlas بنێرە",
+    sentTitle: "ئیمەیڵی Atlas نێردرا.",
+    sentHelp: "تەنها نوێترین ئیمەیڵی Atlas بکەرەوە و Open Atlas دابگرە.",
+    openInbox: "نوێترین ئیمەیڵی Atlas بکەرەوە",
+    returnHelp: "دوای چوونەژوورەوە، Atlas یەک جار ئەم ئامێرە ئامادە دەکات و پاشان خشتەی وادەکان دەکاتەوە.",
+    resend: "ئیمەیڵێکی نوێ بنێرە",
+    another: "ئیمەیڵێکی تر بەکاربهێنە",
+    invalidEmail: "ئیمەیڵی کاری کلینیک بنووسە.",
+    rateLimited: "هیچ ئیمەیڵێکی نوێ نەنێردرا. ناردنی ئیمەیڵ کاتێکی کورت سنووردارە. ئەگەر پێشتر داوات کردووە، تەنها نوێترین ئیمەیڵی Atlas بەکاربهێنە؛ ئەگەر نا، دواتر دووبارە هەوڵ بدە.",
+    notReady: "Atlas نەیتوانی بۆ ئەم هەژمارە ئیمەیڵی چوونەژوورەوە بنێرێت. ناونیشانەکە بپشکنە یان داوا لە کلینیک بکە هەژمارەکەت ئامادە بکات.",
+    network: "Atlas نەیتوانی چوونەژوورەوە دەستپێبکات. پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدە.",
+  },
+  ar: {
+    open: "فتح Atlas",
+    opening: "جارٍ فتح Atlas…",
+    deviceHelp: "أكمل التحقق الآمن على هذا الجهاز.",
+    deviceCancelled: "تم إلغاء فتح Atlas. حاول مرة أخرى، أو استخدم بريد العمل على جهاز جديد.",
+    deviceUnavailable: "الدخول السريع غير جاهز على هذا الجهاز. استخدم بريد العيادة أدناه.",
+    emailFallback: "جهاز جديد أو استعادة الدخول",
+    emailHint: "استخدم بريد العمل الذي أعدته العيادة مسبقاً.",
+    send: "إرسال بريد Atlas",
+    sentTitle: "تم إرسال بريد Atlas.",
+    sentHelp: "افتح أحدث رسالة من Atlas فقط واضغط Open Atlas.",
+    openInbox: "فتح أحدث رسالة من Atlas",
+    returnHelp: "بعد تسجيل الدخول، سيجهز Atlas هذا الجهاز مرة واحدة ثم يفتح جدول المواعيد.",
+    resend: "إرسال رسالة جديدة",
+    another: "استخدام بريد آخر",
+    invalidEmail: "أدخل بريد العمل الخاص بالعيادة.",
+    rateLimited: "لم يتم إرسال رسالة جديدة. استعادة الدخول بالبريد محدودة مؤقتاً. إذا طلبت رسالة بالفعل فاستخدم أحدث رسالة من Atlas فقط، وإلا حاول لاحقاً.",
+    notReady: "تعذر على Atlas إرسال رسالة دخول لهذا الحساب. تحقق من البريد أو اطلب من العيادة تجهيز الحساب.",
+    network: "تعذر بدء تسجيل الدخول. تحقق من الاتصال وحاول مرة أخرى.",
+  },
+} as const;
 
 function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
@@ -16,8 +81,26 @@ function inboxUrl(email: string) {
   return null;
 }
 
+function remainingCooldown() {
+  try {
+    const until = Number(window.localStorage.getItem(COOLDOWN_KEY) ?? "0");
+    return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+  } catch {
+    return 0;
+  }
+}
+
+function rememberCooldown(seconds: number) {
+  try {
+    window.localStorage.setItem(COOLDOWN_KEY, String(Date.now() + seconds * 1000));
+  } catch {
+    // A blocked localStorage should never block authentication.
+  }
+}
+
 export function LoginForm({ locale }: { locale: UiLocale }) {
   const t = uiText(locale);
+  const copy = authCopy[locale];
   const [email, setEmail] = useState("");
   const [showEmail, setShowEmail] = useState(false);
   const [sent, setSent] = useState(false);
@@ -25,6 +108,10 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
   const [deviceBusy, setDeviceBusy] = useState(false);
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    setCooldown(remainingCooldown());
+  }, []);
 
   useEffect(() => {
     if (!sent) return;
@@ -47,7 +134,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
 
   useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
+    const timer = window.setInterval(() => setCooldown(remainingCooldown()), 1000);
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
@@ -57,22 +144,21 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     setError("");
     try {
       const supabase = createClient();
-      const { data, error: passkeyError } = await supabase.auth.signInWithPasskey();
-      if (passkeyError || !data.session) {
-        const cancelled = passkeyError?.name === "NotAllowedError" || passkeyError?.message?.toLowerCase().includes("cancel");
-        if (!cancelled) {
-          setShowEmail(true);
-          setError("This device could not open Atlas directly. Use the clinic email below instead.");
-        }
+      const { data, error: deviceError } = await supabase.auth.signInWithPasskey();
+      if (!deviceError && data.session) {
+        window.location.replace("/dashboard");
         return;
       }
-      window.location.replace("/dashboard");
+
+      const errorText = `${deviceError?.name ?? ""} ${deviceError?.message ?? ""}`.toLowerCase();
+      const cancelled = errorText.includes("notallowed") || errorText.includes("not allowed") || errorText.includes("cancel") || errorText.includes("abort");
+      setShowEmail(true);
+      setError(cancelled ? copy.deviceCancelled : copy.deviceUnavailable);
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message.toLowerCase() : "";
-      if (!message.includes("cancel") && !message.includes("notallowed")) {
-        setShowEmail(true);
-        setError("This device could not open Atlas directly. Use the clinic email below instead.");
-      }
+      const text = caught instanceof Error ? `${caught.name} ${caught.message}`.toLowerCase() : "";
+      const cancelled = text.includes("notallowed") || text.includes("not allowed") || text.includes("cancel") || text.includes("abort");
+      setShowEmail(true);
+      setError(cancelled ? copy.deviceCancelled : copy.deviceUnavailable);
     } finally {
       setDeviceBusy(false);
     }
@@ -80,38 +166,46 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
 
   async function sendLink(event?: FormEvent) {
     event?.preventDefault();
-    if (busy || cooldown > 0) return;
-    const normalized = normalizeEmail(email);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
-      setError("Enter your work email address.");
+    const wait = remainingCooldown();
+    if (busy || wait > 0) {
+      setCooldown(wait);
       return;
     }
+
+    const normalized = normalizeEmail(email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      setError(copy.invalidEmail);
+      return;
+    }
+
     setBusy(true);
     setError("");
     try {
-      const supabase = createMagicLinkClient();
+      const supabase = createClient();
       const { error: sendError } = await supabase.auth.signInWithOtp({
         email: normalized,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/device`,
         },
       });
       setEmail(normalized);
       if (sendError) {
         if (sendError.code === "over_email_send_rate_limit") {
-          // Never pretend an email was sent when Supabase rejected the request.
+          rememberCooldown(60);
           setCooldown(60);
-          setError("No new Atlas email was sent because email sign-in is temporarily limited. Try Open Atlas above, or wait a moment and request a fresh email.");
+          setError(copy.rateLimited);
         } else {
-          setError("Atlas could not send the sign-in email. Check the email address or ask the clinic administrator to add this account.");
+          setError(copy.notReady);
         }
         return;
       }
-      setSent(true);
+
+      rememberCooldown(60);
       setCooldown(60);
+      setSent(true);
     } catch {
-      setError("Atlas could not start sign-in. Check your connection and try again.");
+      setError(copy.network);
     } finally {
       setBusy(false);
     }
@@ -122,20 +216,19 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     return (
       <div className="receptionist-login-flow">
         <div className="notice notice-success login-notice" role="status">
-          <strong>Fresh Atlas email sent.</strong><br />
-          Open only the newest Atlas email and tap <strong>Open Atlas</strong>.
+          <strong>{copy.sentTitle}</strong><br />
+          {copy.sentHelp}
         </div>
-        {inbox ? <a className="button" href={inbox} target="_blank" rel="noreferrer">Open newest Atlas email</a> : null}
-        <button className="button button-ghost" type="button" disabled={deviceBusy} onClick={() => void openAtlasOnThisDevice()}>
-          {deviceBusy ? "Opening…" : "Open Atlas on this device"}
-        </button>
-        <p className="login-method-help">Once this device is trusted, normal days open Atlas without another email.</p>
+        {inbox ? <a className="button" href={inbox} target="_blank" rel="noreferrer">{copy.openInbox}</a> : null}
+        <p className="login-method-help">{copy.returnHelp}</p>
         {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+        <div className="login-secondary-actions">
           <button className="button button-ghost button-small" type="button" disabled={busy || cooldown > 0} onClick={() => void sendLink()}>
-            {busy ? "Sending…" : cooldown > 0 ? `New email in ${cooldown}s` : "Send a fresh email"}
+            {busy ? t.sending : cooldown > 0 ? `${cooldown}s` : copy.resend}
           </button>
-          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setSent(false); setShowEmail(true); setError(""); }}>Use another email</button>
+          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setSent(false); setShowEmail(true); setError(""); }}>
+            {copy.another}
+          </button>
         </div>
       </div>
     );
@@ -143,23 +236,24 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
 
   return (
     <div className="receptionist-login-flow">
-      <button className="button" type="button" disabled={deviceBusy || busy} onClick={() => void openAtlasOnThisDevice()}>
-        {deviceBusy ? "Opening Atlas…" : "Open Atlas"}
+      <button className="button login-primary-action" type="button" disabled={deviceBusy || busy} onClick={() => void openAtlasOnThisDevice()}>
+        {deviceBusy ? copy.opening : copy.open}
       </button>
-      <p className="login-method-help">On a trusted clinic device, this opens the schedule directly with Face ID, Touch ID, or the device unlock.</p>
+      <p className="login-method-help">{copy.deviceHelp}</p>
 
       {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
 
       {!showEmail ? (
         <button className="button button-ghost" type="button" onClick={() => { setShowEmail(true); setError(""); }}>
-          Use clinic email instead
+          {copy.emailFallback}
         </button>
       ) : (
         <form className="stack-form login-email-form" onSubmit={sendLink}>
+          <p className="field-help login-email-help">{copy.emailHint}</p>
           <label htmlFor="email">{t.workEmail}</label>
           <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="reception@clinic.com" dir="ltr" required />
           <button className="button button-ghost" type="submit" disabled={busy || cooldown > 0}>
-            {busy ? "Sending…" : cooldown > 0 ? `Try again in ${cooldown}s` : "Send fresh Atlas email"}
+            {busy ? t.sending : cooldown > 0 ? `${cooldown}s` : copy.send}
           </button>
         </form>
       )}
