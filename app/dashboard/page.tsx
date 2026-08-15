@@ -147,9 +147,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const maximum = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000);
   const minimumInput = toBaghdadInputValue(minimum);
   const maximumInput = toBaghdadInputValue(maximum);
-  const occupiedAppointmentTimes = rows
-    .filter((row) => row.status === "pending" || row.status === "confirmed")
-    .map((row) => toBaghdadInputValue(new Date(row.appointment_at)));
+  const occupiedByDoctor = rows.reduce<Record<string, string[]>>((result, row) => {
+    if (!row.doctor_id || (row.status !== "pending" && row.status !== "confirmed")) return result;
+    const values = result[row.doctor_id] ?? [];
+    values.push(toBaghdadInputValue(new Date(row.appointment_at)));
+    result[row.doctor_id] = values;
+    return result;
+  }, {});
   const defaultReminderLanguage = reminderSettings?.default_reminder_language ?? "ku";
 
   return (
@@ -307,7 +311,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               intervalMinutes={clinic.appointment_interval_minutes}
               min={minimumInput}
               max={maximumInput}
-              occupied={occupiedAppointmentTimes}
+              occupiedByDoctor={occupiedByDoctor}
               timeZoneLabel={appLocale.timeZoneLabel}
             />
             <label htmlFor="reminder_language">Patient reminder language</label>
