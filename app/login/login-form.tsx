@@ -68,7 +68,9 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         email: normalized,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: `${window.location.origin}/auth/finish?next=/dashboard`,
+          // Keep using the callback URL already approved in Supabase. For the
+          // implicit flow the callback forwards the URL fragment to /auth/finish.
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
       setEmail(normalized);
