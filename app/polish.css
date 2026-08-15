@@ -55,9 +55,27 @@
 .staff-role-actions .danger-link { color: #a43131; background: transparent; }
 .staff-protected-note { margin-top: 10px; }
 
+.patient-card { width: min(560px, 100%); }
+.patient-card .eyebrow { margin-top: 26px; }
+.patient-appointment-details {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+.patient-appointment-details > div {
+  border: 1px solid #e2e8e4;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f8faf9;
+}
+.patient-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.patient-actions form, .patient-actions button { width: 100%; }
+.patient-privacy { margin-top: 20px; }
+
 @media (max-width: 620px) {
   .demo-safety-strip { align-items: flex-start; flex-direction: column; gap: 2px; }
   .staff-role-actions { align-items: stretch; flex-direction: column; }
   .staff-role-actions form:first-child { grid-template-columns: 1fr; width: 100%; }
   .staff-role-actions form:last-child, .staff-role-actions form:last-child button { width: 100%; }
+  .patient-appointment-details, .patient-actions { grid-template-columns: 1fr; }
 }

@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 const features = [
   ["One clean schedule", "Appointments, confirmations, cancellations and no-shows in one focused workspace."],
@@ -6,7 +10,11 @@ const features = [
   ["Reminder-ready", "Secure patient links and WhatsApp reminder infrastructure are ready for provider activation."],
 ] as const;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (data.user) redirect("/dashboard");
+
   return (
     <main className="marketing-page">
       <nav className="nav shell marketing-nav">
