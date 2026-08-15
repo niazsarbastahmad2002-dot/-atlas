@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 
@@ -121,12 +121,12 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
           </button>
         </form>
 
-        <div className="login-secondary-actions">
-          <button className="text-button" type="button" disabled={busy} onClick={() => void sendCode()}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => void sendCode()}>
             Send a new code
           </button>
           <button
-            className="text-button"
+            className="button button-ghost button-small"
             type="button"
             disabled={busy}
             onClick={() => {
