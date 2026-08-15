@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -7,7 +8,7 @@ export function createAdminClient() {
 
   if (!url || !secretKey) throw new Error("Atlas server database credentials are not configured.");
 
-  return createClient(url, secretKey, {
+  return createClient<Database>(url, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
