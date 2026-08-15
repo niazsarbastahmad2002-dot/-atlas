@@ -4,33 +4,13 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText } from "@/lib/i18n/ui";
 import { getLoginMessage } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
+import { FirstAccessForm } from "./first-access-form";
 import { LoginForm } from "./login-form";
 import { PasskeySignIn } from "./passkey-sign-in";
 
 type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
 };
-
-const passkeySubtitle = {
-  en: "Set up a passkey once, then open Atlas with Face ID, Touch ID, your device PIN, or password manager.",
-  ku: "یەک جار پاسکی ڕێکبخە، پاشان Atlas بە Face ID، Touch ID، PIN ـی ئامێر یان بەڕێوەبەری وشەی نهێنی بکەرەوە.",
-  ar: "أعدّ مفتاح مرور مرة واحدة، ثم افتح Atlas باستخدام Face ID أو Touch ID أو رمز الجهاز أو مدير كلمات المرور.",
-} as const;
-
-const firstTimeCopy = {
-  en: {
-    title: "First time on this device?",
-    body: "Sign in once with your work email, then open Settings and set up a passkey. After that, no email link is needed on this device.",
-  },
-  ku: {
-    title: "یەکەم جارە لەم ئامێرە؟",
-    body: "یەک جار بە ئیمەیڵی کار بچۆ ژوورەوە، پاشان لە ڕێکخستنەکان پاسکی دروست بکە. دوای ئەوە بەستەری ئیمەیڵ پێویست نابێت.",
-  },
-  ar: {
-    title: "أول مرة على هذا الجهاز؟",
-    body: "سجّل الدخول مرة واحدة ببريد العمل، ثم افتح الإعدادات وأنشئ مفتاح مرور. بعد ذلك لن تحتاج إلى رابط بريد على هذا الجهاز.",
-  },
-} as const;
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error } = await searchParams;
@@ -51,18 +31,25 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </Link>
 
         <div className="login-copy">
-          <div className="eyebrow">{t.loginEyebrow}</div>
-          <h1>{t.loginTitle}</h1>
-          <p>{passkeySubtitle[locale]}</p>
+          <div className="eyebrow">First time</div>
+          <h1>Open Atlas in under a minute.</h1>
+          <p>Your clinic gives you one short setup code. Enter it once, secure this device, and Atlas normally opens straight to your workspace from then on.</p>
         </div>
 
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
 
+        <FirstAccessForm />
+
+        <div className="auth-alternative">
+          <span>Already set up, but signed out?</span>
+          <p className="quiet">Use your saved passkey only when Atlas no longer has your active session.</p>
+        </div>
+
         <PasskeySignIn />
 
         <div className="auth-alternative">
-          <span>{firstTimeCopy[locale].title}</span>
-          <p className="quiet">{firstTimeCopy[locale].body}</p>
+          <span>Fallback</span>
+          <p className="quiet">Email sign-in stays available for account recovery and the clinic owner. Receptionists do not need it for normal first access.</p>
         </div>
 
         <LoginForm locale={locale} />
