@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
-
-type Step = "email" | "code";
 
 function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
@@ -12,14 +10,34 @@ function normalizeEmail(value: string) {
 
 export function LoginForm({ locale }: { locale: UiLocale }) {
   const t = uiText(locale);
-  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function sendCode(event?: FormEvent) {
+  useEffect(() => {
+    if (!sent) return;
+
+    let cancelled = false;
+    const supabase = createClient();
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled && data.session) window.location.replace("/dashboard");
+    };
+
+    void checkSession();
+    const timer = window.setInterval(() => void checkSession(), 1500);
+    const onFocus = () => void checkSession();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [sent]);
+
+  async function sendLink(event?: FormEvent) {
     event?.preventDefault();
     if (busy) return;
 
@@ -31,27 +49,28 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
 
     setBusy(true);
     setError("");
-    setMessage("");
 
     try {
       const supabase = createClient();
       const { error: sendError } = await supabase.auth.signInWithOtp({
         email: normalized,
-        options: { shouldCreateUser: false },
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        },
       });
 
       if (sendError) {
         if (sendError.code === "over_email_send_rate_limit") {
-          setError("A code was requested too recently. Wait a moment and try again.");
+          setError("A sign-in link was requested too recently. Wait a moment and try again.");
         } else {
-          setError("Atlas could not send a sign-in code. Check the email or ask your clinic administrator to add this account.");
+          setError("Atlas could not send the sign-in link. Check the email or ask the clinic administrator to add this account.");
         }
         return;
       }
 
       setEmail(normalized);
-      setStep("code");
-      setMessage(`Enter the 6-digit code sent to ${normalized}.`);
+      setSent(true);
     } catch {
       setError("Atlas could not start sign-in. Check your connection and try again.");
     } finally {
@@ -59,87 +78,38 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     }
   }
 
-  async function verifyCode(event: FormEvent) {
-    event.preventDefault();
-    if (busy) return;
-
-    const token = code.replace(/\D/g, "");
-    if (!/^\d{6}$/.test(token)) {
-      setError("Enter the 6-digit code from your email.");
-      return;
-    }
-
-    setBusy(true);
-    setError("");
-
-    try {
-      const supabase = createClient();
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: "email",
-      });
-
-      if (verifyError) {
-        setError("That code is incorrect or expired. Check the latest email and try again.");
-        return;
-      }
-
-      window.location.replace("/dashboard");
-    } catch {
-      setError("Atlas could not finish sign-in. Try the code again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (step === "code") {
+  if (sent) {
     return (
       <div className="receptionist-login-flow">
-        {message ? <p className="notice notice-success login-notice" role="status">{message}</p> : null}
+        <div className="notice notice-success login-notice" role="status">
+          <strong>One last tap.</strong><br />
+          We sent a secure Atlas sign-in button to <bdi dir="ltr">{email}</bdi>.
+        </div>
+
+        <a className="button" href="mailto:">Open email</a>
+        <p className="login-method-help">
+          Tap the Atlas sign-in button in the newest email. Atlas opens the schedule automatically and keeps this device signed in.
+        </p>
+
         {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
 
-        <form className="stack-form login-email-form" onSubmit={verifyCode}>
-          <label htmlFor="email-code">Verification code</label>
-          <input
-            id="email-code"
-            name="code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-            placeholder="123456"
-            dir="ltr"
-            autoFocus
-            required
-          />
-          <button className="button" type="submit" disabled={busy || code.length !== 6}>
-            {busy ? "Opening Atlas…" : "Open Atlas"}
-          </button>
-        </form>
-
         <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => void sendCode()}>
-            Send a new code
+          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => void sendLink()}>
+            {busy ? "Sending…" : "Send again"}
           </button>
           <button
             className="button button-ghost button-small"
             type="button"
             disabled={busy}
             onClick={() => {
-              setStep("email");
-              setCode("");
-              setMessage("");
+              setSent(false);
               setError("");
             }}
           >
             Use another email
           </button>
         </div>
-        <p className="login-method-help">This verification is normally needed only when Atlas no longer has an active session on this device.</p>
+        <p className="login-method-help">Normally this is needed only once on this device. Returning receptionists open Atlas straight into the schedule.</p>
       </div>
     );
   }
@@ -147,7 +117,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
   return (
     <div className="receptionist-login-flow">
       {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
-      <form className="stack-form login-email-form" onSubmit={sendCode}>
+      <form className="stack-form login-email-form" onSubmit={sendLink}>
         <label htmlFor="email">{t.workEmail}</label>
         <input
           id="email"
@@ -161,10 +131,10 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
           required
         />
         <button className="button" type="submit" disabled={busy}>
-          {busy ? "Sending code…" : "Continue"}
+          {busy ? "Sending…" : "Continue"}
         </button>
       </form>
-      <p className="login-method-help">First time on this device: enter your work email and one short verification code. After that, just open Atlas.</p>
+      <p className="login-method-help">First time on this device: enter the clinic email and tap one secure link. After that, just open Atlas.</p>
     </div>
   );
 }
