@@ -77,3 +77,32 @@ where n.nspname = 'public'
     'reminder_delivery_events',
     'trusted_devices'
   );
+
+-- 4) Security-definer RPCs used by Atlas must never be executable by anonymous users.
+select 1 / case when count(*) = 6 and bool_and(not has_function_privilege('anon', p.oid, 'EXECUTE')) then 1 else 0 end
+  as sensitive_rpc_anon_denied
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in (
+    'create_patient_access_token',
+    'register_trusted_device',
+    'revoke_all_trusted_devices',
+    'revoke_current_trusted_device',
+    'revoke_trusted_device',
+    'validate_trusted_device'
+  );
+
+-- 5) An authenticated outsider may call the patient-token RPC, but it must reject
+--    an appointment belonging to another clinic. This is the intended reason the
+--    function is SECURITY DEFINER: it can write the private token table only after
+--    performing its own tenant check.
+begin;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000999', true);
+set local role authenticated;
+select 1 / case when public.create_patient_access_token(
+  (select id from public.appointments order by created_at asc limit 1),
+  repeat('a', 64),
+  now() + interval '1 day'
+) = false then 1 else 0 end as outsider_patient_token_rejected;
+rollback;
