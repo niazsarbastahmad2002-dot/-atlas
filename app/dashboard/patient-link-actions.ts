@@ -8,14 +8,9 @@ import {
 } from "@/lib/patient-links";
 import { createClient } from "@/lib/supabase/server";
 
-export type PatientLinkState = {
+type PatientLinkState = {
   link: string | null;
   error: string | null;
-};
-
-export const initialPatientLinkState: PatientLinkState = {
-  link: null,
-  error: null,
 };
 
 export async function createPatientAccessLink(
