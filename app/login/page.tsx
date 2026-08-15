@@ -31,7 +31,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="login-copy">
           <div className="eyebrow">Reception</div>
           <h1>Open Atlas. Start the day.</h1>
-          <p>Use your clinic email once on this device. Atlas keeps you signed in, so normal days start straight at the schedule.</p>
+          <p>Enter the clinic email once, tap the secure Atlas link we send, and the schedule opens. Normal days after that start straight inside Atlas.</p>
         </div>
 
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
