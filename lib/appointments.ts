@@ -20,6 +20,17 @@ const statusTransitions: Record<AppointmentStatus, readonly AppointmentStatus[]>
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const dateTimePattern = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 const unsafeNameCharacters = /[\p{Cc}\p{Cf}]/u;
+const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+
+function asciiDigits(value: string) {
+  return value.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const arabicIndex = arabicDigits.indexOf(digit);
+    if (arabicIndex >= 0) return String(arabicIndex);
+    const persianIndex = persianDigits.indexOf(digit);
+    return persianIndex >= 0 ? String(persianIndex) : digit;
+  });
+}
 
 export function isUuid(value: string) {
   return uuidPattern.test(value);
@@ -36,7 +47,7 @@ export function isValidDisplayName(value: string) {
 }
 
 export function normalizeIraqiMobile(value: string) {
-  let phone = value.trim().replace(/[\s().-]/g, "");
+  let phone = asciiDigits(value).trim().replace(/[\s().-]/g, "");
   if (phone.startsWith("00")) phone = `+${phone.slice(2)}`;
   if (phone.startsWith("0")) phone = `+964${phone.slice(1)}`;
   if (phone.startsWith("964")) phone = `+${phone}`;
@@ -64,11 +75,12 @@ function baghdadParts(date: Date) {
 }
 
 export function parseBaghdadDateTime(value: string, now = new Date()) {
-  const match = dateTimePattern.exec(value);
+  const normalizedValue = asciiDigits(value);
+  const match = dateTimePattern.exec(normalizedValue);
   if (!match) return null;
 
   const [, year, month, day, hour, minute] = match;
-  const date = new Date(`${value}:00+03:00`);
+  const date = new Date(`${normalizedValue}:00+03:00`);
   if (Number.isNaN(date.getTime())) return null;
 
   const parts = baghdadParts(date);
