@@ -142,20 +142,21 @@ export function AppointmentTimeField({
   return (
     <div className="time-field-group" style={{ minWidth: 0 }}>
       <label htmlFor="appointment_date">{text.date} <span className="label-muted">· {timeZoneLabel}</span></label>
-      <input
-        id="appointment_date"
-        className="appointment-date-input"
-        type="date"
-        value={date}
-        min={minDate}
-        max={maxDate}
-        style={{ minWidth: 0, maxWidth: "100%", width: "100%", textAlign: "left" }}
-        onChange={(event) => {
-          setDate(event.target.value);
-          setTime("");
-        }}
-        required
-      />
+      <div className="appointment-date-shell">
+        <input
+          id="appointment_date"
+          className="appointment-date-input"
+          type="date"
+          value={date}
+          min={minDate}
+          max={maxDate}
+          onChange={(event) => {
+            setDate(event.target.value);
+            setTime("");
+          }}
+          required
+        />
+      </div>
 
       <label htmlFor="appointment_slot">{text.slot} · {intervalMinutes} min</label>
       <select
@@ -185,7 +186,43 @@ export function AppointmentTimeField({
       <p className="field-help">{text.slotHelp}</p>
 
       <style jsx>{`
+        .appointment-date-shell {
+          width: 100%;
+          min-width: 0;
+          overflow: hidden;
+          border: 1px solid #cbd4ce;
+          border-radius: 12px;
+          background: #fff;
+          transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .appointment-date-shell:focus-within {
+          border-color: var(--accent);
+          box-shadow: 0 0 0 4px rgba(31, 90, 67, .10);
+        }
+
+        .appointment-date-input {
+          display: block;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          min-height: 46px;
+          border: 0;
+          border-radius: 0;
+          padding: 10px 13px;
+          background: transparent;
+          box-shadow: none;
+          text-align: left;
+        }
+
+        .appointment-date-input:focus {
+          border: 0;
+          box-shadow: none;
+        }
+
         .appointment-date-input::-webkit-date-and-time-value {
+          width: 100%;
+          margin: 0;
           text-align: left;
         }
       `}</style>
