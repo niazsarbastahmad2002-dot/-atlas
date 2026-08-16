@@ -144,11 +144,12 @@ export function AppointmentTimeField({
       <label htmlFor="appointment_date">{text.date} <span className="label-muted">· {timeZoneLabel}</span></label>
       <input
         id="appointment_date"
+        className="appointment-date-input"
         type="date"
         value={date}
         min={minDate}
         max={maxDate}
-        style={{ minWidth: 0, maxWidth: "100%", textAlign: "left" }}
+        style={{ minWidth: 0, maxWidth: "100%", width: "100%", textAlign: "left" }}
         onChange={(event) => {
           setDate(event.target.value);
           setTime("");
@@ -182,6 +183,12 @@ export function AppointmentTimeField({
         {text.custom}
       </button>
       <p className="field-help">{text.slotHelp}</p>
+
+      <style jsx>{`
+        .appointment-date-input::-webkit-date-and-time-value {
+          text-align: left;
+        }
+      `}</style>
     </div>
   );
 }
