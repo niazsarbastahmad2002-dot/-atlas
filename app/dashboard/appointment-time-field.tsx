@@ -119,7 +119,7 @@ export function AppointmentTimeField({
 
   if (custom) {
     return (
-      <div className="time-field-group">
+      <div className="time-field-group" style={{ minWidth: 0 }}>
         <label htmlFor="appointment_at">{text.dateTime} <span className="label-muted">· {timeZoneLabel}</span></label>
         <input
           id="appointment_at"
@@ -128,6 +128,7 @@ export function AppointmentTimeField({
           min={min}
           max={max}
           defaultValue={selectedValue}
+          style={{ minWidth: 0, maxWidth: "100%" }}
           required
         />
         <button className="inline-mode-button" type="button" onClick={() => setCustom(false)}>
@@ -139,7 +140,7 @@ export function AppointmentTimeField({
   }
 
   return (
-    <div className="time-field-group">
+    <div className="time-field-group" style={{ minWidth: 0 }}>
       <label htmlFor="appointment_date">{text.date} <span className="label-muted">· {timeZoneLabel}</span></label>
       <input
         id="appointment_date"
@@ -147,7 +148,7 @@ export function AppointmentTimeField({
         value={date}
         min={minDate}
         max={maxDate}
-        style={{ textAlign: "center" }}
+        style={{ minWidth: 0, maxWidth: "100%", textAlign: "left" }}
         onChange={(event) => {
           setDate(event.target.value);
           setTime("");
