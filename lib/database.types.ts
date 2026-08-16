@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
@@ -435,39 +437,6 @@ export type Database = {
           },
         ]
       }
-      trusted_devices: {
-        Row: {
-          created_at: string
-          id: string
-          label: string
-          last_seen_at: string
-          revoked_at: string | null
-          session_id: string
-          token_hash: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          label?: string
-          last_seen_at?: string
-          revoked_at?: string | null
-          session_id: string
-          token_hash: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          label?: string
-          last_seen_at?: string
-          revoked_at?: string | null
-          session_id?: string
-          token_hash?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -508,6 +477,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_patient_access_token_server: {
+        Args: {
+          p_actor_id: string
+          p_appointment_id: string
+          p_expires_at: string
+          p_token_hash: string
+        }
+        Returns: boolean
+      }
       fail_whatsapp_reminder: {
         Args: {
           p_error_code: string
@@ -540,17 +518,6 @@ export type Database = {
           p_provider_message_id: string
           p_status: string
         }
-        Returns: boolean
-      }
-      register_trusted_device: {
-        Args: { p_label?: string; p_token_hash: string }
-        Returns: string
-      }
-      revoke_all_trusted_devices: { Args: never; Returns: number }
-      revoke_current_trusted_device: { Args: never; Returns: boolean }
-      revoke_trusted_device: { Args: { p_device_id: string }; Returns: boolean }
-      validate_trusted_device: {
-        Args: { p_token_hash: string }
         Returns: boolean
       }
       validate_whatsapp_reminder_claim: {
