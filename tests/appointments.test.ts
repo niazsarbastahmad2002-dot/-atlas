@@ -20,6 +20,11 @@ test("normalizes common Iraqi mobile formats", () => {
   assert.equal(normalizeIraqiMobile("9647501234567"), "+9647501234567");
 });
 
+test("accepts Kurdish and Arabic-script digits for Iraqi mobiles", () => {
+  assert.equal(normalizeIraqiMobile("٠٧٥٠ ١٢٣ ٤٥٦٧"), "+9647501234567");
+  assert.equal(normalizeIraqiMobile("۰۷۵۰ ۱۲۳ ۴۵۶۷"), "+9647501234567");
+});
+
 test("rejects invalid Iraqi mobile numbers", () => {
   assert.equal(normalizeIraqiMobile("12345"), null);
   assert.equal(normalizeIraqiMobile("+9646501234567"), null);
@@ -73,6 +78,13 @@ test("parses and formats Baghdad-local appointment times", () => {
   assert.ok(parsed);
   assert.equal(parsed.toISOString(), "2026-08-15T09:30:00.000Z");
   assert.equal(toBaghdadInputValue(parsed), "2026-08-15T12:30");
+});
+
+test("parses localized digits in Baghdad appointment times", () => {
+  const now = new Date("2026-08-15T00:00:00Z");
+  const parsed = parseBaghdadDateTime("٢٠٢٦-٠٨-١٥T١٢:٣٠", now);
+  assert.ok(parsed);
+  assert.equal(parsed.toISOString(), "2026-08-15T09:30:00.000Z");
 });
 
 test("rejects malformed, stale, and excessively distant appointment times", () => {
