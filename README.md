@@ -15,7 +15,9 @@ Atlas is intentionally not an EMR, diagnostic system, treatment tool, hospital-m
 - Application timezone: `Asia/Baghdad`
 - `/demo`: synthetic browser-only test workspace; never connected to production clinic/patient data
 
-The repository, Supabase migrations, generated database types, and this README are expected to describe the same production system. Forward migrations are used for production schema changes.
+The live database, generated database types, current forward migrations, application code, and this README are expected to describe the same production system. The production database predates complete migration-file capture in this repository; the exact recorded ledger and the rules for future migration parity are documented in [`supabase/MIGRATION_HISTORY.md`](supabase/MIGRATION_HISTORY.md). Do not reconstruct missing historical SQL from migration names alone.
+
+Operational pilot procedures live in [`PILOT_RUNBOOK.md`](PILOT_RUNBOOK.md).
 
 ## Receptionist workflow
 
@@ -50,6 +52,8 @@ Atlas does not create accounts from arbitrary email sign-in attempts (`shouldCre
 ### Authentication pilot blocker
 
 Supabase's built-in development email sender has restrictive rate limits and recent production auth logs show repeated `over_email_send_rate_limit` responses. **Custom production SMTP is required before relying on email recovery in a real clinic pilot.** Atlas must not claim an email was sent when Supabase rejected it.
+
+Production auth logs have also verified successful passkey authentication and successful PKCE magic-link authentication, so the remaining recovery blocker is mail delivery infrastructure rather than the Atlas login flow itself.
 
 The previous setup-code, six-digit email-code, application `trusted_devices`, and implicit-token-finish architectures are retired. Passkey credentials themselves are owned by Supabase Auth, not by an Atlas public table.
 
@@ -165,10 +169,11 @@ Production verification after a merge includes:
 - recent Vercel runtime errors/logs reviewed
 - Supabase security/performance advisors reviewed after DDL/security changes
 - tenant-isolation SQL smoke test when relevant
+- exact production migration version mirrored to source and database types regenerated after schema changes
 
 ## Pilot operations
 
-Before any real patient usage, the pilot clinic should explicitly agree to the pilot and designate who can provision/offboard staff. Keep only scheduling data that Atlas actually needs.
+Before any real patient usage, follow [`PILOT_RUNBOOK.md`](PILOT_RUNBOOK.md). The pilot clinic should explicitly agree to the pilot and designate who can provision/offboard staff. Keep only scheduling data that Atlas actually needs.
 
 Minimum operating expectations:
 
