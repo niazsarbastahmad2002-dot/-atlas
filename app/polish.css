@@ -72,6 +72,50 @@
 .patient-actions form, .patient-actions button { width: 100%; }
 .patient-privacy { margin-top: 20px; }
 
+/* Day-by-day schedule navigation stays compact: three obvious targets, no dashboard clutter. */
+.day-navigation {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr minmax(96px, auto);
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+.day-navigation > .button { min-height: 40px; padding-inline: 12px; }
+.day-current {
+  display: grid;
+  min-height: 40px;
+  place-items: center;
+  gap: 2px;
+  border-radius: 12px;
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+}
+.day-current strong { font-size: 13px; line-height: 1.25; }
+.day-current span { color: var(--accent); font-size: 10px; font-weight: 800; }
+.day-current.is-today { background: var(--accent-faint); }
+
+.appointment-action-feedback {
+  flex-basis: 100%;
+  color: var(--danger);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+.row-actions button:disabled { opacity: .42; }
+
+.login-primary-action { width: 100%; min-height: 52px; }
+.login-secondary-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.login-email-help { margin: 4px 0 2px; text-align: center; }
+.device-setup-card { width: min(520px, 100%); }
+.device-setup-actions { margin-top: 20px; }
+.device-setup-continue { margin-top: 10px; }
+
 /* Product polish: keep Atlas calm, dense enough for reception work, and app-like. */
 @media (min-width: 901px) {
   .workspace-page { padding-top: 26px; }
@@ -116,6 +160,13 @@
   .app-bottom-nav > a:active { transform: scale(.97); }
   .app-bottom-add-circle { transition: transform .12s ease, box-shadow .12s ease; }
   .app-bottom-add:active .app-bottom-add-circle { transform: scale(.94); box-shadow: 0 4px 12px rgba(31,90,67,.18); }
+}
+
+@media (max-width: 540px) {
+  .day-navigation { grid-template-columns: 44px 1fr 44px; gap: 7px; }
+  .day-navigation > .button { min-width: 44px; padding: 0; }
+  .day-navigation > .button span { display: none; }
+  .day-current strong { font-size: 12px; }
 }
 
 @media (max-width: 430px) {

@@ -7,34 +7,19 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production",
 };
 
+/**
+ * Atlas uses one browser auth client for both passkey sign-in and the standard
+ * Supabase SSR/PKCE email recovery flow. Keeping one flow avoids the historical
+ * implicit/PKCE split and ensures sessions are written to the same cookie store.
+ */
 export function createClient() {
   return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       auth: {
+        flowType: "pkce",
         experimental: { passkey: true },
-      },
-      cookieOptions,
-    },
-  );
-}
-
-/**
- * Magic links can be opened by an email app in a browser context that does not
- * have the PKCE verifier created by the original Atlas tab. For first-access
- * email sign-in we deliberately use Supabase's supported implicit flow, then
- * move the returned session into Atlas cookies on /auth/finish.
- */
-export function createMagicLinkClient() {
-  return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      auth: {
-        flowType: "implicit",
-        detectSessionInUrl: false,
-        persistSession: true,
       },
       cookieOptions,
     },

@@ -111,7 +111,7 @@ export async function provisionStaffMember(
 
   return {
     status: "success",
-    message: "Receptionist access is ready. They can open Atlas and sign in with their work email verification code.",
+    message: "Receptionist access is ready. On a new device they can use this work email to receive one secure Atlas sign-in link.",
     email,
   };
 }

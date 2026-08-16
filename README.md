@@ -1,76 +1,198 @@
 # Atlas
 
-Atlas is a focused Next.js and Supabase appointment workflow for small clinics. The daily product is designed around the receptionist: open Atlas, see the schedule, make the change, move on.
+Atlas is a mobile-first appointment and reminder workflow for private clinics in Erbil/Kurdistan. The normal daily user is the receptionist.
 
-## Pilot feature set
+**Product rule:** open Atlas → see the schedule → perform the task → move on.
 
-- Receptionist-first passwordless authentication: first access on a device uses work email + a 6-digit email verification code; a valid session then opens Atlas directly on later visits.
-- Administrative clinic membership controls remain behind Settings and are not part of the receptionist's daily workflow.
-- Doctor add/edit/archive/restore/order management.
-- Iraqi mobile normalization (`0750 123 4567` → `+9647501234567`).
-- Pending, confirmed, cancelled, completed, no-show, and retained-history void/archive appointment semantics.
-- Clinic scheduling intervals of 5/10/15/20/30 minutes, interval-aware slot selection, doctor-specific double-booking protection, and custom time override.
-- Per-patient reminder language (Sorani Kurdish, Arabic, or English), with remembered receptionist doctor/language preferences on the local browser.
-- Secure expiring patient self-service links that expose only the linked appointment and allow only permitted confirm/cancel transitions.
-- WhatsApp reminder queue, retries, idempotency, approved-template gating, signed webhook handling, delivery tracking, consent gating, and clinic reminder settings.
-- Synthetic `/demo` environment that never connects to Supabase.
-- GitHub CI for strict TypeScript, tests, production build, and high-severity production dependency audit.
+Atlas is intentionally not an EMR, diagnostic system, treatment tool, hospital-management suite, or general clinic ERP. Do not store diagnoses or medical notes in Atlas.
 
-## Authentication UX
+## Production source of truth
 
-Atlas deliberately avoids presenting receptionists with a menu of authentication methods.
+- Production: `https://atlasdemofixed.vercel.app`
+- GitHub: `niazsarbastahmad2002-dot/-atlas`, branch `main`
+- Vercel project: `atlas_demo_fixed` (Git-connected; production deploys from `main`)
+- Supabase project: `Atlas`, project ref `moazrwbalqiyoafrydkj`
+- Application timezone: `Asia/Baghdad`
+- `/demo`: synthetic browser-only test workspace; never connected to production clinic/patient data
 
-1. A clinic administrator adds the receptionist's work email once in Settings > Staff. This pre-creates the Atlas account and clinic membership.
-2. On a device with no Atlas session, the receptionist enters that work email and receives a 6-digit verification code.
-3. They type the code into the same Atlas screen and enter the schedule.
-4. Supabase's persisted session keeps normal later visits frictionless: opening Atlas goes directly to the workspace until the receptionist explicitly signs out, clears browser data, or the session is otherwise invalidated.
+The repository, Supabase migrations, generated database types, and this README are expected to describe the same production system. Forward migrations are used for production schema changes.
 
-For hosted Supabase, the **Magic Link / OTP** email template must use `{{ .Token }}` rather than `{{ .ConfirmationURL }}` so the email displays the six-digit code. The application requests OTP only for pre-provisioned users (`shouldCreateUser: false`).
+## Receptionist workflow
 
-## Safety status
+The main workspace supports:
 
-- `/demo` is browser-memory-only and never connects to Supabase.
-- Use invented details for product testing until a clinic has completed its own privacy, operations, and staff review.
-- Atlas stores scheduling details only. Do not enter diagnoses, medical notes, or other unnecessary health information.
-- No claim of healthcare, privacy, or regulatory compliance is made.
-- RLS is enabled on tenant/privacy-sensitive tables; `supabase/tenant_isolation_smoke_test.sql` verifies member access, outsider isolation, and write behavior transactionally with rollback.
+- day-by-day appointment schedule
+- appointment creation with Iraqi mobile normalization
+- doctor assignment and doctor-specific double-booking protection
+- 5/10/15/20/30-minute clinic scheduling intervals
+- interval-aware quick slots plus custom time
+- Pending, Confirmed, Cancelled, Completed, and No-show states
+- retained-history archive/void instead of destructive deletion
+- optimistic status actions with scroll-position continuity
+- Sorani Kurdish, Arabic, and English UI
+- independent Sorani/Arabic/English patient reminder language
+- patient reminder consent
+- secure appointment-specific patient self-service links
 
-## Local verification
+Administrative membership and clinic controls remain behind Settings. Database roles (`owner`, `manager`, `receptionist`) remain because they enforce authorization boundaries; they are not intended to complicate ordinary front-desk work.
+
+## Authentication model
+
+Atlas has one canonical authentication story.
+
+1. **Existing valid session:** opening Atlas goes directly to `/dashboard`. No login screen.
+2. **Session missing, device already prepared:** the sign-in screen shows one primary **Open Atlas** action. Supabase Passkeys/WebAuthn may use Face ID, Touch ID, fingerprint, device PIN, or the platform password manager underneath. Receptionists do not need to understand the term “passkey”.
+3. **New device or recovery:** use the pre-provisioned clinic work email. Atlas sends one secure Supabase magic link using the standard SSR/PKCE flow. A successful link returns to Atlas, performs one optional device-security setup, then opens the schedule.
+4. **Logout:** explicit logout invalidates the current Supabase session and returns to sign-in.
+
+Atlas does not create accounts from arbitrary email sign-in attempts (`shouldCreateUser: false`). Clinic access must be provisioned first. Expired/used links, mail rate limits, cancelled device prompts, unsupported device authentication, and network failures have separate human-readable recovery states.
+
+### Authentication pilot blocker
+
+Supabase's built-in development email sender has restrictive rate limits and recent production auth logs show repeated `over_email_send_rate_limit` responses. **Custom production SMTP is required before relying on email recovery in a real clinic pilot.** Atlas must not claim an email was sent when Supabase rejected it.
+
+The previous setup-code, six-digit email-code, application `trusted_devices`, and implicit-token-finish architectures are retired. Passkey credentials themselves are owned by Supabase Auth, not by an Atlas public table.
+
+## Current database model
+
+Primary public tables:
+
+- `clinics`
+- `clinic_members`
+- `doctors`
+- `appointments`
+- `clinic_reminder_settings`
+- `appointment_reminders`
+- `reminder_delivery_events`
+- `pending_reminder_delivery_events`
+- `appointment_audit_events`
+
+Private patient-link tables:
+
+- `private.patient_appointment_tokens`
+- `private.patient_link_rate_limits`
+
+Important invariants are enforced in Postgres as well as application code: tenant membership, doctor/clinic consistency, Iraqi phone format, valid appointment status transitions, outcome timing, appointment identity immutability, void history, reminder state/retry safety, and doctor slot collision protection.
+
+Patient-link token creation is a server-only operation. Raw patient tokens are high entropy and only their hashes are stored. Private patient token/rate-limit tables deny direct `anon` and `authenticated` access.
+
+## Security assumptions
+
+- RLS is required on tenant-sensitive public tables.
+- Clinic A must not read or mutate Clinic B.
+- Service-role and secret credentials are server-only.
+- Privileged `SECURITY DEFINER` functions use a fixed empty `search_path`, validate their caller/actor, and expose execution only to roles that need it.
+- Appointment/patient actions do not weaken database constraints just to make a UI action succeed.
+- Audit events intentionally avoid patient name and phone data.
+- Logs must not contain raw patient-link tokens, unnecessary patient PII, medical notes/diagnoses, secrets, or raw WhatsApp webhook payloads.
+- No claim of HIPAA, GDPR, Iraqi healthcare, or other regulatory compliance is made without a dedicated legal/security validation.
+
+`supabase/tenant_isolation_smoke_test.sql` is transactional and rolls back synthetic fixtures.
+
+## Patient self-service
+
+Patient links are appointment-specific, high entropy, hashed at rest, expiring, revocable, and rate controlled. A patient may only view limited information for the linked appointment and perform permitted confirm/cancel transitions. Patients cannot browse clinic schedules or enumerate other appointments.
+
+## WhatsApp reminders
+
+The existing reminder system includes scheduling, retries, terminal retry handling, idempotency, duplicate-send protection, consent gating, approved-template gating, clinic/global daily limits, signed webhook handling, delivery states, reschedule/cancellation synchronization, and privacy-conscious logging.
+
+`WHATSAPP_ENABLED=false` must remain the production default until all external prerequisites are genuinely complete:
+
+1. verified WhatsApp Business setup and production number
+2. approved Meta template(s)
+3. production server-side credentials
+4. webhook registration and verification
+5. a reliable five-minute reminder scheduler
+6. conservative clinic/global quotas
+7. synthetic end-to-end acceptance test
+
+Do not fake activation.
+
+## `/demo` isolation
+
+`/demo` exists for receptionist testing with invented data. It must never:
+
+- read production clinic or patient rows
+- write production clinic or patient rows
+- send real email
+- send real WhatsApp
+- create real patient links
+
+Changes to the receptionist UI should keep `/demo` behavior representative where practical without connecting it to Supabase.
+
+## Environment contract
+
+Public browser variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SITE_URL`
+
+Server-only variables:
+
+- `SUPABASE_SECRET_KEY` (preferred) or `SUPABASE_SERVICE_ROLE_KEY`
+- `CRON_SECRET`
+- `WHATSAPP_ENABLED`
+- `WHATSAPP_ACCESS_TOKEN`
+- `WHATSAPP_PHONE_NUMBER_ID`
+- `WHATSAPP_APP_SECRET`
+- `WHATSAPP_VERIFY_TOKEN`
+- `WHATSAPP_GRAPH_API_VERSION`
+- `WHATSAPP_GLOBAL_DAILY_LIMIT`
+
+Never expose server-only values through `NEXT_PUBLIC_*` variables or client bundles.
+
+SMTP credentials are configured in Supabase Auth, not in Atlas browser code.
+
+## Verification and CI
+
+Local/source verification:
 
 ```bash
 npm ci
 npm run check
-npm audit --omit=dev
+npm audit --omit=dev --audit-level=high
 ```
 
-`npm run check` runs strict TypeScript, the unit/integration test suite, and a production Next.js build. Database security and tenant isolation are tested transactionally with `supabase/tenant_isolation_smoke_test.sql`; it always rolls back synthetic fixtures.
+`npm run check` runs strict TypeScript, the unit/security suite, and a production Next.js build. Browser E2E smoke coverage lives under `e2e/` and is intended to cover the receptionist-facing login/recovery surface, `/demo`, directionality, representative device sizes, and core synthetic appointment interactions. Authenticated production auth is additionally verified against Supabase auth logs because passkey/email ceremonies cannot be safely automated with real staff identities in public CI.
 
-## Environment
+Production verification after a merge includes:
 
-Copy `.env.example` and populate it through secure environment-variable management. Never expose `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, or any WhatsApp secret to browser code.
+- GitHub CI green
+- Vercel deployment READY
+- production `/login` and `/demo` smoke checks
+- recent Vercel runtime errors/logs reviewed
+- Supabase security/performance advisors reviewed after DDL/security changes
+- tenant-isolation SQL smoke test when relevant
 
-## WhatsApp activation
+## Pilot operations
 
-The queue, scheduling triggers, bounded retry handling, idempotency, approved-template sender, delivery tracking, and signed webhook endpoint are implemented but disabled by default. Production activation requires:
+Before any real patient usage, the pilot clinic should explicitly agree to the pilot and designate who can provision/offboard staff. Keep only scheduling data that Atlas actually needs.
 
-1. A verified WhatsApp Business Cloud API number and an approved template with exactly two body parameters: clinic name and appointment date/time.
-2. Server-only WhatsApp and Supabase secret variables from `.env.example` plus a high-entropy `CRON_SECRET`.
-3. Meta webhook callback `https://atlasdemofixed.vercel.app/api/whatsapp/webhook` subscribed to message status events.
-4. An authenticated call to `/api/cron/reminders` every five minutes. On Vercel Pro this can be a Vercel Cron; otherwise use Supabase Cron or another trusted scheduler. The request must use `Authorization: Bearer $CRON_SECRET`.
-5. Set a conservative `WHATSAPP_GLOBAL_DAILY_LIMIT`. Approve each clinic server-side by setting `messaging_approved_at` and its `daily_message_limit`; clinic users cannot approve themselves.
-6. Set `WHATSAPP_ENABLED=true` only after a synthetic acceptance test succeeds. Reminders are scheduled only when staff record the patient's explicit reminder consent.
+Minimum operating expectations:
 
-No raw webhook payload, inbound message body, patient name, or medical detail is stored in reminder tables or emitted to application logs.
+- clinic permission and a named clinic contact
+- pre-provisioned receptionist accounts and prompt offboarding when staff leave
+- documented recovery path for a lost/replaced device
+- custom SMTP tested before relying on email recovery
+- clear instruction not to enter diagnoses or medical notes
+- known incident contact and ability to pause the pilot
+- understanding of Supabase/Vercel backup/recovery capabilities before relying on Atlas operationally
+- stop/pause criteria for access-control failures, data mix-ups, unreliable authentication, duplicate reminders, or other patient-impacting defects
 
-## External activation blockers
+## Pilot evidence and metrics
+
+Atlas is technically mature enough that real receptionist evidence matters more than adding endless features. Target at least 5–10 additional receptionist/clinic conversations using synthetic data where possible. Observe hesitation rather than explaining every screen immediately.
+
+Establish baseline and pilot measures for: appointments/day, no-show rate, cancellations, reminder calls/messages, receptionist scheduling workload, appointment-entry time, scheduling corrections, confirmation rate, patient response rate, receptionist/owner satisfaction, continued usage, and willingness to pay.
+
+Do not claim Atlas reduces no-shows until pilot evidence demonstrates it.
+
+## Remaining external blockers
 
 These are intentionally not faked in source code:
 
-- The hosted Supabase Magic Link / OTP template must display `{{ .Token }}` for the receptionist verification-code experience.
-- A production SMTP provider/credentials is still recommended before real-clinic rollout for reliable staff authentication email delivery.
-- Meta/WhatsApp verification, approved production template, provider credentials, webhook registration, and a trusted five-minute scheduler.
-- Real-world validation with Erbil clinic receptionists, including baseline no-show rate and receptionist scheduling workload.
-
-## Production
-
-The canonical production URL is [atlasdemofixed.vercel.app](https://atlasdemofixed.vercel.app).
+- **Production SMTP:** configure and verify a reliable SMTP sender in Supabase Auth before the first real clinic depends on email recovery.
+- **WhatsApp production:** Meta verification, production number, approved template, production credentials, webhook registration, scheduler, quotas, and acceptance test.
+- **Real-world validation:** additional Erbil receptionist/clinic testing, baseline metrics, clinic agreement, and pilot operational ownership.

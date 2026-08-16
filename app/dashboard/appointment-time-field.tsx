@@ -7,6 +7,7 @@ type AppointmentTimeFieldProps = {
   intervalMinutes: number;
   min: string;
   max: string;
+  initialDate?: string;
   occupiedByDoctor: Record<string, string[]>;
   timeZoneLabel: string;
   locale: UiLocale;
@@ -67,13 +68,17 @@ export function AppointmentTimeField({
   intervalMinutes,
   min,
   max,
+  initialDate,
   occupiedByDoctor,
   timeZoneLabel,
   locale,
 }: AppointmentTimeFieldProps) {
   const text = timeCopy[locale];
+  const minDate = min.slice(0, 10);
+  const maxDate = max.slice(0, 10);
+  const startingDate = initialDate && initialDate >= minDate && initialDate <= maxDate ? initialDate : minDate;
   const [custom, setCustom] = useState(false);
-  const [date, setDate] = useState(min.slice(0, 10));
+  const [date, setDate] = useState(startingDate);
   const [doctorId, setDoctorId] = useState("");
   const [time, setTime] = useState("");
   const slots = useMemo(() => slotTimes(intervalMinutes), [intervalMinutes]);
@@ -122,6 +127,7 @@ export function AppointmentTimeField({
           type="datetime-local"
           min={min}
           max={max}
+          defaultValue={selectedValue}
           required
         />
         <button className="inline-mode-button" type="button" onClick={() => setCustom(false)}>
@@ -139,8 +145,8 @@ export function AppointmentTimeField({
         id="appointment_date"
         type="date"
         value={date}
-        min={min.slice(0, 10)}
-        max={max.slice(0, 10)}
+        min={minDate}
+        max={maxDate}
         onChange={(event) => {
           setDate(event.target.value);
           setTime("");
