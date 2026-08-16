@@ -469,14 +469,6 @@ export type Database = {
         Args: { p_bucket_hash: string }
         Returns: boolean
       }
-      create_patient_access_token: {
-        Args: {
-          p_appointment_id: string
-          p_expires_at: string
-          p_token_hash: string
-        }
-        Returns: boolean
-      }
       create_patient_access_token_server: {
         Args: {
           p_actor_id: string
