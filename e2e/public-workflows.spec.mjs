@@ -24,7 +24,7 @@ test("unauthenticated receptionist sees one primary open action and recovery sta
 test("expired or consumed email link shows plain recovery language", async ({ page }) => {
   await page.goto("/auth/callback");
   await expect(page).toHaveURL(/\/login\?error=invalid_link/);
-  await expect(page.getByRole("alert")).toContainText("expired or was already used");
+  await expect(page.locator(".login-notice[role='alert']")).toContainText("expired or was already used");
   await expect(page.getByRole("button", { name: "New device or recovery" })).toBeVisible();
 });
 
