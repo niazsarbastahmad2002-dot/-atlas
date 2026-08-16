@@ -147,6 +147,7 @@ export function AppointmentTimeField({
         value={date}
         min={minDate}
         max={maxDate}
+        style={{ textAlign: "center" }}
         onChange={(event) => {
           setDate(event.target.value);
           setTime("");
