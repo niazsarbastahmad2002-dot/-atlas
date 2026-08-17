@@ -1,7 +1,9 @@
-import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
+import { uiLocaleMeta, type UiLocale } from "./ui.ts";
 
 const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
 const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+
+export type DayPeriod = "am" | "pm";
 
 export function toAsciiDigits(value: string) {
   return value.replace(/[٠-٩۰-۹]/g, (digit) => {
@@ -72,6 +74,22 @@ export function formatWeekday(date: Date, locale: UiLocale) {
   }).format(date);
 }
 
+export function formatDayPeriod(period: DayPeriod, locale: UiLocale) {
+  if (locale === "ku") return period === "am" ? "پ.ن" : "د.ن";
+  if (locale === "ar") return period === "am" ? "ص" : "م";
+  return period === "am" ? "AM" : "PM";
+}
+
 export function formatTimeValue(value: string, locale: UiLocale) {
-  return localizeDigits(value, locale);
+  const match = /^(\d{1,2}):(\d{2})$/.exec(toAsciiDigits(value));
+  if (!match) return localizeDigits(value, locale);
+
+  const hour24 = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour24 > 23 || minute > 59) return localizeDigits(value, locale);
+
+  const period: DayPeriod = hour24 >= 12 ? "pm" : "am";
+  const hour12 = hour24 % 12 || 12;
+  const clock = `${String(hour12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  return `${localizeDigits(clock, locale)} ${formatDayPeriod(period, locale)}`;
 }
