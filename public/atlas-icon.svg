@@ -1,4 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Atlas">
-  <rect width="512" height="512" rx="112" fill="#1f5a43"/>
-  <path d="M256 112 392 392h-73l-28-62h-70l-28 62h-73L256 112Zm0 126-26 58h52l-26-58Z" fill="#fff"/>
+  <defs>
+    <linearGradient id="atlas-g" x1="70" y1="58" x2="430" y2="454" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f7452"/>
+      <stop offset="1" stop-color="#174f3c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#atlas-g)"/>
+  <path d="M247 103c4-10 14-16 25-16s21 6 25 16l121 292h-77l-28-72H201l-29 72H94L215 103h32Zm9 111-32 82h66l-34-82Z" fill="#fff"/>
+  <path d="M165 342c31-44 64-65 100-65 35 0 60-18 82-53" fill="none" stroke="#176046" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="165" cy="342" r="12" fill="#fff"/>
+  <circle cx="347" cy="224" r="12" fill="#fff"/>
 </svg>

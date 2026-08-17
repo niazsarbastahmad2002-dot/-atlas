@@ -11,9 +11,9 @@ const authCopy = {
     emailHint: "Use the work email already prepared for this clinic.",
     send: "Send Atlas email",
     sentTitle: "Atlas email sent.",
-    sentHelp: "Open only the newest Atlas email and tap Open Atlas.",
-    openInbox: "Open newest Atlas email",
-    returnHelp: "After sign-in, Atlas opens the schedule directly. You do not need to set up anything else.",
+    sentHelp: "Open your inbox, choose the newest sign-in email, then tap Open Atlas.",
+    openInbox: "Open email inbox",
+    returnHelp: "When the link opens, Atlas goes straight to the schedule. You do not need to set up anything else.",
     resend: "Send a fresh email",
     another: "Use another email",
     quick: "Use quick sign-in",
@@ -30,9 +30,9 @@ const authCopy = {
     emailHint: "ئەو ئیمەیڵەی کار بەکاربهێنە کە پێشتر بۆ ئەم کلینیکە ئامادە کراوە.",
     send: "ئیمەیڵی Atlas بنێرە",
     sentTitle: "ئیمەیڵی Atlas نێردرا.",
-    sentHelp: "تەنها نوێترین ئیمەیڵی Atlas بکەرەوە و Open Atlas دابگرە.",
-    openInbox: "نوێترین ئیمەیڵی Atlas بکەرەوە",
-    returnHelp: "دوای چوونەژوورەوە Atlas ڕاستەوخۆ خشتەی وادەکان دەکاتەوە. هیچ ڕێکخستنێکی تری پێویست نییە.",
+    sentHelp: "سندوقی ئیمەیڵەکەت بکەرەوە، نوێترین ئیمەیڵی چوونەژوورەوە هەڵبژێرە، پاشان Open Atlas دابگرە.",
+    openInbox: "ئیمەیڵ بکەرەوە",
+    returnHelp: "کاتێک بەستەرەکە دەکرێتەوە، Atlas ڕاستەوخۆ خشتەی وادەکان دەکاتەوە. هیچ ڕێکخستنێکی تری پێویست نییە.",
     resend: "ئیمەیڵێکی نوێ بنێرە",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     quick: "چوونەژوورەوەی خێرا",
@@ -49,9 +49,9 @@ const authCopy = {
     emailHint: "استخدم بريد العمل الذي أعدته العيادة مسبقاً.",
     send: "إرسال بريد Atlas",
     sentTitle: "تم إرسال بريد Atlas.",
-    sentHelp: "افتح أحدث رسالة من Atlas فقط واضغط Open Atlas.",
-    openInbox: "فتح أحدث رسالة من Atlas",
-    returnHelp: "بعد تسجيل الدخول يفتح Atlas جدول المواعيد مباشرة. لا تحتاج إلى إعداد أي شيء آخر.",
+    sentHelp: "افتح صندوق البريد، اختر أحدث رسالة لتسجيل الدخول، ثم اضغط Open Atlas.",
+    openInbox: "فتح البريد",
+    returnHelp: "عند فتح الرابط ينتقل Atlas مباشرة إلى جدول المواعيد. لا تحتاج إلى إعداد أي شيء آخر.",
     resend: "إرسال رسالة جديدة",
     another: "استخدام بريد آخر",
     quick: "استخدام الدخول السريع",
@@ -72,9 +72,11 @@ function normalizeEmail(value: string) {
 
 function inboxUrl(email: string) {
   const domain = email.split("@")[1]?.toLowerCase();
-  if (domain === "gmail.com" || domain === "googlemail.com") return "https://mail.google.com/mail/u/0/#search/Atlas";
-  if (domain === "outlook.com" || domain === "hotmail.com" || domain === "live.com") return "https://outlook.live.com/mail/0/inbox";
+  if (domain === "gmail.com" || domain === "googlemail.com") return "https://mail.google.com/mail/u/0/#inbox";
+  if (domain === "outlook.com" || domain === "hotmail.com" || domain === "live.com" || domain === "msn.com") return "https://outlook.live.com/mail/0/inbox";
   if (domain === "yahoo.com") return "https://mail.yahoo.com/";
+  if (domain === "icloud.com" || domain === "me.com" || domain === "mac.com") return "https://www.icloud.com/mail/";
+  if (domain === "proton.me" || domain === "protonmail.com") return "https://mail.proton.me/";
   return null;
 }
 

@@ -1,41 +1,52 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createPatientAccessLink } from "./patient-link-actions";
 
 const initialPatientLinkState = {
   link: null as string | null,
   error: null as string | null,
+  patientPhone: null as string | null,
+  patientName: null as string | null,
 };
 
 const copy = {
   en: {
-    shareAppointment: "Share appointment",
+    shareAppointment: "Patient link",
     creating: "Preparing link…",
-    help: "This private link lets the patient view, confirm, or cancel only this appointment.",
+    help: "This private link shows only this appointment. The patient can view it, confirm, or cancel. It is separate from automatic reminders.",
+    shareHelp: "Nothing is sent automatically. Choose WhatsApp or Share, review the message, then send it yourself.",
     copy: "Copy link",
     copied: "Copied ✓",
-    share: "Share",
+    share: "Share…",
+    whatsapp: "Send on WhatsApp",
     shareTitle: "Atlas appointment",
+    message: "Your Atlas appointment link:",
   },
   ku: {
-    shareAppointment: "وادەکە بنێرە",
+    shareAppointment: "بەستەری نەخۆش",
     creating: "بەستەر ئامادە دەکرێت…",
-    help: "ئەم بەستەرە تایبەتە تەنها ڕێگە بە نەخۆش دەدات ئەم وادەیە ببینێت، پشتڕاستی بکاتەوە یان هەڵیوەشێنێتەوە.",
+    help: "ئەم بەستەرە تایبەتە تەنها ئەم وادەیە پیشان دەدات. نەخۆش دەتوانێت بیبینێت، پشتڕاستی بکاتەوە یان هەڵیوەشێنێتەوە. ئەمە جیاوازە لە بیرخستنەوەی خۆکار.",
+    shareHelp: "هیچ شتێک خۆکار نانێردرێت. واتسئەپ یان ناردن هەڵبژێرە، پەیامەکە ببینە و پاشان خۆت بینێرە.",
     copy: "بەستەر کۆپی بکە",
     copied: "کۆپی کرا ✓",
-    share: "ناردن",
+    share: "ناردن…",
+    whatsapp: "لە واتسئەپ بینێرە",
     shareTitle: "وادەی Atlas",
+    message: "بەستەری وادەی Atlas ـی تۆ:",
   },
   ar: {
-    shareAppointment: "مشاركة الموعد",
+    shareAppointment: "رابط المريض",
     creating: "جارٍ تجهيز الرابط…",
-    help: "هذا الرابط الخاص يتيح للمريض عرض هذا الموعد فقط وتأكيده أو إلغاءه.",
+    help: "هذا الرابط الخاص يعرض هذا الموعد فقط. يستطيع المريض عرضه أو تأكيده أو إلغاءه. وهو منفصل عن التذكيرات التلقائية.",
+    shareHelp: "لن يُرسل شيء تلقائياً. اختر واتساب أو مشاركة، راجع الرسالة، ثم أرسلها بنفسك.",
     copy: "نسخ الرابط",
     copied: "تم النسخ ✓",
-    share: "مشاركة",
+    share: "مشاركة…",
+    whatsapp: "إرسال عبر واتساب",
     shareTitle: "موعد Atlas",
+    message: "رابط موعدك في Atlas:",
   },
 } as const;
 
@@ -61,6 +72,14 @@ export function PatientLinkButton({
     setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
   }, []);
 
+  const whatsappUrl = useMemo(() => {
+    if (!state.link || !state.patientPhone) return null;
+    const digits = state.patientPhone.replace(/\D/g, "");
+    if (!digits) return null;
+    const message = `${t.message}\n${state.link}`;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+  }, [state.link, state.patientPhone, t.message]);
+
   async function copyLink() {
     if (!state.link) return;
     try {
@@ -76,7 +95,11 @@ export function PatientLinkButton({
     if (!state.link || !canShare) return;
     setSharing(true);
     try {
-      await navigator.share({ title: t.shareTitle, url: state.link });
+      await navigator.share({
+        title: t.shareTitle,
+        text: t.message,
+        url: state.link,
+      });
     } catch {
       // Closing the native share sheet is not an error the receptionist needs to see.
     } finally {
@@ -98,10 +121,15 @@ export function PatientLinkButton({
 
       {state.link ? (
         <div className="patient-link-result" role="status">
-          <p className="patient-link-help">{t.help}</p>
+          <div className="patient-link-copy-block">
+            <strong>{t.shareAppointment}</strong>
+            <p className="patient-link-help">{t.help}</p>
+            <p className="patient-link-send-help">{t.shareHelp}</p>
+          </div>
           <div className="patient-link-share-actions">
-            <button type="button" onClick={copyLink}>{copied ? t.copied : t.copy}</button>
+            {whatsappUrl ? <a className="patient-link-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer">{t.whatsapp}</a> : null}
             {canShare ? <button type="button" onClick={shareLink} disabled={sharing}>{t.share}</button> : null}
+            <button type="button" onClick={copyLink}>{copied ? t.copied : t.copy}</button>
           </div>
         </div>
       ) : null}
@@ -110,22 +138,40 @@ export function PatientLinkButton({
         .patient-link-control { display: contents; }
         .patient-link-result {
           flex-basis: 100%;
-          display: flex;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
           align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          margin-top: 2px;
-          border-radius: 10px;
-          padding: 10px 11px;
+          gap: 14px;
+          margin-top: 4px;
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 12px;
           background: var(--surface-soft);
         }
-        .patient-link-help { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
-        .patient-link-share-actions { display: flex; flex: none; gap: 6px; }
-        .patient-link-share-actions button { min-height: 38px; }
-        @media (max-width: 620px) {
-          .patient-link-result { align-items: stretch; flex-direction: column; }
-          .patient-link-share-actions { width: 100%; }
-          .patient-link-share-actions button { flex: 1; }
+        .patient-link-copy-block strong { display: block; margin-bottom: 4px; font-size: 11.5px; }
+        .patient-link-help, .patient-link-send-help { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
+        .patient-link-send-help { margin-top: 5px; color: #7d8982; }
+        .patient-link-share-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+        .patient-link-share-actions button, .patient-link-share-actions a {
+          display: inline-flex;
+          min-height: 38px;
+          align-items: center;
+          justify-content: center;
+          border: 0;
+          border-radius: 9px;
+          padding: 8px 10px;
+          background: #e9efeb;
+          color: var(--ink);
+          font-size: 10px;
+          font-weight: 760;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .patient-link-share-actions .patient-link-whatsapp { background: var(--accent); color: #fff; }
+        @media (max-width: 720px) {
+          .patient-link-result { grid-template-columns: 1fr; align-items: stretch; }
+          .patient-link-share-actions { width: 100%; justify-content: stretch; }
+          .patient-link-share-actions button, .patient-link-share-actions a { flex: 1; }
         }
       `}</style>
     </div>

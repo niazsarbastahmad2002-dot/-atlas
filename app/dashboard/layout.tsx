@@ -6,7 +6,9 @@ import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
 import { QuickHourPolish } from "./quick-hour-polish";
+import { ScheduleNavigationPolish } from "./schedule-navigation-polish";
 import { SettingsClientPolish } from "./settings-client-polish";
+import { SettingsHistoryShortcut } from "./settings-history-shortcut";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const locale = await getUiLocale();
@@ -15,7 +17,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     <div className="app-shell">
       <DashboardClientPolish locale={locale} />
       <SettingsClientPolish locale={locale} />
+      <SettingsHistoryShortcut locale={locale} />
       <QuickHourPolish />
+      <ScheduleNavigationPolish />
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
