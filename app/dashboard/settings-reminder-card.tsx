@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { usePathname, useRouter } from "next/navigation";
 import { formatLeadTime } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 
@@ -12,65 +10,77 @@ type ReminderSettings = {
   secondLeadMinutes: number | null;
   defaultLanguage: string;
   approved: boolean;
+};
+
+type Props = {
+  clinicId: string;
+  locale: UiLocale;
   canManage: boolean;
-  templateName: string;
-  templateLanguage: string;
-  dailyMessageLimit: number;
+  initialSettings: ReminderSettings;
 };
 
 const leadOptions = [30, 60, 120, 240, 360, 720, 1440, 2880, 10080];
 
 const copy = {
   en: {
-    eyebrow: "Communication",
-    title: "Appointment reminders",
-    approvedHelp: "Send up to two WhatsApp reminders for each appointment.",
-    pendingHelp: "Choose the timing now. WhatsApp sending stays off until provider approval is finished.",
-    enabled: "Automatic WhatsApp reminders",
+    eyebrow: "Reminders",
+    title: "Patient reminders",
+    help: "Choose when Atlas should remind patients about their appointment.",
+    pending: "Your reminder timing is ready. WhatsApp sending stays off until messaging approval is connected.",
+    enabled: "Send WhatsApp reminders automatically",
+    enabledHelp: "Only appointments with patient reminder consent are included.",
     first: "First reminder",
-    second: "Second reminder (optional)",
+    second: "Second reminder",
+    optional: "Optional",
     off: "Off",
-    before: "before appointment",
-    language: "Default reminder language",
+    before: "before",
+    language: "Default patient reminder language",
+    recommended: "Recommended default: 1 day before + 2 hours before.",
     saving: "Saving…",
-    saved: "Saved",
-    failed: "Could not save. Try again.",
-    approval: "WhatsApp approval is still pending, so reminders cannot be turned on yet.",
-    loading: "Loading reminder settings…",
+    saved: "Saved ✓",
+    failed: "Could not save. Your last saved settings were restored.",
+    approval: "WhatsApp is not connected yet, so automatic sending cannot be turned on.",
+    viewOnly: "Only clinic administration can change these settings.",
   },
   ku: {
-    eyebrow: "پەیوەندی",
-    title: "بیرخستنەوەی وادە",
-    approvedHelp: "بۆ هەر وادەیەک تا دوو بیرخستنەوەی واتسئاپ بنێرە.",
-    pendingHelp: "کاتەکان ئێستا هەڵبژێرە. ناردنی واتسئاپ تا تەواوبوونی پەسەندکردنی دابینکەر ناچالاک دەمێنێتەوە.",
-    enabled: "بیرخستنەوەی خۆکاری واتسئاپ",
+    eyebrow: "بیرخستنەوە",
+    title: "بیرخستنەوەی نەخۆش",
+    help: "هەڵبژێرە Atlas کەی بیرخستنەوەی وادە بۆ نەخۆش بنێرێت.",
+    pending: "کاتەکانی بیرخستنەوە ئامادەن. ناردنی واتسئاپ تا پەیوەستکردنی پەسەندکردنی پەیام ناچالاک دەمێنێتەوە.",
+    enabled: "بیرخستنەوەی واتسئاپ خۆکار بنێرە",
+    enabledHelp: "تەنها ئەو وادانەی ڕەزامەندی بیرخستنەوەیان هەیە دەگرێتەوە.",
     first: "بیرخستنەوەی یەکەم",
-    second: "بیرخستنەوەی دووەم (ئارەزوومەندانە)",
+    second: "بیرخستنەوەی دووەم",
+    optional: "ئارەزوومەندانە",
     off: "ناچالاک",
     before: "پێش وادە",
-    language: "زمانی بنەڕەتی بیرخستنەوە",
+    language: "زمانی بنەڕەتی بیرخستنەوەی نەخۆش",
+    recommended: "پێشنیاری بنەڕەتی: ١ ڕۆژ پێش وادە + ٢ کاتژمێر پێش وادە.",
     saving: "پاشەکەوت دەکرێت…",
-    saved: "پاشەکەوت کرا",
-    failed: "پاشەکەوت نەکرا. دووبارە هەوڵ بدە.",
-    approval: "پەسەندکردنی واتسئاپ هێشتا تەواو نەبووە، بۆیە ناتوانرێت بیرخستنەوەکان چالاک بکرێن.",
-    loading: "ڕێکخستنەکانی بیرخستنەوە بار دەبن…",
+    saved: "پاشەکەوت کرا ✓",
+    failed: "پاشەکەوت نەکرا. ڕێکخستنە پاشەکەوتکراوەکانی پێشوو گەڕێنرانەوە.",
+    approval: "واتسئاپ هێشتا پەیوەست نەکراوە، بۆیە ناردنی خۆکار ناتوانرێت چالاک بکرێت.",
+    viewOnly: "تەنها بەڕێوەبردنی کلینیک دەتوانێت ئەم ڕێکخستنانە بگۆڕێت.",
   },
   ar: {
-    eyebrow: "التواصل",
-    title: "تذكيرات المواعيد",
-    approvedHelp: "أرسل ما يصل إلى تذكيرين عبر واتساب لكل موعد.",
-    pendingHelp: "اختر التوقيت الآن. يبقى إرسال واتساب متوقفاً حتى اكتمال موافقة المزود.",
-    enabled: "تذكيرات واتساب التلقائية",
+    eyebrow: "التذكيرات",
+    title: "تذكيرات المرضى",
+    help: "اختر متى يذكّر Atlas المريض بموعده.",
+    pending: "توقيت التذكيرات جاهز. يبقى إرسال واتساب متوقفاً حتى ربط موافقة المراسلة.",
+    enabled: "إرسال تذكيرات واتساب تلقائياً",
+    enabledHelp: "تشمل فقط المواعيد التي وافق فيها المريض على التذكير.",
     first: "التذكير الأول",
-    second: "التذكير الثاني (اختياري)",
+    second: "التذكير الثاني",
+    optional: "اختياري",
     off: "إيقاف",
     before: "قبل الموعد",
-    language: "لغة التذكير الافتراضية",
+    language: "لغة تذكير المريض الافتراضية",
+    recommended: "الإعداد المقترح: قبل يوم + قبل ساعتين.",
     saving: "جارٍ الحفظ…",
-    saved: "تم الحفظ",
-    failed: "تعذر الحفظ. حاول مرة أخرى.",
-    approval: "موافقة واتساب ما زالت معلقة، لذلك لا يمكن تشغيل التذكيرات بعد.",
-    loading: "جارٍ تحميل إعدادات التذكير…",
+    saved: "تم الحفظ ✓",
+    failed: "تعذر الحفظ. تمت استعادة آخر إعدادات محفوظة.",
+    approval: "واتساب غير متصل بعد، لذلك لا يمكن تشغيل الإرسال التلقائي.",
+    viewOnly: "يمكن لإدارة العيادة فقط تغيير هذه الإعدادات.",
   },
 } as const;
 
@@ -80,93 +90,37 @@ const languageLabels = {
   ar: { ku: "الكردية (السورانية)", ar: "العربية", en: "الإنجليزية" },
 } as const;
 
-function reminderLeadLabel(minutes: number, locale: UiLocale) {
-  return `${formatLeadTime(minutes, locale)} ${copy[locale].before}`;
+function leadLabel(minutes: number, locale: UiLocale) {
+  return locale === "en"
+    ? `${formatLeadTime(minutes, locale)} before appointment`
+    : `${formatLeadTime(minutes, locale)} ${copy[locale].before}`;
 }
 
-export function SettingsReminderCard({ locale }: { locale: UiLocale }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [target, setTarget] = useState<HTMLElement | null>(null);
-  const [clinicId, setClinicId] = useState("");
-  const [settings, setSettings] = useState<ReminderSettings | null>(null);
-  const [loadError, setLoadError] = useState(false);
+export function SettingsReminderCard({ clinicId, locale, canManage, initialSettings }: Props) {
+  const t = copy[locale];
+  const [settings, setSettings] = useState(initialSettings);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydrated = useRef(false);
   const saveVersion = useRef(0);
-
-  const t = copy[locale];
-
-  useEffect(() => {
-    if (!pathname.startsWith("/dashboard/settings")) return;
-
-    const oldLead = document.querySelector<HTMLSelectElement>("#lead_minutes");
-    const oldCard = oldLead?.closest<HTMLElement>(".settings-card") ?? null;
-    const grid = document.querySelector<HTMLElement>(".settings-grid");
-    const hiddenClinic = oldLead?.form?.querySelector<HTMLInputElement>('input[name="clinic_id"]');
-    const id = hiddenClinic?.value ?? new URLSearchParams(window.location.search).get("clinic") ?? "";
-
-    if (oldCard) oldCard.hidden = true;
-    if (grid) setTarget(grid);
-    if (id) setClinicId(id);
-
-    const manageLink = document.querySelector<HTMLAnchorElement>('a.settings-link[href*="/dashboard/staff"]');
-    let manageHref = "";
-    let onManage: ((event: MouseEvent) => void) | null = null;
-    if (manageLink) {
-      manageHref = manageLink.getAttribute("href") ?? "";
-      if (manageHref) {
-        router.prefetch(manageHref);
-        onManage = (event: MouseEvent) => {
-          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-          event.preventDefault();
-          router.push(manageHref);
-        };
-        manageLink.addEventListener("click", onManage);
-      }
-    }
-
-    return () => {
-      if (oldCard) oldCard.hidden = false;
-      if (manageLink && onManage) manageLink.removeEventListener("click", onManage);
-    };
-  }, [pathname, router]);
+  const lastSaved = useRef(initialSettings);
 
   useEffect(() => {
-    if (!clinicId) return;
-    let cancelled = false;
-    setLoadError(false);
+    setSettings(initialSettings);
+    lastSaved.current = initialSettings;
+    hydrated.current = false;
+    setSaveState("idle");
+  }, [initialSettings]);
 
-    void fetch(`/api/settings/reminders?clinic=${encodeURIComponent(clinicId)}`, {
-      cache: "no-store",
-      credentials: "same-origin",
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("load_failed");
-        return response.json() as Promise<ReminderSettings>;
-      })
-      .then((data) => {
-        if (cancelled) return;
-        hydrated.current = false;
-        setSettings(data);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError(true);
-      });
-
-    return () => { cancelled = true; };
-  }, [clinicId]);
-
-  const payload = useMemo(() => settings ? {
+  const payload = useMemo(() => ({
     clinicId,
     enabled: settings.enabled,
     leadMinutes: settings.leadMinutes,
     secondLeadMinutes: settings.secondLeadMinutes,
     defaultLanguage: settings.defaultLanguage,
-  } : null, [clinicId, settings]);
+  }), [clinicId, settings]);
 
   useEffect(() => {
-    if (!payload || !settings?.canManage) return;
+    if (!canManage) return;
     if (!hydrated.current) {
       hydrated.current = true;
       return;
@@ -174,6 +128,7 @@ export function SettingsReminderCard({ locale }: { locale: UiLocale }) {
 
     const version = ++saveVersion.current;
     setSaveState("saving");
+
     const timer = window.setTimeout(() => {
       void fetch("/api/settings/reminders", {
         method: "POST",
@@ -183,124 +138,154 @@ export function SettingsReminderCard({ locale }: { locale: UiLocale }) {
       }).then(async (response) => {
         if (version !== saveVersion.current) return;
         if (!response.ok) {
-          if (response.status === 409) setSettings((current) => current ? { ...current, enabled: false } : current);
+          setSettings(lastSaved.current);
           setSaveState("error");
           return;
         }
+
+        const saved = await response.json() as {
+          enabled: boolean;
+          leadMinutes: number;
+          secondLeadMinutes: number | null;
+          defaultLanguage: string;
+        };
+        const next = {
+          ...settings,
+          enabled: saved.enabled,
+          leadMinutes: saved.leadMinutes,
+          secondLeadMinutes: saved.secondLeadMinutes,
+          defaultLanguage: saved.defaultLanguage,
+        };
+        lastSaved.current = next;
+        setSettings(next);
         setSaveState("saved");
         window.setTimeout(() => {
           if (version === saveVersion.current) setSaveState("idle");
-        }, 1200);
+        }, 1400);
       }).catch(() => {
-        if (version === saveVersion.current) setSaveState("error");
+        if (version !== saveVersion.current) return;
+        setSettings(lastSaved.current);
+        setSaveState("error");
       });
-    }, 220);
+    }, 180);
 
     return () => window.clearTimeout(timer);
-  }, [payload, settings?.canManage]);
+  }, [canManage, payload]);
 
-  if (!pathname.startsWith("/dashboard/settings") || !target) return null;
+  function setFirstReminder(leadMinutes: number) {
+    setSaveState("idle");
+    setSettings((current) => ({
+      ...current,
+      leadMinutes,
+      secondLeadMinutes: current.secondLeadMinutes === leadMinutes ? null : current.secondLeadMinutes,
+    }));
+  }
 
-  const content = (
+  function setSecondReminder(value: string) {
+    setSaveState("idle");
+    setSettings((current) => ({
+      ...current,
+      secondLeadMinutes: value ? Number(value) : null,
+    }));
+  }
+
+  return (
     <section className="settings-card atlas-reminder-card">
       <div className="settings-card-heading">
         <span className="settings-card-icon" aria-hidden="true">◎</span>
         <div>
           <div className="eyebrow">{t.eyebrow}</div>
           <h2>{t.title}</h2>
-          <p>{settings?.approved ? t.approvedHelp : t.pendingHelp}</p>
+          <p>{t.help}</p>
         </div>
       </div>
 
-      {!settings ? (
-        <p className={`quiet ${loadError ? "notice notice-error" : ""}`}>{loadError ? t.failed : t.loading}</p>
-      ) : (
-        <div className="atlas-reminder-form">
-          <label className="toggle-row" htmlFor="atlas-reminders-enabled">
-            <span>
-              <strong>{t.enabled}</strong>
-              <small>{settings.approved ? t.approvedHelp : t.approval}</small>
-            </span>
-            <input
-              id="atlas-reminders-enabled"
-              type="checkbox"
-              checked={settings.enabled}
-              disabled={!settings.canManage || !settings.approved}
-              onChange={(event) => setSettings((current) => current ? { ...current, enabled: event.target.checked } : current)}
-            />
-          </label>
+      <div className="atlas-reminder-form">
+        <label className="toggle-row" htmlFor="atlas-reminders-enabled">
+          <span>
+            <strong>{t.enabled}</strong>
+            <small>{settings.approved ? t.enabledHelp : t.approval}</small>
+          </span>
+          <input
+            id="atlas-reminders-enabled"
+            type="checkbox"
+            checked={settings.enabled}
+            disabled={!canManage || !settings.approved}
+            onChange={(event) => {
+              setSaveState("idle");
+              setSettings((current) => ({ ...current, enabled: event.target.checked }));
+            }}
+          />
+        </label>
 
-          <div className="atlas-reminder-times">
-            <label>
-              <span>{t.first}</span>
-              <select
-                value={settings.leadMinutes}
-                disabled={!settings.canManage}
-                onChange={(event) => {
-                  const leadMinutes = Number(event.target.value);
-                  setSettings((current) => current ? {
-                    ...current,
-                    leadMinutes,
-                    secondLeadMinutes: current.secondLeadMinutes === leadMinutes ? null : current.secondLeadMinutes,
-                  } : current);
-                }}
-              >
-                {leadOptions.map((minutes) => <option value={minutes} key={minutes}>{reminderLeadLabel(minutes, locale)}</option>)}
-              </select>
-            </label>
+        {!settings.approved ? <p className="reminder-provider-note">{t.pending}</p> : null}
 
-            <label>
-              <span>{t.second}</span>
-              <select
-                value={settings.secondLeadMinutes ?? ""}
-                disabled={!settings.canManage}
-                onChange={(event) => setSettings((current) => current ? {
-                  ...current,
-                  secondLeadMinutes: event.target.value ? Number(event.target.value) : null,
-                } : current)}
-              >
-                <option value="">{t.off}</option>
-                {leadOptions.map((minutes) => (
-                  <option value={minutes} key={minutes} disabled={minutes === settings.leadMinutes}>
-                    {reminderLeadLabel(minutes, locale)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
+        <div className="atlas-reminder-times">
           <label>
-            <span>{t.language}</span>
+            <span>{t.first}</span>
             <select
-              value={settings.defaultLanguage}
-              disabled={!settings.canManage}
-              onChange={(event) => setSettings((current) => current ? { ...current, defaultLanguage: event.target.value } : current)}
+              value={settings.leadMinutes}
+              disabled={!canManage}
+              onChange={(event) => setFirstReminder(Number(event.target.value))}
             >
-              <option value="ku">{languageLabels[locale].ku}</option>
-              <option value="ar">{languageLabels[locale].ar}</option>
-              <option value="en">{languageLabels[locale].en}</option>
+              {leadOptions.map((minutes) => <option value={minutes} key={minutes}>{leadLabel(minutes, locale)}</option>)}
             </select>
           </label>
 
-          <div className="atlas-reminder-footer">
-            <p className="field-help">Template: {settings.templateName} · {settings.templateLanguage} · limit {settings.dailyMessageLimit}/day</p>
-            <span className={`atlas-reminder-save is-${saveState}`} role={saveState === "error" ? "alert" : "status"}>
-              {saveState === "saving" ? t.saving : saveState === "saved" ? t.saved : saveState === "error" ? t.failed : ""}
-            </span>
-          </div>
+          <label>
+            <span>{t.second} <small>· {t.optional}</small></span>
+            <select
+              value={settings.secondLeadMinutes ?? ""}
+              disabled={!canManage}
+              onChange={(event) => setSecondReminder(event.target.value)}
+            >
+              <option value="">{t.off}</option>
+              {leadOptions.map((minutes) => (
+                <option value={minutes} key={minutes} disabled={minutes === settings.leadMinutes}>
+                  {leadLabel(minutes, locale)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      )}
+
+        <label className="atlas-reminder-language">
+          <span>{t.language}</span>
+          <select
+            value={settings.defaultLanguage}
+            disabled={!canManage}
+            onChange={(event) => {
+              setSaveState("idle");
+              setSettings((current) => ({ ...current, defaultLanguage: event.target.value }));
+            }}
+          >
+            <option value="ku">{languageLabels[locale].ku}</option>
+            <option value="ar">{languageLabels[locale].ar}</option>
+            <option value="en">{languageLabels[locale].en}</option>
+          </select>
+        </label>
+
+        <div className="atlas-reminder-footer">
+          <p className="field-help">{canManage ? t.recommended : t.viewOnly}</p>
+          <span className={`atlas-reminder-save is-${saveState}`} role={saveState === "error" ? "alert" : "status"} aria-live="polite">
+            {saveState === "saving" ? t.saving : saveState === "saved" ? t.saved : saveState === "error" ? t.failed : ""}
+          </span>
+        </div>
+      </div>
 
       <style jsx>{`
-        .atlas-reminder-form { display: grid; gap: 13px; }
+        .atlas-reminder-form { display: grid; gap: 14px; }
         .atlas-reminder-form > label,
         .atlas-reminder-times label { display: grid; gap: 7px; color: var(--ink-soft); font-size: 12px; font-weight: 760; }
         .atlas-reminder-times { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-        .atlas-reminder-footer { min-height: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .atlas-reminder-times label > span { display: flex; align-items: baseline; gap: 4px; }
+        .atlas-reminder-times small { color: var(--muted); font-size: 10px; font-weight: 650; }
+        .reminder-provider-note { margin: -2px 0 0; border-radius: 10px; padding: 10px 11px; background: var(--surface-soft); color: var(--muted); font-size: 11px; line-height: 1.5; }
+        .atlas-reminder-footer { min-height: 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .atlas-reminder-footer .field-help { margin: 0; }
-        .atlas-reminder-save { min-width: 92px; color: var(--muted); text-align: end; font-size: 11px; font-weight: 760; }
+        .atlas-reminder-save { min-width: 118px; color: var(--muted); text-align: end; font-size: 11px; font-weight: 780; }
         .atlas-reminder-save.is-saved { color: var(--success); }
-        .atlas-reminder-save.is-error { color: var(--danger); }
+        .atlas-reminder-save.is-error { max-width: 260px; color: var(--danger); }
         @media (max-width: 620px) {
           .atlas-reminder-times { grid-template-columns: 1fr; }
           .atlas-reminder-footer { align-items: flex-start; flex-direction: column; }
@@ -309,6 +294,4 @@ export function SettingsReminderCard({ locale }: { locale: UiLocale }) {
       `}</style>
     </section>
   );
-
-  return createPortal(content, target);
 }
