@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
@@ -16,74 +17,74 @@ type StaffPageProps = {
 const copy: Record<UiLocale, Record<string, string>> = {
   en: {
     title: "Clinic access",
-    subtitle: "Administrative access stays here so the receptionist's daily Atlas experience stays simple.",
+    subtitle: "This stays out of the daily schedule. Use it only when someone joins, leaves, or needs administration access.",
     ownerOnly: "Administration",
     add: "Add receptionist",
     receptionist: "Receptionist",
     manager: "Manager",
-    owner: "Owner",
-    role: "Role",
-    signedInFirst: "Add the receptionist's work email once. They then use the normal Atlas sign-in screen and a 6-digit email verification code — no clinic setup code is needed.",
-    access: "Clinic access",
-    protected: "The clinic owner cannot be removed or demoted.",
-    saveRole: "Save role",
-    remove: "Remove",
-    ownerRequired: "Administrative access required.",
-    ownerRequiredHelp: "Receptionists use the schedule. Clinic membership is managed here only when needed.",
-    unavailable: "Staff directory could not load.",
+    owner: "Clinic administrator",
+    role: "Access",
+    signedInFirst: "Add the receptionist's work email once. They then use the normal Atlas sign-in screen. No clinic setup code is needed.",
+    access: "People with access",
+    protected: "The clinic administrator cannot be removed here.",
+    saveRole: "Save access",
+    remove: "Remove access",
+    ownerRequired: "Administration access required.",
+    ownerRequiredHelp: "Receptionists use the schedule. Clinic access is managed here only when needed.",
+    unavailable: "Clinic access could not load.",
   },
   ku: {
     title: "دەسەڵاتی کلینیک",
-    subtitle: "بەڕێوەبردنی دەسەڵات لێرە دەمێنێتەوە بۆ ئەوەی بەکارهێنانی ڕۆژانەی پێشخانە سادە بێت.",
+    subtitle: "ئەم بەشە لە خشتەی ڕۆژانە دوورە. تەنها کاتێک بەکاریبهێنە کە کەسێک زیاد دەبێت، دەڕوات، یان دەسەڵاتی بەڕێوەبردنی پێویستە.",
     ownerOnly: "بەڕێوەبردن",
     add: "زیادکردنی پێشخانە",
     receptionist: "پێشخانە",
     manager: "بەڕێوەبەر",
-    owner: "خاوەن کلینیک",
-    role: "ڕۆڵ",
-    signedInFirst: "تەنها جارێک ئیمەیڵی کاری پێشخانە زیاد بکە. پاشان لە پەڕەی ئاسایی چوونەژوورەوەی Atlas کۆدی پشتڕاستکردنەوەی ٦ ژمارەیی بەکاردهێنێت — کۆدی تایبەتی کلینیک پێویست نییە.",
-    access: "دەسەڵاتی کلینیک",
-    protected: "خاوەن کلینیک ناتوانرێت بسڕدرێتەوە یان دەسەڵاتی کەم بکرێتەوە.",
-    saveRole: "ڕۆڵ پاشەکەوت بکە",
-    remove: "سڕینەوە",
+    owner: "بەڕێوەبەری کلینیک",
+    role: "دەسەڵات",
+    signedInFirst: "تەنها جارێک ئیمەیڵی کاری پێشخانە زیاد بکە. پاشان پەڕەی ئاسایی چوونەژوورەوەی Atlas بەکاردەهێنێت. کۆدی تایبەتی کلینیک پێویست نییە.",
+    access: "کەسانی دەسەڵاتدار",
+    protected: "بەڕێوەبەری کلینیک لێرە ناتوانرێت لاببرێت.",
+    saveRole: "دەسەڵات پاشەکەوت بکە",
+    remove: "دەسەڵات لاببە",
     ownerRequired: "دەسەڵاتی بەڕێوەبردن پێویستە.",
-    ownerRequiredHelp: "پێشخانە خشتەی کات بەکاردەهێنێت. ئەندامێتی کلینیک تەنها کاتێک پێویست بێت لێرە بەڕێوەدەبرێت.",
-    unavailable: "لیستی ستاف بار نەبوو.",
+    ownerRequiredHelp: "پێشخانە خشتەی کات بەکاردەهێنێت. دەسەڵاتی کلینیک تەنها کاتێک پێویست بێت لێرە بەڕێوەدەبرێت.",
+    unavailable: "دەسەڵاتی کلینیک بار نەبوو.",
   },
   ar: {
     title: "صلاحيات العيادة",
-    subtitle: "تبقى إدارة الصلاحيات هنا حتى تظل تجربة موظف الاستقبال اليومية بسيطة.",
+    subtitle: "تبقى هذه الصفحة بعيداً عن الجدول اليومي. استخدمها فقط عند انضمام شخص أو مغادرته أو احتياجه لصلاحيات الإدارة.",
     ownerOnly: "الإدارة",
     add: "إضافة موظف استقبال",
     receptionist: "موظف استقبال",
     manager: "مدير",
-    owner: "مالك",
-    role: "الدور",
-    signedInFirst: "أضف بريد موظف الاستقبال مرة واحدة. بعد ذلك يستخدم شاشة دخول Atlas العادية ورمز تحقق من 6 أرقام عبر البريد — لا حاجة إلى رمز إعداد خاص بالعيادة.",
-    access: "صلاحيات العيادة",
-    protected: "لا يمكن إزالة مالك العيادة أو خفض صلاحياته.",
-    saveRole: "حفظ الدور",
-    remove: "إزالة",
-    ownerRequired: "صلاحية إدارية مطلوبة.",
-    ownerRequiredHelp: "موظف الاستقبال يستخدم الجدول. تتم إدارة عضوية العيادة هنا فقط عند الحاجة.",
-    unavailable: "تعذر تحميل دليل الموظفين.",
+    owner: "مسؤول العيادة",
+    role: "الصلاحية",
+    signedInFirst: "أضف بريد موظف الاستقبال مرة واحدة. بعد ذلك يستخدم شاشة دخول Atlas العادية. لا حاجة إلى رمز إعداد خاص بالعيادة.",
+    access: "الأشخاص الذين لديهم صلاحية",
+    protected: "لا يمكن إزالة مسؤول العيادة من هنا.",
+    saveRole: "حفظ الصلاحية",
+    remove: "إزالة الصلاحية",
+    ownerRequired: "صلاحية الإدارة مطلوبة.",
+    ownerRequiredHelp: "موظفو الاستقبال يستخدمون الجدول. تتم إدارة صلاحيات العيادة هنا فقط عند الحاجة.",
+    unavailable: "تعذر تحميل صلاحيات العيادة.",
   },
 };
 
 const errorMessages: Record<string, string> = {
   invalid: "Check the staff details and try again.",
-  owner_required: "Only the clinic administrator can manage staff.",
+  owner_required: "Only clinic administration can manage access.",
   directory_unavailable: "The staff directory is temporarily unavailable.",
   user_not_found: "That Atlas account could not be found.",
-  owner_protected: "The clinic owner cannot be removed or demoted.",
-  already_member: "That person is already a member of this clinic.",
-  save_failed: "The staff change could not be saved.",
+  owner_protected: "The clinic administrator cannot be removed or demoted.",
+  already_member: "That person already has access to this clinic.",
+  save_failed: "The access change could not be saved.",
 };
 
 const noticeMessages: Record<string, string> = {
-  added: "Staff member added.",
-  updated: "Staff role updated.",
-  removed: "Staff member removed.",
+  added: "Receptionist access added.",
+  updated: "Access updated.",
+  removed: "Access removed.",
 };
 
 export default async function StaffPage({ searchParams }: StaffPageProps) {
@@ -112,7 +113,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
           <div className="app-brand"><span className="app-brand-mark">A</span><span>Atlas</span></div>
           <h1>{text.ownerRequired}</h1>
           <p className="quiet">{text.ownerRequiredHelp}</p>
-          <a className="button" href={`/dashboard/settings?clinic=${clinic.id}`}>{t.settings}</a>
+          <Link className="button" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{t.settings}</Link>
         </section>
       </main>
     );
@@ -128,9 +129,12 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   let memberRows: Array<{ user_id: string; role: string; email: string }> = [];
   try {
     const admin = createAdminClient();
-    memberRows = await Promise.all((members ?? []).map(async (member) => {
-      const { data } = await admin.auth.admin.getUserById(member.user_id);
-      return { ...member, email: data.user?.email ?? "Email unavailable" };
+    const { data: directory, error: directoryError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (directoryError) throw directoryError;
+    const emailById = new Map(directory.users.map((user) => [user.id, user.email ?? "Email unavailable"]));
+    memberRows = (members ?? []).map((member) => ({
+      ...member,
+      email: emailById.get(member.user_id) ?? "Email unavailable",
     }));
   } catch {
     return <DirectoryUnavailable label={text.unavailable} back={t.settings} />;
@@ -147,7 +151,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
           <h1>{text.title}</h1>
           <p>{text.subtitle}</p>
         </div>
-        <a className="button button-ghost button-small" href={`/dashboard/settings?clinic=${clinic.id}`}>{t.settings}</a>
+        <Link className="button button-ghost button-small" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{t.settings}</Link>
       </header>
 
       {clinics.length > 1 ? (
@@ -169,13 +173,13 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             <span className="settings-card-icon" aria-hidden="true">+</span>
             <div><div className="eyebrow">{text.ownerOnly}</div><h2>{text.add}</h2><p>{text.signedInFirst}</p></div>
           </div>
-          <StaffProvisionForm clinicId={clinic.id} />
+          <StaffProvisionForm clinicId={clinic.id} locale={locale} />
         </section>
 
         <section className="settings-card">
           <div className="settings-card-heading">
             <span className="settings-card-icon" aria-hidden="true">👥</span>
-            <div><div className="eyebrow">{text.access}</div><h2>{t.staff}</h2><p>{clinic.name} · {memberRows.length}</p></div>
+            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p>{clinic.name} · {memberRows.length}</p></div>
           </div>
           <div className="doctor-settings-list">
             {memberRows.map((member) => {
@@ -219,7 +223,7 @@ function DirectoryUnavailable({ label, back }: { label: string; back: string }) 
       <section className="auth-card">
         <div className="brand">Atlas</div>
         <h1>{label}</h1>
-        <a className="button" href="/dashboard/settings">{back}</a>
+        <Link className="button" href="/dashboard/settings">{back}</Link>
       </section>
     </main>
   );
