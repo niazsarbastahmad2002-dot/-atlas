@@ -33,36 +33,32 @@ const patientCopy = {
     eyebrow: "Your appointment",
     doctor: "Doctor",
     dateTime: "Date & time",
-    status: "Status",
-    reminderLanguage: "Reminder language",
-    pending: "Pending confirmation",
-    confirmed: "Confirmed",
-    cancelled: "Cancelled",
-    completed: "Completed",
-    noShow: "No-show",
-    language: "English",
-    confirm: "Confirm appointment",
-    cancel: "Cancel appointment",
-    privacy: "This private link only shows this appointment. It does not provide access to the clinic schedule.",
+    question: "Will you come?",
+    confirm: "Yes, I’m coming",
+    cancel: "No, cancel it",
+    confirmed: "Confirmed. We’ll be expecting you.",
+    cancelled: "This appointment is cancelled.",
+    completed: "This appointment is complete.",
+    noShow: "This appointment has ended.",
+    changeMind: "I can’t come",
+    privacy: "This page is only for this appointment.",
   },
   ku: {
     lang: "ckb",
     dir: "rtl" as const,
     dateLocale: "ckb-IQ",
-    eyebrow: "وادەکەت",
+    eyebrow: "کاتەکەت",
     doctor: "پزیشک",
-    dateTime: "بەروار و کات",
-    status: "دۆخ",
-    reminderLanguage: "زمانی بیرخستنەوە",
-    pending: "چاوەڕوانی پشتڕاستکردنەوە",
-    confirmed: "پشتڕاستکراوە",
-    cancelled: "هەڵوەشێنراوە",
-    completed: "تەواوبوو",
-    noShow: "نەهات",
-    language: "کوردی (سۆرانی)",
-    confirm: "وادەکە پشتڕاست بکەرەوە",
-    cancel: "وادەکە هەڵبوەشێنەرەوە",
-    privacy: "ئەم بەستەرە تایبەتە تەنها ئەم وادەیە نیشان دەدات و دەستگەیشتن بە خشتەی کلینیک نادات.",
+    dateTime: "ڕێکەوت و کات",
+    question: "دێیت؟",
+    confirm: "بەڵێ، دێم",
+    cancel: "نەخێر، هەڵیوەشێنەوە",
+    confirmed: "پشتڕاست کرا. چاوەڕێت دەکەین.",
+    cancelled: "کاتەکەت هەڵوەشێنرایەوە.",
+    completed: "کاتەکەت تەواو بوو.",
+    noShow: "کاتەکەت تێپەڕی.",
+    changeMind: "ناتوانم بێم",
+    privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
   },
   ar: {
     lang: "ar",
@@ -71,17 +67,15 @@ const patientCopy = {
     eyebrow: "موعدك",
     doctor: "الطبيب",
     dateTime: "التاريخ والوقت",
-    status: "الحالة",
-    reminderLanguage: "لغة التذكير",
-    pending: "بانتظار التأكيد",
-    confirmed: "مؤكد",
-    cancelled: "ملغي",
-    completed: "مكتمل",
-    noShow: "لم يحضر",
-    language: "العربية",
-    confirm: "تأكيد الموعد",
-    cancel: "إلغاء الموعد",
-    privacy: "هذا الرابط الخاص يعرض هذا الموعد فقط ولا يتيح الوصول إلى جدول العيادة.",
+    question: "هل ستأتي؟",
+    confirm: "نعم، سأأتي",
+    cancel: "لا، ألغِ الموعد",
+    confirmed: "تم التأكيد. سنكون بانتظارك.",
+    cancelled: "تم إلغاء هذا الموعد.",
+    completed: "تم إكمال هذا الموعد.",
+    noShow: "انتهى وقت هذا الموعد.",
+    changeMind: "لن أستطيع الحضور",
+    privacy: "هذه الصفحة لهذا الموعد فقط.",
   },
 } as const;
 
@@ -116,25 +110,23 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
 
   const locale = patientLocale(appointment.reminder_language);
   const text = patientCopy[locale];
-  const statusLabels: Record<string, string> = {
-    pending: text.pending,
-    confirmed: text.confirmed,
-    cancelled: text.cancelled,
-    completed: text.completed,
-    no_show: text.noShow,
-  };
-  const languageLabels: Record<string, string> = {
-    ku: patientCopy.ku.language,
-    ar: patientCopy.ar.language,
-    en: patientCopy.en.language,
-  };
   const dateTime = new Intl.DateTimeFormat(text.dateLocale, {
     timeZone: "Asia/Baghdad",
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(appointment.appointment_at));
-  const canConfirm = appointment.appointment_status === "pending";
-  const canCancel = ["pending", "confirmed"].includes(appointment.appointment_status);
+  const status = appointment.appointment_status;
+  const isPending = status === "pending";
+  const isConfirmed = status === "confirmed";
+  const statusMessage = isConfirmed
+    ? text.confirmed
+    : status === "cancelled"
+      ? text.cancelled
+      : status === "completed"
+        ? text.completed
+        : status === "no_show"
+          ? text.noShow
+          : null;
 
   return (
     <main className="center-page patient-page">
@@ -145,29 +137,46 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
         </a>
         <div className="eyebrow">{text.eyebrow}</div>
         <h1>{appointment.clinic_name}</h1>
+
         <dl className="appointment-details patient-appointment-details">
           <div><dt>{text.doctor}</dt><dd>{appointment.doctor_name}</dd></div>
           <div><dt>{text.dateTime}</dt><dd>{dateTime}</dd></div>
-          <div><dt>{text.status}</dt><dd>{statusLabels[appointment.appointment_status] ?? appointment.appointment_status}</dd></div>
-          <div><dt>{text.reminderLanguage}</dt><dd>{languageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div>
         </dl>
 
-        {canConfirm || canCancel ? (
-          <div className="patient-actions" aria-label="Patient appointment actions">
-            {canConfirm ? (
+        {isPending ? (
+          <div className="patient-response-block">
+            <h2>{text.question}</h2>
+            <div className="patient-actions" aria-label="Patient appointment response">
               <form action={updatePatientAppointment.bind(null, token, "confirmed")}>
                 <button className="button" type="submit">{text.confirm}</button>
               </form>
-            ) : null}
-            {canCancel ? (
               <form action={updatePatientAppointment.bind(null, token, "cancelled")}>
                 <button className="button button-ghost" type="submit">{text.cancel}</button>
+              </form>
+            </div>
+          </div>
+        ) : null}
+
+        {statusMessage ? (
+          <div className={`patient-status-message ${isConfirmed ? "is-confirmed" : ""}`} role="status">
+            <strong>{statusMessage}</strong>
+            {isConfirmed ? (
+              <form action={updatePatientAppointment.bind(null, token, "cancelled")}>
+                <button className="patient-change-mind" type="submit">{text.changeMind}</button>
               </form>
             ) : null}
           </div>
         ) : null}
 
         <p className="quiet patient-privacy">{text.privacy}</p>
+
+        <style>{`
+          .patient-response-block { margin-top: 8px; }
+          .patient-response-block h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
+          .patient-status-message { margin-top: 8px; border-radius: 14px; padding: 15px; background: var(--surface-soft); color: var(--ink-soft); line-height: 1.5; }
+          .patient-status-message.is-confirmed { background: var(--success-bg); color: var(--success); }
+          .patient-change-mind { margin-top: 10px; border: 0; padding: 3px 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+        `}</style>
       </section>
     </main>
   );
