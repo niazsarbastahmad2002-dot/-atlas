@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { DashboardPreferenceMemory } from "./preference-memory";
 import { AppNavigation } from "./app-navigation";
+import { DashboardClientPolish } from "./dashboard-client-polish";
+import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
 import { PasskeySettingsCard } from "./passkey-settings-card";
 
@@ -11,6 +12,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <div className="app-shell">
+      <DashboardClientPolish locale={locale} />
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />

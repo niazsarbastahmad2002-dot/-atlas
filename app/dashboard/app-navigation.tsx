@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { type MouseEvent, useEffect, useState } from "react";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 
 function CalendarIcon() {
@@ -29,19 +30,50 @@ function GearIcon() {
   );
 }
 
+function isPlainNavigation(event: MouseEvent<HTMLAnchorElement>) {
+  return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+}
+
 export function AppNavigation({ locale }: { locale: UiLocale }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [visiblePath, setVisiblePath] = useState(pathname);
   const t = uiText(locale);
-  const onSettings = pathname.startsWith("/dashboard/settings")
-    || pathname.startsWith("/dashboard/reminders")
-    || pathname.startsWith("/dashboard/staff");
-  const onSchedule = pathname === "/dashboard";
+  const onSettings = visiblePath.startsWith("/dashboard/settings")
+    || visiblePath.startsWith("/dashboard/reminders")
+    || visiblePath.startsWith("/dashboard/staff");
+  const onSchedule = visiblePath === "/dashboard";
+
+  useEffect(() => setVisiblePath(pathname), [pathname]);
+
+  useEffect(() => {
+    router.prefetch("/dashboard");
+    router.prefetch("/dashboard/settings");
+  }, [router]);
+
+  const go = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!isPlainNavigation(event)) return;
+    event.preventDefault();
+    setVisiblePath(href);
+    router.prefetch(href);
+    router.push(href, { scroll: true });
+  };
+
+  const warm = (href: string) => () => router.prefetch(href);
 
   return (
     <>
       <header className="app-topbar">
         <div className="app-topbar-inner shell">
-          <Link className="app-brand" href="/dashboard" prefetch={true} scroll={true} aria-label={t.openSchedule}>
+          <Link
+            className="app-brand"
+            href="/dashboard"
+            prefetch={true}
+            scroll={true}
+            onPointerDown={warm("/dashboard")}
+            onClick={go("/dashboard")}
+            aria-label={t.openSchedule}
+          >
             <span className="app-brand-mark" aria-hidden="true">A</span>
             <span className="app-brand-word">Atlas</span>
           </Link>
@@ -51,6 +83,9 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
               href="/dashboard"
               prefetch={true}
               scroll={true}
+              onPointerDown={warm("/dashboard")}
+              onMouseEnter={warm("/dashboard")}
+              onClick={go("/dashboard")}
               aria-label={t.openSchedule}
               title={t.schedule}
             >
@@ -62,6 +97,9 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
               href="/dashboard/settings"
               prefetch={true}
               scroll={true}
+              onPointerDown={warm("/dashboard/settings")}
+              onMouseEnter={warm("/dashboard/settings")}
+              onClick={go("/dashboard/settings")}
               aria-label={t.openSettings}
               title={t.settings}
             >
@@ -73,7 +111,14 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       </header>
 
       <nav className="app-bottom-nav" aria-label="Atlas mobile navigation">
-        <Link className={onSchedule ? "is-active" : ""} href="/dashboard" prefetch={true} scroll={true}>
+        <Link
+          className={onSchedule ? "is-active" : ""}
+          href="/dashboard"
+          prefetch={true}
+          scroll={true}
+          onPointerDown={warm("/dashboard")}
+          onClick={go("/dashboard")}
+        >
           <CalendarIcon />
           <span>{t.schedule}</span>
         </Link>
@@ -81,7 +126,14 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           <span className="app-bottom-add-circle"><PlusIcon /></span>
           <span>{t.add}</span>
         </Link>
-        <Link className={onSettings ? "is-active" : ""} href="/dashboard/settings" prefetch={true} scroll={true}>
+        <Link
+          className={onSettings ? "is-active" : ""}
+          href="/dashboard/settings"
+          prefetch={true}
+          scroll={true}
+          onPointerDown={warm("/dashboard/settings")}
+          onClick={go("/dashboard/settings")}
+        >
           <GearIcon />
           <span>{t.settings}</span>
         </Link>
