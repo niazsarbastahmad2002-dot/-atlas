@@ -29,23 +29,44 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
   if (locale === "ku") {
     if (reason === "busy") return "وادەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.";
     if (reason === "too_early") return "هێشتا کاتی وادەکە نەهاتووە. دوای کاتی وادە دۆخی کۆتایی تۆمار بکە.";
-    if (reason === "past_cancelled") return "وادەی هەڵوەشێنراوی ڕابردوو ناتوانرێت بکرێتەوە؛ وادەیەکی نوێ دروست بکە.";
+    if (reason === "past_cancelled") return "وادەی هەڵوەشێنراوی ڕابردوو ناگەڕێندرێتەوە؛ وادەیەکی نوێ دروست بکە.";
     if (reason === "invalid") return "ئەم گۆڕانکارییە بۆ ئەم وادەیە ڕێگەپێدراو نییە.";
     return "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.";
   }
   if (locale === "ar") {
     if (reason === "busy") return "الموعد قيد التحديث. حاول مرة أخرى.";
     if (reason === "too_early") return "لم يحن وقت الموعد بعد. سجّل النتيجة بعد وقت الموعد.";
-    if (reason === "past_cancelled") return "لا يمكن إعادة فتح موعد ملغي مضى وقته. أنشئ موعداً جديداً.";
+    if (reason === "past_cancelled") return "لا يمكن استعادة موعد ملغي مضى وقته. أنشئ موعداً جديداً.";
     if (reason === "invalid") return "هذا التغيير غير متاح لهذا الموعد.";
     return "لم يتم حفظ التغيير. حاول مرة أخرى.";
   }
   if (reason === "busy") return "This appointment is still updating. Try again.";
   if (reason === "too_early") return "It is too early to record the appointment outcome. Try again after the appointment time.";
-  if (reason === "past_cancelled") return "A past cancelled appointment cannot be reopened. Create a new appointment instead.";
+  if (reason === "past_cancelled") return "A past cancelled appointment cannot be restored. Create a new appointment instead.";
   if (reason === "invalid") return "That change is not available for this appointment.";
   return "The change was not saved. Try again.";
 }
+
+const correctionCopy = {
+  en: {
+    restore: "Restore",
+    backToPending: "Back to pending",
+    undoCompleted: "Undo completed",
+    undoNoShow: "Undo no-show",
+  },
+  ku: {
+    restore: "گەڕاندنەوە",
+    backToPending: "بگەڕێنەوە بۆ چاوەڕوان",
+    undoCompleted: "کۆتایی هەڵبوەشێنەوە",
+    undoNoShow: "نەهاتن هەڵبوەشێنەوە",
+  },
+  ar: {
+    restore: "استعادة",
+    backToPending: "إعادة إلى قيد الانتظار",
+    undoCompleted: "تراجع عن مكتمل",
+    undoNoShow: "تراجع عن عدم الحضور",
+  },
+} as const;
 
 export function AppointmentActions({
   clinicId,
@@ -70,13 +91,6 @@ export function AppointmentActions({
     setOptimisticStatus(status);
   }, [status]);
 
-  const actionLabels: Record<AppointmentStatus, string> = {
-    pending: t.reopen,
-    confirmed: t.confirm,
-    cancelled: t.cancel,
-    completed: t.complete,
-    no_show: t.noShow,
-  };
   const statusLabels: Record<AppointmentStatus, string> = {
     pending: t.pending,
     confirmed: t.confirmed,
@@ -92,12 +106,33 @@ export function AppointmentActions({
       : "Remove this appointment from the schedule? Atlas will keep its history.";
   const scheduledAt = new Date(appointmentAt).getTime();
   const tooEarlyForOutcome = Number.isFinite(scheduledAt) && scheduledAt > Date.now() + 5 * 60 * 1000;
-  const tooLateToReopen = Number.isFinite(scheduledAt) && scheduledAt < Date.now() - 5 * 60 * 1000;
+  const tooLateToRestore = Number.isFinite(scheduledAt) && scheduledAt < Date.now() - 5 * 60 * 1000;
+  const corrections = correctionCopy[locale];
 
   function unavailableReason(nextStatus: AppointmentStatus) {
     if ((nextStatus === "completed" || nextStatus === "no_show") && tooEarlyForOutcome) return "too_early" as const;
-    if (nextStatus === "pending" && optimisticStatus === "cancelled" && tooLateToReopen) return "past_cancelled" as const;
+    if (nextStatus === "pending" && optimisticStatus === "cancelled" && tooLateToRestore) return "past_cancelled" as const;
     return null;
+  }
+
+  function transitionLabel(nextStatus: AppointmentStatus) {
+    if (optimisticStatus === "pending" && nextStatus === "confirmed") return t.confirm;
+    if (nextStatus === "cancelled") return t.cancel;
+    if (nextStatus === "completed") return t.complete;
+    if (nextStatus === "no_show") return t.noShow;
+    if (optimisticStatus === "cancelled" && nextStatus === "pending") return corrections.restore;
+    if (optimisticStatus === "confirmed" && nextStatus === "pending") return corrections.backToPending;
+    if (optimisticStatus === "completed" && nextStatus === "confirmed") return corrections.undoCompleted;
+    if (optimisticStatus === "no_show" && nextStatus === "confirmed") return corrections.undoNoShow;
+    return statusLabels[nextStatus];
+  }
+
+  function shouldShowTransition(nextStatus: AppointmentStatus) {
+    if (unavailableReason(nextStatus)) return false;
+    // Once the appointment time has arrived, reception only needs to record
+    // the outcome; "Back to pending" is no longer useful on the main row.
+    if (optimisticStatus === "confirmed" && nextStatus === "pending" && !tooEarlyForOutcome) return false;
+    return true;
   }
 
   function changeStatus(nextStatus: AppointmentStatus, target: EventTarget | null) {
@@ -152,22 +187,20 @@ export function AppointmentActions({
     });
   }
 
+  const transitions = allowedAppointmentTransitions(optimisticStatus).filter(shouldShowTransition);
+
   return (
     <div className="row-actions polished-actions" aria-label="Appointment actions" aria-busy={pending}>
-      {allowedAppointmentTransitions(optimisticStatus).map((nextStatus) => {
-        const blocked = unavailableReason(nextStatus);
-        return (
-          <button
-            type="button"
-            disabled={pending || Boolean(blocked)}
-            key={nextStatus}
-            title={blocked ? actionFeedback(locale, blocked) : undefined}
-            onClick={(event) => changeStatus(nextStatus, event.currentTarget)}
-          >
-            {actionLabels[nextStatus]}
-          </button>
-        );
-      })}
+      {transitions.map((nextStatus) => (
+        <button
+          type="button"
+          disabled={pending}
+          key={nextStatus}
+          onClick={(event) => changeStatus(nextStatus, event.currentTarget)}
+        >
+          {transitionLabel(nextStatus)}
+        </button>
+      ))}
       <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} />
       <button
         className="archive-action"
