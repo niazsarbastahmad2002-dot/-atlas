@@ -13,8 +13,8 @@ const copy = {
     ready: "Quick sign-in ready",
     readyHelp: "Quick sign-in is saved. Normal Atlas launches still open directly while this device remains signed in.",
     existing: "Quick sign-in is already saved for this account.",
-    cancelled: "The device prompt was closed. Nothing changed — you can try again later.",
-    unavailable: "Quick sign-in could not be set up. Your current Atlas session is unchanged.",
+    cancelled: "Nothing changed. You can close this or try again later.",
+    unavailable: "Nothing changed. If you already saved quick sign-in, you can keep using it normally.",
     disabled: "Quick sign-in is temporarily unavailable. Email sign-in still works normally.",
   },
   ku: {
@@ -25,8 +25,8 @@ const copy = {
     ready: "چوونەژوورەوەی خێرا ئامادەیە",
     readyHelp: "چوونەژوورەوەی خێرا هەڵگیرا. تا ئەم ئامێرە چوونەژوورەوەی تێدا ماوە، Atlas هەر ڕاستەوخۆ دەکرێتەوە.",
     existing: "چوونەژوورەوەی خێرا پێشتر بۆ ئەم هەژمارە هەڵگیراوە.",
-    cancelled: "پەنجەرەی ئامێر داخرا. هیچ شتێک نەگۆڕا — دواتر دەتوانیت دووبارە هەوڵ بدەیت.",
-    unavailable: "چوونەژوورەوەی خێرا ڕێک نەخرا. سێشنی ئێستای Atlas هیچ گۆڕانکارییەکی بەسەردا نەهات.",
+    cancelled: "هیچ شتێک نەگۆڕا. دەتوانیت دایبخەیت یان دواتر دووبارە هەوڵ بدەیت.",
+    unavailable: "هیچ شتێک نەگۆڕا. ئەگەر چوونەژوورەوەی خێرات پێشتر هەڵگرتووە، هەر بە ئاسایی بەکاری بهێنە.",
     disabled: "چوونەژوورەوەی خێرا کاتێکی کورت بەردەست نییە. چوونەژوورەوە بە ئیمەیڵ هەر کار دەکات.",
   },
   ar: {
@@ -37,15 +37,17 @@ const copy = {
     ready: "الدخول السريع جاهز",
     readyHelp: "تم حفظ الدخول السريع. ما دام هذا الجهاز مسجلاً للدخول فسيظل Atlas يفتح مباشرة.",
     existing: "الدخول السريع محفوظ بالفعل لهذا الحساب.",
-    cancelled: "تم إغلاق طلب الجهاز. لم يتغير شيء ويمكنك المحاولة لاحقاً.",
-    unavailable: "تعذر إعداد الدخول السريع. جلسة Atlas الحالية لم تتغير.",
+    cancelled: "لم يتغير شيء. يمكنك الإغلاق أو المحاولة لاحقاً.",
+    unavailable: "لم يتغير شيء. إذا كنت قد حفظت الدخول السريع من قبل فيمكنك الاستمرار في استخدامه بشكل طبيعي.",
     disabled: "الدخول السريع غير متاح مؤقتاً. تسجيل الدخول بالبريد ما زال يعمل بشكل طبيعي.",
   },
 } as const;
 
+type PasskeyStatus = "idle" | "working" | "success" | "info" | "error";
+
 export function PasskeyManager({ locale }: { locale: UiLocale }) {
   const t = copy[locale];
-  const [status, setStatus] = useState<"idle" | "working" | "success" | "error">("idle");
+  const [status, setStatus] = useState<PasskeyStatus>("idle");
   const [message, setMessage] = useState("");
 
   async function register() {
@@ -63,16 +65,17 @@ export function PasskeyManager({ locale }: { locale: UiLocale }) {
 
         if (code === "passkey_disabled") {
           setMessage(t.disabled);
+          setStatus("error");
         } else if (code === "webauthn_credential_exists" || code === "too_many_passkeys" || text.includes("already") || (text.includes("credential") && text.includes("exist"))) {
           setMessage(t.existing);
           setStatus("success");
-          return;
         } else if (text.includes("cancel") || text.includes("notallowed") || text.includes("not allowed") || text.includes("timed out") || text.includes("abort")) {
           setMessage(t.cancelled);
+          setStatus("info");
         } else {
           setMessage(t.unavailable);
+          setStatus("info");
         }
-        setStatus("error");
         return;
       }
 
@@ -81,9 +84,15 @@ export function PasskeyManager({ locale }: { locale: UiLocale }) {
     } catch (error) {
       const name = error instanceof DOMException ? error.name : "";
       setMessage(name === "NotAllowedError" || name === "AbortError" ? t.cancelled : t.unavailable);
-      setStatus("error");
+      setStatus("info");
     }
   }
+
+  const noticeClass = status === "success"
+    ? "notice notice-success"
+    : status === "error"
+      ? "notice notice-error"
+      : "notice passkey-notice-neutral";
 
   return (
     <div className="settings-form passkey-settings-inline">
@@ -95,7 +104,7 @@ export function PasskeyManager({ locale }: { locale: UiLocale }) {
         {status === "working" ? t.waiting : status === "success" ? t.ready : t.button}
       </button>
       {message ? (
-        <p className={`notice ${status === "success" ? "notice-success" : "notice-error"}`} role={status === "success" ? "status" : "alert"}>
+        <p className={noticeClass} role={status === "error" ? "alert" : "status"}>
           {message}
         </p>
       ) : null}
@@ -103,6 +112,7 @@ export function PasskeyManager({ locale }: { locale: UiLocale }) {
         .passkey-settings-inline { margin-top: 8px; }
         .passkey-settings-title { display: block; margin-bottom: 4px; font-size: 12px; color: var(--ink-soft); }
         .passkey-settings-inline .button { justify-self: start; width: auto; }
+        .passkey-notice-neutral { margin-top: 8px; border: 1px solid var(--line); background: var(--surface-soft); color: var(--muted); }
       `}</style>
     </div>
   );
