@@ -93,11 +93,12 @@ export function SettingsClientPolish({ locale }: { locale: UiLocale }) {
     };
 
     const prepareFastSettings = () => {
-      const reminderForm = document.querySelector<HTMLFormElement>("#lead_minutes")?.form;
+      const leadControl = document.querySelector<HTMLSelectElement>("#lead_minutes");
+      const reminderForm = leadControl?.form ?? null;
       if (reminderForm && !reminderForm.dataset.atlasAutosave) {
         reminderForm.dataset.atlasAutosave = "true";
         for (const id of ["lead_minutes", "default_reminder_language", "enabled"]) {
-          const control = reminderForm.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`);
+          const control = reminderForm.querySelector(`#${id}`) as HTMLInputElement | HTMLSelectElement | null;
           control?.addEventListener("change", () => reminderForm.requestSubmit());
         }
       }
@@ -107,8 +108,8 @@ export function SettingsClientPolish({ locale }: { locale: UiLocale }) {
         list.dataset.atlasOptimisticArchive = "true";
         list.addEventListener("submit", (event) => {
           const form = event.target as HTMLFormElement;
-          const row = form.closest<HTMLElement>(".doctor-settings-row");
-          const actions = row?.querySelector<HTMLElement>(".compact-actions");
+          const row = form.closest(".doctor-settings-row") as HTMLElement | null;
+          const actions = row?.querySelector(".compact-actions") as HTMLElement | null;
           if (!row || !actions || !actions.contains(form)) return;
           const forms = Array.from(actions.querySelectorAll("form"));
           if (forms.at(-1) !== form) return;
