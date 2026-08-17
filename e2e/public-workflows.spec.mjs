@@ -9,23 +9,21 @@ async function setLocale(context, locale) {
   }]);
 }
 
-test("unauthenticated receptionist sees one primary open action and recovery stays secondary", async ({ page }) => {
+test("unauthenticated receptionist sees work email immediately and quick sign-in stays optional", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Open Atlas. Start the day." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Open Atlas" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "New device or recovery" })).toBeVisible();
-  await expect(page.getByLabel("Work email")).toHaveCount(0);
-
-  await page.getByRole("button", { name: "New device or recovery" }).click();
   await expect(page.getByLabel("Work email")).toBeVisible();
   await expect(page.getByRole("button", { name: "Send Atlas email" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use quick sign-in" })).toBeVisible();
+  await expect(page.getByText(/Optional\. Use this only if you previously saved quick sign-in/)).toBeVisible();
 });
 
-test("expired or consumed email link shows plain recovery language", async ({ page }) => {
+test("expired or consumed email link shows plain recovery language with email ready", async ({ page }) => {
   await page.goto("/auth/callback");
   await expect(page).toHaveURL(/\/login\?error=invalid_link/);
   await expect(page.locator(".login-notice[role='alert']")).toContainText("expired or was already used");
-  await expect(page.getByRole("button", { name: "New device or recovery" })).toBeVisible();
+  await expect(page.getByLabel("Work email")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send Atlas email" })).toBeVisible();
 });
 
 test("signed-out state confirms logout without technical jargon", async ({ page }) => {
@@ -33,13 +31,13 @@ test("signed-out state confirms logout without technical jargon", async ({ page 
   await expect(page.getByRole("status")).toContainText("signed out safely");
 });
 
-test("Sorani login is RTL and uses localized recovery copy", async ({ context, page }) => {
+test("Sorani login is RTL and work email is immediately available", async ({ context, page }) => {
   await setLocale(context, "ku");
   await page.goto("/login");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: /Atlas بکەرەوە/ })).toBeVisible();
-  await page.getByRole("button", { name: /ئامێری نوێ/ }).click();
   await expect(page.getByLabel("ئیمەیڵی کار")).toBeVisible();
+  await expect(page.getByRole("button", { name: "ئیمەیڵی Atlas بنێرە" })).toBeVisible();
 });
 
 test("Arabic login is RTL", async ({ context, page }) => {
@@ -47,6 +45,7 @@ test("Arabic login is RTL", async ({ context, page }) => {
   await page.goto("/login");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: /افتح Atlas/ })).toBeVisible();
+  await expect(page.getByLabel(/بريد العمل/)).toBeVisible();
 });
 
 test("English login is LTR", async ({ context, page }) => {
