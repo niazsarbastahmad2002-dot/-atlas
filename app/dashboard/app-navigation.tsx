@@ -47,8 +47,22 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
   useEffect(() => setVisiblePath(pathname), [pathname]);
 
   useEffect(() => {
-    router.prefetch("/dashboard");
-    router.prefetch("/dashboard/settings");
+    const warmCoreRoutes = () => {
+      router.prefetch("/dashboard");
+      router.prefetch("/dashboard/settings");
+    };
+
+    warmCoreRoutes();
+    const timer = window.setInterval(warmCoreRoutes, 20_000);
+    const onVisible = () => {
+      if (!document.hidden) warmCoreRoutes();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [router]);
 
   const go = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
