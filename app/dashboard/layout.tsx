@@ -6,6 +6,7 @@ import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
 import { QuickHourPolish } from "./quick-hour-polish";
+import { ScheduleNavigationPolish } from "./schedule-navigation-polish";
 import { SettingsClientPolish } from "./settings-client-polish";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
@@ -16,6 +17,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <DashboardClientPolish locale={locale} />
       <SettingsClientPolish locale={locale} />
       <QuickHourPolish />
+      <ScheduleNavigationPolish />
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
