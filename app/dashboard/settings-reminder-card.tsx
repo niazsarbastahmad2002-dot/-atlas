@@ -79,7 +79,7 @@ const copy = {
     saving: "جارٍ الحفظ…",
     saved: "تم الحفظ ✓",
     failed: "تعذر الحفظ. تمت استعادة آخر إعدادات محفوظة.",
-    approval: "واتساب غير متصل بعد، لذلك لا يمكن تشغيل الإرسال التلقائي.",
+    approval: "واتسئاب غير متصل بعد، لذلك لا يمكن تشغيل الإرسال التلقائي.",
     viewOnly: "يمكن لإدارة العيادة فقط تغيير هذه الإعدادات.",
   },
 } as const;
@@ -101,6 +101,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
   const [settings, setSettings] = useState(initialSettings);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydrated = useRef(false);
+  const skipNextSave = useRef(false);
   const saveVersion = useRef(0);
   const lastSaved = useRef(initialSettings);
 
@@ -108,6 +109,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
     setSettings(initialSettings);
     lastSaved.current = initialSettings;
     hydrated.current = false;
+    skipNextSave.current = false;
     setSaveState("idle");
   }, [initialSettings]);
 
@@ -125,9 +127,19 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
       hydrated.current = true;
       return;
     }
+    if (skipNextSave.current) {
+      skipNextSave.current = false;
+      return;
+    }
 
     const version = ++saveVersion.current;
     setSaveState("saving");
+
+    const restoreLastSaved = () => {
+      skipNextSave.current = true;
+      setSettings(lastSaved.current);
+      setSaveState("error");
+    };
 
     const timer = window.setTimeout(() => {
       void fetch("/api/settings/reminders", {
@@ -138,8 +150,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
       }).then(async (response) => {
         if (version !== saveVersion.current) return;
         if (!response.ok) {
-          setSettings(lastSaved.current);
-          setSaveState("error");
+          restoreLastSaved();
           return;
         }
 
@@ -149,28 +160,24 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
           secondLeadMinutes: number | null;
           defaultLanguage: string;
         };
-        const next = {
+        lastSaved.current = {
           ...settings,
           enabled: saved.enabled,
           leadMinutes: saved.leadMinutes,
           secondLeadMinutes: saved.secondLeadMinutes,
           defaultLanguage: saved.defaultLanguage,
         };
-        lastSaved.current = next;
-        setSettings(next);
         setSaveState("saved");
         window.setTimeout(() => {
           if (version === saveVersion.current) setSaveState("idle");
         }, 1400);
       }).catch(() => {
-        if (version !== saveVersion.current) return;
-        setSettings(lastSaved.current);
-        setSaveState("error");
+        if (version === saveVersion.current) restoreLastSaved();
       });
     }, 180);
 
     return () => window.clearTimeout(timer);
-  }, [canManage, payload]);
+  }, [canManage, payload, settings]);
 
   function setFirstReminder(leadMinutes: number) {
     setSaveState("idle");
