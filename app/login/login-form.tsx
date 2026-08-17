@@ -8,62 +8,59 @@ const COOLDOWN_KEY = "atlas-email-recovery-cooldown";
 
 const authCopy = {
   en: {
-    open: "Open Atlas",
-    opening: "Opening Atlas…",
-    deviceHelp: "If you saved optional quick sign-in before, use the secure prompt. Otherwise use work email below.",
-    deviceCancelled: "Quick sign-in was cancelled. You can try again or use work email.",
-    deviceUnavailable: "Quick sign-in is not set up on this device. Use the clinic work email below.",
-    emailFallback: "Use work email",
     emailHint: "Use the work email already prepared for this clinic.",
     send: "Send Atlas email",
     sentTitle: "Atlas email sent.",
     sentHelp: "Open only the newest Atlas email and tap Open Atlas.",
     openInbox: "Open newest Atlas email",
-    returnHelp: "After sign-in, Atlas opens the schedule. Optional quick sign-in can be set up later in Settings.",
+    returnHelp: "After sign-in, Atlas opens the schedule directly. You do not need to set up anything else.",
     resend: "Send a fresh email",
     another: "Use another email",
+    quick: "Use quick sign-in",
+    quickOpening: "Opening quick sign-in…",
+    quickHelp: "Optional. Use this only if you previously saved quick sign-in on this account.",
+    quickCancelled: "Quick sign-in was cancelled. Your work-email sign-in is still available.",
+    quickUnavailable: "Quick sign-in is not set up here. Use your work email.",
     invalidEmail: "Enter the clinic work email.",
-    rateLimited: "No new email was sent. Email recovery is temporarily limited. If you already requested one, use only the newest Atlas email; otherwise try again later.",
+    rateLimited: "No new email was sent. Email sign-in is temporarily limited. If you already requested one, use only the newest Atlas email; otherwise try again later.",
     notReady: "Atlas could not send a sign-in email for that account. Check the address or ask the clinic to prepare this account.",
     network: "Atlas could not start sign-in. Check the connection and try again.",
   },
   ku: {
-    open: "Atlas بکەرەوە",
-    opening: "Atlas دەکرێتەوە…",
-    deviceHelp: "ئەگەر پێشتر چوونەژوورەوەی خێرات هەڵگرتووە، پشتڕاستکردنەوەی ئامێر بەکاربهێنە. ئەگەر نا، ئیمەیڵی کار لە خوارەوە بەکاربهێنە.",
-    deviceCancelled: "چوونەژوورەوەی خێرا هەڵوەشێنرایەوە. دەتوانیت دووبارە هەوڵ بدەیت یان ئیمەیڵی کار بەکاربهێنیت.",
-    deviceUnavailable: "چوونەژوورەوەی خێرا لەم ئامێرە ڕێک نەخراوە. ئیمەیڵی کاری کلینیک بەکاربهێنە.",
-    emailFallback: "ئیمەیڵی کار بەکاربهێنە",
     emailHint: "ئەو ئیمەیڵەی کار بەکاربهێنە کە پێشتر بۆ ئەم کلینیکە ئامادە کراوە.",
     send: "ئیمەیڵی Atlas بنێرە",
     sentTitle: "ئیمەیڵی Atlas نێردرا.",
     sentHelp: "تەنها نوێترین ئیمەیڵی Atlas بکەرەوە و Open Atlas دابگرە.",
     openInbox: "نوێترین ئیمەیڵی Atlas بکەرەوە",
-    returnHelp: "دوای چوونەژوورەوە Atlas ڕاستەوخۆ خشتەی وادەکان دەکاتەوە. چوونەژوورەوەی خێرای ئارەزوومەندانە دواتر لە ڕێکخستنەکان دەتوانرێت ڕێکبخرێت.",
+    returnHelp: "دوای چوونەژوورەوە Atlas ڕاستەوخۆ خشتەی وادەکان دەکاتەوە. هیچ ڕێکخستنێکی تری پێویست نییە.",
     resend: "ئیمەیڵێکی نوێ بنێرە",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
+    quick: "چوونەژوورەوەی خێرا",
+    quickOpening: "چوونەژوورەوەی خێرا دەکرێتەوە…",
+    quickHelp: "ئارەزوومەندانەیە. تەنها ئەگەر پێشتر بۆ ئەم هەژمارە چوونەژوورەوەی خێرات هەڵگرتووە، بەکاریبهێنە.",
+    quickCancelled: "چوونەژوورەوەی خێرا هەڵوەشێنرایەوە. چوونەژوورەوە بە ئیمەیڵی کار هەر بەردەستە.",
+    quickUnavailable: "چوونەژوورەوەی خێرا لێرە ڕێک نەخراوە. ئیمەیڵی کار بەکاربهێنە.",
     invalidEmail: "ئیمەیڵی کاری کلینیک بنووسە.",
-    rateLimited: "هیچ ئیمەیڵێکی نوێ نەنێردرا. ناردنی ئیمەیڵ کاتێکی کورت سنووردارە. ئەگەر پێشتر داوات کردووە، تەنها نوێترین ئیمەیڵی Atlas بەکاربهێنە؛ ئەگەر نا، دواتر دووبارە هەوڵ بدە.",
+    rateLimited: "هیچ ئیمەیڵێکی نوێ نەنێردرا. چوونەژوورەوە بە ئیمەیڵ کاتێکی کورت سنووردارە. ئەگەر پێشتر داوات کردووە، تەنها نوێترین ئیمەیڵی Atlas بەکاربهێنە؛ ئەگەر نا، دواتر دووبارە هەوڵ بدە.",
     notReady: "Atlas نەیتوانی بۆ ئەم هەژمارە ئیمەیڵی چوونەژوورەوە بنێرێت. ناونیشانەکە بپشکنە یان داوا لە کلینیک بکە هەژمارەکەت ئامادە بکات.",
     network: "Atlas نەیتوانی چوونەژوورەوە دەستپێبکات. پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدە.",
   },
   ar: {
-    open: "فتح Atlas",
-    opening: "جارٍ فتح Atlas…",
-    deviceHelp: "إذا حفظت الدخول السريع الاختياري من قبل، استخدم تحقق الجهاز. وإلا فاستخدم بريد العمل أدناه.",
-    deviceCancelled: "تم إلغاء الدخول السريع. يمكنك المحاولة مرة أخرى أو استخدام بريد العمل.",
-    deviceUnavailable: "الدخول السريع غير مُعد على هذا الجهاز. استخدم بريد العيادة أدناه.",
-    emailFallback: "استخدام بريد العمل",
     emailHint: "استخدم بريد العمل الذي أعدته العيادة مسبقاً.",
     send: "إرسال بريد Atlas",
     sentTitle: "تم إرسال بريد Atlas.",
     sentHelp: "افتح أحدث رسالة من Atlas فقط واضغط Open Atlas.",
     openInbox: "فتح أحدث رسالة من Atlas",
-    returnHelp: "بعد تسجيل الدخول يفتح Atlas جدول المواعيد مباشرة. يمكن إعداد الدخول السريع الاختياري لاحقاً من الإعدادات.",
+    returnHelp: "بعد تسجيل الدخول يفتح Atlas جدول المواعيد مباشرة. لا تحتاج إلى إعداد أي شيء آخر.",
     resend: "إرسال رسالة جديدة",
     another: "استخدام بريد آخر",
+    quick: "استخدام الدخول السريع",
+    quickOpening: "جارٍ فتح الدخول السريع…",
+    quickHelp: "اختياري. استخدمه فقط إذا سبق أن حفظت الدخول السريع لهذا الحساب.",
+    quickCancelled: "تم إلغاء الدخول السريع. تسجيل الدخول ببريد العمل ما زال متاحاً.",
+    quickUnavailable: "الدخول السريع غير مُعد هنا. استخدم بريد العمل.",
     invalidEmail: "أدخل بريد العمل الخاص بالعيادة.",
-    rateLimited: "لم يتم إرسال رسالة جديدة. استعادة الدخول بالبريد محدودة مؤقتاً. إذا طلبت رسالة بالفعل فاستخدم أحدث رسالة من Atlas فقط، وإلا حاول لاحقاً.",
+    rateLimited: "لم يتم إرسال رسالة جديدة. تسجيل الدخول بالبريد محدود مؤقتاً. إذا طلبت رسالة بالفعل فاستخدم أحدث رسالة من Atlas فقط، وإلا حاول لاحقاً.",
     notReady: "تعذر على Atlas إرسال رسالة دخول لهذا الحساب. تحقق من البريد أو اطلب من العيادة تجهيز الحساب.",
     network: "تعذر بدء تسجيل الدخول. تحقق من الاتصال وحاول مرة أخرى.",
   },
@@ -102,10 +99,9 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
   const t = uiText(locale);
   const copy = authCopy[locale];
   const [email, setEmail] = useState("");
-  const [showEmail, setShowEmail] = useState(false);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [deviceBusy, setDeviceBusy] = useState(false);
+  const [quickBusy, setQuickBusy] = useState(false);
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
 
@@ -138,29 +134,27 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
-  async function openAtlasOnThisDevice() {
-    if (deviceBusy || busy) return;
-    setDeviceBusy(true);
+  async function quickSignIn() {
+    if (quickBusy || busy) return;
+    setQuickBusy(true);
     setError("");
     try {
       const supabase = createClient();
-      const { data, error: deviceError } = await supabase.auth.signInWithPasskey();
-      if (!deviceError && data.session) {
+      const { data, error: quickError } = await supabase.auth.signInWithPasskey();
+      if (!quickError && data.session) {
         window.location.replace("/dashboard");
         return;
       }
 
-      const errorText = `${deviceError?.name ?? ""} ${deviceError?.message ?? ""}`.toLowerCase();
-      const cancelled = errorText.includes("notallowed") || errorText.includes("not allowed") || errorText.includes("cancel") || errorText.includes("abort");
-      setShowEmail(true);
-      setError(cancelled ? copy.deviceCancelled : copy.deviceUnavailable);
+      const text = `${quickError?.name ?? ""} ${quickError?.message ?? ""}`.toLowerCase();
+      const cancelled = text.includes("notallowed") || text.includes("not allowed") || text.includes("cancel") || text.includes("abort");
+      setError(cancelled ? copy.quickCancelled : copy.quickUnavailable);
     } catch (caught) {
       const text = caught instanceof Error ? `${caught.name} ${caught.message}`.toLowerCase() : "";
       const cancelled = text.includes("notallowed") || text.includes("not allowed") || text.includes("cancel") || text.includes("abort");
-      setShowEmail(true);
-      setError(cancelled ? copy.deviceCancelled : copy.deviceUnavailable);
+      setError(cancelled ? copy.quickCancelled : copy.quickUnavailable);
     } finally {
-      setDeviceBusy(false);
+      setQuickBusy(false);
     }
   }
 
@@ -226,7 +220,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
           <button className="button button-ghost button-small" type="button" disabled={busy || cooldown > 0} onClick={() => void sendLink()}>
             {busy ? t.sending : cooldown > 0 ? `${cooldown}s` : copy.resend}
           </button>
-          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setSent(false); setShowEmail(true); setError(""); }}>
+          <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setSent(false); setError(""); }}>
             {copy.another}
           </button>
         </div>
@@ -236,27 +230,33 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
 
   return (
     <div className="receptionist-login-flow">
-      <button className="button login-primary-action" type="button" disabled={deviceBusy || busy} onClick={() => void openAtlasOnThisDevice()}>
-        {deviceBusy ? copy.opening : copy.open}
-      </button>
-      <p className="login-method-help">{copy.deviceHelp}</p>
+      <form className="stack-form login-email-form" onSubmit={sendLink}>
+        <p className="field-help login-email-help">{copy.emailHint}</p>
+        <label htmlFor="email">{t.workEmail}</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="reception@clinic.com"
+          dir="ltr"
+          required
+        />
+        <button className="button login-primary-action" type="submit" disabled={busy || quickBusy || cooldown > 0}>
+          {busy ? t.sending : cooldown > 0 ? `${cooldown}s` : copy.send}
+        </button>
+      </form>
 
       {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
 
-      {!showEmail ? (
-        <button className="button button-ghost" type="button" onClick={() => { setShowEmail(true); setError(""); }}>
-          {copy.emailFallback}
+      <div className="auth-alternative login-quick-signin">
+        <button className="button button-ghost" type="button" disabled={quickBusy || busy} onClick={() => void quickSignIn()}>
+          {quickBusy ? copy.quickOpening : copy.quick}
         </button>
-      ) : (
-        <form className="stack-form login-email-form" onSubmit={sendLink}>
-          <p className="field-help login-email-help">{copy.emailHint}</p>
-          <label htmlFor="email">{t.workEmail}</label>
-          <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="reception@clinic.com" dir="ltr" required />
-          <button className="button button-ghost" type="submit" disabled={busy || cooldown > 0}>
-            {busy ? t.sending : cooldown > 0 ? `${cooldown}s` : copy.send}
-          </button>
-        </form>
-      )}
+        <p className="login-method-help">{copy.quickHelp}</p>
+      </div>
     </div>
   );
 }
