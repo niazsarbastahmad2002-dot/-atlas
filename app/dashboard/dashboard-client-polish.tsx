@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { localizeDigits, toAsciiDigits } from "@/lib/i18n/format";
+import { formatTimeValue, localizeDigits, toAsciiDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
+import { createAppointmentInline } from "./instant-actions";
 
 const exactCopy: Record<Exclude<UiLocale, "en">, Record<string, string>> = {
   ku: {
@@ -48,6 +50,27 @@ const exactCopy: Record<Exclude<UiLocale, "en">, Record<string, string>> = {
     "Reminder settings updated.": "تم تحديث إعدادات التذكير.",
   },
 };
+
+const fastSaveCopy = {
+  en: {
+    saving: "Saving appointment…",
+    saved: "Appointment saved",
+    failed: "Could not save. Check the details and try again.",
+    slotTaken: "That time was just taken. Choose another time.",
+  },
+  ku: {
+    saving: "وادە پاشەکەوت دەکرێت…",
+    saved: "وادە پاشەکەوت کرا",
+    failed: "وادە پاشەکەوت نەبوو. زانیارییەکان بپشکنە.",
+    slotTaken: "ئەم کاتە گیرا. کاتێکی تر هەڵبژێرە.",
+  },
+  ar: {
+    saving: "جارٍ حفظ الموعد…",
+    saved: "تم حفظ الموعد",
+    failed: "تعذر حفظ الموعد. تحقق من البيانات وحاول مرة أخرى.",
+    slotTaken: "تم حجز هذا الوقت للتو. اختر وقتاً آخر.",
+  },
+} as const;
 
 function groupPhone(value: string) {
   const ascii = toAsciiDigits(value).trim();
@@ -97,10 +120,42 @@ function localizeVisibleText(value: string, locale: UiLocale) {
   return localizeDigits(text, locale);
 }
 
+function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt: string) {
+  document.querySelectorAll(".atlas-fast-save-toast").forEach((element) => element.remove());
+
+  const toast = document.createElement("div");
+  toast.className = "atlas-fast-save-toast";
+  toast.dir = locale === "en" ? "ltr" : "rtl";
+
+  const main = document.createElement("strong");
+  main.textContent = fastSaveCopy[locale].saving;
+  const detail = document.createElement("span");
+  const time = appointmentAt.includes("T") ? appointmentAt.split("T")[1] : "";
+  detail.textContent = [patientName, time ? formatTimeValue(time, locale) : ""].filter(Boolean).join(" · ");
+  toast.append(main, detail);
+  document.body.append(toast);
+
+  return {
+    success() {
+      toast.classList.add("is-success");
+      main.textContent = `✓ ${fastSaveCopy[locale].saved}`;
+      window.setTimeout(() => toast.remove(), 1100);
+    },
+    fail(slotTaken = false) {
+      toast.classList.add("is-error");
+      main.textContent = slotTaken ? fastSaveCopy[locale].slotTaken : fastSaveCopy[locale].failed;
+      window.setTimeout(() => toast.remove(), 2600);
+    },
+  };
+}
+
 export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
+  const router = useRouter();
+
   useEffect(() => {
     const preparedInputs = new WeakSet<HTMLInputElement>();
     const preparedSelects = new WeakSet<HTMLSelectElement>();
+    const preparedForms = new WeakSet<HTMLFormElement>();
     let frame = 0;
 
     const preparePhoneInput = (input: HTMLInputElement) => {
@@ -144,9 +199,74 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       }
     };
 
+    const prepareAppointmentForm = (form: HTMLFormElement) => {
+      if (preparedForms.has(form)) return;
+      preparedForms.add(form);
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (form.dataset.fastSaving === "true") return;
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const formData = new FormData(form);
+        const appointmentAt = String(formData.get("appointment_at") ?? "");
+        const patientName = String(formData.get("patient_name") ?? "").trim();
+        if (!appointmentAt) {
+          showFastSaveToast(locale, patientName, "").fail(false);
+          return;
+        }
+
+        form.dataset.fastSaving = "true";
+        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        const originalLabel = button?.textContent ?? "";
+        if (button) {
+          button.disabled = true;
+          button.textContent = fastSaveCopy[locale].saving;
+        }
+        const toast = showFastSaveToast(locale, patientName, appointmentAt);
+
+        try {
+          const result = await createAppointmentInline(formData);
+          if (!result.ok) {
+            toast.fail(result.reason === "slot_taken");
+            return;
+          }
+
+          const nameInput = form.querySelector<HTMLInputElement>('#patient_name');
+          const phoneInput = form.querySelector<HTMLInputElement>('#patient_phone');
+          const consentInput = form.querySelector<HTMLInputElement>('#reminder_consent');
+          const idempotencyInput = form.querySelector<HTMLInputElement>('input[name="idempotency_key"]');
+          if (nameInput) nameInput.value = "";
+          if (phoneInput) phoneInput.value = "";
+          if (consentInput) consentInput.checked = false;
+          if (idempotencyInput && typeof crypto.randomUUID === "function") idempotencyInput.value = crypto.randomUUID();
+
+          toast.success();
+          if (button) button.textContent = `✓ ${fastSaveCopy[locale].saved}`;
+          router.refresh();
+        } catch {
+          toast.fail(false);
+        } finally {
+          form.dataset.fastSaving = "false";
+          window.setTimeout(() => {
+            if (button && button.isConnected) {
+              button.disabled = false;
+              button.textContent = originalLabel;
+            }
+          }, 550);
+        }
+      }, true);
+    };
+
     const polish = () => {
       document.querySelectorAll<HTMLInputElement>('.app-shell input[type="tel"]').forEach(preparePhoneInput);
       document.querySelectorAll<HTMLSelectElement>(".app-shell select#locale, .app-shell select#appointment_interval_minutes").forEach(prepareInstantSelect);
+      document.querySelectorAll<HTMLFormElement>(".app-shell form.appointment-form").forEach(prepareAppointmentForm);
       if (locale === "en") return;
 
       const shell = document.querySelector(".app-shell");
@@ -182,7 +302,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       observer.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [locale]);
+  }, [locale, router]);
 
   return (
     <style jsx global>{`
@@ -197,6 +317,39 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       .appointment-form,
       .app-content {
         overflow: visible;
+      }
+      .atlas-fast-save-toast {
+        position: fixed;
+        z-index: 250;
+        inset-inline-end: max(18px, env(safe-area-inset-right, 0px));
+        bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 18px));
+        display: grid;
+        gap: 3px;
+        width: min(320px, calc(100vw - 36px));
+        border: 1px solid #cbdad1;
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: #fff;
+        color: var(--ink);
+        box-shadow: 0 18px 48px rgba(20,36,28,.16);
+        animation: atlas-toast-in .16s ease-out both;
+      }
+      .atlas-fast-save-toast strong { font-size: 13px; }
+      .atlas-fast-save-toast span { color: var(--muted); font-size: 11px; }
+      .atlas-fast-save-toast.is-success { border-color: #b8ddc7; background: #f2fbf5; }
+      .atlas-fast-save-toast.is-success strong { color: var(--success); }
+      .atlas-fast-save-toast.is-error { border-color: #efc3c3; background: #fff7f7; }
+      .atlas-fast-save-toast.is-error strong { color: var(--danger); }
+      @keyframes atlas-toast-in {
+        from { opacity: 0; transform: translateY(8px) scale(.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @media (max-width: 720px) {
+        .atlas-fast-save-toast {
+          inset-inline: 14px;
+          width: auto;
+          bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        }
       }
     `}</style>
   );
