@@ -7,6 +7,7 @@ import {
   toBaghdadInputValue,
 } from "@/lib/appointments";
 import { baghdadDate } from "@/lib/i18n/config";
+import { formatLeadTime } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { formatBaghdadDateTime, formatBaghdadDay, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { getDashboardMessage } from "@/lib/messages";
@@ -30,10 +31,50 @@ type DashboardPageProps = {
   }>;
 };
 
-const dayCopy: Record<UiLocale, { previous: string; today: string; next: string; appointments: string; empty: string }> = {
-  en: { previous: "Previous", today: "Today", next: "Next", appointments: "Appointments", empty: "No appointments on this day." },
-  ku: { previous: "پێشوو", today: "ئەمڕۆ", next: "داهاتوو", appointments: "وادەکان", empty: "لەم ڕۆژە هیچ وادەیەک نییە." },
-  ar: { previous: "السابق", today: "اليوم", next: "التالي", appointments: "المواعيد", empty: "لا توجد مواعيد في هذا اليوم." },
+const dayCopy: Record<UiLocale, {
+  previous: string;
+  today: string;
+  next: string;
+  nextUp: string;
+  appointments: string;
+  empty: string;
+  emptyHelp: string;
+  add: string;
+  reminders: string;
+}> = {
+  en: {
+    previous: "Previous",
+    today: "Today",
+    next: "Next",
+    nextUp: "Next appointment",
+    appointments: "Appointments",
+    empty: "No appointments on this day.",
+    emptyHelp: "Add an appointment when the first patient calls or walks in.",
+    add: "Add appointment",
+    reminders: "Patient reminders",
+  },
+  ku: {
+    previous: "پێشوو",
+    today: "ئەمڕۆ",
+    next: "داهاتوو",
+    nextUp: "وادەی داهاتوو",
+    appointments: "وادەکان",
+    empty: "لەم ڕۆژە هیچ وادەیەک نییە.",
+    emptyHelp: "کاتێک یەکەم نەخۆش پەیوەندی کرد یان هات، وادەکە زیاد بکە.",
+    add: "وادە زیاد بکە",
+    reminders: "بیرخستنەوەی نەخۆش",
+  },
+  ar: {
+    previous: "السابق",
+    today: "اليوم",
+    next: "التالي",
+    nextUp: "الموعد التالي",
+    appointments: "المواعيد",
+    empty: "لا توجد مواعيد في هذا اليوم.",
+    emptyHelp: "أضف موعداً عندما يتصل أول مريض أو يصل إلى العيادة.",
+    add: "إضافة موعد",
+    reminders: "تذكيرات المرضى",
+  },
 };
 
 function validBaghdadDay(value: string | undefined, fallback: string) {
@@ -52,6 +93,15 @@ function shiftBaghdadDay(day: string, amount: number) {
 function scheduleHref(clinicId: string, day: string) {
   const params = new URLSearchParams({ clinic: clinicId, day });
   return `/dashboard?${params}`;
+}
+
+function reminderPlanLabel(first: number, second: number | null, locale: UiLocale) {
+  const firstLabel = formatLeadTime(first, locale);
+  if (!second) return firstLabel;
+  const secondLabel = formatLeadTime(second, locale);
+  if (locale === "ku") return `${firstLabel} + ${secondLabel} پێش وادە`;
+  if (locale === "ar") return `${firstLabel} + ${secondLabel} قبل الموعد`;
+  return `${firstLabel} + ${secondLabel} before appointment`;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -100,7 +150,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const selectionError = params.clinic && requestedClinic !== clinic.id
     ? getDashboardMessage("clinic_unavailable")
     : null;
-  const today = baghdadDate.format(new Date());
+  const now = Date.now();
+  const today = baghdadDate.format(new Date(now));
   const selectedDay = validBaghdadDay(params.day, today);
   const selectedDate = new Date(`${selectedDay}T12:00:00+03:00`);
   const dayStart = new Date(`${selectedDay}T00:00:00+03:00`).toISOString();
@@ -127,12 +178,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .eq("clinic_id", clinic.id)
       .is("voided_at", null)
       .in("status", ["pending", "confirmed"])
-      .gte("appointment_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString())
       .order("appointment_at", { ascending: true })
       .limit(5000),
     supabase
       .from("clinic_reminder_settings")
-      .select("enabled, lead_minutes, default_reminder_language")
+      .select("enabled, lead_minutes, second_lead_minutes, default_reminder_language")
       .eq("clinic_id", clinic.id)
       .maybeSingle(),
     supabase
@@ -149,13 +200,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const doctorRows = doctors ?? [];
   const activeDoctors = doctorRows.filter((doctor) => doctor.active);
   const confirmed = rows.filter((row) => row.status === "confirmed").length;
-  const reminders = rows.filter((row) => ["sent", "delivered", "read"].includes(row.reminder_status)).length;
+  const pending = rows.filter((row) => row.status === "pending").length;
   const previousDay = shiftBaghdadDay(selectedDay, -1);
   const nextDay = shiftBaghdadDay(selectedDay, 1);
+  const nextAppointmentId = selectedDay === today
+    ? rows.find((row) => ["pending", "confirmed"].includes(row.status) && new Date(row.appointment_at).getTime() >= now - 5 * 60 * 1000)?.id ?? null
+    : null;
 
-  const minimum = new Date(Date.now() + 5 * 60 * 1000);
+  const minimum = new Date(now + 5 * 60 * 1000);
   minimum.setSeconds(0, 0);
-  const maximum = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000);
+  const maximum = new Date(now + 2 * 365 * 24 * 60 * 60 * 1000);
   const minimumInput = toBaghdadInputValue(minimum);
   const maximumInput = toBaghdadInputValue(maximum);
   const occupiedByDoctor = (occupiedAppointments ?? []).reduce<Record<string, string[]>>((result, row) => {
@@ -175,14 +229,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     no_show: t.noShow,
   };
   const reminderLabels: Record<string, string> = {
-    disabled: t.remindersOff,
     queued: t.reminderQueued,
     processing: t.reminderSending,
     sent: t.reminderSent,
     delivered: t.reminderDelivered,
     read: t.reminderRead,
     failed: t.reminderFailed,
-    cancelled: t.reminderCancelled,
   };
   const reminderLanguageLabels: Record<string, string> = {
     ku: "کوردی (سۆرانی)",
@@ -229,7 +281,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <section className="stats workspace-stats" aria-label={days.appointments}>
         <Stat label={days.appointments} value={rows.length} />
         <Stat label={t.confirmed} value={confirmed} />
-        <Stat label={t.remindersSent} value={reminders} />
+        <Stat label={t.pending} value={pending} />
       </section>
 
       <div className="workspace-grid">
@@ -307,8 +359,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </form>
 
           <div className={`reminder-note ${reminderSettings?.enabled ? "reminder-ready" : ""}`}>
+            <strong>{days.reminders}: </strong>
             {reminderSettings?.enabled
-              ? t.reminderScheduled.replace("{minutes}", String(reminderSettings.lead_minutes))
+              ? reminderPlanLabel(reminderSettings.lead_minutes, reminderSettings.second_lead_minutes, locale)
               : t.reminderOff}
           </div>
           <p className="composer-privacy">{t.privacyNote}</p>
@@ -326,7 +379,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           {rows.length === 0 ? (
             <div className="empty-state compact-empty">
-              <div><strong>{days.empty}</strong><span>{t.noAppointmentsHelp}</span></div>
+              <div>
+                <strong>{days.empty}</strong>
+                <span>{days.emptyHelp}</span>
+                <a className="button button-small empty-state-action" href="#new-appointment">+ {days.add}</a>
+              </div>
             </div>
           ) : (
             <div className="appointment-list polished-appointment-list">
@@ -335,8 +392,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 const editorDoctors = doctorRows
                   .filter((doctor) => doctor.active || doctor.id === appointment.doctor_id)
                   .map((doctor) => ({ id: doctor.id, name: doctor.name }));
+                const isNext = appointment.id === nextAppointmentId;
+                const reminderLabel = reminderLabels[appointment.reminder_status];
                 return (
-                  <article className="appointment-row polished-appointment" key={appointment.id}>
+                  <article className={`appointment-row polished-appointment ${isNext ? "is-next-appointment" : ""}`} key={appointment.id}>
+                    {isNext ? <div className="next-appointment-label">{days.nextUp}</div> : null}
                     <div className="appointment-primary">
                       <div className="patient-cell">
                         <strong>{appointment.patient_name}</strong>
@@ -344,12 +404,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       </div>
                       <div className="appointment-badges">
                         <span className={`status status-${status}`}>{statusLabels[status]}</span>
-                        <span className="status status-reminder">{reminderLabels[appointment.reminder_status] ?? t.reminderQueued}</span>
+                        {reminderLabel ? <span className="status status-reminder">{reminderLabel}</span> : null}
                       </div>
                     </div>
                     <dl className="appointment-details polished-details">
+                      <div><dt>{t.time}</dt><dd className="appointment-time-value">{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div>
                       <div><dt>{t.doctor}</dt><dd>{appointment.doctor_name}</dd></div>
-                      <div><dt>{t.time}</dt><dd>{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div>
                       <div><dt>{t.reminderLanguage}</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div>
                     </dl>
                     <AppointmentEditor
