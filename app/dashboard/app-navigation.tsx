@@ -41,7 +41,8 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
   const t = uiText(locale);
   const onSettings = visiblePath.startsWith("/dashboard/settings")
     || visiblePath.startsWith("/dashboard/reminders")
-    || visiblePath.startsWith("/dashboard/staff");
+    || visiblePath.startsWith("/dashboard/staff")
+    || visiblePath.startsWith("/dashboard/history");
   const onSchedule = visiblePath === "/dashboard";
 
   useEffect(() => setVisiblePath(pathname), [pathname]);
