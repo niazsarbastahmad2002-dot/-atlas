@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { toBaghdadInputValue, type AppointmentMutationFailure, type AppointmentStatus } from "@/lib/appointments";
+import type { AppointmentMutationFailure, AppointmentStatus } from "@/lib/appointments";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import { AppointmentEditDateTimeField } from "./appointment-edit-datetime-field";
 import { updateAppointmentDetailsInline } from "./instant-actions";
 
 type DoctorOption = { id: string; name: string };
@@ -67,6 +68,12 @@ const copy = {
     closed: "أعد فتح الموعد قبل تغيير تفاصيله.",
     failed: "تعذر تحديث الموعد. حاول مرة أخرى.",
   },
+} as const;
+
+const reminderLanguageLabels = {
+  en: { ku: "Kurdish (Sorani)", ar: "Arabic", en: "English" },
+  ku: { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" },
+  ar: { ku: "الكردية (السورانية)", ar: "العربية", en: "الإنجليزية" },
 } as const;
 
 function failureText(locale: UiLocale, reason: AppointmentMutationFailure) {
@@ -139,22 +146,21 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
             {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
           </select>
 
-          <label htmlFor={`edit-time-${appointmentId}`}>{ui.time} <span className="label-muted">· {ui.erbilTime}</span></label>
-          <input
+          <AppointmentEditDateTimeField
             id={`edit-time-${appointmentId}`}
-            name="appointment_at"
-            type="datetime-local"
-            defaultValue={toBaghdadInputValue(new Date(appointmentAt))}
+            appointmentAt={appointmentAt}
             min={min}
             max={max}
-            required
+            locale={locale}
+            label={ui.time}
+            timeZoneLabel={ui.erbilTime}
           />
 
           <label htmlFor={`edit-language-${appointmentId}`}>{ui.reminderLanguage}</label>
           <select id={`edit-language-${appointmentId}`} name="reminder_language" defaultValue={reminderLanguage}>
-            <option value="ku">کوردی (سۆرانی)</option>
-            <option value="ar">العربية</option>
-            <option value="en">English</option>
+            <option value="ku">{reminderLanguageLabels[locale].ku}</option>
+            <option value="ar">{reminderLanguageLabels[locale].ar}</option>
+            <option value="en">{reminderLanguageLabels[locale].en}</option>
           </select>
 
           <label className="checkbox-field consent-card" htmlFor={`edit-consent-${appointmentId}`}>
@@ -166,6 +172,38 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
         </form>
       ) : null}
       {message ? <span className={`appointment-edit-message is-${message.tone}`} role={message.tone === "error" ? "alert" : "status"}>{message.text}</span> : null}
+
+      <style jsx global>{`
+        .appointment-edit-form {
+          display: grid;
+          gap: 9px;
+          margin: 8px 0 2px;
+        }
+        .appointment-edit-form > label {
+          margin-top: 3px;
+          font-size: 12px;
+          font-weight: 760;
+        }
+        .appointment-edit-form > .button {
+          justify-self: start;
+          min-width: 126px;
+          margin-top: 7px;
+        }
+        .appointment-editor + .polished-actions {
+          gap: 10px !important;
+          row-gap: 9px !important;
+          margin-top: 12px;
+        }
+        .appointment-editor + .polished-actions button {
+          min-height: 38px;
+          padding: 8px 12px;
+          touch-action: manipulation;
+        }
+        @media (max-width: 540px) {
+          .appointment-edit-form > .button { width: 100%; }
+          .appointment-editor + .polished-actions { align-items: stretch; }
+        }
+      `}</style>
     </div>
   );
 }
