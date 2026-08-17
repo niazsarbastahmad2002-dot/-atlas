@@ -1,0 +1,47 @@
+"use client";
+
+import { useState } from "react";
+import type { UiLocale } from "@/lib/i18n/ui";
+
+const choices: Array<{ value: UiLocale; label: string; detail: string }> = [
+  { value: "ku", label: "کوردی", detail: "سۆرانی" },
+  { value: "ar", label: "العربية", detail: "العراقي" },
+  { value: "en", label: "English", detail: "English" },
+];
+
+export function LoginLanguagePicker({ locale }: { locale: UiLocale }) {
+  const [busy, setBusy] = useState(false);
+
+  async function choose(value: UiLocale) {
+    if (busy || value === locale) return;
+    setBusy(true);
+    try {
+      await fetch("/api/ui-language", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ locale: value }),
+      });
+      window.location.reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="login-language-picker" aria-label="Choose language">
+      {choices.map((choice) => (
+        <button
+          type="button"
+          key={choice.value}
+          className={choice.value === locale ? "is-active" : ""}
+          aria-pressed={choice.value === locale}
+          disabled={busy}
+          onClick={() => void choose(choice.value)}
+        >
+          <strong>{choice.label}</strong>
+          <span>{choice.detail}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
