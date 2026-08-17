@@ -68,6 +68,10 @@ export function formatMonthYear(date: Date, locale: UiLocale) {
 }
 
 export function formatWeekday(date: Date, locale: UiLocale) {
+  if (locale === "ku") {
+    const shortKurdish = ["یەک", "دوو", "سێ", "چوار", "پێنج", "هەینی", "شەم"];
+    return shortKurdish[date.getUTCDay()];
+  }
   return new Intl.DateTimeFormat(dateLocale(locale), {
     timeZone: "UTC",
     weekday: "short",
