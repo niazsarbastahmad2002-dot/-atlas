@@ -40,34 +40,45 @@ const labels = {
   ar: { today: "اليوم", yesterday: "أمس", tomorrow: "غداً", cancelled: "ملغاة" },
 } as const;
 
-function syncRelativeDayLabels() {
-  const locale = pageLocale();
-  const copy = labels[locale];
-  const today = baghdadToday();
-  const yesterday = shiftDay(today, -1);
-  const tomorrow = shiftDay(today, 1);
+function selectedDayFromLocation(today: string) {
+  const requested = new URL(window.location.href).searchParams.get("day");
+  return requested && /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : today;
+}
 
-  document.querySelectorAll<HTMLAnchorElement>(".day-navigation > a.button[href^='/dashboard?']").forEach((link) => {
-    const href = link.getAttribute("href");
-    const label = link.querySelector("span");
-    if (!href || !label) return;
-    const day = new URL(href, window.location.origin).searchParams.get("day");
-    const nextLabel = day === today
-      ? copy.today
-      : day === yesterday
-        ? copy.yesterday
-        : day === tomorrow
-          ? copy.tomorrow
-          : null;
-    if (nextLabel && label.textContent !== nextLabel) label.textContent = nextLabel;
-  });
+function syncSelectedDayLabel() {
+  const current = document.querySelector<HTMLAnchorElement>(".day-navigation .day-current");
+  if (!current) return;
+
+  const today = baghdadToday();
+  const selectedDay = selectedDayFromLocation(today);
+  const copy = labels[pageLocale()];
+  const relativeLabel = selectedDay === today
+    ? copy.today
+    : selectedDay === shiftDay(today, -1)
+      ? copy.yesterday
+      : selectedDay === shiftDay(today, 1)
+        ? copy.tomorrow
+        : null;
+
+  let label = current.querySelector<HTMLSpanElement>("span");
+  if (!relativeLabel) {
+    label?.remove();
+    return;
+  }
+
+  if (!label) {
+    label = document.createElement("span");
+    current.appendChild(label);
+  }
+
+  label.dataset.atlasRelativeDay = "true";
+  if (label.textContent !== relativeLabel) label.textContent = relativeLabel;
 }
 
 function syncCancelledStat() {
   const stats = document.querySelector<HTMLElement>(".workspace-stats");
   if (!stats) return;
 
-  const locale = pageLocale();
   const cancelledCount = document.querySelectorAll(".appointments-panel .status-cancelled").length;
   let card = stats.querySelector<HTMLElement>("[data-atlas-cancelled-stat]");
 
@@ -81,7 +92,7 @@ function syncCancelledStat() {
 
   const label = card.querySelector("span");
   const value = card.querySelector("strong");
-  const nextLabel = labels[locale].cancelled;
+  const nextLabel = labels[pageLocale()].cancelled;
   const nextValue = String(cancelledCount);
   if (label && label.textContent !== nextLabel) label.textContent = nextLabel;
   if (value && value.textContent !== nextValue) value.textContent = nextValue;
@@ -91,9 +102,17 @@ export function ScheduleNavigationPolish() {
   const router = useRouter();
 
   useEffect(() => {
+    const prefetchDays = () => {
+      document.querySelectorAll<HTMLAnchorElement>(".day-navigation a[href^='/dashboard?']").forEach((link) => {
+        const href = link.getAttribute("href");
+        if (href) router.prefetch(href);
+      });
+    };
+
     const sync = () => {
-      syncRelativeDayLabels();
+      syncSelectedDayLabel();
       syncCancelledStat();
+      prefetchDays();
     };
 
     const warmDay = (event: Event) => {
@@ -106,8 +125,17 @@ export function ScheduleNavigationPolish() {
     const handleClick = (event: MouseEvent) => {
       if (!isPlainPrimaryClick(event)) return;
       const target = event.target instanceof Element ? event.target : null;
-      const link = target?.closest<HTMLAnchorElement>("a[href='#new-appointment']");
-      if (!link) return;
+
+      const dayLink = target?.closest<HTMLAnchorElement>(".day-navigation a[href^='/dashboard?']");
+      const dayHref = dayLink?.getAttribute("href");
+      if (dayHref) {
+        event.preventDefault();
+        router.push(dayHref, { scroll: false });
+        return;
+      }
+
+      const appointmentLink = target?.closest<HTMLAnchorElement>("a[href='#new-appointment']");
+      if (!appointmentLink) return;
       const composer = document.getElementById("new-appointment");
       const patientName = document.getElementById("patient_name") as HTMLInputElement | null;
       if (!composer || !patientName) return;
@@ -121,9 +149,11 @@ export function ScheduleNavigationPolish() {
     document.addEventListener("mouseover", warmDay, { passive: true });
     document.addEventListener("click", handleClick);
 
-    const workspace = document.querySelector(".workspace-page");
-    const observer = workspace ? new MutationObserver(sync) : null;
-    observer?.observe(workspace!, { childList: true, subtree: true });
+    // .app-content survives dashboard route changes, so watching it keeps the
+    // relative-day label and Cancelled summary correct after every navigation.
+    const content = document.querySelector(".app-content");
+    const observer = content ? new MutationObserver(sync) : null;
+    observer?.observe(content!, { childList: true, subtree: true });
 
     return () => {
       observer?.disconnect();
