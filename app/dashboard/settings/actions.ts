@@ -185,23 +185,32 @@ export async function moveDoctor(clinicId: string, doctorId: string, direction: 
     .from("doctors")
     .select("id, name, display_order")
     .eq("clinic_id", clinicId)
+    .eq("active", true)
     .order("display_order", { ascending: true })
     .order("name", { ascending: true });
   if (error || !doctors) redirect(settingsUrl(clinicId, "error", "save_failed"));
 
-  const ordered = [...doctors];
-  const index = ordered.findIndex((doctor) => doctor.id === doctorId);
+  const index = doctors.findIndex((doctor) => doctor.id === doctorId);
   const target = direction === "up" ? index - 1 : index + 1;
-  if (index < 0 || target < 0 || target >= ordered.length) return;
-  [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+  if (index < 0 || target < 0 || target >= doctors.length) return;
 
-  for (let displayOrder = 0; displayOrder < ordered.length; displayOrder += 1) {
-    const { error: updateError } = await supabase
+  const current = doctors[index];
+  const adjacent = doctors[target];
+  const [currentResult, adjacentResult] = await Promise.all([
+    supabase
       .from("doctors")
-      .update({ display_order: displayOrder })
+      .update({ display_order: adjacent.display_order })
       .eq("clinic_id", clinicId)
-      .eq("id", ordered[displayOrder].id);
-    if (updateError) redirect(settingsUrl(clinicId, "error", "save_failed"));
+      .eq("id", current.id),
+    supabase
+      .from("doctors")
+      .update({ display_order: current.display_order })
+      .eq("clinic_id", clinicId)
+      .eq("id", adjacent.id),
+  ]);
+
+  if (currentResult.error || adjacentResult.error) {
+    redirect(settingsUrl(clinicId, "error", "save_failed"));
   }
 
   refreshSettings();
