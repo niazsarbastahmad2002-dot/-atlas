@@ -10,7 +10,7 @@ export function PasskeyManager() {
   async function register() {
     if (status === "working") return;
     setStatus("working");
-    setMessage("");
+    setMessage("Opening this device's security prompt…");
 
     try {
       const supabase = createClient();
@@ -21,28 +21,28 @@ export function PasskeyManager() {
         const text = error.message?.toLowerCase() ?? "";
 
         if (code === "passkey_disabled") {
-          setMessage("Passkey recovery is temporarily unavailable in Atlas authentication settings.");
+          setMessage("Backup sign-in is temporarily unavailable. Your normal Atlas session is unchanged.");
         } else if (code === "webauthn_credential_exists" || text.includes("already") || text.includes("credential") && text.includes("exist")) {
-          setMessage("This account already has a saved Atlas passkey. Your normal signed-in session will still open Atlas directly.");
+          setMessage("Backup sign-in is already ready on this account. Atlas will still open normally while this device stays signed in.");
           setStatus("success");
           return;
         } else if (text.includes("cancel") || text.includes("notallowed") || text.includes("not allowed") || text.includes("timed out")) {
-          setMessage("The device prompt was closed before it finished. Tap again and approve the Apple Passwords / device prompt.");
+          setMessage("The device prompt was closed before it finished. Tap again if you want to set up backup sign-in.");
         } else {
-          setMessage("Passkey setup could not finish. Your current Atlas session is unchanged, so you can safely try again later.");
+          setMessage("Backup sign-in could not finish. Nothing changed, so you can safely try again later.");
         }
         setStatus("error");
         return;
       }
 
-      setMessage(`Recovery passkey ready${data.friendly_name ? `: ${data.friendly_name}` : ""}. Atlas will keep opening directly while this device stays signed in.`);
+      setMessage(`Backup sign-in ready${data.friendly_name ? `: ${data.friendly_name}` : ""}. You will not be asked for it on normal everyday launches.`);
       setStatus("success");
     } catch (error) {
       const name = error instanceof DOMException ? error.name : "";
       if (name === "NotAllowedError" || name === "AbortError") {
-        setMessage("The device prompt was closed before it finished. Tap again and approve the device prompt.");
+        setMessage("The device prompt was closed before it finished. Tap again if you want to continue.");
       } else {
-        setMessage("This device could not finish passkey setup. Your Atlas session is unchanged; you can safely try again later.");
+        setMessage("This device could not finish backup sign-in setup. Your Atlas session is unchanged.");
       }
       setStatus("error");
     }
@@ -50,12 +50,13 @@ export function PasskeyManager() {
 
   return (
     <div className="settings-form">
-      <p className="field-help">Atlas normally keeps this device signed in, so there is no Face ID, fingerprint, PIN, or passkey prompt on everyday launches. A saved passkey is only a fast recovery method if the session is ever lost.</p>
+      <p className="field-help">Everyday use: just open Atlas. No passkey prompt is needed while this device remains signed in.</p>
+      <p className="field-help">To test email sign-in from the beginning, use Sign out above. Then choose “New device or recovery” and enter the work email again. You do not need to delete the email account.</p>
       <button className="button" type="button" onClick={register} disabled={status === "working"} aria-busy={status === "working"}>
-        {status === "working" ? "Waiting for device…" : status === "success" ? "Recovery passkey ready" : "Set up recovery passkey"}
+        {status === "working" ? "Opening device security…" : status === "success" ? "Backup sign-in ready" : "Set up backup sign-in"}
       </button>
       {message ? (
-        <p className={`notice ${status === "success" ? "notice-success" : "notice-error"}`} role={status === "success" ? "status" : "alert"}>
+        <p className={`notice ${status === "success" ? "notice-success" : status === "working" ? "" : "notice-error"}`} role={status === "error" ? "alert" : "status"}>
           {message}
         </p>
       ) : null}
