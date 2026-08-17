@@ -14,8 +14,8 @@ export function PasskeySettingsCard() {
           <span className="settings-card-icon" aria-hidden="true">⌁</span>
           <div>
             <div className="eyebrow">Account security</div>
-            <h2>Passkey sign-in</h2>
-            <p>Fast sign-in without Google Cloud or an email link.</p>
+            <h2>Backup sign-in <span className="label-muted">· optional</span></h2>
+            <p>Atlas normally keeps this device signed in. A passkey is only a faster backup if that session is ever lost.</p>
           </div>
         </div>
         <PasskeyManager />
