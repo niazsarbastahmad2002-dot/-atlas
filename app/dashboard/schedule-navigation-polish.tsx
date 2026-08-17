@@ -19,14 +19,16 @@ export function ScheduleNavigationPolish() {
 
       const dayLinks = [...document.querySelectorAll<HTMLAnchorElement>(".day-navigation a[href^='/dashboard?']")];
       dayLinks.forEach((link) => {
-        router.prefetch(link.href);
-        const warm = () => router.prefetch(link.href);
+        const href = link.getAttribute("href");
+        if (!href) return;
+        router.prefetch(href);
+        const warm = () => router.prefetch(href);
         const go = (event: MouseEvent) => {
           if (!isPlainPrimaryClick(event)) return;
           event.preventDefault();
           const nav = link.closest<HTMLElement>(".day-navigation");
           nav?.classList.add("is-navigating");
-          router.push(link.href, { scroll: false });
+          router.push(href, { scroll: false });
         };
         link.addEventListener("pointerdown", warm, { passive: true });
         link.addEventListener("mouseenter", warm, { passive: true });
