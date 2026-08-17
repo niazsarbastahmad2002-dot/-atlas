@@ -6,6 +6,7 @@ import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
 import { PasskeySettingsCard } from "./passkey-settings-card";
+import { SettingsClientPolish } from "./settings-client-polish";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const locale = await getUiLocale();
@@ -13,6 +14,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <div className="app-shell">
       <DashboardClientPolish locale={locale} />
+      <SettingsClientPolish locale={locale} />
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
