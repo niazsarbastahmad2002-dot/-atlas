@@ -84,11 +84,12 @@ export function AppointmentActions({
     completed: t.completed,
     no_show: t.noShow,
   };
-  const archiveQuestion = locale === "ku"
-    ? "ئەم وادەیە ئەرشیف بکرێت؟ مێژووەکەی دەپارێزرێت."
+  const removeLabel = locale === "ku" ? "لابردن" : locale === "ar" ? "إزالة" : "Remove";
+  const removeQuestion = locale === "ku"
+    ? "ئەم وادەیە لە خشتە لاببرێت؟ مێژووەکەی لە Atlas دەپارێزرێت."
     : locale === "ar"
-      ? "أرشفة هذا الموعد؟ سيتم الاحتفاظ بسجله."
-      : "Archive this appointment? Its history will be retained.";
+      ? "إزالة هذا الموعد من الجدول؟ سيحتفظ Atlas بسجله."
+      : "Remove this appointment from the schedule? Atlas will keep its history.";
   const scheduledAt = new Date(appointmentAt).getTime();
   const tooEarlyForOutcome = Number.isFinite(scheduledAt) && scheduledAt > Date.now() + 5 * 60 * 1000;
   const tooLateToReopen = Number.isFinite(scheduledAt) && scheduledAt < Date.now() - 5 * 60 * 1000;
@@ -126,8 +127,8 @@ export function AppointmentActions({
     });
   }
 
-  function archive(target: EventTarget | null) {
-    if (pending || !window.confirm(archiveQuestion)) return;
+  function remove(target: EventTarget | null) {
+    if (pending || !window.confirm(removeQuestion)) return;
     const card = findAppointmentCard(target);
     const previousVisibility = card?.style.visibility ?? "";
     const previousPointerEvents = card?.style.pointerEvents ?? "";
@@ -173,9 +174,9 @@ export function AppointmentActions({
         style={{ marginInlineStart: "auto", color: "var(--danger)", background: "transparent" }}
         type="button"
         disabled={pending}
-        onClick={(event) => archive(event.currentTarget)}
+        onClick={(event) => remove(event.currentTarget)}
       >
-        {t.archive}
+        {removeLabel}
       </button>
       {error ? (
         <span className="appointment-action-feedback" role="alert">
