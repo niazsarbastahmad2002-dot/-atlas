@@ -1,4 +1,4 @@
-import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
+import { uiLocaleMeta, type UiLocale } from "./ui.ts";
 
 const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
 const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
