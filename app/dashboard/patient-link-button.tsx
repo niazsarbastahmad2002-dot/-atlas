@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createPatientAccessLink } from "./patient-link-actions";
 
@@ -55,6 +55,11 @@ export function PatientLinkButton({
   );
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+  }, []);
 
   async function copyLink() {
     if (!state.link) return;
@@ -68,7 +73,7 @@ export function PatientLinkButton({
   }
 
   async function shareLink() {
-    if (!state.link || !("share" in navigator)) return;
+    if (!state.link || !canShare) return;
     setSharing(true);
     try {
       await navigator.share({ title: t.shareTitle, url: state.link });
@@ -96,9 +101,7 @@ export function PatientLinkButton({
           <p className="patient-link-help">{t.help}</p>
           <div className="patient-link-share-actions">
             <button type="button" onClick={copyLink}>{copied ? t.copied : t.copy}</button>
-            {typeof navigator !== "undefined" && "share" in navigator ? (
-              <button type="button" onClick={shareLink} disabled={sharing}>{t.share}</button>
-            ) : null}
+            {canShare ? <button type="button" onClick={shareLink} disabled={sharing}>{t.share}</button> : null}
           </div>
         </div>
       ) : null}
