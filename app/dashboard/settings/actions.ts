@@ -64,7 +64,6 @@ export async function setInterfaceLanguage(formData: FormData) {
 
   console.info("Atlas interface language updated", { userId: user.id, locale });
   revalidatePath("/", "layout");
-  redirect(settingsUrl(clinicId, "notice", "language_saved"));
 }
 
 export async function updateClinicName(formData: FormData) {
@@ -85,7 +84,6 @@ export async function updateClinicName(formData: FormData) {
   if (error || !data) redirect(settingsUrl(clinicId, "error", "save_failed"));
 
   refreshSettings();
-  redirect(settingsUrl(clinicId, "notice", "clinic_saved"));
 }
 
 export async function updateClinicInterval(formData: FormData) {
@@ -105,7 +103,6 @@ export async function updateClinicInterval(formData: FormData) {
   if (error || !data) redirect(settingsUrl(clinicId, "error", "save_failed"));
 
   refreshSettings();
-  redirect(settingsUrl(clinicId, "notice", "interval_saved"));
 }
 
 export async function createDoctor(formData: FormData) {
@@ -136,7 +133,6 @@ export async function createDoctor(formData: FormData) {
   if (error) redirect(settingsUrl(clinicId, "error", "save_failed"));
 
   refreshSettings();
-  redirect(settingsUrl(clinicId, "notice", "doctor_saved"));
 }
 
 export async function updateDoctor(formData: FormData) {
@@ -159,7 +155,6 @@ export async function updateDoctor(formData: FormData) {
   if (error || !data) redirect(settingsUrl(clinicId, "error", "save_failed"));
 
   refreshSettings();
-  redirect(settingsUrl(clinicId, "notice", "doctor_saved"));
 }
 
 export async function setDoctorActive(clinicId: string, doctorId: string, active: boolean) {
@@ -178,7 +173,6 @@ export async function setDoctorActive(clinicId: string, doctorId: string, active
   if (error || !data) redirect(settingsUrl(clinicId, "error", "save_failed"));
 
   refreshSettings();
-  redirect(settingsUrl(clinicId, "notice", active ? "doctor_restored" : "doctor_archived"));
 }
 
 export async function moveDoctor(clinicId: string, doctorId: string, direction: string) {
@@ -198,9 +192,7 @@ export async function moveDoctor(clinicId: string, doctorId: string, direction: 
   const ordered = [...doctors];
   const index = ordered.findIndex((doctor) => doctor.id === doctorId);
   const target = direction === "up" ? index - 1 : index + 1;
-  if (index < 0 || target < 0 || target >= ordered.length) {
-    redirect(settingsUrl(clinicId, "notice", "doctor_saved"));
-  }
+  if (index < 0 || target < 0 || target >= ordered.length) return;
   [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
 
   for (let displayOrder = 0; displayOrder < ordered.length; displayOrder += 1) {
@@ -213,7 +205,6 @@ export async function moveDoctor(clinicId: string, doctorId: string, direction: 
   }
 
   refreshSettings();
-  redirect(settingsUrl(clinicId, "notice", "doctor_saved"));
 }
 
 export async function updateReminderSettings(formData: FormData) {
@@ -254,7 +245,6 @@ export async function updateReminderSettings(formData: FormData) {
   if (error || !data) redirect(settingsUrl(clinicId, "error", "save_failed"));
 
   refreshSettings();
-  redirect(settingsUrl(clinicId, "notice", "reminders_saved"));
 }
 
 export async function signOut() {
