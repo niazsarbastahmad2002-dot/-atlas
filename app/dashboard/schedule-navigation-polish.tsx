@@ -37,7 +37,7 @@ function pageLocale() {
 const labels = {
   en: { today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow", cancelled: "Cancelled" },
   ku: { today: "ئەمڕۆ", yesterday: "دوێنێ", tomorrow: "سبەی", cancelled: "هەڵوەشێنراوە" },
-  ar: { today: "اليوم", yesterday: "أمس", tomorrow: "غداً", cancelled: "ملغاة" },
+  ar: { today: "اليوم", yesterday: "أمس", tomorrow: "باچر", cancelled: "ملغاة" },
 } as const;
 
 function selectedDayFromLocation(today: string) {
@@ -60,18 +60,20 @@ function syncSelectedDayLabel() {
         ? copy.tomorrow
         : null;
 
-  let label = current.querySelector<HTMLSpanElement>("span");
+  let label = current.querySelector<HTMLSpanElement>("[data-atlas-relative-day]");
   if (!relativeLabel) {
     label?.remove();
+    current.classList.remove("has-relative-day");
     return;
   }
 
   if (!label) {
     label = document.createElement("span");
+    label.dataset.atlasRelativeDay = "true";
     current.appendChild(label);
   }
 
-  label.dataset.atlasRelativeDay = "true";
+  current.classList.add("has-relative-day");
   if (label.textContent !== relativeLabel) label.textContent = relativeLabel;
 }
 
@@ -130,6 +132,8 @@ export function ScheduleNavigationPolish() {
       const dayHref = dayLink?.getAttribute("href");
       if (dayHref) {
         event.preventDefault();
+        const navigation = dayLink.closest<HTMLElement>(".day-navigation");
+        navigation?.classList.add("is-navigating");
         router.push(dayHref, { scroll: false });
         return;
       }
@@ -141,7 +145,7 @@ export function ScheduleNavigationPolish() {
       if (!composer || !patientName) return;
       event.preventDefault();
       composer.scrollIntoView({ behavior: "smooth", block: "start" });
-      window.setTimeout(() => patientName.focus({ preventScroll: true }), 260);
+      window.setTimeout(() => patientName.focus({ preventScroll: true }), 180);
     };
 
     sync();
@@ -149,10 +153,11 @@ export function ScheduleNavigationPolish() {
     document.addEventListener("mouseover", warmDay, { passive: true });
     document.addEventListener("click", handleClick);
 
-    // .app-content survives dashboard route changes, so watching it keeps the
-    // relative-day label and Cancelled summary correct after every navigation.
     const content = document.querySelector(".app-content");
-    const observer = content ? new MutationObserver(sync) : null;
+    const observer = content ? new MutationObserver(() => {
+      document.querySelector(".day-navigation")?.classList.remove("is-navigating");
+      sync();
+    }) : null;
     observer?.observe(content!, { childList: true, subtree: true });
 
     return () => {
@@ -166,6 +171,14 @@ export function ScheduleNavigationPolish() {
   return (
     <style jsx global>{`
       .workspace-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .day-current [data-atlas-relative-day] {
+        display: block !important;
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 850;
+        line-height: 1.2;
+      }
+      .day-current.has-relative-day::after { content: none !important; }
       @media (max-width: 720px) {
         .workspace-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
