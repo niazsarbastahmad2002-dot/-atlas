@@ -3,6 +3,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
 import "./globals.css";
 import "./polish.css";
+import "./atlas-perfect.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
