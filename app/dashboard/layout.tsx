@@ -5,10 +5,8 @@ import { AppNavigation } from "./app-navigation";
 import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
-import { PasskeySettingsCard } from "./passkey-settings-card";
 import { QuickHourPolish } from "./quick-hour-polish";
 import { SettingsClientPolish } from "./settings-client-polish";
-import { SettingsReminderCard } from "./settings-reminder-card";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const locale = await getUiLocale();
@@ -25,8 +23,6 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <AppNavigation locale={locale} />
       <div className="app-content">
         {children}
-        <SettingsReminderCard locale={locale} />
-        <PasskeySettingsCard />
       </div>
     </div>
   );

@@ -261,6 +261,7 @@ export type Database = {
           enabled: boolean
           lead_minutes: number
           messaging_approved_at: string | null
+          second_lead_minutes: number | null
           template_language: string
           template_name: string
           updated_at: string
@@ -272,6 +273,7 @@ export type Database = {
           enabled?: boolean
           lead_minutes?: number
           messaging_approved_at?: string | null
+          second_lead_minutes?: number | null
           template_language?: string
           template_name?: string
           updated_at?: string
@@ -283,6 +285,7 @@ export type Database = {
           enabled?: boolean
           lead_minutes?: number
           messaging_approved_at?: string | null
+          second_lead_minutes?: number | null
           template_language?: string
           template_name?: string
           updated_at?: string

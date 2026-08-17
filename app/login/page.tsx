@@ -13,7 +13,7 @@ const pageCopy: Record<UiLocale, { eyebrow: string; title: string; subtitle: str
   en: {
     eyebrow: "Reception",
     title: "Open Atlas. Start the day.",
-    subtitle: "If this device already knows Atlas, open it directly. Work email is only for a new device or recovery.",
+    subtitle: "Use the clinic work email to sign in. After that, Atlas normally keeps this trusted device signed in.",
     invalid: "That email link has expired or was already used. Request one fresh Atlas email below.",
     signedOut: "You signed out safely.",
     confirmed: "Patient confirmed",
@@ -22,7 +22,7 @@ const pageCopy: Record<UiLocale, { eyebrow: string; title: string; subtitle: str
   ku: {
     eyebrow: "پێشخانە",
     title: "Atlas بکەرەوە. کار دەستپێبکە.",
-    subtitle: "ئەگەر ئەم ئامێرە پێشتر Atlas ـی بەکارهێناوە، ڕاستەوخۆ بیکەرەوە. ئیمەیڵی کار تەنها بۆ ئامێری نوێ یان گەڕاندنەوەی دەسەڵاتە.",
+    subtitle: "بە ئیمەیڵی کاری کلینیک بچۆ ژوورەوە. پاشان Atlas بە ئاسایی ئەم ئامێرە متمانەپێکراوە بە چوونەژوورەوە دەهێڵێتەوە.",
     invalid: "ئەم بەستەری ئیمەیڵە بەسەرچووە یان پێشتر بەکارهاتووە. لە خوارەوە ئیمەیڵێکی نوێی Atlas داوا بکە.",
     signedOut: "بە سەلامەتی چوویتە دەرەوە.",
     confirmed: "نەخۆش پشتڕاستی کردەوە",
@@ -31,7 +31,7 @@ const pageCopy: Record<UiLocale, { eyebrow: string; title: string; subtitle: str
   ar: {
     eyebrow: "الاستقبال",
     title: "افتح Atlas وابدأ يومك.",
-    subtitle: "إذا كان هذا الجهاز قد استخدم Atlas من قبل، افتحه مباشرة. بريد العمل مخصص فقط لجهاز جديد أو لاستعادة الدخول.",
+    subtitle: "استخدم بريد العيادة للعمل لتسجيل الدخول. بعد ذلك يبقي Atlas هذا الجهاز الموثوق مسجلاً للدخول عادةً.",
     invalid: "انتهت صلاحية رابط البريد أو تم استخدامه من قبل. اطلب رسالة Atlas جديدة أدناه.",
     signedOut: "تم تسجيل الخروج بأمان.",
     confirmed: "تم تأكيد المريض",

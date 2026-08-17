@@ -32,19 +32,14 @@ async function context(clinicId: string) {
   return { supabase, canManage };
 }
 
-function reminderSettingsTable(supabase: Awaited<ReturnType<typeof createClient>>) {
-  // The generated Database type is refreshed separately from schema migrations.
-  // Keep this tiny adapter local so the new additive column can ship safely first.
-  return (supabase as any).from("clinic_reminder_settings");
-}
-
 export async function GET(request: Request) {
   const clinicId = new URL(request.url).searchParams.get("clinic") ?? "";
   const ctx = await context(clinicId);
   if (!ctx) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { data, error } = await reminderSettingsTable(ctx.supabase)
-    .select("enabled, lead_minutes, second_lead_minutes, default_reminder_language, messaging_approved_at, template_name, template_language, daily_message_limit")
+  const { data, error } = await ctx.supabase
+    .from("clinic_reminder_settings")
+    .select("enabled, lead_minutes, second_lead_minutes, default_reminder_language, messaging_approved_at")
     .eq("clinic_id", clinicId)
     .maybeSingle();
 
@@ -57,9 +52,6 @@ export async function GET(request: Request) {
     defaultLanguage: data.default_reminder_language,
     approved: Boolean(data.messaging_approved_at),
     canManage: ctx.canManage,
-    templateName: data.template_name,
-    templateLanguage: data.template_language,
-    dailyMessageLimit: data.daily_message_limit,
   }, { headers: { "Cache-Control": "no-store" } });
 }
 
@@ -97,7 +89,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
-  const { data: current, error: readError } = await reminderSettingsTable(ctx.supabase)
+  const { data: current, error: readError } = await ctx.supabase
+    .from("clinic_reminder_settings")
     .select("messaging_approved_at")
     .eq("clinic_id", clinicId)
     .maybeSingle();
@@ -107,7 +100,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "approval_required" }, { status: 409 });
   }
 
-  const { data, error } = await reminderSettingsTable(ctx.supabase)
+  const { data, error } = await ctx.supabase
+    .from("clinic_reminder_settings")
     .update({
       enabled,
       lead_minutes: leadMinutes,
