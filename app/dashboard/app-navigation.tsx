@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type MouseEvent, useEffect, useState } from "react";
+import { trackAtlasEvent } from "@/lib/analytics/client";
+import { classifyAtlasScreen } from "@/lib/analytics/schema";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 
 function CalendarIcon() {
@@ -66,9 +68,14 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     };
   }, [router]);
 
-  const go = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+  const go = (href: string, interaction: "topbar" | "bottom_nav" | "brand") => (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainNavigation(event)) return;
     event.preventDefault();
+    trackAtlasEvent("atlas_navigation", {
+      target: classifyAtlasScreen(href),
+      interaction,
+      locale,
+    });
     setVisiblePath(href);
     router.prefetch(href);
     router.push(href, { scroll: true });
@@ -86,7 +93,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
             prefetch={true}
             scroll={true}
             onPointerDown={warm("/dashboard")}
-            onClick={go("/dashboard")}
+            onClick={go("/dashboard", "brand")}
             aria-label={t.openSchedule}
           >
             <span className="app-brand-mark" aria-hidden="true">A</span>
@@ -100,7 +107,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
               scroll={true}
               onPointerDown={warm("/dashboard")}
               onMouseEnter={warm("/dashboard")}
-              onClick={go("/dashboard")}
+              onClick={go("/dashboard", "topbar")}
               aria-label={t.openSchedule}
               title={t.schedule}
             >
@@ -114,7 +121,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
               scroll={true}
               onPointerDown={warm("/dashboard/settings")}
               onMouseEnter={warm("/dashboard/settings")}
-              onClick={go("/dashboard/settings")}
+              onClick={go("/dashboard/settings", "topbar")}
               aria-label={t.openSettings}
               title={t.settings}
             >
@@ -132,12 +139,18 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           prefetch={true}
           scroll={true}
           onPointerDown={warm("/dashboard")}
-          onClick={go("/dashboard")}
+          onClick={go("/dashboard", "bottom_nav")}
         >
           <CalendarIcon />
           <span>{t.schedule}</span>
         </Link>
-        <Link className="app-bottom-add" href="/dashboard#new-appointment" prefetch={true} scroll={true}>
+        <Link
+          className="app-bottom-add"
+          href="/dashboard#new-appointment"
+          prefetch={true}
+          scroll={true}
+          onClick={() => trackAtlasEvent("atlas_navigation", { target: "schedule", interaction: "bottom_nav", locale })}
+        >
           <span className="app-bottom-add-circle"><PlusIcon /></span>
           <span>{t.add}</span>
         </Link>
@@ -147,7 +160,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           prefetch={true}
           scroll={true}
           onPointerDown={warm("/dashboard/settings")}
-          onClick={go("/dashboard/settings")}
+          onClick={go("/dashboard/settings", "bottom_nav")}
         >
           <GearIcon />
           <span>{t.settings}</span>

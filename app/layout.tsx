@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { AtlasAnalytics } from "@/app/components/atlas-analytics";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
 import "./globals.css";
@@ -37,7 +38,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang={meta.language} dir={meta.direction}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <AtlasAnalytics />
+      </body>
     </html>
   );
 }

@@ -12,6 +12,7 @@ import {
   type AppointmentMutationFailure,
   type AppointmentStatus,
 } from "@/lib/appointments";
+import { queueAtlasServerEvent } from "@/lib/analytics/server";
 import { createClient } from "@/lib/supabase/server";
 
 const reminderLanguages = new Set(["ku", "ar", "en"]);
@@ -19,6 +20,15 @@ const reminderLanguages = new Set(["ku", "ar", "en"]);
 export type InlineAppointmentResult =
   | { ok: true; status?: AppointmentStatus; archived?: boolean; updated?: boolean; created?: boolean }
   | { ok: false; reason: AppointmentMutationFailure };
+
+function statusAction(status: AppointmentStatus) {
+  if (status === "confirmed") return "confirm" as const;
+  if (status === "cancelled") return "cancel" as const;
+  if (status === "completed") return "complete" as const;
+  if (status === "no_show") return "no_show" as const;
+  if (status === "pending") return "pending" as const;
+  return null;
+}
 
 export async function createAppointmentInline(formData: FormData): Promise<InlineAppointmentResult> {
   const clinicId = String(formData.get("clinic_id") ?? "");
@@ -39,7 +49,10 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     || !patientPhone
     || !appointmentAt
     || !reminderLanguages.has(reminderLanguage)
-  ) return { ok: false, reason: "invalid" };
+  ) {
+    queueAtlasServerEvent("atlas_appointment_created", { outcome: "validation", interaction: "form", screen: "schedule", surface: "clinic" });
+    return { ok: false, reason: "invalid" };
+  }
 
   // Keep the hot path short. The user's session is already carried by the
   // Supabase client and RLS remains the authority for clinic access. We only
@@ -52,7 +65,10 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     .eq("id", doctorId)
     .eq("active", true)
     .maybeSingle();
-  if (doctorError || !doctor) return { ok: false, reason: "invalid" };
+  if (doctorError || !doctor) {
+    queueAtlasServerEvent("atlas_appointment_created", { outcome: "validation", interaction: "form", screen: "schedule", surface: "clinic" });
+    return { ok: false, reason: "invalid" };
+  }
 
   const { error } = await supabase.from("appointments").insert({
     clinic_id: clinicId,
@@ -69,9 +85,16 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
   if (error) {
     const reason = classifyAppointmentMutationError(error.code, error.message);
     if (reason === "failed") console.error("Atlas fast appointment creation failed", { code: error.code });
+    queueAtlasServerEvent("atlas_appointment_created", {
+      outcome: reason === "slot_taken" ? "slot_taken" : "failure",
+      interaction: "form",
+      screen: "schedule",
+      surface: "clinic",
+    });
     return { ok: false, reason };
   }
 
+  queueAtlasServerEvent("atlas_appointment_created", { outcome: "success", interaction: "form", screen: "schedule", surface: "clinic" });
   // The dashboard is dynamic. The client paints an optimistic row immediately
   // and refreshes after this returns, so avoid an extra redirect/reload here.
   return { ok: true, created: true };
@@ -86,6 +109,7 @@ export async function updateAppointmentStatusInline(
     return { ok: false, reason: "invalid" };
   }
 
+  const action = statusAction(status);
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("appointments")
@@ -99,10 +123,15 @@ export async function updateAppointmentStatusInline(
   if (error) {
     const reason = classifyAppointmentMutationError(error.code, error.message);
     if (reason === "failed") console.error("Atlas inline appointment status update failed", { code: error.code });
+    if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "failure", screen: "schedule", surface: "clinic" });
     return { ok: false, reason };
   }
-  if (!data) return { ok: false, reason: "failed" };
+  if (!data) {
+    if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "failure", screen: "schedule", surface: "clinic" });
+    return { ok: false, reason: "failed" };
+  }
 
+  if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "success", screen: "schedule", surface: "clinic" });
   revalidatePath("/dashboard");
   return { ok: true, status };
 }
