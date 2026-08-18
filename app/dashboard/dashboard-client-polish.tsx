@@ -19,7 +19,7 @@ const exactCopy: Record<Exclude<UiLocale, "en">, Record<string, string>> = {
     "Choose a valid appointment interval.": "ماوەیەکی دروست بۆ نێوان وادەکان هەڵبژێرە.",
     "Check the doctor details and try again.": "زانیاری پزیشک بپشکنە و دووبارە هەوڵ بدە.",
     "Check the reminder settings and try again.": "ڕێکخستنی بیرخستنەوە بپشکنە و دووبارە هەوڵ بدە.",
-    "That setting could not be saved. Refresh and try again.": "ڕێکخستنەکە پاشەکەوت نەبوو. دووبارە هەوڵ بدە.",
+    "That setting could not be saved. Refresh and try again.": "ڕێکخستنەکە نەگۆڕدرا. دووبارە هەوڵ بدە.",
     "Interface language updated.": "زمانی Atlas گۆڕدرا.",
     "Clinic details updated.": "زانیاری کلینیک نوێکرایەوە.",
     "Appointment interval updated.": "ماوەی نێوان وادەکان نوێکرایەوە.",
@@ -53,21 +53,21 @@ const exactCopy: Record<Exclude<UiLocale, "en">, Record<string, string>> = {
 
 const fastSaveCopy = {
   en: {
-    saving: "Saving appointment…",
-    saved: "Appointment saved",
-    failed: "Could not save. Check the details and try again.",
+    saving: "Adding appointment…",
+    saved: "Appointment added",
+    failed: "Could not add appointment. Check the details and try again.",
     slotTaken: "That time was just taken. Choose another time.",
   },
   ku: {
-    saving: "وادە پاشەکەوت دەکرێت…",
-    saved: "وادە پاشەکەوت کرا",
-    failed: "وادە پاشەکەوت نەبوو. زانیارییەکان بپشکنە.",
+    saving: "وادە دادەنرێت…",
+    saved: "وادە دانرا",
+    failed: "وادە دانەنرا. زانیارییەکان بپشکنە.",
     slotTaken: "ئەم کاتە گیرا. کاتێکی تر هەڵبژێرە.",
   },
   ar: {
-    saving: "جارٍ حفظ الموعد…",
-    saved: "تم حفظ الموعد",
-    failed: "تعذر حفظ الموعد. تحقق من البيانات وحاول مرة أخرى.",
+    saving: "جارٍ إضافة الموعد…",
+    saved: "تمت إضافة الموعد",
+    failed: "تعذرت إضافة الموعد. تحقق من البيانات وحاول مرة أخرى.",
     slotTaken: "تم حجز هذا الوقت للتو. اختر وقتاً آخر.",
   },
 } as const;
@@ -139,7 +139,7 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
     success() {
       toast.classList.add("is-success");
       main.textContent = `✓ ${fastSaveCopy[locale].saved}`;
-      window.setTimeout(() => toast.remove(), 1100);
+      window.setTimeout(() => toast.remove(), 700);
     },
     fail(slotTaken = false) {
       toast.classList.add("is-error");
@@ -154,7 +154,6 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
 
   useEffect(() => {
     const preparedInputs = new WeakSet<HTMLInputElement>();
-    const preparedSelects = new WeakSet<HTMLSelectElement>();
     const preparedForms = new WeakSet<HTMLFormElement>();
     let frame = 0;
 
@@ -179,24 +178,6 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
 
       update();
       input.addEventListener("input", update);
-    };
-
-    const prepareInstantSelect = (select: HTMLSelectElement) => {
-      if (preparedSelects.has(select)) return;
-      preparedSelects.add(select);
-
-      if (select.id === "locale") {
-        select.addEventListener("change", () => {
-          const value = select.value as UiLocale;
-          document.documentElement.lang = value === "ku" ? "ckb" : value;
-          document.documentElement.dir = value === "en" ? "ltr" : "rtl";
-          select.form?.requestSubmit();
-        });
-      }
-
-      if (select.id === "appointment_interval_minutes") {
-        select.addEventListener("change", () => select.form?.requestSubmit());
-      }
     };
 
     const prepareAppointmentForm = (form: HTMLFormElement) => {
@@ -258,14 +239,13 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
               button.disabled = false;
               button.textContent = originalLabel;
             }
-          }, 550);
+          }, 120);
         }
       }, true);
     };
 
     const polish = () => {
       document.querySelectorAll<HTMLInputElement>('.app-shell input[type="tel"]').forEach(preparePhoneInput);
-      document.querySelectorAll<HTMLSelectElement>(".app-shell select#locale, .app-shell select#appointment_interval_minutes").forEach(prepareInstantSelect);
       document.querySelectorAll<HTMLFormElement>(".app-shell form.appointment-form").forEach(prepareAppointmentForm);
       if (locale === "en") return;
 
