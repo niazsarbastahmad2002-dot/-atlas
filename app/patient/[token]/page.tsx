@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 
 type PatientPageProps = {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ view?: string }>;
 };
 
 type PatientAppointment = {
@@ -39,6 +40,9 @@ const patientCopy = {
     first: "You’re first for this doctor.",
     ahead: "appointment before yours",
     aheadMany: "appointments before yours",
+    confirmTitle: "Confirm your appointment",
+    confirmInitial: "Confirm appointment",
+    cancelSmall: "Need to cancel?",
     question: "Will you come?",
     confirm: "Yes, I’m coming",
     cancel: "No, cancel it",
@@ -47,7 +51,7 @@ const patientCopy = {
     completed: "This appointment is complete.",
     noShow: "This appointment has ended.",
     changeMind: "I can’t come",
-    privacy: "This page is only for this appointment.",
+    privacy: "This page is private to this appointment.",
   },
   ku: {
     lang: "ckb",
@@ -60,6 +64,9 @@ const patientCopy = {
     first: "تۆ یەکەم کەسیت بۆ ئەم پزیشکە.",
     ahead: "وادە پێش تۆیە",
     aheadMany: "وادە پێش تۆیە",
+    confirmTitle: "کاتەکەت پشتڕاست بکەرەوە",
+    confirmInitial: "پشتڕاستکردنەوەی کات",
+    cancelSmall: "دەتەوێت هەڵیوەشێنیتەوە؟",
     question: "دێیت؟",
     confirm: "بەڵێ، دێم",
     cancel: "نەخێر، هەڵیوەشێنەوە",
@@ -81,6 +88,9 @@ const patientCopy = {
     first: "أنت الأول عند هذا الطبيب.",
     ahead: "موعد قبلك",
     aheadMany: "مواعيد قبلك",
+    confirmTitle: "أكد موعدك",
+    confirmInitial: "تأكيد الموعد",
+    cancelSmall: "تحتاج إلى الإلغاء؟",
     question: "هل ستأتي؟",
     confirm: "نعم، سأأتي",
     cancel: "لا، ألغِ الموعد",
@@ -89,7 +99,7 @@ const patientCopy = {
     completed: "تم إكمال هذا الموعد.",
     noShow: "انتهى وقت هذا الموعد.",
     changeMind: "لن أستطيع الحضور",
-    privacy: "هذه الصفحة لهذا الموعد فقط.",
+    privacy: "هذه الصفحة خاصة بهذا الموعد فقط.",
   },
 } as const;
 
@@ -97,8 +107,8 @@ function patientLocale(value: string): PatientLocale {
   return value === "ku" || value === "ar" ? value : "en";
 }
 
-export default async function PatientAppointmentPage({ params }: PatientPageProps) {
-  const { token } = await params;
+export default async function PatientAppointmentPage({ params, searchParams }: PatientPageProps) {
+  const [{ token }, query] = await Promise.all([params, searchParams]);
   if (!isPatientToken(token)) return <Unavailable />;
 
   let admin: ReturnType<typeof createAdminClient>;
@@ -124,15 +134,24 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
 
   const locale = patientLocale(appointment.reminder_language);
   const text = patientCopy[locale];
-  const dateTime = new Intl.DateTimeFormat(text.dateLocale, {
+  const appointmentDate = new Date(appointment.appointment_at);
+  const dateText = new Intl.DateTimeFormat(text.dateLocale, {
     timeZone: "Asia/Baghdad",
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(appointment.appointment_at));
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(appointmentDate);
+  const timeText = new Intl.DateTimeFormat(text.dateLocale, {
+    timeZone: "Asia/Baghdad",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(appointmentDate);
   const status = appointment.appointment_status;
   const isPending = status === "pending";
   const isConfirmed = status === "confirmed";
   const isActive = isPending || isConfirmed;
+  const reminderView = query.view === "reminder";
   const ahead = appointment.appointments_ahead ?? 0;
   const statusMessage = isConfirmed
     ? text.confirmed
@@ -154,9 +173,14 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
         <div className="eyebrow">{text.eyebrow}</div>
         <h1>{appointment.clinic_name}</h1>
 
+        <div className="patient-time-card">
+          <span>{text.dateTime}</span>
+          <strong>{dateText}</strong>
+          <bdi>{timeText}</bdi>
+        </div>
+
         <dl className="appointment-details patient-appointment-details">
           <div><dt>{text.doctor}</dt><dd>{appointment.doctor_name}</dd></div>
-          <div><dt>{text.dateTime}</dt><dd>{dateTime}</dd></div>
         </dl>
 
         {isActive && appointment.queue_position ? (
@@ -166,7 +190,19 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
           </div>
         ) : null}
 
-        {isPending ? (
+        {isPending && !reminderView ? (
+          <div className="patient-initial-response">
+            <h2>{text.confirmTitle}</h2>
+            <form action={updatePatientAppointment.bind(null, token, "confirmed")}>
+              <button className="button patient-confirm-primary" type="submit">{text.confirmInitial}</button>
+            </form>
+            <form action={updatePatientAppointment.bind(null, token, "cancelled")}>
+              <button className="patient-cancel-small" type="submit">{text.cancelSmall}</button>
+            </form>
+          </div>
+        ) : null}
+
+        {isPending && reminderView ? (
           <div className="patient-response-block">
             <h2>{text.question}</h2>
             <div className="patient-actions" aria-label="Patient appointment response">
@@ -194,16 +230,24 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
         <p className="quiet patient-privacy">{text.privacy}</p>
 
         <style>{`
+          .patient-time-card { margin: 2px 0 14px; border: 1px solid #cfe7dd; border-radius: 17px; padding: 15px 17px; background: linear-gradient(145deg,#f5fcf9,#edf8f3); }
+          .patient-time-card > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+          .patient-time-card strong { display: block; color: var(--ink); font-size: 18px; line-height: 1.35; }
+          .patient-time-card bdi { display: block; margin-top: 6px; color: var(--accent); direction: ltr; font-size: 28px; font-weight: 880; line-height: 1; font-variant-numeric: tabular-nums; }
+          .patient-appointment-details { grid-template-columns: 1fr; margin-bottom: 14px; }
           .patient-order-card { margin: 0 0 16px; border: 1px solid #cfe7dd; border-radius: 15px; padding: 13px 15px; background: #effaf6; }
           .patient-order-card > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
           .patient-order-card span { color: var(--muted); font-size: 11px; font-weight: 760; }
           .patient-order-card strong { color: var(--accent); font-size: 24px; line-height: 1; }
           .patient-order-card p { margin: 7px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.45; }
-          .patient-response-block { margin-top: 8px; }
-          .patient-response-block h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
-          .patient-status-message { margin-top: 8px; border-radius: 14px; padding: 15px; background: var(--surface-soft); color: var(--ink-soft); line-height: 1.5; }
+          .patient-initial-response, .patient-response-block { margin-top: 8px; }
+          .patient-initial-response h2, .patient-response-block h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
+          .patient-confirm-primary { width: 100%; min-height: 48px; }
+          .patient-cancel-small { float: inline-end; margin-top: 10px; border: 0; padding: 4px 0; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+          .patient-status-message { clear: both; margin-top: 18px; border-radius: 14px; padding: 15px; background: var(--surface-soft); color: var(--ink-soft); line-height: 1.5; }
           .patient-status-message.is-confirmed { background: var(--success-bg); color: var(--success); }
           .patient-change-mind { margin-top: 10px; border: 0; padding: 3px 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+          .patient-privacy { clear: both; padding-top: 10px; }
         `}</style>
       </section>
     </main>
