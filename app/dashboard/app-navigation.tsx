@@ -6,7 +6,7 @@ import { type MouseEvent, useEffect, useState } from "react";
 import { trackAtlasEvent } from "@/lib/analytics/client";
 import { classifyAtlasScreen } from "@/lib/analytics/schema";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
-import { flushSettingWrites, hasPendingSettingWrite } from "./setting-write-barrier";
+import { flushSettingWrites, hasPendingSettingWrite, needsFreshSettingNavigation } from "./setting-write-barrier";
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
 
@@ -65,12 +65,21 @@ function validRememberedSchedule(href: string | null) {
     const today = baghdadDay(new Date());
     const yesterday = shiftBaghdadDay(today, -1);
     if (day < yesterday) {
-      const clinic = url.searchParams.get("clinic");
-      return clinic
-        ? `/dashboard?${new URLSearchParams({ clinic, day: today })}`
-        : "/dashboard";
+      url.searchParams.set("day", today);
+      return `${url.pathname}?${url.searchParams}`;
     }
     return `${url.pathname}${url.search}`;
+  } catch {
+    return "/dashboard";
+  }
+}
+
+function todayScheduleFrom(href: string) {
+  try {
+    const url = new URL(href, window.location.origin);
+    url.pathname = "/dashboard";
+    url.searchParams.set("day", baghdadDay(new Date()));
+    return `${url.pathname}?${url.searchParams}`;
   } catch {
     return "/dashboard";
   }
@@ -101,7 +110,10 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     setVisiblePath(pathname);
 
     if (pathname === "/dashboard") {
-      const current = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
+      const candidate = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
+      const workspace = document.querySelector<HTMLElement>(".workspace-page");
+      const canRemember = workspace?.dataset.atlasMemoryValid !== "false";
+      const current = canRemember ? candidate : todayScheduleFrom(candidate);
       setScheduleHref(current);
       try { window.localStorage.setItem(scheduleMemoryKey, current); } catch {}
 
@@ -121,7 +133,8 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
 
   useEffect(() => {
     const warmCoreRoutes = () => {
-      if (!hasPendingSettingWrite()) router.prefetch(scheduleHref);
+      if (hasPendingSettingWrite() || needsFreshSettingNavigation()) return;
+      router.prefetch(scheduleHref);
       router.prefetch(settingsHref);
     };
 
@@ -149,11 +162,12 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     const targetPath = new URL(href, window.location.origin).pathname;
     setVisiblePath(targetPath);
 
-    if (targetPath === "/dashboard" && hasPendingSettingWrite()) {
+    const coreTarget = targetPath === "/dashboard" || targetPath === "/dashboard/settings";
+    if (coreTarget && (hasPendingSettingWrite() || needsFreshSettingNavigation())) {
       await flushSettingWrites();
-      // A previously prefetched Schedule response may contain the old clinic
-      // interval. A real navigation here guarantees the just-saved setting is
-      // used on the very first Schedule paint, without any stale 5-minute grid.
+      // A real load is intentional here: Next may have prefetched this route
+      // before the setting changed. Never let that old payload overwrite the
+      // value the database has already confirmed.
       window.location.assign(href);
       return;
     }
@@ -163,7 +177,9 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
   };
 
   const warm = (href: string) => () => {
-    if (new URL(href, window.location.origin).pathname === "/dashboard" && hasPendingSettingWrite()) return;
+    const targetPath = new URL(href, window.location.origin).pathname;
+    const coreTarget = targetPath === "/dashboard" || targetPath === "/dashboard/settings";
+    if (coreTarget && (hasPendingSettingWrite() || needsFreshSettingNavigation())) return;
     router.prefetch(href);
   };
   const addHref = typeof window === "undefined" ? "/dashboard#new-appointment" : withHash(scheduleHref, "new-appointment");
