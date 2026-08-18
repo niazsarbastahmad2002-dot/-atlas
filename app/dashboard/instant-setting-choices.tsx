@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useLayoutEffect } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
-import { queueSettingWrite } from "./setting-write-barrier";
+import { flushSettingWrites, hasPendingSettingWrite, needsFreshSettingNavigation, queueSettingWrite } from "./setting-write-barrier";
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
 
@@ -47,6 +47,7 @@ export function InstantSettingChoices() {
           const response = await fetch("/api/ui-language", {
             method: "POST",
             credentials: "same-origin",
+            cache: "no-store",
             keepalive: true,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ locale: value }),
@@ -81,12 +82,18 @@ export function InstantSettingChoices() {
           const response = await fetch("/api/settings/clinic", {
             method: "POST",
             credentials: "same-origin",
+            cache: "no-store",
             keepalive: true,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ clinicId, appointmentIntervalMinutes: Number(value) }),
           });
           if (!response.ok) throw new Error("interval_update_failed");
-          if (version === versions.get(select)) select.dataset.atlasLastSaved = value;
+          const saved = await response.json() as { appointmentIntervalMinutes?: number };
+          if (saved.appointmentIntervalMinutes !== Number(value)) throw new Error("interval_not_persisted");
+          if (version === versions.get(select)) {
+            select.dataset.atlasLastSaved = value;
+            router.refresh();
+          }
         }).catch(() => {
           if (version !== versions.get(select)) return;
           select.value = previous;
@@ -114,13 +121,18 @@ export function InstantSettingChoices() {
         .forEach(bindRole);
     };
 
-    const handleSettingsBack = (event: MouseEvent) => {
+    const handleSettingsBack = async (event: MouseEvent) => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = event.target instanceof Element ? event.target : null;
       const link = target?.closest<HTMLAnchorElement>(".settings-heading a[href^='/dashboard']");
       if (!link || link.getAttribute("href")?.includes("/settings")) return;
       event.preventDefault();
       const href = rememberedSchedule();
+      if (hasPendingSettingWrite() || needsFreshSettingNavigation()) {
+        await flushSettingWrites();
+        window.location.assign(href);
+        return;
+      }
       router.prefetch(href);
       router.push(href, { scroll: true });
     };

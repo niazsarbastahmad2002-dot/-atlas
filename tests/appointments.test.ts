@@ -88,9 +88,10 @@ test("parses localized digits in Baghdad appointment times", () => {
   assert.equal(parsed.toISOString(), "2026-08-15T09:30:00.000Z");
 });
 
-test("rejects malformed, stale, and excessively distant appointment times", () => {
+test("rejects malformed, past, and excessively distant appointment times", () => {
   const now = new Date("2026-08-15T00:00:00Z");
   assert.equal(parseBaghdadDateTime("2026-02-30T12:30", now), null);
+  assert.equal(parseBaghdadDateTime("2026-08-14T23:30", now), null);
   assert.equal(parseBaghdadDateTime("2026-08-14T01:00", now), null);
   assert.equal(parseBaghdadDateTime("2030-08-15T12:30", now), null);
 });

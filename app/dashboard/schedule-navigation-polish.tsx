@@ -7,7 +7,7 @@ function isPlainPrimaryClick(event: MouseEvent) {
   return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 }
 
-const scheduleLinkSelector = ".day-navigation a[href^='/dashboard?'], .schedule-date-shortcuts a[href^='/dashboard?']";
+const scheduleLinkSelector = ".day-navigation a[href^='/dashboard?'], .schedule-date-shortcuts a[href^='/dashboard?'], .doctor-schedule-tabs a[href^='/dashboard?']";
 
 export function ScheduleNavigationPolish() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export function ScheduleNavigationPolish() {
         const href = dayLink.getAttribute("href");
         if (href) {
           event.preventDefault();
-          dayLink.closest<HTMLElement>(".day-navigation, .schedule-date-shortcuts")?.classList.add("is-navigating");
+          dayLink.closest<HTMLElement>(".day-navigation, .schedule-date-shortcuts, .doctor-schedule-tabs")?.classList.add("is-navigating");
           router.push(href, { scroll: false });
           return;
         }

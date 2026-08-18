@@ -92,7 +92,10 @@ export function parseBaghdadDateTime(value: string, now = new Date()) {
     || parts.minute !== minute
   ) return null;
 
-  const min = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  // Creation and detail editing are forward-looking schedule operations.
+  // Allow only a tiny clock-skew/submission grace period, never yesterday or
+  // an already-passed clinic slot.
+  const min = new Date(now.getTime() - 60 * 1000);
   const max = new Date(now.getTime() + 2 * 365 * 24 * 60 * 60 * 1000);
   if (date < min || date > max) return null;
   return date;
