@@ -3,5 +3,8 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "regions": ["sin1"]
+  "regions": ["sin1"],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
