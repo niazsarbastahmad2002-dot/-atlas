@@ -19,10 +19,7 @@ function AtlasLoginLogo() {
   return (
     <Link className="login-logo-lockup" href="/" aria-label="Atlas">
       <img className="login-main-mark" src="/atlas-mark.svg" alt="" aria-hidden="true" />
-      <span className="login-logo-copy">
-        <strong>ATLAS</strong>
-        <small>CLINIC MANAGEMENT</small>
-      </span>
+      <span className="login-logo-copy"><strong>ATLAS</strong></span>
     </Link>
   );
 }

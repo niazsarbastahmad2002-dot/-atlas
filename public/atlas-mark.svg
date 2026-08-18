@@ -1,17 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Atlas">
   <defs>
-    <linearGradient id="atlas-mark-g" x1="92" y1="420" x2="414" y2="82" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0b4f3d"/>
-      <stop offset="0.58" stop-color="#08785b"/>
-      <stop offset="1" stop-color="#19c69a"/>
+    <linearGradient id="route-a" x1="105" y1="118" x2="414" y2="310" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18b98e"/>
+      <stop offset="1" stop-color="#0a5b49"/>
     </linearGradient>
-    <linearGradient id="atlas-mark-accent" x1="278" y1="120" x2="390" y2="300" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#38dfbb"/>
-      <stop offset="1" stop-color="#0a6a52"/>
+    <linearGradient id="route-b" x1="405" y1="392" x2="94" y2="196" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a5b49"/>
+      <stop offset="1" stop-color="#0f7b60"/>
     </linearGradient>
   </defs>
-  <path d="M102 408 229 105c10-24 23-36 40-36 16 0 29 12 39 36l108 259c11 27-8 55-37 55-17 0-31-10-38-26L269 216 177 429c-7 16-22 26-39 26-30 0-49-30-36-47Z" fill="url(#atlas-mark-g)"/>
-  <path d="M258 90c7-14 18-21 31-21 16 0 29 11 38 31l87 208c-39-4-72-18-99-43-24-23-43-54-57-93-12-33-12-61 0-82Z" fill="url(#atlas-mark-accent)" opacity=".88"/>
-  <path d="M177 307c54-35 109-35 164 0" fill="none" stroke="#f7fffc" stroke-width="39" stroke-linecap="round"/>
-  <path d="M256 263c5 22 19 36 42 42-23 6-37 20-42 42-6-22-20-36-42-42 22-6 36-20 42-42Z" fill="#f7fffc"/>
+  <path d="M118 280c0-89 72-161 161-161 58 0 110 31 138 78" fill="none" stroke="url(#route-a)" stroke-width="46" stroke-linecap="round"/>
+  <path d="M394 232c0 89-72 161-161 161-58 0-110-31-138-78" fill="none" stroke="url(#route-b)" stroke-width="46" stroke-linecap="round"/>
+  <circle cx="118" cy="280" r="23" fill="#18b98e"/>
+  <circle cx="394" cy="232" r="23" fill="#0a5b49"/>
+  <circle cx="256" cy="256" r="58" fill="#0a5b49"/>
+  <circle cx="256" cy="256" r="22" fill="#effcf7"/>
 </svg>

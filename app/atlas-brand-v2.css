@@ -1,0 +1,71 @@
+/* Atlas waypoint identity: one calm brand system across sign-in, app chrome and installed icon. */
+:root {
+  --atlas-brand: #075244;
+  --atlas-brand-deep: #043d34;
+  --atlas-brand-mint: #62e7c3;
+  --atlas-brand-ice: #effcf7;
+}
+
+.login-logo-lockup {
+  gap: 7px;
+  margin-bottom: 28px;
+}
+
+.login-main-mark {
+  width: 82px;
+  height: 82px;
+  filter: drop-shadow(0 12px 24px rgba(5, 82, 68, .14));
+}
+
+.login-logo-copy strong {
+  margin-inline-start: .17em;
+  color: var(--atlas-brand-deep);
+  font-size: 25px;
+  font-weight: 840;
+  letter-spacing: .17em;
+}
+
+.login-language-picker button.is-active {
+  border-color: rgba(7, 82, 68, .42);
+  background: linear-gradient(180deg, #fcfffd, #eef8f4);
+  box-shadow: 0 0 0 1px rgba(7,82,68,.07), 0 8px 20px rgba(5,82,68,.06);
+}
+
+.login-visual {
+  background:
+    radial-gradient(circle at 78% 14%, rgba(98, 231, 195, .19), transparent 27%),
+    radial-gradient(circle at 12% 91%, rgba(65, 191, 155, .16), transparent 31%),
+    linear-gradient(145deg, #043d34 0%, #075244 50%, #03372f 100%);
+}
+
+.login-story-logo {
+  background-image: url('/atlas-icon.svg') !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+}
+
+.login-story-number {
+  color: #c8f8e9;
+}
+
+.login-visual-dot {
+  background: var(--atlas-brand-mint) !important;
+}
+
+.app-brand-mark {
+  background-image: url('/atlas-icon.svg') !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+}
+
+@media (max-width: 900px) {
+  .login-main-mark { width: 72px; height: 72px; }
+  .login-logo-copy strong { font-size: 22px; }
+}
+
+@media (max-width: 540px) {
+  .login-main-mark { width: 64px; height: 64px; }
+  .login-logo-copy strong { font-size: 20px; letter-spacing: .15em; }
+}
