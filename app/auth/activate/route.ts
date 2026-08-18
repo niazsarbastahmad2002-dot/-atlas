@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isUuid } from "@/lib/appointments";
+import { safeAuthDestination } from "@/lib/navigation";
 import {
   readPendingStaffInvitations,
   withoutPendingStaffInvitation,
@@ -9,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const next = safeAuthDestination(requestUrl.searchParams.get("next"));
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
@@ -19,7 +21,7 @@ export async function GET(request: Request) {
   const admin = createAdminClient();
   const { data: authData, error: authError } = await admin.auth.admin.getUserById(userData.user.id);
   if (authError || !authData.user) {
-    return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+    return NextResponse.redirect(new URL(next, requestUrl.origin));
   }
 
   const pending = readPendingStaffInvitations(authData.user.app_metadata);
@@ -72,5 +74,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+  return NextResponse.redirect(new URL(next, requestUrl.origin));
 }
