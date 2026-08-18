@@ -92,6 +92,10 @@ function localizeVisibleText(value: string, locale: UiLocale) {
   if (locale === "en") return value;
 
   const trimmed = value.trim();
+  // Email addresses are literal account identifiers, not translated UI. Their
+  // ASCII spelling and digits must remain exactly as entered in every locale.
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return value;
+
   const exact = exactCopy[locale][trimmed];
   if (exact) {
     const leading = value.slice(0, value.indexOf(trimmed));
