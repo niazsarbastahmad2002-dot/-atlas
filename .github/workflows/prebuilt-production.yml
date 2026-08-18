@@ -66,7 +66,24 @@ jobs:
         id: pull
         if: steps.tokencheck.outcome == 'success'
         continue-on-error: true
-        run: vercel pull --yes --environment=production --scope=atlas-fca2 --token="${{ secrets.VERCEL_TOKEN }}"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set +e
+          OUTPUT=$(vercel pull --yes --environment=production --scope=atlas-fca2 --token="$VERCEL_TOKEN" 2>&1)
+          STATUS=$?
+          export OUTPUT STATUS VERCEL_TOKEN
+          python - <<'PY' > /tmp/vercel-pull-diagnostic.txt
+          import os
+          text = os.environ.get("OUTPUT", "")
+          token = os.environ.get("VERCEL_TOKEN", "")
+          if token:
+              text = text.replace(token, "[REDACTED]")
+          text = text[-1800:]
+          print(f"vercel pull exit code: {os.environ.get('STATUS', '?')}\n\n{text}")
+          PY
+          gh issue comment 59 --body-file /tmp/vercel-pull-diagnostic.txt
+          exit "$STATUS"
 
       - name: Build Atlas on GitHub Actions
         id: build
