@@ -110,7 +110,9 @@ export function DoctorScheduleTabs({ locale }: { locale: UiLocale }) {
           }
         }
 
-        panel.querySelector<HTMLElement>(".count-pill")!.textContent = String(visible);
+        const countPill = panel.querySelector<HTMLElement>(".count-pill");
+        if (countPill && countPill.textContent !== String(visible)) countPill.textContent = String(visible);
+
         const statValues = workspace.querySelectorAll<HTMLElement>(".workspace-stats .stat strong");
         const values = [visible, pending, confirmed, completed, noShow, cancelled];
         statValues.forEach((value, index) => {
@@ -125,29 +127,38 @@ export function DoctorScheduleTabs({ locale }: { locale: UiLocale }) {
           empty.className = "doctor-schedule-empty";
           list.before(empty);
         }
-        empty.textContent = copy[locale].empty;
+        if (empty.textContent !== copy[locale].empty) empty.textContent = copy[locale].empty;
         empty.hidden = visible !== 0;
 
         tabs?.querySelectorAll<HTMLButtonElement>("button[data-doctor-id]").forEach((button) => {
           const selected = button.dataset.doctorId === doctor.id;
           button.classList.toggle("is-selected", selected);
-          button.setAttribute("aria-pressed", String(selected));
+          if (button.getAttribute("aria-pressed") !== String(selected)) {
+            button.setAttribute("aria-pressed", String(selected));
+          }
         });
       };
 
-      tabs.replaceChildren(...doctors.map((doctor) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.dataset.doctorId = doctor.id;
-        button.setAttribute("aria-pressed", "false");
-        const name = document.createElement("strong");
-        name.textContent = doctor.name;
-        const count = document.createElement("span");
-        count.textContent = String(counts.get(doctor.name) ?? 0);
-        button.append(name, count);
-        button.addEventListener("click", () => apply(doctor.id));
-        return button;
-      }));
+      const signature = doctors
+        .map((doctor) => `${doctor.id}:${doctor.name}:${counts.get(doctor.name) ?? 0}`)
+        .join("|");
+
+      if (tabs.dataset.atlasDoctorsSignature !== signature) {
+        tabs.dataset.atlasDoctorsSignature = signature;
+        tabs.replaceChildren(...doctors.map((doctor) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.dataset.doctorId = doctor.id;
+          button.setAttribute("aria-pressed", "false");
+          const name = document.createElement("strong");
+          name.textContent = doctor.name;
+          const count = document.createElement("span");
+          count.textContent = String(counts.get(doctor.name) ?? 0);
+          button.append(name, count);
+          button.addEventListener("click", () => apply(doctor.id));
+          return button;
+        }));
+      }
 
       if (!doctorSelect.dataset.atlasDoctorTabsBound) {
         doctorSelect.dataset.atlasDoctorTabsBound = "true";
