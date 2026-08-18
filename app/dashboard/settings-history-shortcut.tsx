@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 
@@ -10,12 +11,24 @@ const copy = {
 } as const;
 
 export function SettingsHistoryShortcut({ locale }: { locale: UiLocale }) {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // History belongs to the main Settings page only. Clinic Access also uses
+    // the settings grid layout, but duplicating History there made the page
+    // look like a second Settings screen.
+    if (pathname !== "/dashboard/settings") return;
+
     const t = copy[locale];
 
     const install = () => {
       const grid = document.querySelector<HTMLElement>(".settings-grid");
       if (!grid || grid.querySelector("[data-atlas-history-card]")) return;
+
+      const clinicId = new URLSearchParams(window.location.search).get("clinic");
+      const historyHref = clinicId
+        ? `/dashboard/history?${new URLSearchParams({ clinic: clinicId })}`
+        : "/dashboard/history";
 
       const card = document.createElement("section");
       card.className = "settings-card settings-link-card settings-history-card";
@@ -29,7 +42,7 @@ export function SettingsHistoryShortcut({ locale }: { locale: UiLocale }) {
             <p>${t.help}</p>
           </div>
         </div>
-        <a class="settings-link" href="/dashboard/history">
+        <a class="settings-link" href="${historyHref}">
           <span>${t.open}</span><span aria-hidden="true">→</span>
         </a>
       `;
@@ -43,7 +56,7 @@ export function SettingsHistoryShortcut({ locale }: { locale: UiLocale }) {
     const observer = new MutationObserver(install);
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [locale]);
+  }, [locale, pathname]);
 
   return null;
 }
