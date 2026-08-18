@@ -9,7 +9,6 @@ import { InstantSettingChoices } from "./instant-setting-choices";
 import { QuickHourPolish } from "./quick-hour-polish";
 import { ScheduleNavigationPolish } from "./schedule-navigation-polish";
 import { SettingsClientPolish } from "./settings-client-polish";
-import { SettingsDraftReset } from "./settings-draft-reset";
 import { SettingsHistoryShortcut } from "./settings-history-shortcut";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
@@ -20,7 +19,6 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <InstantSettingChoices />
       <DashboardClientPolish locale={locale} />
       <SettingsClientPolish locale={locale} />
-      <SettingsDraftReset locale={locale} />
       <SettingsHistoryShortcut locale={locale} />
       <QuickHourPolish />
       <ScheduleNavigationPolish />
