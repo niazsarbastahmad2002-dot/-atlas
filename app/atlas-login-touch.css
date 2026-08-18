@@ -1,0 +1,24 @@
+/* The sign-in illustration is decorative. It must never sit above or intercept form controls. */
+.login-card {
+  position: relative;
+  z-index: 3;
+}
+.login-visual {
+  pointer-events: none;
+}
+
+/* iPad portrait needs genuinely flexible columns instead of minimum widths that can overlap. */
+@media (min-width: 901px) and (max-width: 1080px) {
+  .login-page {
+    grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
+  }
+  .login-card {
+    width: min(500px, calc(100% - 34px));
+  }
+  .login-visual {
+    padding: 34px 26px;
+  }
+  [dir="rtl"] .login-story h2 {
+    font-size: 36px;
+  }
+}
