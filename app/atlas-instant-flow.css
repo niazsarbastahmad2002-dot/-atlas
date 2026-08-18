@@ -1,0 +1,62 @@
+/* Atlas instant receptionist workflow refinements. */
+.schedule-date-shortcuts {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin: -5px 0 12px;
+  padding: 2px 1px 4px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.schedule-date-shortcuts::-webkit-scrollbar { display: none; }
+.schedule-date-shortcuts a {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d6e3dc;
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: rgba(255,255,255,.8);
+  color: var(--ink-soft);
+  box-shadow: 0 1px 1px rgba(7,31,25,.025);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.schedule-date-shortcuts a:hover {
+  border-color: #bed9cc;
+  background: #f3faf7;
+  color: var(--accent);
+}
+.schedule-date-shortcuts a.is-selected {
+  border-color: rgba(8,119,90,.22);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Direct choices persist on change, so Atlas does not show a second apply tap. */
+#locale + .button,
+#appointment_interval_minutes + .button,
+.staff-role-actions select + button[type="submit"] {
+  display: none !important;
+}
+.settings-card-accent .settings-form-inline #locale,
+.settings-control-row #appointment_interval_minutes {
+  width: 100%;
+  min-width: 0;
+}
+.settings-card-accent .settings-form-inline {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+@media (max-width: 540px) {
+  .schedule-date-shortcuts { margin-inline: -2px; }
+}
