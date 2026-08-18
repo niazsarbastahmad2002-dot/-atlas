@@ -24,7 +24,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
       </Suspense>
-      <AppNavigation locale={locale} />
+      <Suspense fallback={null}>
+        <AppNavigation locale={locale} />
+      </Suspense>
       <div className="app-content">
         {children}
       </div>
