@@ -6,6 +6,7 @@ import { type MouseEvent, useEffect, useState } from "react";
 import { trackAtlasEvent } from "@/lib/analytics/client";
 import { classifyAtlasScreen } from "@/lib/analytics/schema";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import { flushSettingWrites, hasPendingSettingWrite } from "./setting-write-barrier";
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
 
@@ -120,7 +121,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
 
   useEffect(() => {
     const warmCoreRoutes = () => {
-      router.prefetch(scheduleHref);
+      if (!hasPendingSettingWrite()) router.prefetch(scheduleHref);
       router.prefetch(settingsHref);
     };
 
@@ -137,7 +138,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     };
   }, [router, scheduleHref, settingsHref]);
 
-  const go = (href: string, interaction: "topbar" | "bottom_nav" | "brand") => (event: MouseEvent<HTMLAnchorElement>) => {
+  const go = (href: string, interaction: "topbar" | "bottom_nav" | "brand") => async (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainNavigation(event)) return;
     event.preventDefault();
     trackAtlasEvent("atlas_navigation", {
@@ -147,94 +148,54 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     });
     const targetPath = new URL(href, window.location.origin).pathname;
     setVisiblePath(targetPath);
+
+    if (targetPath === "/dashboard" && hasPendingSettingWrite()) {
+      await flushSettingWrites();
+      // A previously prefetched Schedule response may contain the old clinic
+      // interval. A real navigation here guarantees the just-saved setting is
+      // used on the very first Schedule paint, without any stale 5-minute grid.
+      window.location.assign(href);
+      return;
+    }
+
     router.prefetch(href);
     router.push(href, { scroll: true });
   };
 
-  const warm = (href: string) => () => router.prefetch(href);
+  const warm = (href: string) => () => {
+    if (new URL(href, window.location.origin).pathname === "/dashboard" && hasPendingSettingWrite()) return;
+    router.prefetch(href);
+  };
   const addHref = typeof window === "undefined" ? "/dashboard#new-appointment" : withHash(scheduleHref, "new-appointment");
 
   return (
     <>
       <header className="app-topbar">
         <div className="app-topbar-inner shell">
-          <Link
-            className="app-brand"
-            href={scheduleHref}
-            prefetch={true}
-            scroll={true}
-            onPointerDown={warm(scheduleHref)}
-            onClick={go(scheduleHref, "brand")}
-            aria-label={t.openSchedule}
-          >
+          <Link className="app-brand" href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "brand")} aria-label={t.openSchedule}>
             <span className="app-brand-mark" aria-hidden="true">A</span>
             <span className="app-brand-word">Atlas</span>
           </Link>
           <nav className="app-top-actions" aria-label="Atlas navigation">
-            <Link
-              className={`icon-button ${onSchedule ? "is-active" : ""}`}
-              href={scheduleHref}
-              prefetch={true}
-              scroll={true}
-              onPointerDown={warm(scheduleHref)}
-              onMouseEnter={warm(scheduleHref)}
-              onClick={go(scheduleHref, "topbar")}
-              aria-label={t.openSchedule}
-              title={t.schedule}
-            >
-              <CalendarIcon />
-              <span className="icon-button-label">{t.schedule}</span>
+            <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onMouseEnter={warm(scheduleHref)} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} title={t.schedule}>
+              <CalendarIcon /><span className="icon-button-label">{t.schedule}</span>
             </Link>
-            <Link
-              className={`icon-button ${onSettings ? "is-active" : ""}`}
-              href={settingsHref}
-              prefetch={true}
-              scroll={true}
-              onPointerDown={warm(settingsHref)}
-              onMouseEnter={warm(settingsHref)}
-              onClick={go(settingsHref, "topbar")}
-              aria-label={t.openSettings}
-              title={t.settings}
-            >
-              <GearIcon />
-              <span className="icon-button-label">{t.settings}</span>
+            <Link className={`icon-button ${onSettings ? "is-active" : ""}`} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onMouseEnter={warm(settingsHref)} onClick={go(settingsHref, "topbar")} aria-label={t.openSettings} title={t.settings}>
+              <GearIcon /><span className="icon-button-label">{t.settings}</span>
             </Link>
           </nav>
         </div>
       </header>
 
       <nav className="app-bottom-nav" aria-label="Atlas mobile navigation">
-        <Link
-          className={onSchedule ? "is-active" : ""}
-          href={scheduleHref}
-          prefetch={true}
-          scroll={true}
-          onPointerDown={warm(scheduleHref)}
-          onClick={go(scheduleHref, "bottom_nav")}
-        >
-          <CalendarIcon />
-          <span>{t.schedule}</span>
+        <Link className={onSchedule ? "is-active" : ""} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "bottom_nav")}>
+          <CalendarIcon /><span>{t.schedule}</span>
         </Link>
-        <Link
-          className="app-bottom-add"
-          href={addHref}
-          prefetch={true}
-          scroll={true}
-          onClick={() => trackAtlasEvent("atlas_navigation", { target: "schedule", interaction: "bottom_nav", locale })}
-        >
-          <span className="app-bottom-add-circle"><PlusIcon /></span>
-          <span>{t.add}</span>
+        <Link className="app-bottom-add" href={addHref} prefetch={true} scroll={true} onClick={go(addHref, "bottom_nav")}>
+          <span className="app-bottom-add-circle"><PlusIcon /></span><span>{t.add}</span>
         </Link>
-        <Link
-          className={onSettings ? "is-active" : ""}
-          href={settingsHref}
-          prefetch={true}
-          scroll={true}
-          onPointerDown={warm(settingsHref)}
-          onClick={go(settingsHref, "bottom_nav")}
-        >
-          <GearIcon />
-          <span>{t.settings}</span>
+        <Link className={onSettings ? "is-active" : ""} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onClick={go(settingsHref, "bottom_nav")}>
+          <GearIcon /><span>{t.settings}</span>
         </Link>
       </nav>
     </>

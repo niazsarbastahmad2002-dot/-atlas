@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useLayoutEffect } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
+import { queueSettingWrite } from "./setting-write-barrier";
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
 
@@ -39,21 +40,22 @@ export function InstantSettingChoices() {
         const version = nextVersion(select);
         const previous = select.dataset.atlasLastSaved ?? "en";
 
-        // The tap itself is the confirmation: switch direction immediately,
-        // then persist and refresh translated server text in the background.
         document.documentElement.lang = value === "ku" ? "ckb" : value;
         document.documentElement.dir = value === "en" ? "ltr" : "rtl";
 
-        void fetch("/api/ui-language", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ locale: value }),
-        }).then((response) => {
-          if (version !== versions.get(select)) return;
+        void queueSettingWrite(async () => {
+          const response = await fetch("/api/ui-language", {
+            method: "POST",
+            credentials: "same-origin",
+            keepalive: true,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ locale: value }),
+          });
           if (!response.ok) throw new Error("language_update_failed");
-          select.dataset.atlasLastSaved = value;
-          router.refresh();
+          if (version === versions.get(select)) {
+            select.dataset.atlasLastSaved = value;
+            router.refresh();
+          }
         }).catch(() => {
           if (version !== versions.get(select)) return;
           select.value = previous;
@@ -70,22 +72,21 @@ export function InstantSettingChoices() {
 
       select.addEventListener("change", (event) => {
         event.stopImmediatePropagation();
+        const value = select.value;
         const version = nextVersion(select);
-        const previous = select.dataset.atlasLastSaved ?? select.value;
+        const previous = select.dataset.atlasLastSaved ?? value;
         const clinicId = select.form?.querySelector<HTMLInputElement>('input[name="clinic_id"]')?.value ?? "";
 
-        void fetch("/api/settings/clinic", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clinicId,
-            appointmentIntervalMinutes: Number(select.value),
-          }),
-        }).then((response) => {
-          if (version !== versions.get(select)) return;
+        void queueSettingWrite(async () => {
+          const response = await fetch("/api/settings/clinic", {
+            method: "POST",
+            credentials: "same-origin",
+            keepalive: true,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ clinicId, appointmentIntervalMinutes: Number(value) }),
+          });
           if (!response.ok) throw new Error("interval_update_failed");
-          select.dataset.atlasLastSaved = select.value;
+          if (version === versions.get(select)) select.dataset.atlasLastSaved = value;
         }).catch(() => {
           if (version !== versions.get(select)) return;
           select.value = previous;

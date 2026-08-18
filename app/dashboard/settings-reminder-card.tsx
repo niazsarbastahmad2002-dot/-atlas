@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatLeadTime } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
+import { queueSettingWrite } from "./setting-write-barrier";
 
 type ReminderSettings = {
   enabled: boolean;
@@ -135,40 +136,35 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
       setSaveError(true);
     };
 
-    // The visible control changes immediately. Persistence follows quietly in
-    // the background; only a failure asks for the receptionist's attention.
-    const timer = window.setTimeout(() => {
-      void fetch("/api/settings/reminders", {
+    // The control changes on the tap. Persistence starts in the same turn and
+    // joins Atlas's settings write barrier, so leaving Settings immediately can
+    // never cancel or outrun this save.
+    void queueSettingWrite(async () => {
+      const response = await fetch("/api/settings/reminders", {
         method: "POST",
         credentials: "same-origin",
+        keepalive: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      }).then(async (response) => {
-        if (version !== saveVersion.current) return;
-        if (!response.ok) {
-          restoreLastSaved();
-          return;
-        }
-
-        const saved = await response.json() as {
-          enabled: boolean;
-          leadMinutes: number;
-          secondLeadMinutes: number | null;
-          defaultLanguage: string;
-        };
-        lastSaved.current = {
-          ...settings,
-          enabled: saved.enabled,
-          leadMinutes: saved.leadMinutes,
-          secondLeadMinutes: saved.secondLeadMinutes,
-          defaultLanguage: saved.defaultLanguage,
-        };
-      }).catch(() => {
-        if (version === saveVersion.current) restoreLastSaved();
       });
-    }, 35);
-
-    return () => window.clearTimeout(timer);
+      if (!response.ok) throw new Error("reminder_update_failed");
+      const saved = await response.json() as {
+        enabled: boolean;
+        leadMinutes: number;
+        secondLeadMinutes: number | null;
+        defaultLanguage: string;
+      };
+      if (version !== saveVersion.current) return;
+      lastSaved.current = {
+        ...settings,
+        enabled: saved.enabled,
+        leadMinutes: saved.leadMinutes,
+        secondLeadMinutes: saved.secondLeadMinutes,
+        defaultLanguage: saved.defaultLanguage,
+      };
+    }).catch(() => {
+      if (version === saveVersion.current) restoreLastSaved();
+    });
   }, [canManage, payload, settings]);
 
   function setFirstReminder(leadMinutes: number) {
@@ -201,73 +197,20 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
 
       <div className="atlas-reminder-form">
         <label className="toggle-row" htmlFor="atlas-reminders-enabled">
-          <span>
-            <strong>{t.enabled}</strong>
-            <small>{settings.approved ? t.enabledHelp : t.approval}</small>
-          </span>
-          <input
-            id="atlas-reminders-enabled"
-            type="checkbox"
-            checked={settings.enabled}
-            disabled={!canManage || !settings.approved}
-            onChange={(event) => {
-              setSaveError(false);
-              setSettings((current) => ({ ...current, enabled: event.target.checked }));
-            }}
-          />
+          <span><strong>{t.enabled}</strong><small>{settings.approved ? t.enabledHelp : t.approval}</small></span>
+          <input id="atlas-reminders-enabled" type="checkbox" checked={settings.enabled} disabled={!canManage || !settings.approved} onChange={(event) => { setSaveError(false); setSettings((current) => ({ ...current, enabled: event.target.checked })); }} />
         </label>
 
         {!settings.approved ? <p className="reminder-provider-note">{t.pending}</p> : null}
 
         <div className="atlas-reminder-times">
-          <label>
-            <span>{t.first}</span>
-            <select
-              value={settings.leadMinutes}
-              disabled={!canManage}
-              onChange={(event) => setFirstReminder(Number(event.target.value))}
-            >
-              {leadOptions.map((minutes) => <option value={minutes} key={minutes}>{leadLabel(minutes, locale)}</option>)}
-            </select>
-          </label>
-
-          <label>
-            <span>{t.second} <small>· {t.optional}</small></span>
-            <select
-              value={settings.secondLeadMinutes ?? ""}
-              disabled={!canManage}
-              onChange={(event) => setSecondReminder(event.target.value)}
-            >
-              <option value="">{t.off}</option>
-              {leadOptions.map((minutes) => (
-                <option value={minutes} key={minutes} disabled={minutes === settings.leadMinutes}>
-                  {leadLabel(minutes, locale)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <label><span>{t.first}</span><select value={settings.leadMinutes} disabled={!canManage} onChange={(event) => setFirstReminder(Number(event.target.value))}>{leadOptions.map((minutes) => <option value={minutes} key={minutes}>{leadLabel(minutes, locale)}</option>)}</select></label>
+          <label><span>{t.second} <small>· {t.optional}</small></span><select value={settings.secondLeadMinutes ?? ""} disabled={!canManage} onChange={(event) => setSecondReminder(event.target.value)}><option value="">{t.off}</option>{leadOptions.map((minutes) => <option value={minutes} key={minutes} disabled={minutes === settings.leadMinutes}>{leadLabel(minutes, locale)}</option>)}</select></label>
         </div>
 
-        <label className="atlas-reminder-language">
-          <span>{t.language}</span>
-          <select
-            value={settings.defaultLanguage}
-            disabled={!canManage}
-            onChange={(event) => {
-              setSaveError(false);
-              setSettings((current) => ({ ...current, defaultLanguage: event.target.value }));
-            }}
-          >
-            <option value="ku">{languageLabels[locale].ku}</option>
-            <option value="ar">{languageLabels[locale].ar}</option>
-            <option value="en">{languageLabels[locale].en}</option>
-          </select>
-        </label>
+        <label className="atlas-reminder-language"><span>{t.language}</span><select value={settings.defaultLanguage} disabled={!canManage} onChange={(event) => { setSaveError(false); setSettings((current) => ({ ...current, defaultLanguage: event.target.value })); }}><option value="ku">{languageLabels[locale].ku}</option><option value="ar">{languageLabels[locale].ar}</option><option value="en">{languageLabels[locale].en}</option></select></label>
 
-        <div className="atlas-reminder-footer">
-          <p className="field-help">{canManage ? t.recommended : t.viewOnly}</p>
-          {saveError ? <span className="atlas-reminder-save is-error" role="alert">{t.failed}</span> : null}
-        </div>
+        <div className="atlas-reminder-footer"><p className="field-help">{canManage ? t.recommended : t.viewOnly}</p>{saveError ? <span className="atlas-reminder-save is-error" role="alert">{t.failed}</span> : null}</div>
       </div>
 
       <style jsx>{`
