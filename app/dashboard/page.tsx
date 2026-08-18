@@ -9,7 +9,7 @@ import {
 import { baghdadDate } from "@/lib/i18n/config";
 import { formatLeadTime } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { formatBaghdadDateTime, formatBaghdadDay, uiText, type UiLocale } from "@/lib/i18n/ui";
+import { formatBaghdadDateTime, formatBaghdadDay, uiLocaleMeta, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { getDashboardMessage } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
@@ -28,11 +28,11 @@ type DashboardPageProps = {
 
 const dayCopy: Record<UiLocale, {
   previous: string; today: string; yesterday: string; tomorrow: string; next: string; nextUp: string;
-  appointments: string; empty: string; emptyHelp: string; add: string; reminders: string; order: string;
+  appointments: string; empty: string; emptyHelp: string; add: string; reminders: string; order: string; quickDates: string;
 }> = {
-  en: { previous: "Previous", today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow", next: "Next", nextUp: "Next appointment", appointments: "Appointments", empty: "No appointments on this day.", emptyHelp: "Add an appointment when the first patient calls or walks in.", add: "Add appointment", reminders: "Patient reminders", order: "Appointment order" },
-  ku: { previous: "پێشوو", today: "ئەمڕۆ", yesterday: "دوێنێ", tomorrow: "سبەی", next: "داهاتوو", nextUp: "وادەی داهاتوو", appointments: "وادەکان", empty: "لەم ڕۆژە هیچ وادەیەک نییە.", emptyHelp: "کاتێک یەکەم نەخۆش پەیوەندی کرد یان هات، وادەکە زیاد بکە.", add: "وادە زیاد بکە", reminders: "بیرخستنەوەی نەخۆش", order: "ڕیزی وادە" },
-  ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد" },
+  en: { previous: "Previous", today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow", next: "Next", nextUp: "Next appointment", appointments: "Appointments", empty: "No appointments on this day.", emptyHelp: "Add an appointment when the first patient calls or walks in.", add: "Add appointment", reminders: "Patient reminders", order: "Appointment order", quickDates: "Quick schedule dates" },
+  ku: { previous: "پێشوو", today: "ئەمڕۆ", yesterday: "دوێنێ", tomorrow: "سبەی", next: "داهاتوو", nextUp: "وادەی داهاتوو", appointments: "وادەکان", empty: "لەم ڕۆژە هیچ وادەیەک نییە.", emptyHelp: "کاتێک یەکەم نەخۆش پەیوەندی کرد یان هات، وادەکە زیاد بکە.", add: "وادە زیاد بکە", reminders: "بیرخستنەوەی نەخۆش", order: "ڕیزی وادە", quickDates: "ڕۆژە خێراکان" },
+  ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد", quickDates: "أيام سريعة" },
 };
 
 function validBaghdadDay(value: string | undefined, fallback: string) {
@@ -50,6 +50,15 @@ function shiftBaghdadDay(day: string, amount: number) {
 
 function scheduleHref(clinicId: string, day: string) {
   return `/dashboard?${new URLSearchParams({ clinic: clinicId, day })}`;
+}
+
+function formatShortcutDay(day: string, locale: UiLocale) {
+  return new Intl.DateTimeFormat(uiLocaleMeta[locale].dateLocale, {
+    timeZone: "Asia/Baghdad",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${day}T12:00:00+03:00`));
 }
 
 function reminderPlanLabel(first: number, second: number | null, locale: UiLocale) {
@@ -92,7 +101,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const dayEnd = new Date(`${shiftBaghdadDay(selectedDay, 1)}T00:00:00+03:00`).toISOString();
 
   const [{ data: appointments, error: appointmentError }, { data: occupiedAppointments, error: occupiedError }, { data: reminderSettings }, { data: doctors, error: doctorsError }] = await Promise.all([
-    supabase.from("appointments").select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, status, reminder_status, reminder_language, reminder_consent").eq("clinic_id", clinic.id).is("voided_at", null).gte("appointment_at", dayStart).lt("appointment_at", dayEnd).order("appointment_at", { ascending: true }).limit(500),
+    supabase.from("appointments").select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, created_at, status, reminder_status, reminder_language, reminder_consent").eq("clinic_id", clinic.id).is("voided_at", null).gte("appointment_at", dayStart).lt("appointment_at", dayEnd).order("appointment_at", { ascending: true }).order("created_at", { ascending: true }).order("id", { ascending: true }).limit(500),
     supabase.from("appointments").select("doctor_id, appointment_at").eq("clinic_id", clinic.id).is("voided_at", null).in("status", ["pending", "confirmed"]).gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString()).order("appointment_at", { ascending: true }).limit(5000),
     supabase.from("clinic_reminder_settings").select("enabled, lead_minutes, second_lead_minutes, default_reminder_language").eq("clinic_id", clinic.id).maybeSingle(),
     supabase.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinic.id).order("display_order", { ascending: true }).order("name", { ascending: true }),
@@ -107,18 +116,32 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const completed = rows.filter((row) => row.status === "completed").length;
   const noShow = rows.filter((row) => row.status === "no_show").length;
   const cancelled = rows.filter((row) => row.status === "cancelled").length;
+
+  // Reception works one clinic line. Queue numbers therefore run across the
+  // whole selected day, even when two appointments share a time or doctor.
   const appointmentOrder = new Map<string, number>();
-  const doctorOrder = new Map<string, number>();
+  let activeOrder = 0;
   for (const row of rows) {
     if (row.status !== "pending" && row.status !== "confirmed") continue;
-    const doctorKey = row.doctor_id ?? `name:${row.doctor_name}`;
-    const nextOrder = (doctorOrder.get(doctorKey) ?? 0) + 1;
-    doctorOrder.set(doctorKey, nextOrder);
-    appointmentOrder.set(row.id, nextOrder);
+    activeOrder += 1;
+    appointmentOrder.set(row.id, activeOrder);
   }
+
   const previousDay = shiftBaghdadDay(selectedDay, -1);
   const nextDay = shiftBaghdadDay(selectedDay, 1);
   const nextAppointmentId = selectedDay === today ? rows.find((row) => ["pending", "confirmed"].includes(row.status) && new Date(row.appointment_at).getTime() >= now - 5 * 60 * 1000)?.id ?? null : null;
+
+  const futureAppointmentDays = Array.from(new Set(
+    (occupiedAppointments ?? [])
+      .map((row) => baghdadDate.format(new Date(row.appointment_at)))
+      .filter((day) => day > tomorrow),
+  )).sort().slice(0, 40);
+  const quickDays = [
+    { day: yesterday, label: days.yesterday },
+    { day: today, label: days.today },
+    { day: tomorrow, label: days.tomorrow },
+    ...futureAppointmentDays.map((day) => ({ day, label: formatShortcutDay(day, locale) })),
+  ];
 
   const minimum = new Date(now + 5 * 60 * 1000); minimum.setSeconds(0, 0);
   const maximum = new Date(now + 2 * 365 * 24 * 60 * 60 * 1000);
@@ -130,8 +153,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const reminderLabels: Record<string, string> = { queued: t.reminderQueued, processing: t.reminderSending, sent: t.reminderSent, delivered: t.reminderDelivered, read: t.reminderRead, failed: t.reminderFailed };
   const reminderLanguageLabels: Record<string, string> = { ku: "کوردی (سۆرانی)", ar: "العربية", en: "English" };
 
-  return <main className="workspace-page shell">
+  return <main className="workspace-page shell" data-atlas-selected-day={selectedDay} data-atlas-clinic={clinic.id}>
     <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{relativeDay ?? t.schedule}</div><h1>{clinic.name}</h1><p>{formatBaghdadDay(selectedDate, locale)} · {t.erbilTime}</p></div><a className="button workspace-new-button" href="#new-appointment">+ {t.newAppointment}</a></header>
+    <nav className="schedule-date-shortcuts" aria-label={days.quickDates}>
+      {quickDays.map((item) => <a className={item.day === selectedDay ? "is-selected" : ""} href={scheduleHref(clinic.id, item.day)} key={item.day} aria-current={item.day === selectedDay ? "date" : undefined}>{item.label}</a>)}
+    </nav>
     <nav className="day-navigation" aria-label={days.appointments}>
       <a className="button button-ghost button-small" href={scheduleHref(clinic.id, previousDay)} aria-label={days.previous}>‹ <span>{days.previous}</span></a>
       <a className={`day-current ${selectedDay === today ? "is-today" : ""} ${relativeDay ? "has-relative-day" : ""}`} href={scheduleHref(clinic.id, today)}><strong>{formatBaghdadDay(selectedDate, locale)}</strong>{relativeDay ? <span data-atlas-relative-day="true">{relativeDay}</span> : null}</a>
