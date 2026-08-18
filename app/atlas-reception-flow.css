@@ -1,0 +1,118 @@
+/* Reception-first refinements from clinic workflow review. */
+.workspace-stats.stats {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.workspace-stats .stat {
+  min-height: 68px;
+  border-radius: 15px;
+  padding: 11px 13px;
+}
+.workspace-stats .stat::before {
+  inset-inline: 12px;
+}
+.workspace-stats .stat span {
+  overflow: hidden;
+  font-size: 10.5px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace-stats .stat strong {
+  margin-top: 5px;
+  font-size: 23px;
+}
+
+.appointment-badges {
+  align-items: center;
+}
+.appointment-order-badge {
+  display: inline-grid;
+  min-width: 34px;
+  min-height: 27px;
+  place-items: center;
+  border: 1px solid rgba(8, 119, 90, .17);
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: linear-gradient(145deg, #eafff7, #ddf6ec);
+  color: #07694f;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.01em;
+}
+
+.row-actions.polished-actions {
+  justify-content: flex-start;
+}
+.row-actions.polished-actions .archive-action {
+  margin-inline-start: 0 !important;
+}
+
+/* Do not stretch short utility cards to the height of their neighbor. */
+.settings-grid,
+.staff-settings-grid {
+  align-items: start;
+}
+.settings-card {
+  align-self: start;
+}
+.settings-link-card {
+  justify-content: flex-start;
+}
+.settings-link-card .settings-link {
+  margin-top: 18px;
+}
+
+.administrator-transfer {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.administrator-transfer h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: -.015em;
+}
+.administrator-transfer > p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.administrator-transfer-form {
+  display: grid;
+  gap: 9px;
+  margin-top: 13px;
+}
+.administrator-transfer-form select {
+  min-height: 44px;
+}
+.administrator-transfer-confirm {
+  margin: 1px 0 0;
+  border: 1px solid #dce8e2;
+  border-radius: 12px;
+  padding: 10px 11px;
+  background: #f7faf8;
+  color: var(--ink-soft);
+  font-size: 10.5px;
+}
+.administrator-transfer-form .button {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .workspace-stats.stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .workspace-stats.stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workspace-stats .stat {
+    min-height: 64px;
+  }
+}
