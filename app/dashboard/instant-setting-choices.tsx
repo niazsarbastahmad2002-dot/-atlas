@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useLayoutEffect } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
-import { queueSettingWrite } from "./setting-write-barrier";
+import { flushSettingWrites, hasPendingSettingWrite, needsFreshSettingNavigation, queueSettingWrite } from "./setting-write-barrier";
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
 
@@ -92,9 +92,6 @@ export function InstantSettingChoices() {
           if (saved.appointmentIntervalMinutes !== Number(value)) throw new Error("interval_not_persisted");
           if (version === versions.get(select)) {
             select.dataset.atlasLastSaved = value;
-            // Sync the server-rendered Settings tree to the value that the
-            // database just returned. Navigation still forces a fresh page so
-            // an older prefetched Schedule can never reappear.
             router.refresh();
           }
         }).catch(() => {
@@ -124,13 +121,18 @@ export function InstantSettingChoices() {
         .forEach(bindRole);
     };
 
-    const handleSettingsBack = (event: MouseEvent) => {
+    const handleSettingsBack = async (event: MouseEvent) => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = event.target instanceof Element ? event.target : null;
       const link = target?.closest<HTMLAnchorElement>(".settings-heading a[href^='/dashboard']");
       if (!link || link.getAttribute("href")?.includes("/settings")) return;
       event.preventDefault();
       const href = rememberedSchedule();
+      if (hasPendingSettingWrite() || needsFreshSettingNavigation()) {
+        await flushSettingWrites();
+        window.location.assign(href);
+        return;
+      }
       router.prefetch(href);
       router.push(href, { scroll: true });
     };
