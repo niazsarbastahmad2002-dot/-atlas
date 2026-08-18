@@ -214,11 +214,12 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
         }
         .edit-datetime-trigger > span:first-child { min-width: 0; direction: ${locale === "en" ? "ltr" : "rtl"}; }
         .edit-datetime-popover {
-          position: absolute;
-          z-index: 140;
-          inset-inline-start: 0;
-          top: calc(100% + 7px);
-          width: min(410px, 100%);
+          position: relative;
+          z-index: 2;
+          inset: auto;
+          top: auto;
+          width: 100%;
+          margin-top: 3px;
           border: 1px solid var(--line-strong);
           border-radius: 16px;
           padding: 13px;
