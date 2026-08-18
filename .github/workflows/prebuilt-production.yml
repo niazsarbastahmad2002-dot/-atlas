@@ -1,11 +1,10 @@
 name: Atlas prebuilt production deploy
 
+# Manual fallback only. Normal production deploys continue through Vercel Git.
+# The project-scoped VERCEL_TOKEN is not compatible with `vercel pull`, so this
+# workflow is intentionally not triggered on every push until the fallback auth
+# path is replaced with a CLI-compatible account token or direct API flow.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-    types: [closed]
   workflow_dispatch:
 
 permissions:
@@ -18,7 +17,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -105,5 +103,3 @@ jobs:
       - name: Fail if deployment did not succeed
         if: always() && steps.deploy.outcome != 'success'
         run: exit 1
-
-# Triggered after rotating VERCEL_TOKEN on 2026-08-19.
