@@ -1,17 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Atlas">
   <defs>
-    <linearGradient id="bg" x1="54" y1="38" x2="455" y2="470" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0b6f53"/>
-      <stop offset="1" stop-color="#073b31"/>
+    <linearGradient id="bg" x1="76" y1="56" x2="444" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#08715a"/>
+      <stop offset="1" stop-color="#043d34"/>
     </linearGradient>
-    <linearGradient id="mark" x1="120" y1="404" x2="390" y2="112" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ffffff"/>
-      <stop offset="0.56" stop-color="#d7fff4"/>
-      <stop offset="1" stop-color="#63e6c5"/>
+    <linearGradient id="mint" x1="112" y1="124" x2="406" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#dffff5"/>
+      <stop offset="1" stop-color="#62e7c3"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="118" fill="url(#bg)"/>
-  <path d="M104 390 219 116c9-22 22-33 37-33s28 11 37 33l113 270c11 26-8 53-36 53-16 0-30-10-36-25l-78-188-82 195c-7 16-21 26-38 26-29 0-48-29-32-57Z" fill="url(#mark)"/>
-  <path d="M173 299c55-34 110-34 166 0" fill="none" stroke="#0b5d48" stroke-width="37" stroke-linecap="round"/>
-  <path d="M256 259c5 21 19 35 40 40-21 6-35 19-40 40-6-21-19-34-40-40 21-5 34-19 40-40Z" fill="#ffffff"/>
+  <path d="M118 280c0-89 72-161 161-161 58 0 110 31 138 78" fill="none" stroke="#ffffff" stroke-width="43" stroke-linecap="round"/>
+  <path d="M394 232c0 89-72 161-161 161-58 0-110-31-138-78" fill="none" stroke="url(#mint)" stroke-width="43" stroke-linecap="round"/>
+  <circle cx="118" cy="280" r="22" fill="#ffffff"/>
+  <circle cx="394" cy="232" r="22" fill="#78efd0"/>
+  <circle cx="256" cy="256" r="58" fill="#063f35" stroke="rgba(255,255,255,.13)" stroke-width="2"/>
+  <circle cx="256" cy="256" r="22" fill="#ffffff"/>
 </svg>
