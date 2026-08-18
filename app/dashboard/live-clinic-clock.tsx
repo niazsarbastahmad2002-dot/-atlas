@@ -29,9 +29,6 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
     return () => window.clearInterval(timer);
   }, []);
 
-  // This visible clock intentionally follows the receptionist device itself.
-  // Appointment scheduling remains anchored to the clinic's Erbil/Baghdad
-  // time zone so changing a device time zone cannot alter stored appointments.
   const date = useMemo(() => new Intl.DateTimeFormat(dateLocale, {
     weekday: "short",
     month: "short",
@@ -39,9 +36,12 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
   }).format(now), [dateLocale, now]);
 
   const clock = useMemo(() => timeParts(now, dateLocale), [dateLocale, now]);
+  const dayPeriod = locale === "ku"
+    ? (now.getHours() < 12 ? "پ.ن" : "د.ن")
+    : clock.dayPeriod;
   const accessibleTime = [
     `${clock.hour}:${clock.minute}:${clock.second}`,
-    clock.dayPeriod,
+    dayPeriod,
   ].filter(Boolean).join(" ");
 
   return (
@@ -54,7 +54,7 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
           <span>{clock.minute}</span>
         </strong>
         <span className="atlas-live-clock-seconds">{clock.second}</span>
-        {clock.dayPeriod ? <span className="atlas-live-clock-period">{clock.dayPeriod}</span> : null}
+        {dayPeriod ? <span className="atlas-live-clock-period">{dayPeriod}</span> : null}
       </div>
       <div className="atlas-live-clock-date"><span>{date}</span></div>
       <style jsx>{`
