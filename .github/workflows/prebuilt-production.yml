@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: atlas-prebuilt-production
@@ -19,10 +20,14 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout Atlas
         uses: actions/checkout@v4
+
+      - name: Report deployment start
+        run: gh issue comment 59 --body "Prebuilt production deployment started for commit $GITHUB_SHA."
 
       - name: Use Node 24
         uses: actions/setup-node@v4
@@ -44,3 +49,7 @@ jobs:
 
       - name: Deploy prebuilt Atlas to production
         run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Report deployment result
+        if: always()
+        run: gh issue comment 59 --body "Prebuilt production deployment finished with status: ${{ job.status }} for commit $GITHUB_SHA."
