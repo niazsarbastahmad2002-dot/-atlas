@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   createPatientToken,
@@ -58,4 +59,19 @@ test("constant-time comparison returns correct equality result", () => {
   assert.equal(constantTimeEqual("same-value", "same-value"), true);
   assert.equal(constantTimeEqual("same-value", "different"), false);
   assert.equal(constantTimeEqual("short", "much-longer"), false);
+});
+
+test("receptionist access is constrained to one assigned doctor at the database boundary", () => {
+  const migration = readFileSync(
+    new URL("../supabase/migrations/20260818172500_receptionist_doctor_assignment.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(migration, /assigned_doctor_id uuid references public\.doctors\(id\)/);
+  assert.match(migration, /receptionist doctor assignment required/);
+  assert.match(migration, /private\.can_access_doctor\(clinic_id, doctor_id\)/);
+  assert.match(migration, /create policy appointments_select/);
+  assert.match(migration, /create policy appointments_insert/);
+  assert.match(migration, /create policy appointments_update/);
+  assert.match(migration, /create policy doctors_select/);
 });
