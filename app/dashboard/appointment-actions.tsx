@@ -19,10 +19,16 @@ function findAppointmentCard(target: EventTarget | null) {
 }
 
 function paintStatus(card: HTMLElement | null, status: AppointmentStatus, label: string) {
-  const badge = card?.querySelector<HTMLElement>(".appointment-badges .status:first-child");
+  const badge = card?.querySelector<HTMLElement>(".appointment-badges > .status:not(.status-reminder)");
   if (!badge) return;
   badge.className = `status status-${status}`;
   badge.textContent = label;
+}
+
+function paintOrderVisibility(card: HTMLElement | null, status: AppointmentStatus) {
+  const badge = card?.querySelector<HTMLElement>(".appointment-order-badge");
+  if (!badge) return;
+  badge.style.display = status === "pending" || status === "confirmed" ? "" : "none";
 }
 
 function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
@@ -145,15 +151,19 @@ export function AppointmentActions({
 
     const previousStatus = optimisticStatus;
     const card = findAppointmentCard(target);
+    const orderBadge = card?.querySelector<HTMLElement>(".appointment-order-badge") ?? null;
+    const previousOrderDisplay = orderBadge?.style.display ?? "";
     setError(null);
     setOptimisticStatus(nextStatus);
     paintStatus(card, nextStatus, statusLabels[nextStatus]);
+    paintOrderVisibility(card, nextStatus);
 
     startTransition(async () => {
       const result = await updateAppointmentStatusInline(clinicId, appointmentId, nextStatus);
       if (!result.ok) {
         setOptimisticStatus(previousStatus);
         paintStatus(card, previousStatus, statusLabels[previousStatus]);
+        if (orderBadge) orderBadge.style.display = previousOrderDisplay;
         setError(actionFeedback(locale, result.reason));
         return;
       }
