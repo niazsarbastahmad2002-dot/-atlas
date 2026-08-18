@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { isUuid } from "@/lib/appointments";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 const appointmentIntervals = new Set([5, 10, 15, 20, 30]);
 
 export async function POST(request: Request) {
@@ -43,5 +45,8 @@ export async function POST(request: Request) {
   if (error || !data) return NextResponse.json({ ok: false }, { status: 409 });
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
-  return NextResponse.json({ ok: true, appointmentIntervalMinutes: data.appointment_interval_minutes });
+  return NextResponse.json(
+    { ok: true, appointmentIntervalMinutes: data.appointment_interval_minutes },
+    { headers: { "Cache-Control": "no-store, max-age=0" } },
+  );
 }
