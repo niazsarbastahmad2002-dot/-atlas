@@ -5,7 +5,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { removeStaffMember, updateStaffRole } from "./actions";
+import { removeStaffMember, transferClinicAdministrator, updateStaffRole } from "./actions";
 import { StaffProvisionForm } from "./provision-form";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +32,11 @@ const copy: Record<UiLocale, Record<string, string>> = {
     ownerRequired: "Administration access required.",
     ownerRequiredHelp: "Receptionists use the schedule. Clinic access is managed here only when needed.",
     unavailable: "Clinic access could not load.",
+    transfer: "Transfer clinic administrator",
+    transferHelp: "If the first Atlas account was only helping with setup, add the real administrator first, then transfer control here. The current administrator becomes a receptionist.",
+    transferConfirm: "I understand this person will become the clinic administrator.",
+    transferButton: "Transfer administration",
+    transferEmpty: "Add another person to the clinic before transferring administration.",
   },
   ku: {
     title: "دەسەڵاتی کلینیک",
@@ -50,6 +55,11 @@ const copy: Record<UiLocale, Record<string, string>> = {
     ownerRequired: "دەسەڵاتی بەڕێوەبردن پێویستە.",
     ownerRequiredHelp: "پێشخانە خشتەی کات بەکاردەهێنێت. دەسەڵاتی کلینیک تەنها کاتێک پێویست بێت لێرە بەڕێوەدەبرێت.",
     unavailable: "دەسەڵاتی کلینیک بار نەبوو.",
+    transfer: "گواستنەوەی بەڕێوەبەری کلینیک",
+    transferHelp: "ئەگەر یەکەم هەژماری Atlas تەنها بۆ ڕێکخستن یارمەتیدەر بوو، سەرەتا بەڕێوەبەری ڕاستەقینە زیاد بکە، پاشان دەسەڵات بگوازەوە. بەڕێوەبەری ئێستا دەبێتە کارمەندی پێشخانە.",
+    transferConfirm: "تێدەگەم کە ئەم کەسە دەبێتە بەڕێوەبەری کلینیک.",
+    transferButton: "گواستنەوەی بەڕێوەبردن",
+    transferEmpty: "پێش گواستنەوەی بەڕێوەبردن کەسێکی تر زیاد بکە.",
   },
   ar: {
     title: "صلاحيات العيادة",
@@ -68,6 +78,11 @@ const copy: Record<UiLocale, Record<string, string>> = {
     ownerRequired: "صلاحية الإدارة مطلوبة.",
     ownerRequiredHelp: "موظفو الاستقبال يستخدمون الجدول. تتم إدارة صلاحيات العيادة هنا فقط عند الحاجة.",
     unavailable: "تعذر تحميل صلاحيات العيادة.",
+    transfer: "نقل مسؤول العيادة",
+    transferHelp: "إذا أول حساب في Atlas كان فقط للمساعدة بالإعداد، أضف المسؤول الحقيقي أولاً وبعدين انقل الإدارة لهنا. المسؤول الحالي يصير موظف استقبال.",
+    transferConfirm: "أفهم أن هذا الشخص سيصبح مسؤول العيادة.",
+    transferButton: "نقل الإدارة",
+    transferEmpty: "أضف شخصاً آخر للعيادة قبل نقل الإدارة.",
   },
 };
 
@@ -79,12 +94,15 @@ const errorMessages: Record<string, string> = {
   owner_protected: "The clinic administrator cannot be removed or demoted.",
   already_member: "That person already has access to this clinic.",
   save_failed: "The access change could not be saved.",
+  transfer_invalid: "Choose another person and confirm the transfer.",
+  transfer_failed: "Administration could not be transferred. Try again.",
 };
 
 const noticeMessages: Record<string, string> = {
   added: "Receptionist access added.",
   updated: "Access updated.",
   removed: "Access removed.",
+  administrator_transferred: "Clinic administration transferred.",
 };
 
 export default async function StaffPage({ searchParams }: StaffPageProps) {
@@ -140,6 +158,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
     return <DirectoryUnavailable label={text.unavailable} back={t.settings} />;
   }
 
+  const transferCandidates = memberRows.filter((member) => member.user_id !== clinic.owner_id && member.role !== "owner");
   const errorMessage = params.error ? errorMessages[params.error] : null;
   const noticeMessage = params.notice ? noticeMessages[params.notice] : null;
 
@@ -210,6 +229,27 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                 </article>
               );
             })}
+          </div>
+
+          <div className="administrator-transfer">
+            <div className="eyebrow">{text.ownerOnly}</div>
+            <h3>{text.transfer}</h3>
+            <p>{text.transferHelp}</p>
+            {transferCandidates.length ? (
+              <form className="administrator-transfer-form" action={transferClinicAdministrator.bind(null, clinic.id)}>
+                <select name="new_administrator_id" required aria-label={text.transfer} defaultValue="">
+                  <option value="" disabled>{text.transfer}</option>
+                  {transferCandidates.map((member) => (
+                    <option key={member.user_id} value={member.user_id}>{member.email}</option>
+                  ))}
+                </select>
+                <label className="checkbox-field administrator-transfer-confirm">
+                  <input type="checkbox" name="confirm_transfer" value="yes" required />
+                  <span>{text.transferConfirm}</span>
+                </label>
+                <button className="button button-small" type="submit">{text.transferButton}</button>
+              </form>
+            ) : <p className="field-help">{text.transferEmpty}</p>}
           </div>
         </section>
       </div>
