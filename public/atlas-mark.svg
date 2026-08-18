@@ -1,18 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Atlas">
   <defs>
-    <linearGradient id="route-a" x1="105" y1="118" x2="414" y2="310" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#18b98e"/>
-      <stop offset="1" stop-color="#0a5b49"/>
+    <linearGradient id="atlasA" x1="126" y1="76" x2="398" y2="438" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9fffe3"/>
+      <stop offset="0.35" stop-color="#35d6a5"/>
+      <stop offset="1" stop-color="#087054"/>
     </linearGradient>
-    <linearGradient id="route-b" x1="405" y1="392" x2="94" y2="196" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0a5b49"/>
-      <stop offset="1" stop-color="#0f7b60"/>
+    <linearGradient id="atlasADeep" x1="321" y1="94" x2="400" y2="431" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#176f59"/>
+      <stop offset="1" stop-color="#043f34"/>
     </linearGradient>
+    <linearGradient id="atlasOrbit" x1="82" y1="320" x2="443" y2="239" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b7c5e"/>
+      <stop offset="0.55" stop-color="#43dfae"/>
+      <stop offset="1" stop-color="#a8ffe6"/>
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
-  <path d="M118 280c0-89 72-161 161-161 58 0 110 31 138 78" fill="none" stroke="url(#route-a)" stroke-width="46" stroke-linecap="round"/>
-  <path d="M394 232c0 89-72 161-161 161-58 0-110-31-138-78" fill="none" stroke="url(#route-b)" stroke-width="46" stroke-linecap="round"/>
-  <circle cx="118" cy="280" r="23" fill="#18b98e"/>
-  <circle cx="394" cy="232" r="23" fill="#0a5b49"/>
-  <circle cx="256" cy="256" r="58" fill="#0a5b49"/>
-  <circle cx="256" cy="256" r="22" fill="#effcf7"/>
+
+  <!-- An original asymmetric A: two forward-moving ribbons, open at the center for clarity at small sizes. -->
+  <path d="M54 432 224 72c9-19 36-19 45 0l41 88-50 91-24-54-108 235H54Z" fill="url(#atlasA)"/>
+  <path d="m270 72 188 360h-94L225 162l45-90Z" fill="url(#atlasADeep)"/>
+  <path d="M182 335h174l-43-84-46 84h-85Z" fill="#062d26" opacity=".94"/>
+
+  <!-- The crossbar becomes a route/orbit: the clinic day moving through Atlas. -->
+  <path d="M74 320c84-68 209-91 365-67" fill="none" stroke="url(#atlasOrbit)" stroke-width="27" stroke-linecap="round"/>
+  <path d="M96 324c93-44 205-57 330-42" fill="none" stroke="#d9fff4" stroke-opacity=".24" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="437" cy="254" r="17" fill="#a8ffe6" filter="url(#softGlow)"/>
+  <circle cx="437" cy="254" r="6" fill="#ffffff"/>
+
+  <!-- A small apex cut makes the silhouette unique rather than a generic letterform. -->
+  <path d="m247 78 22 48-24 44-22-47 24-45Z" fill="#eafff8" opacity=".72"/>
 </svg>

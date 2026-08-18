@@ -8,6 +8,7 @@ import "./atlas-perfect.css";
 import "./atlas-login-brand.css";
 import "./atlas-login-touch.css";
 import "./atlas-brand-v2.css";
+import "./atlas-orbit.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
@@ -30,7 +31,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f5f7f6",
+  themeColor: "#071f19",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

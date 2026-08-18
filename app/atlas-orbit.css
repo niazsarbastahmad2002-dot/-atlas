@@ -1,0 +1,490 @@
+/* Atlas Orbit — a distinctive, receptionist-first visual system.
+   Loaded last on purpose: this is the product-wide visual layer, not a mockup. */
+:root {
+  --ink: #10231c;
+  --ink-soft: #294139;
+  --muted: #6c7b75;
+  --line: #dbe6e0;
+  --line-strong: #cadbd3;
+  --surface: rgba(255,255,255,.94);
+  --surface-soft: #f4f8f6;
+  --canvas: #eef4f1;
+  --accent: #08775a;
+  --accent-hover: #056248;
+  --accent-soft: #dff4ec;
+  --accent-faint: #effaf6;
+  --success: #087457;
+  --success-bg: #e3f7ef;
+  --danger: #a33f46;
+  --danger-bg: #fff0f1;
+  --warning: #845f0a;
+  --warning-bg: #fff6dc;
+  --atlas-night: #071f19;
+  --atlas-night-2: #0c2b23;
+  --atlas-mint: #5fe5b6;
+  --atlas-ice: #dffff5;
+  --shadow-sm: 0 1px 2px rgba(7,31,25,.03), 0 10px 32px rgba(7,31,25,.055);
+  --shadow-md: 0 24px 64px rgba(7,31,25,.11);
+  --radius-lg: 24px;
+  --radius-md: 15px;
+}
+
+html { background: var(--canvas); }
+body {
+  background:
+    radial-gradient(circle at 8% -8%, rgba(30,190,139,.10), transparent 26rem),
+    radial-gradient(circle at 92% 10%, rgba(76,225,177,.07), transparent 24rem),
+    linear-gradient(180deg, #f9fbfa 0%, var(--canvas) 68%, #ebf2ee 100%);
+}
+
+::selection { background: rgba(73,218,173,.26); color: #061c16; }
+:focus-visible { outline-color: rgba(27,185,139,.42); }
+
+/* Core controls: tactile, fast, and quiet. */
+.button {
+  border-radius: 15px;
+  background: linear-gradient(135deg, #0a7056 0%, #0f9470 100%);
+  box-shadow: 0 8px 20px rgba(8,119,90,.17), inset 0 1px 0 rgba(255,255,255,.13);
+}
+.button:hover { background: linear-gradient(135deg, #075f49 0%, #0b805f 100%); box-shadow: 0 10px 24px rgba(8,119,90,.21); }
+.button:active { transform: translateY(1px) scale(.992); }
+.button-ghost {
+  border: 1px solid #d8e4de;
+  background: rgba(244,248,246,.94);
+  color: var(--ink);
+  box-shadow: none;
+}
+.button-ghost:hover { border-color: #c6d8cf; background: #edf5f1; }
+input, select {
+  border-color: #cfded6;
+  border-radius: 14px;
+  background: rgba(255,255,255,.96);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+input:focus, select:focus { border-color: #18a77c; box-shadow: 0 0 0 4px rgba(24,167,124,.11); }
+
+/* App chrome: the dark band makes Atlas instantly recognizable without darkening the work surface. */
+.app-topbar {
+  border-bottom: 0;
+  background: rgba(7,31,25,.94);
+  box-shadow: 0 10px 34px rgba(4,23,18,.13);
+  -webkit-backdrop-filter: blur(22px) saturate(1.1);
+  backdrop-filter: blur(22px) saturate(1.1);
+}
+.app-topbar-inner { min-height: 72px; }
+.app-brand { gap: 12px; color: #fff; }
+.app-brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 0;
+  background: url('/atlas-mark.svg') center/contain no-repeat !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 8px 16px rgba(70,225,177,.16));
+}
+.app-brand-word {
+  color: #f5fff9;
+  font-size: 17px;
+  font-weight: 830;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.icon-button {
+  min-height: 43px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: rgba(235,255,247,.66);
+}
+.icon-button:hover { color: #fff; background: rgba(255,255,255,.07); }
+.icon-button.is-active {
+  border-color: rgba(105,237,195,.13);
+  color: #a9f7dc;
+  background: rgba(68,212,166,.11);
+}
+
+.app-content { position: relative; }
+.app-content::before {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  width: 520px;
+  height: 520px;
+  top: 82px;
+  inset-inline-end: -330px;
+  border: 1px solid rgba(17,137,101,.07);
+  border-radius: 50%;
+  box-shadow: 0 0 0 70px rgba(17,137,101,.018), 0 0 0 140px rgba(17,137,101,.012);
+  pointer-events: none;
+}
+
+/* Workspace hierarchy. */
+.workspace-page, .settings-page, .history-page { padding-top: 36px; }
+.workspace-header, .page-heading, .history-heading { margin-bottom: 22px; }
+.workspace-title-block h1, .page-heading h1, .history-heading h1 {
+  color: #0b211a;
+  letter-spacing: -.052em;
+}
+.workspace-title-block p, .page-heading p, .history-heading p { color: #71817a; }
+
+.stats { gap: 13px; }
+.stat {
+  position: relative;
+  overflow: hidden;
+  min-height: 100px;
+  border-color: rgba(205,222,214,.88);
+  border-radius: 19px;
+  background: linear-gradient(165deg, rgba(255,255,255,.98), rgba(247,251,249,.94));
+  box-shadow: var(--shadow-sm);
+}
+.stat::before {
+  content: "";
+  position: absolute;
+  inset-inline: 18px;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #14a77b, #6be7be 65%, transparent);
+  opacity: .72;
+}
+.stat strong { color: #0d2b22; font-size: 31px; }
+.stat span { color: #75847d; }
+
+.workspace-grid { gap: 20px; }
+.panel, .settings-card, .history-card, .auth-card, .feature-card {
+  border-color: rgba(205,221,213,.88);
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(251,253,252,.95));
+  box-shadow: 0 1px 2px rgba(7,31,25,.025), 0 18px 46px rgba(7,31,25,.052);
+}
+.panel { border-radius: 25px; }
+.panel-heading h1, .panel-heading h2, .settings-card-heading h2 { color: #102a21; }
+.composer-shortcut, .settings-card-icon {
+  border: 1px solid rgba(25,155,115,.09);
+  background: linear-gradient(145deg, #e7f8f1, #dff2ea);
+  color: #087457;
+}
+.reminder-note { border: 1px solid rgba(210,225,217,.75); background: #f5f8f6; }
+
+.appointment-list { gap: 10px; }
+.appointment-row {
+  position: relative;
+  overflow: hidden;
+  border-color: #dfe9e4;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  box-shadow: 0 1px 0 rgba(255,255,255,.8);
+}
+.appointment-row::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #70e8c0, #0f8a67);
+  opacity: .54;
+}
+.polished-appointment { transition: border-color .12s ease, box-shadow .12s ease, transform .12s ease; }
+.polished-appointment:hover { border-color: #c9ded4; box-shadow: 0 12px 30px rgba(7,31,25,.065); transform: translateY(-1px); }
+.patient-cell strong { color: #10271f; }
+.appointment-details dt { color: #87958f; }
+.count-pill { background: #eaf4ef; color: #557067; }
+.status { border: 1px solid rgba(118,84,0,.07); }
+.status-confirmed, .status-completed { border-color: rgba(8,116,87,.08); }
+.status-cancelled, .status-no_show { border-color: rgba(163,63,70,.08); }
+
+/* Settings and history become part of the same product instead of separate utility pages. */
+.settings-grid { gap: 18px; }
+.settings-card { border-radius: 22px; }
+.settings-card-accent {
+  border-color: rgba(34,166,124,.2);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(86,226,180,.12), transparent 18rem),
+    linear-gradient(145deg, #fff 25%, #f3faf7);
+}
+.doctor-settings-row, .toggle-row, .history-row {
+  border-color: #dfe9e4;
+  background: #f8fbf9;
+}
+.settings-link { border: 1px solid #d9e9e1; background: #edf7f2; color: #087457; }
+.settings-link:hover { background: #e4f3ec; }
+.history-card { border-radius: 24px; }
+.history-row { border-radius: 15px; }
+.history-selection-bar { border-color: #cfe0d8; border-radius: 18px; box-shadow: 0 22px 58px rgba(7,31,25,.15); }
+
+/* ---------- Sign in: full-bleed Atlas stage + compact floating access card ---------- */
+.login-page {
+  position: relative;
+  isolation: isolate;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.08fr) minmax(430px, .92fr) !important;
+  grid-template-areas: "visual card" !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(55,226,171,.16), transparent 25rem),
+    radial-gradient(circle at 86% 82%, rgba(36,166,127,.09), transparent 28rem),
+    linear-gradient(145deg, #061a16 0%, #08241d 45%, #061a16 100%) !important;
+}
+.login-page::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(90deg, #000, transparent 78%);
+  -webkit-mask-image: linear-gradient(90deg, #000, transparent 78%);
+}
+.login-visual {
+  grid-area: visual !important;
+  position: relative !important;
+  z-index: 1;
+  display: grid !important;
+  min-height: 100dvh !important;
+  align-items: center !important;
+  justify-items: center !important;
+  padding: 54px !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  background: transparent !important;
+}
+.login-visual::before {
+  width: min(58vw, 720px) !important;
+  height: min(58vw, 720px) !important;
+  inset: auto !important;
+  border: 1px solid rgba(111,242,200,.10) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 0 76px rgba(89,231,186,.028), 0 0 0 152px rgba(89,231,186,.017) !important;
+}
+.login-visual::after {
+  content: "";
+  position: absolute;
+  width: 68%;
+  height: 34%;
+  left: 15%;
+  bottom: 8%;
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(47,218,164,.15), transparent 66%);
+  filter: blur(24px);
+}
+.login-visual-lines { display: none !important; }
+.login-brand-stage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  width: min(620px, 100%);
+  text-align: center;
+}
+.login-hero-mark {
+  width: clamp(230px, 30vw, 390px);
+  height: clamp(230px, 30vw, 390px);
+  object-fit: contain;
+  filter: drop-shadow(0 34px 58px rgba(0,0,0,.22));
+}
+.login-stage-word {
+  margin-top: -30px;
+  color: #effff8;
+  font-size: clamp(31px, 4vw, 54px);
+  font-weight: 760;
+  letter-spacing: .29em;
+  text-indent: .29em;
+}
+.login-stage-signal {
+  margin-top: 12px;
+  color: rgba(211,255,239,.55);
+  font-size: 11px;
+  font-weight: 720;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.login-stage-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  border: 1px solid rgba(141,244,211,.12);
+  border-radius: 999px;
+  padding: 9px 13px;
+  color: rgba(225,255,245,.72);
+  background: rgba(255,255,255,.035);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.login-stage-pulse::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #63e9bc;
+  box-shadow: 0 0 0 5px rgba(99,233,188,.08), 0 0 18px rgba(99,233,188,.38);
+}
+
+.login-card {
+  grid-area: card !important;
+  position: relative;
+  z-index: 3;
+  align-self: center;
+  width: min(500px, calc(100% - 58px)) !important;
+  margin: 42px auto !important;
+  border: 1px solid rgba(255,255,255,.64);
+  border-radius: 30px;
+  padding: clamp(28px, 4vh, 40px) !important;
+  background: rgba(250,253,251,.965);
+  box-shadow: 0 36px 90px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.86);
+  -webkit-backdrop-filter: blur(24px) saturate(1.08);
+  backdrop-filter: blur(24px) saturate(1.08);
+}
+.login-logo-lockup {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  width: max-content;
+  margin: 0 0 24px !important;
+}
+.login-main-mark { width: 48px !important; height: 48px !important; filter: drop-shadow(0 8px 15px rgba(8,119,90,.13)) !important; }
+.login-logo-copy { display: block !important; }
+.login-logo-copy strong {
+  margin: 0 !important;
+  color: #0b2a21 !important;
+  font-size: 17px !important;
+  font-weight: 820 !important;
+  letter-spacing: .19em !important;
+}
+.login-language-block { margin: 0 0 24px !important; gap: 8px !important; }
+.login-language-block > span { text-align: start !important; color: #86948e !important; font-size: 9.5px !important; }
+.login-language-picker { gap: 7px !important; }
+.login-language-picker button {
+  min-height: 52px !important;
+  border-color: #dae5df !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,.72) !important;
+  box-shadow: none !important;
+}
+.login-language-picker button.is-active {
+  border-color: rgba(8,119,90,.36) !important;
+  background: linear-gradient(180deg, #f8fffc, #e9f7f1) !important;
+  box-shadow: inset 0 0 0 1px rgba(8,119,90,.055) !important;
+}
+.login-copy { text-align: start !important; }
+.login-copy .eyebrow { margin-bottom: 9px !important; color: #0a8462 !important; }
+.login-copy h1 {
+  max-width: 430px !important;
+  margin: 0 !important;
+  color: #0b211a !important;
+  font-size: clamp(34px, 3.5vw, 47px) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.05em !important;
+}
+.login-copy > p {
+  max-width: 390px !important;
+  margin: 12px 0 21px !important;
+  color: #7a8982 !important;
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+}
+[dir="rtl"] .login-copy h1 { font-size: clamp(30px, 3.2vw, 41px) !important; line-height: 1.35 !important; letter-spacing: 0 !important; word-spacing: .08em !important; }
+[dir="rtl"] .login-copy > p { line-height: 1.8 !important; }
+.login-email-help { display: none !important; }
+.login-email-form { margin-top: 0 !important; }
+.login-email-form label { margin-top: 0 !important; color: #43594f; font-size: 11px; }
+.login-primary-action { min-height: 50px; }
+.login-quick-signin { margin-top: 12px !important; padding-top: 12px !important; }
+.login-quick-signin .login-method-help { display: none !important; }
+.login-demo { margin-top: 14px !important; padding-top: 14px !important; }
+.login-demo > span { display: none !important; }
+.login-demo .quiet { display: none !important; }
+.login-demo .button { min-height: 42px; font-size: 11px; }
+.login-notice { border-radius: 14px; }
+
+/* Demo, marketing and patient surfaces inherit the same geometry without becoming dark. */
+.demo-banner { border-radius: 15px; }
+.feature-card, .auth-card { border-radius: 22px; }
+.brand { color: #0a2a21; }
+
+/* Mobile/iPad: decorative stage stays behind the card and can never block touches. */
+@media (max-width: 1050px) {
+  .login-page { grid-template-columns: .88fr minmax(430px, 1.12fr) !important; }
+  .login-hero-mark { width: clamp(200px, 29vw, 300px); height: clamp(200px, 29vw, 300px); }
+  .login-stage-word { font-size: 31px; }
+}
+
+@media (max-width: 900px) {
+  body { background-color: var(--canvas); }
+  .login-page {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-areas: "card" !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+    padding: max(24px, env(safe-area-inset-top)) 0 max(32px, env(safe-area-inset-bottom));
+  }
+  .login-page::before { mask-image: none; -webkit-mask-image: none; opacity: .7; }
+  .login-visual {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    min-height: 100% !important;
+    padding: 0 !important;
+    opacity: .42;
+    pointer-events: none !important;
+  }
+  .login-brand-stage { display: none !important; }
+  .login-card {
+    width: min(560px, calc(100% - 32px)) !important;
+    margin: auto !important;
+    align-self: center;
+    padding: 28px !important;
+  }
+  .app-topbar-inner { min-height: 64px; }
+}
+
+@media (max-width: 720px) {
+  body { padding-bottom: calc(88px + var(--safe-bottom)); }
+  .shell { width: min(100% - 22px, 1240px); }
+  .app-topbar { background: rgba(7,31,25,.97); }
+  .app-brand-mark { width: 36px; height: 36px; }
+  .app-brand-word { font-size: 14px; letter-spacing: .16em; }
+  .workspace-page, .settings-page, .history-page { padding-top: 24px; }
+  .panel, .settings-card, .history-card { border-radius: 20px; }
+  .stats { gap: 8px; }
+  .stat { min-height: 86px; border-radius: 16px; padding: 14px; }
+  .stat strong { font-size: 26px; }
+  .app-bottom-nav {
+    inset-inline: 12px !important;
+    bottom: max(10px, var(--safe-bottom)) !important;
+    min-height: 64px !important;
+    border: 1px solid rgba(146,211,188,.14) !important;
+    border-radius: 22px !important;
+    padding: 5px 10px !important;
+    background: rgba(7,31,25,.95) !important;
+    box-shadow: 0 16px 42px rgba(3,20,16,.25) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+  .app-bottom-nav > a { color: rgba(231,255,246,.57) !important; }
+  .app-bottom-nav > a.is-active { color: #87efcb !important; }
+  .app-bottom-add-circle {
+    border-color: #0a251e !important;
+    background: linear-gradient(145deg, #58e2b4, #15966e) !important;
+    box-shadow: 0 10px 26px rgba(47,216,165,.26) !important;
+  }
+  .login-card { width: min(100% - 24px, 520px) !important; padding: 24px 20px !important; border-radius: 26px; }
+  .login-main-mark { width: 44px !important; height: 44px !important; }
+  .login-copy h1 { font-size: 34px !important; }
+  [dir="rtl"] .login-copy h1 { font-size: 31px !important; }
+  .login-language-picker button { min-height: 49px !important; padding-inline: 3px !important; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .login-hero-mark { animation: atlasFloat 5.8s ease-in-out infinite; }
+  .login-stage-pulse::before { animation: atlasPulse 2.4s ease-in-out infinite; }
+  @keyframes atlasFloat { 0%,100% { transform: translateY(0) rotate(-.6deg); } 50% { transform: translateY(-8px) rotate(.6deg); } }
+  @keyframes atlasPulse { 0%,100% { opacity: .72; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.08); } }
+}
