@@ -12,6 +12,7 @@ import { QuickHourPolish } from "./quick-hour-polish";
 import { ScheduleNavigationPolish } from "./schedule-navigation-polish";
 import { SettingsClientPolish } from "./settings-client-polish";
 import { SettingsDraftGuard } from "./settings-draft-guard";
+import { SettingsHistoryShortcut } from "./settings-history-shortcut";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const locale = await getUiLocale();
@@ -24,6 +25,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <DoctorScheduleTabs locale={locale} />
       <DashboardClientPolish locale={locale} />
       <SettingsClientPolish locale={locale} />
+      <SettingsHistoryShortcut locale={locale} />
       <QuickHourPolish />
       <ScheduleNavigationPolish />
       <DashboardPreferenceMemory />
