@@ -7,12 +7,14 @@ function isPlainPrimaryClick(event: MouseEvent) {
   return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 }
 
+const scheduleLinkSelector = ".day-navigation a[href^='/dashboard?'], .schedule-date-shortcuts a[href^='/dashboard?']";
+
 export function ScheduleNavigationPolish() {
   const router = useRouter();
 
   useEffect(() => {
     const prefetchDays = () => {
-      document.querySelectorAll<HTMLAnchorElement>(".day-navigation a[href^='/dashboard?']").forEach((link) => {
+      document.querySelectorAll<HTMLAnchorElement>(scheduleLinkSelector).forEach((link) => {
         const href = link.getAttribute("href");
         if (href) router.prefetch(href);
       });
@@ -20,9 +22,7 @@ export function ScheduleNavigationPolish() {
 
     const warmDay = (event: Event) => {
       const target = event.target instanceof Element ? event.target : null;
-      const href = target
-        ?.closest<HTMLAnchorElement>(".day-navigation a[href^='/dashboard?']")
-        ?.getAttribute("href");
+      const href = target?.closest<HTMLAnchorElement>(scheduleLinkSelector)?.getAttribute("href");
       if (href) router.prefetch(href);
     };
 
@@ -30,12 +30,12 @@ export function ScheduleNavigationPolish() {
       if (!isPlainPrimaryClick(event)) return;
       const target = event.target instanceof Element ? event.target : null;
 
-      const dayLink = target?.closest<HTMLAnchorElement>(".day-navigation a[href^='/dashboard?']");
+      const dayLink = target?.closest<HTMLAnchorElement>(scheduleLinkSelector);
       if (dayLink) {
         const href = dayLink.getAttribute("href");
         if (href) {
           event.preventDefault();
-          dayLink.closest<HTMLElement>(".day-navigation")?.classList.add("is-navigating");
+          dayLink.closest<HTMLElement>(".day-navigation, .schedule-date-shortcuts")?.classList.add("is-navigating");
           router.push(href, { scroll: false });
           return;
         }
@@ -51,9 +51,6 @@ export function ScheduleNavigationPolish() {
       window.setTimeout(() => patientName.focus({ preventScroll: true }), 160);
     };
 
-    // The server already renders Today / Yesterday / Tomorrow and the Cancelled
-    // stat. Do not mutate those DOM nodes client-side: repeatedly rewriting them
-    // can create a MutationObserver feedback loop in Safari and starve tap events.
     prefetchDays();
     document.addEventListener("pointerdown", warmDay, { passive: true });
     document.addEventListener("mouseover", warmDay, { passive: true });
