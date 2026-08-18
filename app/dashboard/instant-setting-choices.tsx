@@ -47,6 +47,7 @@ export function InstantSettingChoices() {
           const response = await fetch("/api/ui-language", {
             method: "POST",
             credentials: "same-origin",
+            cache: "no-store",
             keepalive: true,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ locale: value }),
@@ -81,12 +82,21 @@ export function InstantSettingChoices() {
           const response = await fetch("/api/settings/clinic", {
             method: "POST",
             credentials: "same-origin",
+            cache: "no-store",
             keepalive: true,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ clinicId, appointmentIntervalMinutes: Number(value) }),
           });
           if (!response.ok) throw new Error("interval_update_failed");
-          if (version === versions.get(select)) select.dataset.atlasLastSaved = value;
+          const saved = await response.json() as { appointmentIntervalMinutes?: number };
+          if (saved.appointmentIntervalMinutes !== Number(value)) throw new Error("interval_not_persisted");
+          if (version === versions.get(select)) {
+            select.dataset.atlasLastSaved = value;
+            // Sync the server-rendered Settings tree to the value that the
+            // database just returned. Navigation still forces a fresh page so
+            // an older prefetched Schedule can never reappear.
+            router.refresh();
+          }
         }).catch(() => {
           if (version !== versions.get(select)) return;
           select.value = previous;
