@@ -63,7 +63,7 @@ test("constant-time comparison returns correct equality result", () => {
 
 test("receptionist access is constrained to one assigned doctor at the database boundary", () => {
   const migration = readFileSync(
-    new URL("../supabase/migrations/20260818172500_receptionist_doctor_assignment.sql", import.meta.url),
+    new URL("../supabase/migrations/20260818173629_receptionist_doctor_assignment.sql", import.meta.url),
     "utf8",
   );
 
