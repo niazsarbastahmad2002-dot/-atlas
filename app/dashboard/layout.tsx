@@ -5,10 +5,13 @@ import { AppNavigation } from "./app-navigation";
 import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
+import { DoctorScheduleTabs } from "./doctor-schedule-tabs";
 import { InstantSettingChoices } from "./instant-setting-choices";
+import { LiteralTextGuard } from "./literal-text-guard";
 import { QuickHourPolish } from "./quick-hour-polish";
 import { ScheduleNavigationPolish } from "./schedule-navigation-polish";
 import { SettingsClientPolish } from "./settings-client-polish";
+import { SettingsDraftGuard } from "./settings-draft-guard";
 import { SettingsHistoryShortcut } from "./settings-history-shortcut";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
@@ -16,7 +19,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <div className="app-shell">
+      <LiteralTextGuard />
       <InstantSettingChoices />
+      <SettingsDraftGuard locale={locale} />
+      <DoctorScheduleTabs locale={locale} />
       <DashboardClientPolish locale={locale} />
       <SettingsClientPolish locale={locale} />
       <SettingsHistoryShortcut locale={locale} />
