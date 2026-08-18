@@ -46,6 +46,22 @@ async function ownerContext(clinicId: string) {
   return { supabase, ownerId: userData.user.id };
 }
 
+async function activeDoctorBelongsToClinic(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  clinicId: string,
+  doctorId: string,
+) {
+  if (!isUuid(doctorId)) return false;
+  const { data, error } = await supabase
+    .from("doctors")
+    .select("id")
+    .eq("clinic_id", clinicId)
+    .eq("id", doctorId)
+    .eq("active", true)
+    .maybeSingle();
+  return !error && Boolean(data);
+}
+
 async function findUserIdByEmail(email: string) {
   const admin = createAdminClient();
   const perPage = 1000;
@@ -66,12 +82,16 @@ export async function provisionStaffMember(
   const clinicId = String(formData.get("clinic_id") ?? "");
   const email = normalizeEmail(String(formData.get("email") ?? ""));
   const role = String(formData.get("role") ?? "receptionist");
+  const assignedDoctorId = String(formData.get("assigned_doctor_id") ?? "");
 
   if (!isUuid(clinicId) || !validEmail(email) || !staffRoles.has(role)) {
     return { status: "error", message: "Check the staff email and try again." };
   }
 
   const { supabase, ownerId } = await ownerContext(clinicId);
+  if (role === "receptionist" && !(await activeDoctorBelongsToClinic(supabase, clinicId, assignedDoctorId))) {
+    return { status: "error", message: "Choose the doctor this receptionist will work with." };
+  }
   const admin = createAdminClient();
 
   let userId: string | null = null;
@@ -99,6 +119,7 @@ export async function provisionStaffMember(
     clinic_id: clinicId,
     user_id: userId,
     role,
+    assigned_doctor_id: role === "receptionist" ? assignedDoctorId : null,
   }, { onConflict: "clinic_id,user_id" });
 
   if (memberError) {
@@ -106,12 +127,13 @@ export async function provisionStaffMember(
     return { status: "error", message: "The account was prepared, but clinic access could not be saved." };
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/staff");
   revalidatePath("/dashboard/settings");
 
   return {
     status: "success",
-    message: "Receptionist access is ready. On a new device they can use this work email to receive one secure Atlas sign-in link.",
+    message: "Receptionist access is ready for the assigned doctor. On a new device they can use this work email for one secure Atlas sign-in link.",
     email,
   };
 }
@@ -120,12 +142,16 @@ export async function addStaffMember(formData: FormData) {
   const clinicId = String(formData.get("clinic_id") ?? "");
   const email = normalizeEmail(String(formData.get("email") ?? ""));
   const role = String(formData.get("role") ?? "receptionist");
+  const assignedDoctorId = String(formData.get("assigned_doctor_id") ?? "");
 
   if (!isUuid(clinicId) || !validEmail(email) || !staffRoles.has(role)) {
     redirect(staffUrl(clinicId, "error", "invalid"));
   }
 
   const { supabase, ownerId } = await ownerContext(clinicId);
+  if (role === "receptionist" && !(await activeDoctorBelongsToClinic(supabase, clinicId, assignedDoctorId))) {
+    redirect(staffUrl(clinicId, "error", "doctor_required"));
+  }
 
   let userId: string | null = null;
   try {
@@ -141,6 +167,7 @@ export async function addStaffMember(formData: FormData) {
     clinic_id: clinicId,
     user_id: userId,
     role,
+    assigned_doctor_id: role === "receptionist" ? assignedDoctorId : null,
   });
 
   if (error) {
@@ -149,22 +176,30 @@ export async function addStaffMember(formData: FormData) {
     redirect(staffUrl(clinicId, "error", "save_failed"));
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/staff");
   redirect(staffUrl(clinicId, "notice", "added"));
 }
 
 export async function updateStaffRole(clinicId: string, userId: string, formData: FormData) {
   const role = String(formData.get("role") ?? "");
+  const assignedDoctorId = String(formData.get("assigned_doctor_id") ?? "");
   if (!isUuid(clinicId) || !isUuid(userId) || !staffRoles.has(role)) {
     redirect(staffUrl(clinicId, "error", "invalid"));
   }
 
   const { supabase, ownerId } = await ownerContext(clinicId);
   if (userId === ownerId) redirect(staffUrl(clinicId, "error", "owner_protected"));
+  if (role === "receptionist" && !(await activeDoctorBelongsToClinic(supabase, clinicId, assignedDoctorId))) {
+    redirect(staffUrl(clinicId, "error", "doctor_required"));
+  }
 
   const { data, error } = await supabase
     .from("clinic_members")
-    .update({ role })
+    .update({
+      role,
+      assigned_doctor_id: role === "receptionist" ? assignedDoctorId : null,
+    })
     .eq("clinic_id", clinicId)
     .eq("user_id", userId)
     .neq("role", "owner")
@@ -172,10 +207,11 @@ export async function updateStaffRole(clinicId: string, userId: string, formData
     .maybeSingle();
 
   if (error || !data) {
-    console.error("Atlas staff role update failed", { code: error?.code ?? "not_found" });
+    console.error("Atlas staff access update failed", { code: error?.code ?? "not_found" });
     redirect(staffUrl(clinicId, "error", "save_failed"));
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/staff");
   redirect(staffUrl(clinicId, "notice", "updated"));
 }
@@ -202,6 +238,7 @@ export async function removeStaffMember(clinicId: string, userId: string) {
     redirect(staffUrl(clinicId, "error", "save_failed"));
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/staff");
   redirect(staffUrl(clinicId, "notice", "removed"));
 }

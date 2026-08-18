@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { AppointmentMutationFailure, AppointmentStatus } from "@/lib/appointments";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { AppointmentEditDateTimeField } from "./appointment-edit-datetime-field";
@@ -24,6 +24,8 @@ type AppointmentEditorProps = {
   max: string;
   locale: UiLocale;
 };
+
+const editorOpenEvent = "atlas:appointment-editor-open";
 
 const copy = {
   en: {
@@ -107,8 +109,31 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const editable = status === "pending" || status === "confirmed" || status === "cancelled";
+  const lockedDoctor = doctors.length === 1 ? doctors[0] : null;
+
+  useEffect(() => {
+    const closeWhenAnotherEditorOpens = (event: Event) => {
+      const detail = (event as CustomEvent<{ appointmentId?: string }>).detail;
+      if (detail?.appointmentId && detail.appointmentId !== appointmentId) {
+        setOpen(false);
+        setMessage(null);
+      }
+    };
+    window.addEventListener(editorOpenEvent, closeWhenAnotherEditorOpens);
+    return () => window.removeEventListener(editorOpenEvent, closeWhenAnotherEditorOpens);
+  }, [appointmentId]);
 
   if (!editable) return null;
+
+  function toggleEditor() {
+    setMessage(null);
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    window.dispatchEvent(new CustomEvent(editorOpenEvent, { detail: { appointmentId } }));
+    setOpen(true);
+  }
 
   function submit(formData: FormData) {
     if (pending) return;
@@ -127,7 +152,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
 
   return (
     <div className="appointment-editor">
-      <button className="appointment-edit-toggle" type="button" onClick={() => { setOpen((value) => !value); setMessage(null); }} aria-expanded={open}>
+      <button className="appointment-edit-toggle" type="button" onClick={toggleEditor} aria-expanded={open}>
         {open ? t.close : t.edit}
       </button>
       {open ? (
@@ -141,10 +166,19 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           <input id={`edit-phone-${appointmentId}`} name="patient_phone" type="tel" inputMode="tel" defaultValue={patientPhone} placeholder="0750 000 0000" dir="ltr" required />
 
           <label htmlFor={`edit-doctor-${appointmentId}`}>{ui.doctor}</label>
-          <select id={`edit-doctor-${appointmentId}`} name="doctor_id" defaultValue={doctorId ?? ""} required>
-            <option value="">{ui.chooseDoctor}</option>
-            {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
-          </select>
+          {lockedDoctor ? (
+            <>
+              <input id={`edit-doctor-${appointmentId}`} name="doctor_id" type="hidden" value={lockedDoctor.id} />
+              <div className="appointment-locked-doctor" aria-label={`${ui.doctor}: ${lockedDoctor.name}`}>
+                <span>{lockedDoctor.name}</span><small>✓</small>
+              </div>
+            </>
+          ) : (
+            <select id={`edit-doctor-${appointmentId}`} name="doctor_id" defaultValue={doctorId ?? ""} required>
+              <option value="">{ui.chooseDoctor}</option>
+              {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
+            </select>
+          )}
 
           <AppointmentEditDateTimeField
             id={`edit-time-${appointmentId}`}
@@ -188,6 +222,29 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           justify-self: start;
           min-width: 126px;
           margin-top: 7px;
+        }
+        .appointment-locked-doctor {
+          display: flex;
+          min-height: 45px;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          border: 1px solid var(--line-strong);
+          border-radius: 12px;
+          padding: 10px 13px;
+          background: var(--surface-soft);
+          color: var(--ink);
+          font-weight: 760;
+        }
+        .appointment-locked-doctor small {
+          display: grid;
+          width: 22px;
+          height: 22px;
+          place-items: center;
+          border-radius: 999px;
+          background: var(--accent-soft);
+          color: var(--accent);
+          font-size: 11px;
         }
         .appointment-editor + .polished-actions {
           gap: 10px !important;

@@ -17,72 +17,78 @@ type StaffPageProps = {
 const copy: Record<UiLocale, Record<string, string>> = {
   en: {
     title: "Clinic access",
-    subtitle: "This stays out of the daily schedule. Use it only when someone joins, leaves, or needs administration access.",
+    subtitle: "Keep each receptionist focused on one doctor. Clinic Admin keeps the complete clinic view.",
     ownerOnly: "Administration",
     add: "Add receptionist",
     receptionist: "Receptionist",
     manager: "Manager",
     owner: "Clinic administrator",
     role: "Access",
-    signedInFirst: "Add the receptionist's work email once. They then use the normal Atlas sign-in screen. No clinic setup code is needed.",
+    doctor: "Doctor",
+    chooseDoctor: "Choose one doctor",
+    signedInFirst: "Add the receptionist's work email and assign the doctor they work with. They then use the normal Atlas sign-in screen.",
     access: "People with access",
-    protected: "The clinic administrator cannot be removed here.",
-    saveRole: "Change access",
+    protected: "The clinic administrator can see every doctor and cannot be removed here.",
+    saveRole: "Save access",
     remove: "Remove access",
     backSettings: "Back to settings",
     ownerRequired: "Administration access required.",
-    ownerRequiredHelp: "Receptionists use the schedule. Clinic access is managed here only when needed.",
+    ownerRequiredHelp: "Receptionists use their assigned doctor's schedule. Clinic access is managed here only when needed.",
     unavailable: "Clinic access could not load.",
     transfer: "Transfer clinic administrator",
-    transferHelp: "If the first Atlas account was only helping with setup, add the real administrator first, then transfer control here. The current administrator becomes a receptionist.",
+    transferHelp: "If the first Atlas account was only helping with setup, add the real administrator first, then transfer control here. The current administrator becomes a receptionist assigned to the clinic's first active doctor.",
     transferConfirm: "I understand this person will become the clinic administrator.",
     transferButton: "Transfer administration",
     transferEmpty: "Add another person to the clinic before transferring administration.",
   },
   ku: {
     title: "دەسەڵاتی کلینیک",
-    subtitle: "ئەم بەشە لە خشتەی ڕۆژانە دوورە. تەنها کاتێک بەکاریبهێنە کە کەسێک زیاد دەبێت، دەڕوات، یان دەسەڵاتی بەڕێوەبردنی پێویستە.",
+    subtitle: "هەر پێشخانەیەک تەنها لەسەر یەک پزیشک کار بکات. بەڕێوەبەری کلینیک هەموو کلینیکەکە دەبینێت.",
     ownerOnly: "بەڕێوەبردن",
     add: "زیادکردنی پێشخانە",
     receptionist: "پێشخانە",
     manager: "بەڕێوەبەر",
     owner: "بەڕێوەبەری کلینیک",
     role: "دەسەڵات",
-    signedInFirst: "تەنها جارێک ئیمەیڵی کاری پێشخانە زیاد بکە. پاشان پەڕەی ئاسایی چوونەژوورەوەی Atlas بەکاردەهێنێت. کۆدی تایبەتی کلینیک پێویست نییە.",
+    doctor: "پزیشک",
+    chooseDoctor: "یەک پزیشک هەڵبژێرە",
+    signedInFirst: "ئیمەیڵی کاری پێشخانە زیاد بکە و پزیشکەکەی دیاری بکە. پاشان پەڕەی ئاسایی چوونەژوورەوەی Atlas بەکاردەهێنێت.",
     access: "کەسانی دەسەڵاتدار",
-    protected: "بەڕێوەبەری کلینیک لێرە ناتوانرێت لاببرێت.",
-    saveRole: "دەسەڵات بگۆڕە",
+    protected: "بەڕێوەبەری کلینیک هەموو پزیشکەکان دەبینێت و لێرە ناتوانرێت لاببرێت.",
+    saveRole: "دەسەڵات پاشەکەوت بکە",
     remove: "دەسەڵات لاببە",
     backSettings: "گەڕانەوە بۆ ڕێکخستنەکان",
     ownerRequired: "دەسەڵاتی بەڕێوەبردن پێویستە.",
-    ownerRequiredHelp: "پێشخانە خشتەی کات بەکاردەهێنێت. دەسەڵاتی کلینیک تەنها کاتێک پێویست بێت لێرە بەڕێوەدەبرێت.",
+    ownerRequiredHelp: "پێشخانە تەنها خشتەی پزیشکی دیاریکراوی خۆی بەکاردەهێنێت. دەسەڵاتی کلینیک لێرە بەڕێوەدەبرێت.",
     unavailable: "دەسەڵاتی کلینیک بار نەبوو.",
     transfer: "گواستنەوەی بەڕێوەبەری کلینیک",
-    transferHelp: "ئەگەر یەکەم هەژماری Atlas تەنها بۆ ڕێکخستن یارمەتیدەر بوو، سەرەتا بەڕێوەبەری ڕاستەقینە زیاد بکە، پاشان دەسەڵات بگوازەوە. بەڕێوەبەری ئێستا دەبێتە کارمەندی پێشخانە.",
+    transferHelp: "ئەگەر یەکەم هەژماری Atlas تەنها بۆ ڕێکخستن یارمەتیدەر بوو، سەرەتا بەڕێوەبەری ڕاستەقینە زیاد بکە، پاشان دەسەڵات بگوازەوە. بەڕێوەبەری ئێستا دەبێتە پێشخانەی یەکەم پزیشکی چالاک.",
     transferConfirm: "تێدەگەم کە ئەم کەسە دەبێتە بەڕێوەبەری کلینیک.",
     transferButton: "گواستنەوەی بەڕێوەبردن",
     transferEmpty: "پێش گواستنەوەی بەڕێوەبردن کەسێکی تر زیاد بکە.",
   },
   ar: {
     title: "صلاحيات العيادة",
-    subtitle: "تبقى هذه الصفحة بعيداً عن الجدول اليومي. استخدمها فقط عند انضمام شخص أو مغادرته أو احتياجه لصلاحيات الإدارة.",
+    subtitle: "خلّي كل موظف استقبال يركز على طبيب واحد، ومسؤول العيادة يشوف العيادة كلها.",
     ownerOnly: "الإدارة",
     add: "إضافة موظف استقبال",
     receptionist: "موظف استقبال",
     manager: "مدير",
     owner: "مسؤول العيادة",
     role: "الصلاحية",
-    signedInFirst: "أضف بريد موظف الاستقبال مرة واحدة. بعد ذلك يستخدم شاشة دخول Atlas العادية. لا حاجة إلى رمز إعداد خاص بالعيادة.",
+    doctor: "الطبيب",
+    chooseDoctor: "اختر طبيباً واحداً",
+    signedInFirst: "أضف بريد موظف الاستقبال وحدد الطبيب اللي يشتغل وياه. بعدين يستخدم شاشة دخول Atlas العادية.",
     access: "الأشخاص الذين لديهم صلاحية",
-    protected: "لا يمكن إزالة مسؤول العيادة من هنا.",
-    saveRole: "تغيير الصلاحية",
+    protected: "مسؤول العيادة يشوف كل الأطباء وما ينشال من هنا.",
+    saveRole: "حفظ الصلاحية",
     remove: "إزالة الصلاحية",
     backSettings: "العودة إلى الإعدادات",
     ownerRequired: "صلاحية الإدارة مطلوبة.",
-    ownerRequiredHelp: "موظفو الاستقبال يستخدمون الجدول. تتم إدارة صلاحيات العيادة هنا فقط عند الحاجة.",
+    ownerRequiredHelp: "موظف الاستقبال يستخدم جدول طبيبه المحدد فقط. صلاحيات العيادة تندار من هنا عند الحاجة.",
     unavailable: "تعذر تحميل صلاحيات العيادة.",
     transfer: "نقل مسؤول العيادة",
-    transferHelp: "إذا أول حساب في Atlas كان فقط للمساعدة بالإعداد، أضف المسؤول الحقيقي أولاً وبعدين انقل الإدارة لهنا. المسؤول الحالي يصير موظف استقبال.",
+    transferHelp: "إذا أول حساب في Atlas كان فقط للمساعدة بالإعداد، أضف المسؤول الحقيقي وبعدين انقل الإدارة له. المسؤول الحالي يصير موظف استقبال لأول طبيب نشط بالعيادة.",
     transferConfirm: "أفهم أن هذا الشخص سيصبح مسؤول العيادة.",
     transferButton: "نقل الإدارة",
     transferEmpty: "أضف شخصاً آخر للعيادة قبل نقل الإدارة.",
@@ -91,6 +97,7 @@ const copy: Record<UiLocale, Record<string, string>> = {
 
 const errorMessages: Record<string, string> = {
   invalid: "Check the staff details and try again.",
+  doctor_required: "Choose an active doctor for this receptionist.",
   owner_required: "Only clinic administration can manage access.",
   directory_unavailable: "The staff directory is temporarily unavailable.",
   user_not_found: "That Atlas account could not be found.",
@@ -140,14 +147,26 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
     );
   }
 
-  const { data: members, error: membersError } = await supabase
-    .from("clinic_members")
-    .select("user_id, role")
-    .eq("clinic_id", clinic.id)
-    .order("role", { ascending: true });
-  if (membersError) return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
+  const [
+    { data: members, error: membersError },
+    { data: doctors, error: doctorsError },
+  ] = await Promise.all([
+    supabase
+      .from("clinic_members")
+      .select("user_id, role, assigned_doctor_id")
+      .eq("clinic_id", clinic.id)
+      .order("role", { ascending: true }),
+    supabase
+      .from("doctors")
+      .select("id, name, active, display_order")
+      .eq("clinic_id", clinic.id)
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+  ]);
+  if (membersError || doctorsError) return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
+  const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
 
-  let memberRows: Array<{ user_id: string; role: string; email: string }> = [];
+  let memberRows: Array<{ user_id: string; role: string; assigned_doctor_id: string | null; email: string }> = [];
   try {
     const admin = createAdminClient();
     const { data: directory, error: directoryError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -195,7 +214,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             <span className="settings-card-icon" aria-hidden="true">+</span>
             <div><div className="eyebrow">{text.ownerOnly}</div><h2>{text.add}</h2><p>{text.signedInFirst}</p></div>
           </div>
-          <StaffProvisionForm clinicId={clinic.id} locale={locale} />
+          <StaffProvisionForm clinicId={clinic.id} locale={locale} doctors={activeDoctors.map((doctor) => ({ id: doctor.id, name: doctor.name }))} />
         </section>
 
         <section className="settings-card">
@@ -207,20 +226,27 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             {memberRows.map((member) => {
               const protectedOwner = member.user_id === clinic.owner_id || member.role === "owner";
               const roleLabel = protectedOwner ? text.owner : member.role === "manager" ? text.manager : text.receptionist;
+              const assignedDoctor = activeDoctors.find((doctor) => doctor.id === member.assigned_doctor_id);
               return (
                 <article className="doctor-settings-row" key={member.user_id}>
                   <div className="patient-cell">
                     <strong dir="ltr">{member.email}</strong>
-                    <span>{roleLabel}</span>
+                    <span>{roleLabel}{assignedDoctor ? ` · ${assignedDoctor.name}` : ""}</span>
                   </div>
                   {protectedOwner ? (
                     <p className="field-help staff-protected-note">{text.protected}</p>
                   ) : (
                     <div className="staff-role-actions">
                       <form action={updateStaffRole.bind(null, clinic.id, member.user_id)}>
-                        <select name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.email}`}>
+                        <label className="sr-only" htmlFor={`role-${member.user_id}`}>{text.role}</label>
+                        <select id={`role-${member.user_id}`} name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.email}`}>
                           <option value="receptionist">{text.receptionist}</option>
                           <option value="manager">{text.manager}</option>
+                        </select>
+                        <label className="sr-only" htmlFor={`doctor-${member.user_id}`}>{text.doctor}</label>
+                        <select id={`doctor-${member.user_id}`} name="assigned_doctor_id" defaultValue={member.assigned_doctor_id ?? ""} aria-label={`${text.doctor}: ${member.email}`}>
+                          <option value="">{text.chooseDoctor}</option>
+                          {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
                         </select>
                         <button type="submit">{text.saveRole}</button>
                       </form>

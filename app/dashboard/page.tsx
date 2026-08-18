@@ -103,18 +103,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const dayStart = new Date(`${selectedDay}T00:00:00+03:00`).toISOString();
   const dayEnd = new Date(`${shiftBaghdadDay(selectedDay, 1)}T00:00:00+03:00`).toISOString();
 
-  const [{ data: appointments, error: appointmentError }, { data: occupiedAppointments, error: occupiedError }, { data: reminderSettings }, { data: doctors, error: doctorsError }] = await Promise.all([
+  const [
+    { data: membership, error: membershipError },
+    { data: appointments, error: appointmentError },
+    { data: occupiedAppointments, error: occupiedError },
+    { data: reminderSettings },
+    { data: doctors, error: doctorsError },
+  ] = await Promise.all([
+    supabase.from("clinic_members").select("role, assigned_doctor_id").eq("clinic_id", clinic.id).eq("user_id", userData.user.id).maybeSingle(),
     supabase.from("appointments").select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, created_at, status, reminder_status, reminder_language, reminder_consent").eq("clinic_id", clinic.id).is("voided_at", null).gte("appointment_at", dayStart).lt("appointment_at", dayEnd).order("appointment_at", { ascending: true }).order("created_at", { ascending: true }).order("id", { ascending: true }).limit(500),
     supabase.from("appointments").select("doctor_id, appointment_at").eq("clinic_id", clinic.id).is("voided_at", null).in("status", ["pending", "confirmed"]).gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString()).order("appointment_at", { ascending: true }).limit(5000),
     supabase.from("clinic_reminder_settings").select("enabled, lead_minutes, second_lead_minutes, default_reminder_language").eq("clinic_id", clinic.id).maybeSingle(),
     supabase.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinic.id).order("display_order", { ascending: true }).order("name", { ascending: true }),
   ]);
-  if (appointmentError || occupiedError || doctorsError) return <DashboardError />;
+  if (membershipError || appointmentError || occupiedError || doctorsError) return <DashboardError />;
 
+  const canMonitorDoctors = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   const rows = appointments ?? [];
   const doctorRows = doctors ?? [];
   const activeDoctors = doctorRows.filter((doctor) => doctor.active);
-  const multiDoctor = activeDoctors.length > 1;
+  const multiDoctor = canMonitorDoctors && activeDoctors.length > 1;
   const requestedDoctorId = params.doctor && isUuid(params.doctor) ? params.doctor : null;
   const selectedDoctor = multiDoctor
     ? activeDoctors.find((doctor) => doctor.id === requestedDoctorId)
@@ -132,9 +140,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const noShow = visibleRows.filter((row) => row.status === "no_show").length;
   const cancelled = visibleRows.filter((row) => row.status === "cancelled").length;
 
-  // Each doctor has an independent reception line. The database uniqueness
-  // rule is also doctor-specific, so different doctors may use the same clock
-  // time while one doctor can never have two active patients in one slot.
+  // The visible doctor's schedule is the source of truth for appointment
+  // creation. Reception can never view one doctor and silently book another.
   const appointmentOrder = new Map<string, number>();
   let activeOrder = 0;
   for (const row of visibleRows) {
@@ -147,7 +154,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const nextDay = shiftBaghdadDay(selectedDay, 1);
   const nextAppointmentId = selectedDay === today ? visibleRows.find((row) => ["pending", "confirmed"].includes(row.status) && new Date(row.appointment_at).getTime() >= now - 5 * 60 * 1000)?.id ?? null : null;
 
-  const occupiedForSelectedDoctor = multiDoctor && selectedDoctor
+  const occupiedForSelectedDoctor = selectedDoctor
     ? (occupiedAppointments ?? []).filter((row) => row.doctor_id === selectedDoctor.id)
     : (occupiedAppointments ?? []);
   const futureAppointmentDays = Array.from(new Set(
@@ -176,7 +183,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const reminderLanguageLabels: Record<string, string> = { ku: "کوردی (سۆرانی)", ar: "العربية", en: "English" };
 
   return <main className="workspace-page shell" data-atlas-selected-day={selectedDay} data-atlas-clinic={clinic.id} data-atlas-memory-valid={selectedFutureHasActiveSchedule ? "true" : "false"}>
-    <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{relativeDay ?? t.schedule}</div><h1>{clinic.name}</h1></div><LiveClinicClock locale={locale} /></header>
+    <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{t.schedule}</div><h1>{clinic.name}</h1></div><LiveClinicClock locale={locale} /></header>
     <nav className="schedule-date-shortcuts" aria-label={days.quickDates}>
       {quickDays.map((item) => <a className={item.day === selectedDay ? "is-selected" : ""} href={scheduleHref(clinic.id, item.day, selectedDoctorId)} key={item.day} aria-current={item.day === selectedDay ? "date" : undefined}>{item.label}</a>)}
     </nav>
@@ -194,18 +201,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <form action={createAppointment} className="stack-form appointment-form" key={`${clinic.id}:${selectedDay}:${selectedDoctor?.id ?? "none"}`}><input type="hidden" name="clinic_id" value={clinic.id} /><input type="hidden" name="return_day" value={selectedDay} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
           <label htmlFor="patient_name">{t.patientName}</label><input id="patient_name" name="patient_name" autoComplete="name" minLength={2} maxLength={120} required />
           <label htmlFor="patient_phone">{t.iraqiMobile}</label><input id="patient_phone" name="patient_phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={24} pattern="(?:[+]?(?:964)|0)7[0-9 ()-]{9,16}" placeholder="0750 000 0000" aria-describedby="phone-help" dir="ltr" required /><p className="field-help" id="phone-help">{t.phoneHelp}</p>
-          <label htmlFor="doctor_id">{t.doctor}</label><select id="doctor_id" name="doctor_id" defaultValue={selectedDoctor?.id ?? (activeDoctors.length === 1 ? activeDoctors[0].id : "")} required disabled={activeDoctors.length === 0}>{!selectedDoctor && activeDoctors.length !== 1 ? <option value="">{t.chooseDoctor}</option> : null}{activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}</select>
+          <label htmlFor="doctor_id">{t.doctor}</label><input id="doctor_id" name="doctor_id" type="hidden" value={selectedDoctor?.id ?? ""} /><div className="composer-doctor-lock" aria-label={`${t.doctor}: ${selectedDoctor?.name ?? t.chooseDoctor}`}><strong>{selectedDoctor?.name ?? t.chooseDoctor}</strong><span aria-hidden="true">✓</span></div>
           <AppointmentTimeField key={`time:${selectedDay}:${selectedDoctor?.id ?? "none"}`} intervalMinutes={clinic.appointment_interval_minutes} min={minimumInput} max={maximumInput} initialDate={selectedDay} occupiedByDoctor={occupiedByDoctor} timeZoneLabel={t.erbilTime} locale={locale} />
           <label htmlFor="reminder_language">{t.reminderLanguage}</label><select id="reminder_language" name="reminder_language" defaultValue={defaultReminderLanguage}>{Object.entries(reminderLanguageLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
-          <label className="checkbox-field consent-card" htmlFor="reminder_consent"><input id="reminder_consent" name="reminder_consent" type="checkbox" /><span>{t.reminderConsent}</span></label><p className="field-help">{t.reminderConsentHelp}</p><SubmitButton pendingLabel={t.saving} disabled={activeDoctors.length === 0}>{t.saveAppointment}</SubmitButton>
+          <label className="checkbox-field consent-card" htmlFor="reminder_consent"><input id="reminder_consent" name="reminder_consent" type="checkbox" /><span>{t.reminderConsent}</span></label><p className="field-help">{t.reminderConsentHelp}</p><SubmitButton pendingLabel={t.saving} disabled={!selectedDoctor}>{t.saveAppointment}</SubmitButton>
         </form><div className={`reminder-note ${reminderSettings?.enabled ? "reminder-ready" : ""}`}><strong>{days.reminders}: </strong>{reminderSettings?.enabled ? reminderPlanLabel(reminderSettings.lead_minutes, reminderSettings.second_lead_minutes, locale) : t.reminderOff}</div><p className="composer-privacy">{t.privacyNote}</p></section> : null}
-      <section className="panel appointments-panel schedule-card"><div className="panel-heading schedule-heading"><div><div className="eyebrow">{relativeDay ?? t.schedule}</div><h2>{formatBaghdadDay(selectedDate, locale)}</h2><p className="panel-subtitle">{multiDoctor && selectedDoctor ? selectedDoctor.name : t.todaySubheading}</p></div><span className="count-pill">{visibleRows.length}</span></div>
-        {visibleRows.length === 0 ? <div className="empty-state compact-empty"><div><strong>{days.empty}</strong><span>{days.emptyHelp}</span>{canCreateOnSelectedDay ? <a className="button button-small empty-state-action" href="#new-appointment">+ {days.add}</a> : null}</div></div> : <div className="appointment-list polished-appointment-list">{visibleRows.map((appointment) => { const status = isAppointmentStatus(appointment.status) ? appointment.status : "pending"; const editorDoctors = doctorRows.filter((doctor) => doctor.active || doctor.id === appointment.doctor_id).map((doctor) => ({ id: doctor.id, name: doctor.name })); const isNext = appointment.id === nextAppointmentId; const reminderLabel = reminderLabels[appointment.reminder_status]; const order = appointmentOrder.get(appointment.id); const canEditDetails = new Date(appointment.appointment_at).getTime() >= now - 60_000; return <article className={`appointment-row polished-appointment ${isNext ? "is-next-appointment" : ""}`} key={appointment.id}>{isNext ? <div className="next-appointment-label">{days.nextUp}</div> : null}<div className="appointment-primary"><div className="patient-cell"><strong>{appointment.patient_name}</strong><span><bdi dir="ltr">{formatIraqiMobile(appointment.patient_phone)}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge" title={`${days.order} #${order}`} aria-label={`${days.order} ${order}`}>#{order}</span> : null}<span className={`status status-${status}`}>{statusLabels[status]}</span>{reminderLabel ? <span className="status status-reminder">{reminderLabel}</span> : null}</div></div><dl className="appointment-details polished-details"><div><dt>{t.time}</dt><dd className="appointment-time-value">{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div><div><dt>{t.doctor}</dt><dd>{appointment.doctor_name}</dd></div><div><dt>{t.reminderLanguage}</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div></dl>{canEditDetails ? <AppointmentEditor clinicId={clinic.id} appointmentId={appointment.id} status={status} patientName={appointment.patient_name} patientPhone={formatIraqiMobile(appointment.patient_phone)} doctorId={appointment.doctor_id} appointmentAt={appointment.appointment_at} reminderLanguage={appointment.reminder_language} reminderConsent={appointment.reminder_consent} doctors={editorDoctors} min={minimumInput} max={maximumInput} locale={locale} /> : null}<AppointmentActions clinicId={clinic.id} appointmentId={appointment.id} status={status} appointmentAt={appointment.appointment_at} locale={locale} /></article>; })}</div>}
+      <section className="panel appointments-panel schedule-card"><div className="panel-heading schedule-heading"><div><div className="eyebrow">{relativeDay ?? t.schedule}</div><h2>{formatBaghdadDay(selectedDate, locale)}</h2><p className="panel-subtitle">{selectedDoctor?.name ?? t.todaySubheading}</p></div><span className="count-pill">{visibleRows.length}</span></div>
+        {visibleRows.length === 0 ? <div className="empty-state compact-empty"><div><strong>{days.empty}</strong><span>{days.emptyHelp}</span>{canCreateOnSelectedDay && selectedDoctor ? <a className="button button-small empty-state-action" href="#new-appointment">+ {days.add}</a> : null}</div></div> : <div className="appointment-list polished-appointment-list">{visibleRows.map((appointment) => { const status = isAppointmentStatus(appointment.status) ? appointment.status : "pending"; const editorDoctors = doctorRows.filter((doctor) => doctor.active || doctor.id === appointment.doctor_id).map((doctor) => ({ id: doctor.id, name: doctor.name })); const isNext = appointment.id === nextAppointmentId; const reminderLabel = reminderLabels[appointment.reminder_status]; const order = appointmentOrder.get(appointment.id); const canEditDetails = new Date(appointment.appointment_at).getTime() >= now - 60_000; return <article className={`appointment-row polished-appointment ${isNext ? "is-next-appointment" : ""}`} key={appointment.id}>{isNext ? <div className="next-appointment-label">{days.nextUp}</div> : null}<div className="appointment-primary"><div className="patient-cell"><strong>{appointment.patient_name}</strong><span><bdi dir="ltr">{formatIraqiMobile(appointment.patient_phone)}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge" title={`${days.order} #${order}`} aria-label={`${days.order} ${order}`}>#{order}</span> : null}<span className={`status status-${status}`}>{statusLabels[status]}</span>{reminderLabel ? <span className="status status-reminder">{reminderLabel}</span> : null}</div></div><dl className="appointment-details polished-details"><div><dt>{t.time}</dt><dd className="appointment-time-value">{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div><div><dt>{t.doctor}</dt><dd>{appointment.doctor_name}</dd></div><div><dt>{t.reminderLanguage}</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div></dl>{canEditDetails ? <AppointmentEditor clinicId={clinic.id} appointmentId={appointment.id} status={status} patientName={appointment.patient_name} patientPhone={formatIraqiMobile(appointment.patient_phone)} doctorId={appointment.doctor_id} appointmentAt={appointment.appointment_at} reminderLanguage={appointment.reminder_language} reminderConsent={appointment.reminder_consent} doctors={editorDoctors} min={minimumInput} max={maximumInput} locale={locale} /> : null}<AppointmentActions clinicId={clinic.id} appointmentId={appointment.id} status={status} appointmentAt={appointment.appointment_at} locale={locale} /></article>; })}</div>}
       </section>
     </div>
     <style>{`
       .workspace-grid.is-read-only-day{grid-template-columns:1fr}
       .workspace-grid.is-read-only-day .appointments-panel{min-width:0}
+      .composer-doctor-lock{display:flex;min-height:46px;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line-strong);border-radius:12px;padding:10px 13px;background:var(--surface-soft);color:var(--ink)}
+      .composer-doctor-lock strong{font-size:14px;font-weight:780}
+      .composer-doctor-lock span{display:grid;width:24px;height:24px;place-items:center;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:900}
     `}</style>
     {multiDoctor ? <style>{`
       .doctor-schedule-tabs{display:flex;gap:8px;overflow-x:auto;margin:4px 0 14px;padding:1px 0 4px;scrollbar-width:none}
