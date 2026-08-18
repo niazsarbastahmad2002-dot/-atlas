@@ -213,19 +213,21 @@ export async function transferClinicAdministrator(clinicId: string, formData: Fo
     redirect(staffUrl(clinicId, "error", "transfer_invalid"));
   }
 
-  const { supabase, ownerId } = await ownerContext(clinicId);
+  const { ownerId } = await ownerContext(clinicId);
   if (newAdministratorId === ownerId) {
     redirect(staffUrl(clinicId, "error", "transfer_invalid"));
   }
 
-  const transferRpc = supabase.rpc as unknown as (
+  const admin = createAdminClient();
+  const transferRpc = admin.rpc as unknown as (
     functionName: string,
-    args: { p_clinic_id: string; p_new_administrator_id: string },
+    args: { p_clinic_id: string; p_new_administrator_id: string; p_actor_id: string },
   ) => Promise<{ data: boolean | null; error: { code?: string; message?: string } | null }>;
 
   const { data, error } = await transferRpc("transfer_clinic_administrator", {
     p_clinic_id: clinicId,
     p_new_administrator_id: newAdministratorId,
+    p_actor_id: ownerId,
   });
 
   if (error || data !== true) {
