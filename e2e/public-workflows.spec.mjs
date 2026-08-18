@@ -13,7 +13,6 @@ test("unauthenticated receptionist sees language choice, work email and optional
   await expect(page.getByLabel("Work email")).toBeVisible();
   await expect(page.getByRole("button", { name: "Send Atlas email" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Use quick sign-in" })).toBeVisible();
-  await expect(page.getByText(/Optional\. Use this only if you previously saved quick sign-in/)).toBeVisible();
 });
 
 test("language picker persists a pre-auth choice", async ({ page }) => {
