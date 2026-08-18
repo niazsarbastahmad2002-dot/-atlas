@@ -16,7 +16,11 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (!error) return NextResponse.redirect(new URL(next, requestUrl.origin));
+  if (!error) {
+    const activationUrl = new URL("/auth/activate", requestUrl.origin);
+    activationUrl.searchParams.set("next", next);
+    return NextResponse.redirect(activationUrl);
+  }
 
   const errorUrl = new URL("/login", requestUrl.origin);
   errorUrl.searchParams.set("error", "invalid_link");

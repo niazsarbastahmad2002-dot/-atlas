@@ -3,9 +3,10 @@ import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import { readPendingStaffInvitations } from "@/lib/staff-invitations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { removeStaffMember, transferClinicAdministrator, updateStaffRole } from "./actions";
+import { cancelPendingInvitation, removeStaffMember, transferClinicAdministrator, updateStaffRole } from "./actions";
 import { StaffProvisionForm } from "./provision-form";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +27,13 @@ const copy: Record<UiLocale, Record<string, string>> = {
     role: "Access",
     doctor: "Doctor",
     chooseDoctor: "Choose one doctor",
-    signedInFirst: "Add the receptionist's work email and assign the doctor they work with. They then use the normal Atlas sign-in screen.",
+    signedInFirst: "Type the receptionist's email, choose their doctor, and tap Add. Atlas emails them automatically. They stay Pending until they open it.",
     access: "People with access",
+    pending: "Pending",
+    pendingHelp: "Invitation email sent. Access turns on only after this person opens the Atlas email.",
     protected: "The clinic administrator can see every doctor and cannot be removed here.",
     saveRole: "Save access",
-    remove: "Remove access",
+    remove: "Remove",
     backSettings: "Back to settings",
     ownerRequired: "Administration access required.",
     ownerRequiredHelp: "Receptionists use their assigned doctor's schedule. Clinic access is managed here only when needed.",
@@ -52,11 +55,13 @@ const copy: Record<UiLocale, Record<string, string>> = {
     role: "دەسەڵات",
     doctor: "پزیشک",
     chooseDoctor: "یەک پزیشک هەڵبژێرە",
-    signedInFirst: "ئیمەیڵی کاری پێشخانە زیاد بکە و پزیشکەکەی دیاری بکە. پاشان پەڕەی ئاسایی چوونەژوورەوەی Atlas بەکاردەهێنێت.",
+    signedInFirst: "ئیمەیڵی پێشخانە بنووسە، پزیشکەکەی هەڵبژێرە و زیادکردن دابگرە. Atlas خۆکارانە ئیمەیڵی بۆ دەنێرێت و تا کردنەوەی ئیمەیڵەکە چاوەڕوان دەمێنێتەوە.",
     access: "کەسانی دەسەڵاتدار",
+    pending: "چاوەڕوان",
+    pendingHelp: "ئیمەیڵی بانگهێشتنامە نێردراوە. دەسەڵات تەنها دوای کردنەوەی ئیمەیڵی Atlas چالاک دەبێت.",
     protected: "بەڕێوەبەری کلینیک هەموو پزیشکەکان دەبینێت و لێرە ناتوانرێت لاببرێت.",
     saveRole: "دەسەڵات پاشەکەوت بکە",
-    remove: "دەسەڵات لاببە",
+    remove: "لابردن",
     backSettings: "گەڕانەوە بۆ ڕێکخستنەکان",
     ownerRequired: "دەسەڵاتی بەڕێوەبردن پێویستە.",
     ownerRequiredHelp: "پێشخانە تەنها خشتەی پزیشکی دیاریکراوی خۆی بەکاردەهێنێت. دەسەڵاتی کلینیک لێرە بەڕێوەدەبرێت.",
@@ -78,11 +83,13 @@ const copy: Record<UiLocale, Record<string, string>> = {
     role: "الصلاحية",
     doctor: "الطبيب",
     chooseDoctor: "اختر طبيباً واحداً",
-    signedInFirst: "أضف بريد موظف الاستقبال وحدد الطبيب اللي يشتغل وياه. بعدين يستخدم شاشة دخول Atlas العادية.",
+    signedInFirst: "اكتب بريد موظف الاستقبال، اختر طبيبه واضغط إضافة. Atlas يرسل له البريد تلقائياً ويبقى قيد الانتظار إلى أن يفتحه.",
     access: "الأشخاص الذين لديهم صلاحية",
+    pending: "قيد الانتظار",
+    pendingHelp: "تم إرسال بريد الدعوة. تتفعل الصلاحية فقط بعد فتح رسالة Atlas.",
     protected: "مسؤول العيادة يشوف كل الأطباء وما ينشال من هنا.",
     saveRole: "حفظ الصلاحية",
-    remove: "إزالة الصلاحية",
+    remove: "إزالة",
     backSettings: "العودة إلى الإعدادات",
     ownerRequired: "صلاحية الإدارة مطلوبة.",
     ownerRequiredHelp: "موظف الاستقبال يستخدم جدول طبيبه المحدد فقط. صلاحيات العيادة تندار من هنا عند الحاجة.",
@@ -103,6 +110,7 @@ const errorMessages: Record<string, string> = {
   user_not_found: "That Atlas account could not be found.",
   owner_protected: "The clinic administrator cannot be removed or demoted.",
   already_member: "That person already has access to this clinic.",
+  invite_failed: "Atlas could not send that receptionist invitation. Try again.",
   save_failed: "The access change could not be saved.",
   transfer_invalid: "Choose another person and confirm the transfer.",
   transfer_failed: "Administration could not be transferred. Try again.",
@@ -110,6 +118,8 @@ const errorMessages: Record<string, string> = {
 
 const noticeMessages: Record<string, string> = {
   added: "Receptionist access added.",
+  invited: "Receptionist invitation sent.",
+  invitation_removed: "Pending invitation removed.",
   updated: "Access updated.",
   removed: "Access removed.",
   administrator_transferred: "Clinic administration transferred.",
@@ -167,6 +177,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
 
   let memberRows: Array<{ user_id: string; role: string; assigned_doctor_id: string | null; email: string }> = [];
+  let pendingRows: Array<{ user_id: string; assigned_doctor_id: string; email: string; invited_at: string }> = [];
   try {
     const admin = createAdminClient();
     const { data: directory, error: directoryError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -176,6 +187,19 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       ...member,
       email: emailById.get(member.user_id) ?? "Email unavailable",
     }));
+
+    const activeMemberIds = new Set((members ?? []).map((member) => member.user_id));
+    pendingRows = directory.users.flatMap((user) => {
+      if (activeMemberIds.has(user.id)) return [];
+      return readPendingStaffInvitations(user.app_metadata)
+        .filter((invitation) => invitation.clinic_id === clinic.id)
+        .map((invitation) => ({
+          user_id: user.id,
+          assigned_doctor_id: invitation.assigned_doctor_id,
+          email: user.email ?? "Email unavailable",
+          invited_at: invitation.invited_at,
+        }));
+    });
   } catch {
     return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
   }
@@ -220,9 +244,25 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         <section className="settings-card">
           <div className="settings-card-heading">
             <span className="settings-card-icon" aria-hidden="true">👥</span>
-            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p>{clinic.name} · {memberRows.length}</p></div>
+            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p>{clinic.name} · {memberRows.length + pendingRows.length}</p></div>
           </div>
           <div className="doctor-settings-list">
+            {pendingRows.map((pending) => {
+              const assignedDoctor = activeDoctors.find((doctor) => doctor.id === pending.assigned_doctor_id);
+              return (
+                <article className="doctor-settings-row" key={`pending-${pending.user_id}`}>
+                  <div className="patient-cell">
+                    <strong dir="ltr">{pending.email}</strong>
+                    <span>{text.pending}{assignedDoctor ? ` · ${assignedDoctor.name}` : ""}</span>
+                    <span className="field-help">{text.pendingHelp}</span>
+                  </div>
+                  <form action={cancelPendingInvitation.bind(null, clinic.id, pending.user_id)}>
+                    <button className="danger-link" type="submit">{text.remove}</button>
+                  </form>
+                </article>
+              );
+            })}
+
             {memberRows.map((member) => {
               const protectedOwner = member.user_id === clinic.owner_id || member.role === "owner";
               const roleLabel = protectedOwner ? text.owner : member.role === "manager" ? text.manager : text.receptionist;
