@@ -1,14 +1,14 @@
 # Atlas production deployment
 
-Atlas production deploys are built on GitHub Actions and uploaded to Vercel as prebuilt output.
+Atlas keeps the normal Vercel Git deployment path as the default production route.
 
-This avoids consuming Vercel's remote-build quota for every Atlas source change while keeping Vercel as the production host.
+A second GitHub Actions workflow can build Atlas outside Vercel and upload prebuilt output to Vercel. This is a documented fallback for periods when Vercel's remote-build quota is temporarily exhausted.
 
-Production flow:
+Fallback flow:
 
-1. Merge an Atlas pull request into `main`.
+1. Run the `Atlas prebuilt production deploy` GitHub Actions workflow.
 2. GitHub Actions checks out `main` and pulls the production Vercel settings.
 3. GitHub Actions builds Atlas outside Vercel.
 4. The resulting prebuilt output is deployed to Vercel production.
 
-Automatic Vercel Git builds are disabled in `vercel.json` so this pipeline is the single production deployment path.
+Automatic Vercel Git builds remain enabled so Atlas still deploys normally when the Vercel build quota is available.
