@@ -47,8 +47,12 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
   return (
     <div className="atlas-live-clock" aria-label={`${date} ${accessibleTime}`}>
       <div className="atlas-live-clock-orbit" aria-hidden="true"><span /></div>
-      <div className="atlas-live-clock-time" dir="auto">
-        <strong>{clock.hour}<span className="atlas-live-clock-colon">:</span>{clock.minute}</strong>
+      <div className="atlas-live-clock-time" dir="ltr">
+        <strong dir="ltr">
+          <span>{clock.hour}</span>
+          <span className="atlas-live-clock-colon">:</span>
+          <span>{clock.minute}</span>
+        </strong>
         <span className="atlas-live-clock-seconds">{clock.second}</span>
         {clock.dayPeriod ? <span className="atlas-live-clock-period">{clock.dayPeriod}</span> : null}
       </div>
@@ -72,16 +76,6 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
           -webkit-backdrop-filter: blur(14px);
           isolation: isolate;
         }
-        .atlas-live-clock::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          z-index: -1;
-          background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.58) 48%, transparent 72%);
-          transform: translateX(-85%);
-          animation: atlas-clock-sheen 7s ease-in-out infinite;
-          pointer-events: none;
-        }
         .atlas-live-clock-orbit {
           position: absolute;
           inset-inline-end: 11px;
@@ -99,28 +93,35 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
           border-radius: 999px;
           background: var(--accent);
           box-shadow: 0 0 0 4px rgba(8,119,90,.08);
-          animation: atlas-clock-pulse 2s ease-in-out infinite;
         }
         .atlas-live-clock-time {
           display: flex;
+          direction: ltr;
           align-items: baseline;
           gap: 5px;
           padding-inline-end: 10px;
           white-space: nowrap;
+          unicode-bidi: isolate;
         }
         .atlas-live-clock-time strong {
+          display: inline-flex;
+          direction: ltr;
+          align-items: baseline;
+          gap: 0;
           color: var(--ink);
           font-size: 25px;
           font-weight: 880;
           letter-spacing: -.035em;
           line-height: 1;
           font-variant-numeric: tabular-nums;
+          unicode-bidi: isolate;
         }
         .atlas-live-clock-colon {
           display: inline-block;
+          min-width: .45em;
           transform: translateY(-1px);
           color: var(--accent);
-          animation: atlas-clock-colon 1s steps(1) infinite;
+          text-align: center;
         }
         .atlas-live-clock-seconds {
           color: var(--accent);
@@ -143,18 +144,6 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
           font-weight: 760;
           line-height: 1.2;
           white-space: nowrap;
-        }
-        @keyframes atlas-clock-colon { 50% { opacity: .35; } }
-        @keyframes atlas-clock-pulse { 50% { transform: scale(.72); opacity: .55; } }
-        @keyframes atlas-clock-sheen {
-          0%, 70%, 100% { transform: translateX(-85%); opacity: 0; }
-          78% { opacity: .55; }
-          92% { transform: translateX(90%); opacity: 0; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .atlas-live-clock::before,
-          .atlas-live-clock-orbit span,
-          .atlas-live-clock-colon { animation: none; }
         }
         @media (max-width: 620px) {
           .atlas-live-clock { min-width: 136px; border-radius: 17px; padding: 10px 12px 9px; }
