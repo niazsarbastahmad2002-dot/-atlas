@@ -4,6 +4,7 @@ import { uiLocaleMeta } from "@/lib/i18n/ui";
 import "./globals.css";
 import "./polish.css";
 import "./atlas-perfect.css";
+import "./atlas-login-brand.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
