@@ -29,9 +29,9 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
     return () => window.clearInterval(timer);
   }, []);
 
-  // Deliberately do not set a timeZone here. This display follows the exact
-  // clock and time zone of the receptionist's device, while appointment data
-  // itself continues to use the clinic's Erbil/Baghdad scheduling time zone.
+  // This visible clock intentionally follows the receptionist device itself.
+  // Appointment scheduling remains anchored to the clinic's Erbil/Baghdad
+  // time zone so changing a device time zone cannot alter stored appointments.
   const date = useMemo(() => new Intl.DateTimeFormat(dateLocale, {
     weekday: "short",
     month: "short",
