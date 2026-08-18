@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 const copy = {
@@ -10,17 +10,23 @@ const copy = {
   ar: { eyebrow: "السجلات", title: "سجل المواعيد", help: "ابحث في المواعيد القديمة وراجع السجلات المحذوفة واحذفها نهائياً عند الحاجة.", open: "فتح السجل" },
 } as const;
 
+function removeHistoryCard() {
+  document.querySelectorAll("[data-atlas-history-card]").forEach((element) => element.remove());
+}
+
 export function SettingsHistoryShortcut({ locale }: { locale: UiLocale }) {
   const pathname = usePathname();
 
-  useEffect(() => {
-    // History belongs to the main Settings page only. Clinic Access also uses
-    // the settings grid layout, but duplicating History there made the page
-    // look like a second Settings screen.
-    if (pathname !== "/dashboard/settings") return;
+  useLayoutEffect(() => {
+    // This layout survives client navigation. Remove the injected card before
+    // paint whenever reception leaves the actual Settings route, so Clinic
+    // Access can never inherit a stale History card from the previous screen.
+    if (pathname !== "/dashboard/settings") {
+      removeHistoryCard();
+      return;
+    }
 
     const t = copy[locale];
-
     const install = () => {
       const grid = document.querySelector<HTMLElement>(".settings-grid");
       if (!grid || grid.querySelector("[data-atlas-history-card]")) return;
@@ -52,10 +58,14 @@ export function SettingsHistoryShortcut({ locale }: { locale: UiLocale }) {
       else grid.appendChild(card);
     };
 
+    removeHistoryCard();
     install();
     const observer = new MutationObserver(install);
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      removeHistoryCard();
+    };
   }, [locale, pathname]);
 
   return null;
