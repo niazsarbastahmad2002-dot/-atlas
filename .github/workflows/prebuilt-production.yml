@@ -105,3 +105,5 @@ jobs:
       - name: Fail if deployment did not succeed
         if: always() && steps.deploy.outcome != 'success'
         run: exit 1
+
+# Triggered after rotating VERCEL_TOKEN on 2026-08-19.
