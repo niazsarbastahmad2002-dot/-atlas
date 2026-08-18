@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackAtlasEvent } from "@/lib/analytics/client";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 const choices: Array<{ value: UiLocale; label: string; detail: string }> = [
@@ -16,12 +17,17 @@ export function LoginLanguagePicker({ locale }: { locale: UiLocale }) {
     if (busy || value === locale) return;
     setBusy(true);
     try {
-      await fetch("/api/ui-language", {
+      const response = await fetch("/api/ui-language", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ locale: value }),
       });
-      window.location.reload();
+      trackAtlasEvent("atlas_login_language_changed", {
+        locale: value,
+        outcome: response.ok ? "success" : "failure",
+        interaction: "form",
+      });
+      if (response.ok) window.location.reload();
     } finally {
       setBusy(false);
     }
