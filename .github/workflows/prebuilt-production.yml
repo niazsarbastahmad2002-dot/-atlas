@@ -3,6 +3,9 @@ name: Atlas prebuilt production deploy
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    types: [closed]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +18,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -25,6 +29,8 @@ jobs:
     steps:
       - name: Checkout Atlas
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Report deployment start
         run: gh issue comment 59 --body "Prebuilt production deployment started for commit $GITHUB_SHA."
