@@ -10,7 +10,7 @@ export type AppointmentStatus = (typeof appointmentStatuses)[number];
 export type AppointmentMutationFailure = "invalid" | "too_early" | "past_cancelled" | "slot_taken" | "busy" | "failed";
 
 const statusTransitions: Record<AppointmentStatus, readonly AppointmentStatus[]> = {
-  pending: ["confirmed", "cancelled"],
+  pending: ["confirmed", "cancelled", "completed", "no_show"],
   confirmed: ["pending", "cancelled", "completed", "no_show"],
   cancelled: ["pending"],
   completed: ["confirmed"],
@@ -92,13 +92,14 @@ export function parseBaghdadDateTime(value: string, now = new Date()) {
     || parts.minute !== minute
   ) return null;
 
-  const earliest = now.getTime() - 5 * 60 * 1000;
-  const latest = now.getTime() + 2 * 365 * 24 * 60 * 60 * 1000;
-  return date.getTime() >= earliest && date.getTime() <= latest ? date : null;
+  const min = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const max = new Date(now.getTime() + 2 * 365 * 24 * 60 * 60 * 1000);
+  if (date < min || date > max) return null;
+  return date;
 }
 
-export function toBaghdadInputValue(date: Date) {
-  const parts = baghdadParts(date);
+export function toBaghdadInputValue(value: Date) {
+  const parts = baghdadParts(value);
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
@@ -106,28 +107,20 @@ export function isAppointmentStatus(value: string): value is AppointmentStatus {
   return appointmentStatuses.includes(value as AppointmentStatus);
 }
 
-export function allowedAppointmentTransitions(status: AppointmentStatus) {
-  return statusTransitions[status];
-}
-
 export function canTransitionAppointment(from: AppointmentStatus, to: AppointmentStatus) {
   return from === to || statusTransitions[from].includes(to);
 }
 
-/**
- * Database triggers/indexes remain the source of truth for appointment invariants.
- * This converts known Postgres failures into receptionist-friendly categories
- * without weakening the underlying constraints.
- */
-export function classifyAppointmentMutationError(code: string | undefined, message = ""): AppointmentMutationFailure {
-  if (code === "55P03") return "busy";
-  if (code === "23505") return "slot_taken";
-  if (code === "23514") {
-    const text = message.toLowerCase();
-    if (text.includes("outcome cannot be recorded before")) return "too_early";
-    if (text.includes("past cancelled appointment cannot be reopened")) return "past_cancelled";
-    return "invalid";
-  }
-  if (code === "42501") return "invalid";
+export function allowedAppointmentTransitions(from: AppointmentStatus) {
+  return [...statusTransitions[from]];
+}
+
+export function classifyAppointmentMutationError(code: string | undefined, message: string | undefined): AppointmentMutationFailure {
+  const text = `${code ?? ""} ${message ?? ""}`.toLowerCase();
+  if (text.includes("appointment outcome cannot be recorded before")) return "too_early";
+  if (text.includes("past cancelled appointment cannot be reopened")) return "past_cancelled";
+  if (text.includes("appointment reminder is currently being delivered") || code === "55P03") return "busy";
+  if (code === "23505" || text.includes("appointments_one_active_doctor_slot") || text.includes("duplicate key")) return "slot_taken";
+  if (code === "23514" || code === "42501" || text.includes("invalid appointment status transition")) return "invalid";
   return "failed";
 }
