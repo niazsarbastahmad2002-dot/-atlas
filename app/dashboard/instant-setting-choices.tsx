@@ -101,24 +101,12 @@ export function InstantSettingChoices() {
       }, true);
     };
 
-    const bindRole = (select: HTMLSelectElement) => {
-      if (prepared.has(select)) return;
-      prepared.add(select);
-      select.addEventListener("change", (event) => {
-        event.stopImmediatePropagation();
-        select.form?.requestSubmit();
-      }, true);
-    };
-
     const install = () => {
       const locale = document.querySelector<HTMLSelectElement>("#locale");
       if (locale) bindLocale(locale);
 
       const interval = document.querySelector<HTMLSelectElement>("#appointment_interval_minutes");
       if (interval) bindInterval(interval);
-
-      document.querySelectorAll<HTMLSelectElement>(".staff-role-actions select[name='role']")
-        .forEach(bindRole);
     };
 
     const handleSettingsBack = async (event: MouseEvent) => {
