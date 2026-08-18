@@ -10,13 +10,18 @@ const copy = {
   ar: { eyebrow: "السجلات", title: "سجل المواعيد", help: "ابحث في المواعيد القديمة وراجع السجلات المحذوفة واحذفها نهائياً عند الحاجة.", open: "فتح السجل" },
 } as const;
 
+function removeHistoryCard() {
+  document.querySelectorAll("[data-atlas-history-card]").forEach((element) => element.remove());
+}
+
 export function SettingsHistoryShortcut({ locale }: { locale: UiLocale }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // History belongs to the main Settings page only. Clinic Access also uses
-    // the settings grid layout, but duplicating History there made the page
-    // look like a second Settings screen.
+    // Route transitions keep the dashboard layout mounted. Always remove the
+    // old Settings-only card first so Clinic Access can never inherit it for a
+    // frame and then require a refresh to look correct.
+    removeHistoryCard();
     if (pathname !== "/dashboard/settings") return;
 
     const t = copy[locale];
@@ -55,7 +60,10 @@ export function SettingsHistoryShortcut({ locale }: { locale: UiLocale }) {
     install();
     const observer = new MutationObserver(install);
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      removeHistoryCard();
+    };
   }, [locale, pathname]);
 
   return null;
