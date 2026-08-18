@@ -15,37 +15,31 @@ const copy = {
   en: {
     shareAppointment: "Share appointment",
     creating: "Preparing…",
-    help: "Backup while automatic WhatsApp is not active. The patient sees only this appointment and can respond.",
-    shareHelp: "Open WhatsApp, review the message, then send it.",
+    help: "Manual backup until automatic WhatsApp is active.",
     copy: "Copy link",
     copied: "Copied ✓",
-    share: "Share…",
-    whatsapp: "Open WhatsApp",
-    shareTitle: "Atlas appointment",
+    whatsapp: "Send on WhatsApp",
+    back: "Back",
     message: "Your Atlas appointment:",
   },
   ku: {
     shareAppointment: "ناردنی کات",
     creating: "ئامادە دەکرێت…",
-    help: "تا واتسئەپە خۆکارەکە چالاک دەبێت، ئەمە ڕێگای جێگرەوەیە. نەخۆش تەنها ئەم کاتە دەبینێت و دەتوانێت وەڵام بدات.",
-    shareHelp: "واتسئەپ بکەرەوە، پەیامەکە ببینە، پاشان بینێرە.",
+    help: "ڕێگای جێگرەوە تا واتسئەپە خۆکارەکە چالاک دەبێت.",
     copy: "بەستەر کۆپی بکە",
     copied: "کۆپی کرا ✓",
-    share: "ناردن…",
-    whatsapp: "واتسئەپ بکەرەوە",
-    shareTitle: "کاتی Atlas",
+    whatsapp: "لە واتسئەپ بینێرە",
+    back: "گەڕانەوە",
     message: "کاتی پزیشکی تۆ لە Atlas:",
   },
   ar: {
     shareAppointment: "مشاركة الموعد",
     creating: "جارٍ التجهيز…",
-    help: "خيار احتياطي إلى أن يعمل واتساب تلقائياً. يرى المريض هذا الموعد فقط ويمكنه الرد.",
-    shareHelp: "افتح واتساب، راجع الرسالة، ثم أرسلها.",
+    help: "خيار احتياطي إلى أن يعمل واتساب تلقائياً.",
     copy: "نسخ الرابط",
     copied: "تم النسخ ✓",
-    share: "مشاركة…",
-    whatsapp: "فتح واتساب",
-    shareTitle: "موعد Atlas",
+    whatsapp: "إرسال عبر واتساب",
+    back: "رجوع",
     message: "موعدك في Atlas:",
   },
 } as const;
@@ -65,25 +59,35 @@ export function PatientLinkButton({
     initialPatientLinkState,
   );
   const [copied, setCopied] = useState(false);
-  const [sharing, setSharing] = useState(false);
-  const [canShare, setCanShare] = useState(false);
+  const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
-    setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
-  }, []);
+    if (state.link) setShowResult(true);
+  }, [state.link]);
+
+  const initialLink = useMemo(() => {
+    if (!state.link) return null;
+    try {
+      const url = new URL(state.link);
+      url.searchParams.set("view", "initial");
+      return url.toString();
+    } catch {
+      return state.link;
+    }
+  }, [state.link]);
 
   const whatsappUrl = useMemo(() => {
-    if (!state.link || !state.patientPhone) return null;
+    if (!initialLink || !state.patientPhone) return null;
     const digits = state.patientPhone.replace(/\D/g, "");
     if (!digits) return null;
-    const message = `${t.message}\n${state.link}`;
+    const message = `${t.message}\n${initialLink}`;
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
-  }, [state.link, state.patientPhone, t.message]);
+  }, [initialLink, state.patientPhone, t.message]);
 
   async function copyLink() {
-    if (!state.link) return;
+    if (!initialLink) return;
     try {
-      await navigator.clipboard.writeText(state.link);
+      await navigator.clipboard.writeText(initialLink);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -91,45 +95,42 @@ export function PatientLinkButton({
     }
   }
 
-  async function shareLink() {
-    if (!state.link || !canShare) return;
-    setSharing(true);
-    try {
-      await navigator.share({
-        title: t.shareTitle,
-        text: t.message,
-        url: state.link,
-      });
-    } catch {
-      // Closing the native share sheet is not an error the receptionist needs to see.
-    } finally {
-      setSharing(false);
-    }
-  }
-
   return (
     <div className="patient-link-control">
-      <form action={action}>
-        <input type="hidden" name="clinic_id" value={clinicId} />
-        <input type="hidden" name="appointment_id" value={appointmentId} />
-        <button type="submit" disabled={pending}>
-          {pending ? t.creating : t.shareAppointment}
-        </button>
-      </form>
+      {!state.link ? (
+        <form action={action}>
+          <input type="hidden" name="clinic_id" value={clinicId} />
+          <input type="hidden" name="appointment_id" value={appointmentId} />
+          <button type="submit" disabled={pending}>
+            {pending ? t.creating : t.shareAppointment}
+          </button>
+        </form>
+      ) : !showResult ? (
+        <button type="button" onClick={() => setShowResult(true)}>{t.shareAppointment}</button>
+      ) : null}
 
       {state.error ? <span className="field-help" role="alert">{state.error}</span> : null}
 
-      {state.link ? (
+      {state.link && showResult ? (
         <div className="patient-link-result" role="status">
           <div className="patient-link-copy-block">
             <strong>{t.shareAppointment}</strong>
-            <p className="patient-link-help">{t.help}</p>
-            <p className="patient-link-send-help">{t.shareHelp}</p>
+            <p>{t.help}</p>
           </div>
           <div className="patient-link-share-actions">
-            {whatsappUrl ? <a className="patient-link-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer">{t.whatsapp}</a> : null}
-            {canShare ? <button type="button" onClick={shareLink} disabled={sharing}>{t.share}</button> : null}
+            {whatsappUrl ? (
+              <a
+                className="patient-link-whatsapp"
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setShowResult(false)}
+              >
+                {t.whatsapp}
+              </a>
+            ) : null}
             <button type="button" onClick={copyLink}>{copied ? t.copied : t.copy}</button>
+            <button className="patient-link-back" type="button" onClick={() => setShowResult(false)}>{t.back}</button>
           </div>
         </div>
       ) : null}
@@ -149,8 +150,7 @@ export function PatientLinkButton({
           background: var(--surface-soft);
         }
         .patient-link-copy-block strong { display: block; margin-bottom: 4px; font-size: 11.5px; }
-        .patient-link-help, .patient-link-send-help { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
-        .patient-link-send-help { margin-top: 5px; color: #7d8982; }
+        .patient-link-copy-block p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
         .patient-link-share-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
         .patient-link-share-actions button, .patient-link-share-actions a {
           display: inline-flex;
@@ -168,6 +168,7 @@ export function PatientLinkButton({
           cursor: pointer;
         }
         .patient-link-share-actions .patient-link-whatsapp { background: var(--accent); color: #fff; }
+        .patient-link-share-actions .patient-link-back { background: transparent; color: var(--muted); }
         @media (max-width: 720px) {
           .patient-link-result { grid-template-columns: 1fr; align-items: stretch; }
           .patient-link-share-actions { width: 100%; justify-content: stretch; }
