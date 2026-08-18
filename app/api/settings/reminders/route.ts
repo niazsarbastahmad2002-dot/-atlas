@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { isUuid } from "@/lib/appointments";
 import { createClient } from "@/lib/supabase/server";
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
     defaultLanguage: data.default_reminder_language,
     approved: Boolean(data.messaging_approved_at),
     canManage: ctx.canManage,
-  }, { headers: { "Cache-Control": "no-store" } });
+  }, { headers: { "Cache-Control": "no-store, max-age=0" } });
 }
 
 export async function POST(request: Request) {
@@ -115,11 +116,13 @@ export async function POST(request: Request) {
 
   if (error || !data) return NextResponse.json({ error: "save_failed" }, { status: 500 });
 
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
   return NextResponse.json({
     ok: true,
     enabled: data.enabled,
     leadMinutes: data.lead_minutes,
     secondLeadMinutes: data.second_lead_minutes,
     defaultLanguage: data.default_reminder_language,
-  }, { headers: { "Cache-Control": "no-store" } });
+  }, { headers: { "Cache-Control": "no-store, max-age=0" } });
 }
