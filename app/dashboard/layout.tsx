@@ -5,6 +5,7 @@ import { AppNavigation } from "./app-navigation";
 import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
+import { InstantSettingChoices } from "./instant-setting-choices";
 import { QuickHourPolish } from "./quick-hour-polish";
 import { ScheduleNavigationPolish } from "./schedule-navigation-polish";
 import { SettingsClientPolish } from "./settings-client-polish";
@@ -15,6 +16,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <div className="app-shell">
+      <InstantSettingChoices />
       <DashboardClientPolish locale={locale} />
       <SettingsClientPolish locale={locale} />
       <SettingsHistoryShortcut locale={locale} />
