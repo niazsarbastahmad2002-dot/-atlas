@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_ORG_ID: team_12LjTXJIxUILoIdh54kXsRUc
       VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
       GH_TOKEN: ${{ github.token }}
 
@@ -53,28 +53,37 @@ jobs:
         continue-on-error: true
         run: npm install --global vercel@latest
 
-      - name: Pull production settings and environment
-        id: pull
+      - name: Check Vercel token availability
+        id: tokencheck
         if: steps.cli.outcome == 'success'
         continue-on-error: true
-        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "$VERCEL_TOKEN"
+
+      - name: Pull production settings and environment
+        id: pull
+        if: steps.tokencheck.outcome == 'success'
+        continue-on-error: true
+        run: vercel pull --yes --environment=production --scope=atlas-fca2 --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Build Atlas on GitHub Actions
         id: build
         if: steps.pull.outcome == 'success'
         continue-on-error: true
-        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+        run: vercel build --prod --scope=atlas-fca2 --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Deploy prebuilt Atlas to production
         id: deploy
         if: steps.build.outcome == 'success'
         continue-on-error: true
-        run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
+        run: vercel deploy --prebuilt --prod --scope=atlas-fca2 --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Report deployment diagnostics
         if: always()
         run: |
-          gh issue comment 59 --body "Deployment step outcomes for $GITHUB_SHA — npm ci: ${{ steps.deps.outcome }}; Vercel CLI: ${{ steps.cli.outcome }}; vercel pull: ${{ steps.pull.outcome }}; vercel build: ${{ steps.build.outcome }}; prebuilt deploy: ${{ steps.deploy.outcome }}."
+          gh issue comment 59 --body "Deployment step outcomes for $GITHUB_SHA — npm ci: ${{ steps.deps.outcome }}; Vercel CLI: ${{ steps.cli.outcome }}; token available: ${{ steps.tokencheck.outcome }}; vercel pull: ${{ steps.pull.outcome }}; vercel build: ${{ steps.build.outcome }}; prebuilt deploy: ${{ steps.deploy.outcome }}."
 
       - name: Fail if deployment did not succeed
         if: always() && steps.deploy.outcome != 'success'
