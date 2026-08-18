@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type MouseEvent, useEffect, useState } from "react";
 import { trackAtlasEvent } from "@/lib/analytics/client";
 import { classifyAtlasScreen } from "@/lib/analytics/schema";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
+
+const scheduleMemoryKey = "atlas:last-schedule-href";
 
 function CalendarIcon() {
   return (
@@ -36,10 +38,57 @@ function isPlainNavigation(event: MouseEvent<HTMLAnchorElement>) {
   return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 }
 
+function baghdadDay(value: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baghdad",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(value);
+}
+
+function shiftBaghdadDay(day: string, amount: number) {
+  const date = new Date(`${day}T12:00:00+03:00`);
+  date.setUTCDate(date.getUTCDate() + amount);
+  return baghdadDay(date);
+}
+
+function validRememberedSchedule(href: string | null) {
+  if (!href) return "/dashboard";
+  try {
+    const url = new URL(href, window.location.origin);
+    if (url.pathname !== "/dashboard") return "/dashboard";
+    const day = url.searchParams.get("day");
+    if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return `${url.pathname}${url.search}`;
+
+    const today = baghdadDay(new Date());
+    const yesterday = shiftBaghdadDay(today, -1);
+    if (day < yesterday) {
+      const clinic = url.searchParams.get("clinic");
+      return clinic
+        ? `/dashboard?${new URLSearchParams({ clinic, day: today })}`
+        : "/dashboard";
+    }
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return "/dashboard";
+  }
+}
+
+function withHash(href: string, hash: string) {
+  const url = new URL(href, window.location.origin);
+  url.hash = hash;
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 export function AppNavigation({ locale }: { locale: UiLocale }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchKey = searchParams.toString();
   const router = useRouter();
   const [visiblePath, setVisiblePath] = useState(pathname);
+  const [scheduleHref, setScheduleHref] = useState("/dashboard");
+  const [settingsHref, setSettingsHref] = useState("/dashboard/settings");
   const t = uiText(locale);
   const onSettings = visiblePath.startsWith("/dashboard/settings")
     || visiblePath.startsWith("/dashboard/reminders")
@@ -47,12 +96,32 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     || visiblePath.startsWith("/dashboard/history");
   const onSchedule = visiblePath === "/dashboard";
 
-  useEffect(() => setVisiblePath(pathname), [pathname]);
+  useEffect(() => {
+    setVisiblePath(pathname);
+
+    if (pathname === "/dashboard") {
+      const current = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
+      setScheduleHref(current);
+      try { window.localStorage.setItem(scheduleMemoryKey, current); } catch {}
+
+      const clinic = new URL(current, window.location.origin).searchParams.get("clinic");
+      setSettingsHref(clinic ? `/dashboard/settings?${new URLSearchParams({ clinic })}` : "/dashboard/settings");
+      return;
+    }
+
+    let remembered = "/dashboard";
+    try { remembered = validRememberedSchedule(window.localStorage.getItem(scheduleMemoryKey)); } catch {}
+    setScheduleHref(remembered);
+
+    const currentClinic = new URLSearchParams(searchKey).get("clinic")
+      ?? new URL(remembered, window.location.origin).searchParams.get("clinic");
+    setSettingsHref(currentClinic ? `/dashboard/settings?${new URLSearchParams({ clinic: currentClinic })}` : "/dashboard/settings");
+  }, [pathname, searchKey]);
 
   useEffect(() => {
     const warmCoreRoutes = () => {
-      router.prefetch("/dashboard");
-      router.prefetch("/dashboard/settings");
+      router.prefetch(scheduleHref);
+      router.prefetch(settingsHref);
     };
 
     warmCoreRoutes();
@@ -66,7 +135,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [router]);
+  }, [router, scheduleHref, settingsHref]);
 
   const go = (href: string, interaction: "topbar" | "bottom_nav" | "brand") => (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainNavigation(event)) return;
@@ -76,12 +145,14 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       interaction,
       locale,
     });
-    setVisiblePath(href);
+    const targetPath = new URL(href, window.location.origin).pathname;
+    setVisiblePath(targetPath);
     router.prefetch(href);
     router.push(href, { scroll: true });
   };
 
   const warm = (href: string) => () => router.prefetch(href);
+  const addHref = typeof window === "undefined" ? "/dashboard#new-appointment" : withHash(scheduleHref, "new-appointment");
 
   return (
     <>
@@ -89,11 +160,11 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
         <div className="app-topbar-inner shell">
           <Link
             className="app-brand"
-            href="/dashboard"
+            href={scheduleHref}
             prefetch={true}
             scroll={true}
-            onPointerDown={warm("/dashboard")}
-            onClick={go("/dashboard", "brand")}
+            onPointerDown={warm(scheduleHref)}
+            onClick={go(scheduleHref, "brand")}
             aria-label={t.openSchedule}
           >
             <span className="app-brand-mark" aria-hidden="true">A</span>
@@ -102,12 +173,12 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           <nav className="app-top-actions" aria-label="Atlas navigation">
             <Link
               className={`icon-button ${onSchedule ? "is-active" : ""}`}
-              href="/dashboard"
+              href={scheduleHref}
               prefetch={true}
               scroll={true}
-              onPointerDown={warm("/dashboard")}
-              onMouseEnter={warm("/dashboard")}
-              onClick={go("/dashboard", "topbar")}
+              onPointerDown={warm(scheduleHref)}
+              onMouseEnter={warm(scheduleHref)}
+              onClick={go(scheduleHref, "topbar")}
               aria-label={t.openSchedule}
               title={t.schedule}
             >
@@ -116,12 +187,12 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
             </Link>
             <Link
               className={`icon-button ${onSettings ? "is-active" : ""}`}
-              href="/dashboard/settings"
+              href={settingsHref}
               prefetch={true}
               scroll={true}
-              onPointerDown={warm("/dashboard/settings")}
-              onMouseEnter={warm("/dashboard/settings")}
-              onClick={go("/dashboard/settings", "topbar")}
+              onPointerDown={warm(settingsHref)}
+              onMouseEnter={warm(settingsHref)}
+              onClick={go(settingsHref, "topbar")}
               aria-label={t.openSettings}
               title={t.settings}
             >
@@ -135,18 +206,18 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       <nav className="app-bottom-nav" aria-label="Atlas mobile navigation">
         <Link
           className={onSchedule ? "is-active" : ""}
-          href="/dashboard"
+          href={scheduleHref}
           prefetch={true}
           scroll={true}
-          onPointerDown={warm("/dashboard")}
-          onClick={go("/dashboard", "bottom_nav")}
+          onPointerDown={warm(scheduleHref)}
+          onClick={go(scheduleHref, "bottom_nav")}
         >
           <CalendarIcon />
           <span>{t.schedule}</span>
         </Link>
         <Link
           className="app-bottom-add"
-          href="/dashboard#new-appointment"
+          href={addHref}
           prefetch={true}
           scroll={true}
           onClick={() => trackAtlasEvent("atlas_navigation", { target: "schedule", interaction: "bottom_nav", locale })}
@@ -156,11 +227,11 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
         </Link>
         <Link
           className={onSettings ? "is-active" : ""}
-          href="/dashboard/settings"
+          href={settingsHref}
           prefetch={true}
           scroll={true}
-          onPointerDown={warm("/dashboard/settings")}
-          onClick={go("/dashboard/settings", "bottom_nav")}
+          onPointerDown={warm(settingsHref)}
+          onClick={go(settingsHref, "bottom_nav")}
         >
           <GearIcon />
           <span>{t.settings}</span>
