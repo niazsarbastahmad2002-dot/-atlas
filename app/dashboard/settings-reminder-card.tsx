@@ -36,9 +36,7 @@ const copy = {
     before: "before",
     language: "Default patient reminder language",
     recommended: "Recommended default: 1 day before + 2 hours before.",
-    saving: "Saving…",
-    saved: "Saved ✓",
-    failed: "Could not save. Your last saved settings were restored.",
+    failed: "That change did not go through. Your previous settings are still active.",
     approval: "WhatsApp is not connected yet, so automatic sending cannot be turned on.",
     viewOnly: "Only clinic administration can change these settings.",
   },
@@ -56,9 +54,7 @@ const copy = {
     before: "پێش وادە",
     language: "زمانی بنەڕەتی بیرخستنەوەی نەخۆش",
     recommended: "پێشنیاری بنەڕەتی: ١ ڕۆژ پێش وادە + ٢ کاتژمێر پێش وادە.",
-    saving: "پاشەکەوت دەکرێت…",
-    saved: "پاشەکەوت کرا ✓",
-    failed: "پاشەکەوت نەکرا. ڕێکخستنە پاشەکەوتکراوەکانی پێشوو گەڕێنرانەوە.",
+    failed: "گۆڕانکارییەکە نەکرا. ڕێکخستنەکانی پێشوو هەر ماون.",
     approval: "واتسئاپ هێشتا پەیوەست نەکراوە، بۆیە ناردنی خۆکار ناتوانرێت چالاک بکرێت.",
     viewOnly: "تەنها بەڕێوەبردنی کلینیک دەتوانێت ئەم ڕێکخستنانە بگۆڕێت.",
   },
@@ -76,9 +72,7 @@ const copy = {
     before: "قبل الموعد",
     language: "لغة تذكير المريض الافتراضية",
     recommended: "الإعداد المقترح: قبل يوم + قبل ساعتين.",
-    saving: "جارٍ الحفظ…",
-    saved: "تم الحفظ ✓",
-    failed: "تعذر الحفظ. تمت استعادة آخر إعدادات محفوظة.",
+    failed: "لم يتم التغيير. بقيت إعداداتك السابقة كما هي.",
     approval: "واتسئاب غير متصل بعد، لذلك لا يمكن تشغيل الإرسال التلقائي.",
     viewOnly: "يمكن لإدارة العيادة فقط تغيير هذه الإعدادات.",
   },
@@ -99,7 +93,7 @@ function leadLabel(minutes: number, locale: UiLocale) {
 export function SettingsReminderCard({ clinicId, locale, canManage, initialSettings }: Props) {
   const t = copy[locale];
   const [settings, setSettings] = useState(initialSettings);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState(false);
   const hydrated = useRef(false);
   const skipNextSave = useRef(false);
   const saveVersion = useRef(0);
@@ -110,7 +104,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
     lastSaved.current = initialSettings;
     hydrated.current = false;
     skipNextSave.current = false;
-    setSaveState("idle");
+    setSaveError(false);
   }, [initialSettings]);
 
   const payload = useMemo(() => ({
@@ -133,14 +127,16 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
     }
 
     const version = ++saveVersion.current;
-    setSaveState("saving");
+    setSaveError(false);
 
     const restoreLastSaved = () => {
       skipNextSave.current = true;
       setSettings(lastSaved.current);
-      setSaveState("error");
+      setSaveError(true);
     };
 
+    // The visible control changes immediately. Persistence follows quietly in
+    // the background; only a failure asks for the receptionist's attention.
     const timer = window.setTimeout(() => {
       void fetch("/api/settings/reminders", {
         method: "POST",
@@ -167,20 +163,16 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
           secondLeadMinutes: saved.secondLeadMinutes,
           defaultLanguage: saved.defaultLanguage,
         };
-        setSaveState("saved");
-        window.setTimeout(() => {
-          if (version === saveVersion.current) setSaveState("idle");
-        }, 1400);
       }).catch(() => {
         if (version === saveVersion.current) restoreLastSaved();
       });
-    }, 180);
+    }, 35);
 
     return () => window.clearTimeout(timer);
   }, [canManage, payload, settings]);
 
   function setFirstReminder(leadMinutes: number) {
-    setSaveState("idle");
+    setSaveError(false);
     setSettings((current) => ({
       ...current,
       leadMinutes,
@@ -189,7 +181,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
   }
 
   function setSecondReminder(value: string) {
-    setSaveState("idle");
+    setSaveError(false);
     setSettings((current) => ({
       ...current,
       secondLeadMinutes: value ? Number(value) : null,
@@ -219,7 +211,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
             checked={settings.enabled}
             disabled={!canManage || !settings.approved}
             onChange={(event) => {
-              setSaveState("idle");
+              setSaveError(false);
               setSettings((current) => ({ ...current, enabled: event.target.checked }));
             }}
           />
@@ -262,7 +254,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
             value={settings.defaultLanguage}
             disabled={!canManage}
             onChange={(event) => {
-              setSaveState("idle");
+              setSaveError(false);
               setSettings((current) => ({ ...current, defaultLanguage: event.target.value }));
             }}
           >
@@ -274,9 +266,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
 
         <div className="atlas-reminder-footer">
           <p className="field-help">{canManage ? t.recommended : t.viewOnly}</p>
-          <span className={`atlas-reminder-save is-${saveState}`} role={saveState === "error" ? "alert" : "status"} aria-live="polite">
-            {saveState === "saving" ? t.saving : saveState === "saved" ? t.saved : saveState === "error" ? t.failed : ""}
-          </span>
+          {saveError ? <span className="atlas-reminder-save is-error" role="alert">{t.failed}</span> : null}
         </div>
       </div>
 
@@ -290,8 +280,7 @@ export function SettingsReminderCard({ clinicId, locale, canManage, initialSetti
         .reminder-provider-note { margin: -2px 0 0; border-radius: 10px; padding: 10px 11px; background: var(--surface-soft); color: var(--muted); font-size: 11px; line-height: 1.5; }
         .atlas-reminder-footer { min-height: 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .atlas-reminder-footer .field-help { margin: 0; }
-        .atlas-reminder-save { min-width: 118px; color: var(--muted); text-align: end; font-size: 11px; font-weight: 780; }
-        .atlas-reminder-save.is-saved { color: var(--success); }
+        .atlas-reminder-save { color: var(--muted); text-align: end; font-size: 11px; font-weight: 780; }
         .atlas-reminder-save.is-error { max-width: 260px; color: var(--danger); }
         @media (max-width: 620px) {
           .atlas-reminder-times { grid-template-columns: 1fr; }

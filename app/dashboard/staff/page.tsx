@@ -27,8 +27,9 @@ const copy: Record<UiLocale, Record<string, string>> = {
     signedInFirst: "Add the receptionist's work email once. They then use the normal Atlas sign-in screen. No clinic setup code is needed.",
     access: "People with access",
     protected: "The clinic administrator cannot be removed here.",
-    saveRole: "Save access",
+    saveRole: "Change access",
     remove: "Remove access",
+    backSettings: "Back to settings",
     ownerRequired: "Administration access required.",
     ownerRequiredHelp: "Receptionists use the schedule. Clinic access is managed here only when needed.",
     unavailable: "Clinic access could not load.",
@@ -50,8 +51,9 @@ const copy: Record<UiLocale, Record<string, string>> = {
     signedInFirst: "تەنها جارێک ئیمەیڵی کاری پێشخانە زیاد بکە. پاشان پەڕەی ئاسایی چوونەژوورەوەی Atlas بەکاردەهێنێت. کۆدی تایبەتی کلینیک پێویست نییە.",
     access: "کەسانی دەسەڵاتدار",
     protected: "بەڕێوەبەری کلینیک لێرە ناتوانرێت لاببرێت.",
-    saveRole: "دەسەڵات پاشەکەوت بکە",
+    saveRole: "دەسەڵات بگۆڕە",
     remove: "دەسەڵات لاببە",
+    backSettings: "گەڕانەوە بۆ ڕێکخستنەکان",
     ownerRequired: "دەسەڵاتی بەڕێوەبردن پێویستە.",
     ownerRequiredHelp: "پێشخانە خشتەی کات بەکاردەهێنێت. دەسەڵاتی کلینیک تەنها کاتێک پێویست بێت لێرە بەڕێوەدەبرێت.",
     unavailable: "دەسەڵاتی کلینیک بار نەبوو.",
@@ -73,8 +75,9 @@ const copy: Record<UiLocale, Record<string, string>> = {
     signedInFirst: "أضف بريد موظف الاستقبال مرة واحدة. بعد ذلك يستخدم شاشة دخول Atlas العادية. لا حاجة إلى رمز إعداد خاص بالعيادة.",
     access: "الأشخاص الذين لديهم صلاحية",
     protected: "لا يمكن إزالة مسؤول العيادة من هنا.",
-    saveRole: "حفظ الصلاحية",
+    saveRole: "تغيير الصلاحية",
     remove: "إزالة الصلاحية",
+    backSettings: "العودة إلى الإعدادات",
     ownerRequired: "صلاحية الإدارة مطلوبة.",
     ownerRequiredHelp: "موظفو الاستقبال يستخدمون الجدول. تتم إدارة صلاحيات العيادة هنا فقط عند الحاجة.",
     unavailable: "تعذر تحميل صلاحيات العيادة.",
@@ -131,7 +134,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
           <div className="app-brand"><span className="app-brand-mark">A</span><span>Atlas</span></div>
           <h1>{text.ownerRequired}</h1>
           <p className="quiet">{text.ownerRequiredHelp}</p>
-          <Link className="button" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{t.settings}</Link>
+          <Link className="button" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{text.backSettings}</Link>
         </section>
       </main>
     );
@@ -142,7 +145,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
     .select("user_id, role")
     .eq("clinic_id", clinic.id)
     .order("role", { ascending: true });
-  if (membersError) return <DirectoryUnavailable label={text.unavailable} back={t.settings} />;
+  if (membersError) return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
 
   let memberRows: Array<{ user_id: string; role: string; email: string }> = [];
   try {
@@ -155,7 +158,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       email: emailById.get(member.user_id) ?? "Email unavailable",
     }));
   } catch {
-    return <DirectoryUnavailable label={text.unavailable} back={t.settings} />;
+    return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
   }
 
   const transferCandidates = memberRows.filter((member) => member.user_id !== clinic.owner_id && member.role !== "owner");
@@ -170,7 +173,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
           <h1>{text.title}</h1>
           <p>{text.subtitle}</p>
         </div>
-        <Link className="button button-ghost button-small" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{t.settings}</Link>
+        <Link className="button button-ghost button-small" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{text.backSettings}</Link>
       </header>
 
       {clinics.length > 1 ? (
