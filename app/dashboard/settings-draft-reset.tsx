@@ -48,7 +48,7 @@ export function SettingsDraftReset({ locale }: { locale: UiLocale }) {
     const onSubmit = (event: SubmitEvent) => {
       const form = event.target instanceof HTMLFormElement ? event.target : null;
       if (!form) return;
-      const input = form.querySelector<HTMLInputElement>('#clinic_name, .doctor-name-form input[name="doctor_name"]');
+      const input = form.querySelector<HTMLInputElement>('input#clinic_name, input[name="doctor_name"]');
       if (input && isNameInput(input)) committed.set(input, input.value);
     };
 
