@@ -43,21 +43,39 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        id: deps
+        continue-on-error: true
         run: npm ci
 
       - name: Install Vercel CLI
+        id: cli
+        if: steps.deps.outcome == 'success'
+        continue-on-error: true
         run: npm install --global vercel@latest
 
       - name: Pull production settings and environment
+        id: pull
+        if: steps.cli.outcome == 'success'
+        continue-on-error: true
         run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Build Atlas on GitHub Actions
+        id: build
+        if: steps.pull.outcome == 'success'
+        continue-on-error: true
         run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Deploy prebuilt Atlas to production
+        id: deploy
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
         run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
 
-      - name: Report deployment result
+      - name: Report deployment diagnostics
         if: always()
         run: |
-          gh issue comment 59 --body "Prebuilt production deployment finished with status: ${{ job.status }} for commit $GITHUB_SHA."
+          gh issue comment 59 --body "Deployment step outcomes for $GITHUB_SHA — npm ci: ${{ steps.deps.outcome }}; Vercel CLI: ${{ steps.cli.outcome }}; vercel pull: ${{ steps.pull.outcome }}; vercel build: ${{ steps.build.outcome }}; prebuilt deploy: ${{ steps.deploy.outcome }}."
+
+      - name: Fail if deployment did not succeed
+        if: always() && steps.deploy.outcome != 'success'
+        run: exit 1
