@@ -205,3 +205,36 @@ export async function removeStaffMember(clinicId: string, userId: string) {
   revalidatePath("/dashboard/staff");
   redirect(staffUrl(clinicId, "notice", "removed"));
 }
+
+export async function transferClinicAdministrator(clinicId: string, formData: FormData) {
+  const newAdministratorId = String(formData.get("new_administrator_id") ?? "");
+  const confirmed = String(formData.get("confirm_transfer") ?? "") === "yes";
+  if (!isUuid(clinicId) || !isUuid(newAdministratorId) || !confirmed) {
+    redirect(staffUrl(clinicId, "error", "transfer_invalid"));
+  }
+
+  const { supabase, ownerId } = await ownerContext(clinicId);
+  if (newAdministratorId === ownerId) {
+    redirect(staffUrl(clinicId, "error", "transfer_invalid"));
+  }
+
+  const transferRpc = supabase.rpc as unknown as (
+    functionName: string,
+    args: { p_clinic_id: string; p_new_administrator_id: string },
+  ) => Promise<{ data: boolean | null; error: { code?: string; message?: string } | null }>;
+
+  const { data, error } = await transferRpc("transfer_clinic_administrator", {
+    p_clinic_id: clinicId,
+    p_new_administrator_id: newAdministratorId,
+  });
+
+  if (error || data !== true) {
+    console.error("Atlas clinic administrator transfer failed", { code: error?.code ?? "transfer_failed" });
+    redirect(staffUrl(clinicId, "error", "transfer_failed"));
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/staff");
+  redirect(staffUrl(clinicId, "notice", "administrator_transferred"));
+}

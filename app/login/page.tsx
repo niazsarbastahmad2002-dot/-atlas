@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./login-form";
 import { LoginLanguagePicker } from "./language-picker";
@@ -69,7 +69,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   const locale = await getUiLocale();
-  const t = uiText(locale);
   const copy = pageCopy[locale];
   const errorMessage = error === "invalid_link" ? copy.invalid : null;
   const noticeMessage = notice === "signed_out" ? copy.signedOut : null;
@@ -99,11 +98,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
         {noticeMessage ? <p className="notice notice-success login-notice" role="status">{noticeMessage}</p> : null}
         <LoginForm locale={locale} />
-        <div className="auth-alternative login-demo">
-          <span>{t.demoPrompt}</span>
-          <Link className="button button-ghost" href="/demo">{t.openDemo}</Link>
-          <p className="quiet">{t.demoHelp}</p>
-        </div>
       </section>
     </main>
   );

@@ -21,6 +21,8 @@ type PatientAppointment = {
   appointment_status: string;
   reminder_language: string;
   token_expires_at: string;
+  queue_position: number | null;
+  appointments_ahead: number | null;
 };
 
 type PatientLocale = "ku" | "ar" | "en";
@@ -33,6 +35,10 @@ const patientCopy = {
     eyebrow: "Your appointment",
     doctor: "Doctor",
     dateTime: "Date & time",
+    order: "Your order today",
+    first: "You’re first for this doctor.",
+    ahead: "appointment before yours",
+    aheadMany: "appointments before yours",
     question: "Will you come?",
     confirm: "Yes, I’m coming",
     cancel: "No, cancel it",
@@ -50,6 +56,10 @@ const patientCopy = {
     eyebrow: "کاتەکەت",
     doctor: "پزیشک",
     dateTime: "ڕێکەوت و کات",
+    order: "ڕیزت بۆ ئەمڕۆ",
+    first: "تۆ یەکەم کەسیت بۆ ئەم پزیشکە.",
+    ahead: "وادە پێش تۆیە",
+    aheadMany: "وادە پێش تۆیە",
     question: "دێیت؟",
     confirm: "بەڵێ، دێم",
     cancel: "نەخێر، هەڵیوەشێنەوە",
@@ -67,6 +77,10 @@ const patientCopy = {
     eyebrow: "موعدك",
     doctor: "الطبيب",
     dateTime: "التاريخ والوقت",
+    order: "ترتيبك اليوم",
+    first: "أنت الأول عند هذا الطبيب.",
+    ahead: "موعد قبلك",
+    aheadMany: "مواعيد قبلك",
     question: "هل ستأتي؟",
     confirm: "نعم، سأأتي",
     cancel: "لا، ألغِ الموعد",
@@ -118,6 +132,8 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
   const status = appointment.appointment_status;
   const isPending = status === "pending";
   const isConfirmed = status === "confirmed";
+  const isActive = isPending || isConfirmed;
+  const ahead = appointment.appointments_ahead ?? 0;
   const statusMessage = isConfirmed
     ? text.confirmed
     : status === "cancelled"
@@ -142,6 +158,13 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
           <div><dt>{text.doctor}</dt><dd>{appointment.doctor_name}</dd></div>
           <div><dt>{text.dateTime}</dt><dd>{dateTime}</dd></div>
         </dl>
+
+        {isActive && appointment.queue_position ? (
+          <div className="patient-order-card" aria-label={`${text.order} ${appointment.queue_position}`}>
+            <div><span>{text.order}</span><strong>#{appointment.queue_position}</strong></div>
+            <p>{ahead === 0 ? text.first : `${ahead} ${ahead === 1 ? text.ahead : text.aheadMany}.`}</p>
+          </div>
+        ) : null}
 
         {isPending ? (
           <div className="patient-response-block">
@@ -171,6 +194,11 @@ export default async function PatientAppointmentPage({ params }: PatientPageProp
         <p className="quiet patient-privacy">{text.privacy}</p>
 
         <style>{`
+          .patient-order-card { margin: 0 0 16px; border: 1px solid #cfe7dd; border-radius: 15px; padding: 13px 15px; background: #effaf6; }
+          .patient-order-card > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+          .patient-order-card span { color: var(--muted); font-size: 11px; font-weight: 760; }
+          .patient-order-card strong { color: var(--accent); font-size: 24px; line-height: 1; }
+          .patient-order-card p { margin: 7px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.45; }
           .patient-response-block { margin-top: 8px; }
           .patient-response-block h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
           .patient-status-message { margin-top: 8px; border-radius: 14px; padding: 15px; background: var(--surface-soft); color: var(--ink-soft); line-height: 1.5; }

@@ -9,6 +9,7 @@ import "./atlas-login-brand.css";
 import "./atlas-login-touch.css";
 import "./atlas-brand-v2.css";
 import "./atlas-orbit.css";
+import "./atlas-reception-flow.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
