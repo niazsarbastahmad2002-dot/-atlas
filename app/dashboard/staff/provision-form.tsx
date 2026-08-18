@@ -10,28 +10,28 @@ type DoctorOption = { id: string; name: string };
 
 const copy = {
   en: {
-    email: "Receptionist work email",
+    email: "Receptionist email",
     doctor: "Receptionist's doctor",
     chooseDoctor: "Choose one doctor",
     add: "Add receptionist",
-    adding: "Adding receptionist…",
-    help: "This receptionist will see and schedule only this doctor's patients. The Clinic Admin can still see every doctor.",
+    adding: "Sending invitation…",
+    help: "Atlas emails them automatically. They stay Pending until they open the email, then access turns on for this doctor.",
   },
   ku: {
-    email: "ئیمەیڵی کاری پێشخانە",
+    email: "ئیمەیڵی پێشخانە",
     doctor: "پزیشکی پێشخانە",
     chooseDoctor: "یەک پزیشک هەڵبژێرە",
     add: "پێشخانە زیاد بکە",
-    adding: "پێشخانە زیاد دەکرێت…",
-    help: "ئەم پێشخانەیە تەنها وادەکانی ئەم پزیشکە دەبینێت و ڕێکیان دەخات. بەڕێوەبەری کلینیک هەموو پزیشکەکان دەبینێت.",
+    adding: "بانگهێشتنامە دەنێردرێت…",
+    help: "Atlas خۆکارانە ئیمەیڵێکی بۆ دەنێرێت. تا ئیمەیڵەکە نەکاتەوە Pending دەمێنێتەوە، پاشان دەسەڵاتی ئەم پزیشکە چالاک دەبێت.",
   },
   ar: {
-    email: "بريد موظف الاستقبال للعمل",
+    email: "بريد موظف الاستقبال",
     doctor: "طبيب موظف الاستقبال",
     chooseDoctor: "اختر طبيباً واحداً",
     add: "إضافة موظف استقبال",
-    adding: "جارٍ إضافة موظف الاستقبال…",
-    help: "موظف الاستقبال يشوف ويرتب مواعيد هذا الطبيب فقط. مسؤول العيادة يبقى يقدر يشوف كل الأطباء.",
+    adding: "جارٍ إرسال الدعوة…",
+    help: "Atlas يرسل له البريد تلقائياً. يبقى Pending إلى أن يفتح الرسالة، وبعدها تتفعل صلاحية هذا الطبيب.",
   },
 } as const;
 
@@ -60,7 +60,7 @@ export function StaffProvisionForm({ clinicId, locale, doctors }: { clinicId: st
       {state.message ? (
         <div className={`notice ${state.status === "success" ? "notice-success" : "notice-error"}`} role={state.status === "success" ? "status" : "alert"}>
           <strong>{state.message}</strong>
-          {state.status === "success" && state.email ? <div className="field-help" dir="ltr">{state.email}</div> : null}
+          {state.email ? <div className="field-help" dir="ltr">{state.email}</div> : null}
         </div>
       ) : null}
     </div>
