@@ -49,10 +49,11 @@ test("validates UUIDs", () => {
   assert.equal(isUuid("not-a-uuid"), false);
 });
 
-test("enforces appointment status transitions", () => {
-  assert.deepEqual(allowedAppointmentTransitions("pending"), ["confirmed", "cancelled"]);
+test("enforces receptionist-friendly appointment status transitions", () => {
+  assert.deepEqual(allowedAppointmentTransitions("pending"), ["confirmed", "cancelled", "completed", "no_show"]);
   assert.equal(canTransitionAppointment("pending", "confirmed"), true);
-  assert.equal(canTransitionAppointment("pending", "completed"), false);
+  assert.equal(canTransitionAppointment("pending", "completed"), true);
+  assert.equal(canTransitionAppointment("pending", "no_show"), true);
   assert.equal(canTransitionAppointment("confirmed", "no_show"), true);
   assert.equal(canTransitionAppointment("completed", "completed"), true);
 });
