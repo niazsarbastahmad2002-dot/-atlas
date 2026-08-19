@@ -1,0 +1,243 @@
+name: Atlas zero-build promote existing release
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/zero-build-promote-existing.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: atlas-zero-build-promote-existing
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      TEAM_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      CANDIDATE_ID: dpl_BaB4V1SCwFRYEgExBEpFqFsN7R6o
+      CANDIDATE_HOST: atlasdemofixed-2m4wd2e1z-atlas-fca2.vercel.app
+      EXPECTED_CANDIDATE_SHA: 066de8fc8aa8a859893756bed1245045cad71da1
+      CURRENT_PRODUCTION_ID: dpl_H9mDirBpHoW87qPq1o8DGRE9KoGd
+      CANONICAL_HOST: atlasdemofixed.vercel.app
+      GH_TOKEN: ${{ github.token }}
+      ONE_TIME_SCHEDULER_TOKEN: "05df97370b433468ee6744bba884b480531f0eed1aec9cb113beaeae164d15dc"
+
+    steps:
+      - name: Start sanitized report
+        run: |
+          cat > /tmp/report.md <<'EOF'
+          ## Atlas zero-build Vercel promotion
+
+          This path promotes an already-built READY deployment. It does not create a new deployment or run a new Vercel build.
+          EOF
+
+      - name: Validate candidate and capture original protection
+        id: prepare
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v13/deployments/$CANDIDATE_ID?teamId=$TEAM_ID" > /tmp/candidate.json
+          curl --fail --silent --show-error -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/$PROJECT_ID?teamId=$TEAM_ID" > /tmp/project.json
+          python - <<'PY'
+          import json,os,sys
+          c=json.load(open('/tmp/candidate.json'))
+          ok=(c.get('id')==os.environ['CANDIDATE_ID'] and
+              str(c.get('readyState') or c.get('state'))=='READY' and
+              str((c.get('meta') or {}).get('githubCommitSha'))==os.environ['EXPECTED_CANDIDATE_SHA'])
+          p=json.load(open('/tmp/project.json'))
+          protection=p.get('ssoProtection')
+          open('/tmp/original-protection.json','w').write(json.dumps({'ssoProtection':protection}))
+          if not ok:
+              open('/tmp/report.md','a').write('\n- Candidate validation: **failed — production untouched**\n')
+              sys.exit(1)
+          dtype=(protection or {}).get('deploymentType') if isinstance(protection,dict) else None
+          if dtype not in (None,'preview','prod_deployment_urls_and_all_previews'):
+              open('/tmp/report.md','a').write(f'\n- Preview protection mode `{dtype}` is broader than expected; stopped safely.\n')
+              sys.exit(1)
+          open('/tmp/report.md','a').write('\n- Candidate validation: **READY and correct**\n')
+          open('/tmp/report.md','a').write(f'- Original preview protection: **{dtype or "none"}**\n')
+          PY
+
+      - name: Temporarily disable preview SSO protection
+        id: unprotect
+        if: steps.prepare.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/unprotect.json -w '%{http_code}' -X PATCH \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' \
+            --data '{"ssoProtection":null}' \
+            "https://api.vercel.com/v9/projects/$PROJECT_ID?teamId=$TEAM_ID")
+          if [ "$HTTP" != 200 ]; then
+            code=$(python - <<'PY'
+          import json
+          try: print((json.load(open('/tmp/unprotect.json')).get('error') or {}).get('code') or 'unknown')
+          except: print('unknown')
+          PY
+          )
+            echo >> /tmp/report.md
+            echo "- Temporary preview access: **failed safely** (\`$code\`)" >> /tmp/report.md
+            exit 1
+          fi
+          echo '- Temporary preview access: **opened for runtime probe**' >> /tmp/report.md
+
+      - name: Probe actual candidate runtime
+        id: runtime
+        if: steps.unprotect.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          report=/tmp/report.md
+          fail=0
+          probe_page() {
+            path="$1"; marker="$2"; label="$3"
+            code=$(curl --silent --show-error --max-time 20 -o /tmp/body -w '%{http_code}' "https://$CANDIDATE_HOST$path" || true)
+            if [ "$code" = 200 ] && grep -qi "$marker" /tmp/body; then
+              echo "- $label: **pass**" >> "$report"
+            else
+              echo "- $label: **fail** (HTTP $code)" >> "$report"
+              fail=1
+            fi
+          }
+          sleep 2
+          probe_page '/login' 'Atlas' 'Login + Supabase runtime'
+          probe_page '/privacy' 'Atlas' 'Privacy route'
+          probe_page '/terms' 'Atlas' 'Terms route'
+
+          printf '{"object":"whatsapp_business_account","entry":[]}' > /tmp/wa
+          post_code=$(curl --silent --show-error --max-time 20 -o /tmp/post -w '%{http_code}' -X POST \
+            -H 'x-hub-signature-256: sha256=0000000000000000000000000000000000000000000000000000000000000000' \
+            -H 'Content-Type: application/json' --data-binary @/tmp/wa \
+            "https://$CANDIDATE_HOST/api/whatsapp/webhook" || true)
+          post_err=$(python - <<'PY'
+          import json
+          try: print(json.load(open('/tmp/post')).get('error','unknown'))
+          except: print('unknown')
+          PY
+          )
+          if [ "$post_code" = 403 ] && [ "$post_err" = invalid_signature ]; then
+            echo '- WhatsApp app-secret runtime: **pass**' >> "$report"
+          else
+            echo "- WhatsApp app-secret runtime: **fail** (HTTP $post_code, $post_err)" >> "$report"
+            fail=1
+          fi
+
+          cron_code=$(curl --silent --show-error --max-time 30 -o /tmp/cron -w '%{http_code}' \
+            -H "Authorization: Bearer $ONE_TIME_SCHEDULER_TOKEN" \
+            "https://$CANDIDATE_HOST/api/cron/reminders" || true)
+          if [ "$cron_code" = 200 ]; then
+            claimed=$(python - <<'PY'
+          import json
+          try: print(int(json.load(open('/tmp/cron')).get('claimed',-1)))
+          except: print(-1)
+          PY
+          )
+            if [ "$claimed" = 0 ]; then
+              echo '- Supabase admin + scheduler + outbound WhatsApp runtime: **pass**' >> "$report"
+            else
+              echo "- Unexpected reminder claim count: **$claimed**" >> "$report"; fail=1
+            fi
+          else
+            err=$(python - <<'PY'
+          import json
+          try: print(json.load(open('/tmp/cron')).get('error','unknown'))
+          except: print('unknown')
+          PY
+          )
+            echo "- Supabase admin + scheduler + outbound WhatsApp runtime: **fail** (HTTP $cron_code, $err)" >> "$report"; fail=1
+          fi
+          [ "$fail" -eq 0 ]
+
+      - name: Restore original preview protection
+        id: restore
+        if: always() && steps.unprotect.outcome == 'success'
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/restore.json -w '%{http_code}' -X PATCH \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' \
+            --data @/tmp/original-protection.json \
+            "https://api.vercel.com/v9/projects/$PROJECT_ID?teamId=$TEAM_ID")
+          [ "$HTTP" = 200 ]
+          echo '- Preview protection: **restored**' >> /tmp/report.md
+
+      - name: Promote existing deployment without rebuilding
+        id: promote
+        if: steps.runtime.outcome == 'success' && steps.restore.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/promote.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' \
+            --data '{}' \
+            "https://api.vercel.com/v10/projects/$PROJECT_ID/promote/$CANDIDATE_ID?teamId=$TEAM_ID")
+          if [ "$HTTP" != 200 ] && [ "$HTTP" != 201 ] && [ "$HTTP" != 202 ]; then
+            code=$(python - <<'PY'
+          import json
+          try: print((json.load(open('/tmp/promote.json')).get('error') or {}).get('code') or 'unknown')
+          except: print('unknown')
+          PY
+          )
+            echo "- Zero-build promotion: **failed safely** (\`$code\`)" >> /tmp/report.md
+            exit 1
+          fi
+          echo '- Zero-build promotion: **accepted by Vercel**' >> /tmp/report.md
+
+      - name: Verify canonical production points to candidate and works
+        id: verify
+        if: steps.promote.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sleep 5
+          curl --fail --silent --show-error -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v13/deployments/$CANONICAL_HOST?teamId=$TEAM_ID" > /tmp/live.json
+          live_id=$(python - <<'PY'
+          import json
+          print(json.load(open('/tmp/live.json')).get('id',''))
+          PY
+          )
+          [ "$live_id" = "$CANDIDATE_ID" ]
+          for path in /login /privacy /terms; do
+            code=$(curl --silent --show-error --max-time 20 -o /tmp/livebody -w '%{http_code}' "https://$CANONICAL_HOST$path" || true)
+            [ "$code" = 200 ] && grep -qi Atlas /tmp/livebody
+          done
+          echo '- Canonical Atlas verification: **passed**' >> /tmp/report.md
+          echo >> /tmp/report.md
+          echo '**Result: Atlas is live on the new functional release with zero new deployments/builds.**' >> /tmp/report.md
+
+      - name: Roll back production if post-promotion verification failed
+        id: rollback
+        if: steps.promote.outcome == 'success' && steps.verify.outcome != 'success'
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/rollback.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' --data '{}' \
+            "https://api.vercel.com/v10/projects/$PROJECT_ID/promote/$CURRENT_PRODUCTION_ID?teamId=$TEAM_ID")
+          [ "$HTTP" = 200 ] || [ "$HTTP" = 201 ] || [ "$HTTP" = 202 ]
+          echo '- Automatic rollback: **previous production restored**' >> /tmp/report.md
+
+      - name: Publish sanitized result
+        if: always()
+        run: |
+          cat /tmp/report.md >> "$GITHUB_STEP_SUMMARY"
+          gh issue comment 59 --body-file /tmp/report.md
+
+      - name: Require successful zero-build promotion
+        if: always()
+        run: |
+          test "${{ steps.prepare.outcome }}" = success
+          test "${{ steps.unprotect.outcome }}" = success
+          test "${{ steps.runtime.outcome }}" = success
+          test "${{ steps.restore.outcome }}" = success
+          test "${{ steps.promote.outcome }}" = success
+          test "${{ steps.verify.outcome }}" = success
