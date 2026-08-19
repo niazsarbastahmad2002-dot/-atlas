@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { cleanDisplayName, isValidDisplayName, normalizeIraqiMobile } from "@/lib/appointments";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +13,21 @@ function validLead(value: unknown) {
   return Number.isInteger(value) && Number(value) >= 30 && Number(value) <= 10080;
 }
 
+function optionalSpecialty(value: unknown) {
+  if (value === null || value === undefined) return undefined;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (!isValidDisplayName(raw)) return false;
+  return cleanDisplayName(raw);
+}
+
+function optionalPhone(value: unknown) {
+  if (value === null || value === undefined) return undefined;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  return normalizeIraqiMobile(raw) ?? false;
+}
+
 async function context(clinicId: string, requestedDoctorId?: string | null) {
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -20,7 +37,7 @@ async function context(clinicId: string, requestedDoctorId?: string | null) {
   const [{ data: clinic }, { data: membership }, { data: doctors }] = await Promise.all([
     db.from("clinics").select("id, owner_id").eq("id", clinicId).maybeSingle(),
     db.from("clinic_members").select("role, assigned_doctor_id").eq("clinic_id", clinicId).eq("user_id", userData.user.id).maybeSingle(),
-    db.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinicId).eq("active", true).order("display_order", { ascending: true }).order("name", { ascending: true }),
+    db.from("doctors").select("id, name, specialty, receptionist_phone, active, display_order").eq("clinic_id", clinicId).eq("active", true).order("display_order", { ascending: true }).order("name", { ascending: true }),
   ]);
 
   if (!clinic || !Array.isArray(doctors) || doctors.length === 0) return null;
@@ -65,6 +82,8 @@ export async function GET(request: Request) {
     role: ctx.administrative ? "admin" : "receptionist",
     doctorId: ctx.doctor.id,
     doctorName: ctx.doctor.name,
+    doctorSpecialty: ctx.doctor.specialty ?? "",
+    receptionPhone: ctx.doctor.receptionist_phone ?? "",
     doctors: ctx.administrative ? ctx.doctors.map((doctor: any) => ({ id: doctor.id, name: doctor.name })) : [{ id: ctx.doctor.id, name: ctx.doctor.name }],
     appointmentIntervalMinutes: settings.appointment_interval_minutes,
     remindersEnabled: settings.reminders_enabled,
@@ -95,6 +114,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "doctor_forbidden" }, { status: 403 });
   }
 
+  const specialty = optionalSpecialty(body.doctorSpecialty);
+  if (specialty === false) return NextResponse.json({ error: "specialty_invalid" }, { status: 400 });
+  if (specialty !== undefined && !ctx.administrative) {
+    return NextResponse.json({ error: "specialty_forbidden" }, { status: 403 });
+  }
+  const receptionPhone = optionalPhone(body.receptionPhone);
+  if (receptionPhone === false) return NextResponse.json({ error: "phone_invalid" }, { status: 400 });
+
   const { data: current, error: readError } = await ctx.db.from("doctor_workflow_settings")
     .select("appointment_interval_minutes, reminders_enabled, reminder_lead_minutes, reminder_second_lead_minutes, default_reminder_language")
     .eq("clinic_id", clinicId)
@@ -111,19 +138,23 @@ export async function POST(request: Request) {
     updated_by: ctx.user.id,
   };
 
+  let workflowChanged = false;
   if (body.appointmentIntervalMinutes !== undefined) {
     const value = Number(body.appointmentIntervalMinutes);
     if (!intervals.has(value)) return NextResponse.json({ error: "interval_invalid" }, { status: 400 });
     next.appointment_interval_minutes = value;
+    workflowChanged = true;
   }
   if (body.remindersEnabled !== undefined) {
     if (typeof body.remindersEnabled !== "boolean") return NextResponse.json({ error: "reminders_invalid" }, { status: 400 });
     next.reminders_enabled = body.remindersEnabled;
+    workflowChanged = true;
   }
   if (body.reminderLeadMinutes !== undefined) {
     const value = Number(body.reminderLeadMinutes);
     if (!validLead(value)) return NextResponse.json({ error: "lead_invalid" }, { status: 400 });
     next.reminder_lead_minutes = value;
+    workflowChanged = true;
   }
   if (body.reminderSecondLeadMinutes !== undefined) {
     if (body.reminderSecondLeadMinutes === null || body.reminderSecondLeadMinutes === "") {
@@ -133,28 +164,62 @@ export async function POST(request: Request) {
       if (!validLead(value)) return NextResponse.json({ error: "second_lead_invalid" }, { status: 400 });
       next.reminder_second_lead_minutes = value;
     }
+    workflowChanged = true;
   }
   if (body.defaultReminderLanguage !== undefined) {
     const value = String(body.defaultReminderLanguage);
     if (!languages.has(value)) return NextResponse.json({ error: "language_invalid" }, { status: 400 });
     next.default_reminder_language = value;
+    workflowChanged = true;
   }
   if (next.reminder_second_lead_minutes === next.reminder_lead_minutes) next.reminder_second_lead_minutes = null;
 
-  const { data: saved, error } = await ctx.db.from("doctor_workflow_settings")
-    .update(next)
-    .eq("clinic_id", clinicId)
-    .eq("doctor_id", ctx.doctor.id)
-    .select("appointment_interval_minutes, reminders_enabled, reminder_lead_minutes, reminder_second_lead_minutes, default_reminder_language")
-    .maybeSingle();
-  if (error || !saved) {
-    console.error("Atlas doctor workflow settings update failed", { code: error?.code ?? "not_found" });
-    return NextResponse.json({ error: "save_failed" }, { status: 500 });
+  let saved = current;
+  if (workflowChanged) {
+    const result = await ctx.db.from("doctor_workflow_settings")
+      .update(next)
+      .eq("clinic_id", clinicId)
+      .eq("doctor_id", ctx.doctor.id)
+      .select("appointment_interval_minutes, reminders_enabled, reminder_lead_minutes, reminder_second_lead_minutes, default_reminder_language")
+      .maybeSingle();
+    if (result.error || !result.data) {
+      console.error("Atlas doctor workflow settings update failed", { code: result.error?.code ?? "not_found" });
+      return NextResponse.json({ error: "save_failed" }, { status: 500 });
+    }
+    saved = result.data;
+  }
+
+  let savedSpecialty = ctx.doctor.specialty ?? "";
+  let savedReceptionPhone = ctx.doctor.receptionist_phone ?? "";
+  if (specialty !== undefined || receptionPhone !== undefined) {
+    let admin;
+    try {
+      admin = createAdminClient() as any;
+    } catch {
+      return NextResponse.json({ error: "save_failed" }, { status: 500 });
+    }
+    const doctorPatch: Record<string, string | null> = {};
+    if (specialty !== undefined) doctorPatch.specialty = specialty;
+    if (receptionPhone !== undefined) doctorPatch.receptionist_phone = receptionPhone;
+    const { data: savedDoctor, error: doctorError } = await admin.from("doctors")
+      .update(doctorPatch)
+      .eq("clinic_id", clinicId)
+      .eq("id", ctx.doctor.id)
+      .select("specialty, receptionist_phone")
+      .maybeSingle();
+    if (doctorError || !savedDoctor) {
+      console.error("Atlas patient-facing doctor details update failed", { code: doctorError?.code ?? "not_found" });
+      return NextResponse.json({ error: "save_failed" }, { status: 500 });
+    }
+    savedSpecialty = savedDoctor.specialty ?? "";
+    savedReceptionPhone = savedDoctor.receptionist_phone ?? "";
   }
 
   return NextResponse.json({
     doctorId: ctx.doctor.id,
     doctorName: ctx.doctor.name,
+    doctorSpecialty: savedSpecialty,
+    receptionPhone: savedReceptionPhone,
     appointmentIntervalMinutes: saved.appointment_interval_minutes,
     remindersEnabled: saved.reminders_enabled,
     reminderLeadMinutes: saved.reminder_lead_minutes,
