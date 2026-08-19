@@ -1,0 +1,46 @@
+name: Atlas reminder one-shot probe
+
+on:
+  push:
+    branches: [atlas-meta-template-audit-20260819]
+    paths: [.github/workflows/reminder-one-shot-probe.yml]
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/reminder-one-shot-probe.yml]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Run production reminder scheduler once
+        id: call
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error --max-time 45 -o /tmp/body -w '%{http_code}' \
+            -H 'Authorization: Bearer ab18e84ea3e3d61b233546c243adbdedd3d48c8589f4c2829ba4f72d88148ee3' \
+            'https://atlasdemofixed.vercel.app/api/cron/reminders')
+          python - <<'PY'
+          import json
+          try: body=json.load(open('/tmp/body'))
+          except: body={}
+          safe={k:body.get(k) for k in ('error','claimed','sent','retry','failed','stale','completion_unknown') if k in body}
+          with open('/tmp/report.md','w') as f:
+              f.write('## Atlas one-shot reminder probe\n\n')
+              f.write(f'- HTTP: **{__import__("os").environ.get("HTTP_STATUS","unknown")}**\n')
+              f.write(f'- Result: `{json.dumps(safe,separators=(",",":"))}`\n')
+          PY
+        env:
+          HTTP_STATUS: ${{ steps.call.outputs.http_status }}
+
+      - name: Publish probe result
+        if: always()
+        run: |
+          gh issue comment 59 --repo niazsarbastahmad2002-dot/-atlas --body-file /tmp/report.md 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ github.token }}
