@@ -10,18 +10,31 @@ function stringValue(value: unknown) {
   return typeof value === "string" ? value : null;
 }
 
-function providerErrorCode(body: JsonRecord | null, status: number) {
+function providerError(body: JsonRecord | null, status: number, accessToken: string) {
   const error = object(body?.error);
   const code = error?.code;
-  if (typeof code === "string" || typeof code === "number") return `meta_${String(code).slice(0, 32)}`;
-  return `http_${status}`;
+  const subcode = error?.error_subcode;
+  const rawMessage = stringValue(error?.message);
+  const message = rawMessage
+    ? rawMessage.replaceAll(accessToken, "[redacted]").replace(/\s+/g, " ").slice(0, 240)
+    : null;
+  return {
+    errorCode: typeof code === "string" || typeof code === "number"
+      ? `meta_${String(code).slice(0, 32)}`
+      : `http_${status}`,
+    errorSubcode: typeof subcode === "string" || typeof subcode === "number"
+      ? String(subcode).slice(0, 32)
+      : null,
+    errorDetail: message,
+  };
 }
 
 export const ATLAS_APPOINTMENT_REMINDER_TEMPLATE = "atlas_appointment_reminder";
+export const ATLAS_SORANI_META_LANGUAGE = "ckb";
 
 export const ATLAS_APPOINTMENT_REMINDER_VARIANTS = [
   {
-    language: "ku",
+    language: ATLAS_SORANI_META_LANGUAGE,
     text: "بیرخستنەوەی کاتی پزیشک لە {{1}}. کاتی پزیشکت بۆ {{2}} دیاریکراوە. ئەگەر ناتوانیت ئامادە بیت، تکایە پەیوەندی بە کلینیکەوە بکە.",
     examples: ["کلینیکی ئەتڵەس", "20/8/2026، 10:30 پ.ن"],
   },
@@ -44,6 +57,8 @@ export type MetaTemplateBootstrapResult = {
   status: string | null;
   category: string | null;
   errorCode: string | null;
+  errorSubcode: string | null;
+  errorDetail: string | null;
 };
 
 export async function bootstrapAtlasAppointmentReminderTemplates({
@@ -67,6 +82,8 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
       status: null,
       category: null,
       errorCode: "provider_configuration_invalid",
+      errorSubcode: null,
+      errorDetail: null,
     }));
   }
 
@@ -90,6 +107,8 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
         status: existing?.status ?? null,
         category: existing?.category ?? null,
         errorCode: null,
+        errorSubcode: null,
+        errorDetail: null,
       });
       continue;
     }
@@ -127,13 +146,16 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
       const templateId = stringValue(body?.id);
       const status = stringValue(body?.status)?.toUpperCase() ?? null;
       const category = stringValue(body?.category)?.toUpperCase() ?? null;
+      const failure = response.ok ? null : providerError(body, response.status, accessToken);
       results.push({
         language: variant.language,
         created: response.ok,
         templateId,
         status,
         category,
-        errorCode: response.ok ? null : providerErrorCode(body, response.status),
+        errorCode: failure?.errorCode ?? null,
+        errorSubcode: failure?.errorSubcode ?? null,
+        errorDetail: failure?.errorDetail ?? null,
       });
     } catch {
       results.push({
@@ -143,6 +165,8 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
         status: null,
         category: null,
         errorCode: "transport_error",
+        errorSubcode: null,
+        errorDetail: null,
       });
     } finally {
       clearTimeout(timeout);

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ATLAS_APPOINTMENT_REMINDER_TEMPLATE,
+  ATLAS_SORANI_META_LANGUAGE,
   bootstrapAtlasAppointmentReminderTemplates,
 } from "../lib/reminders/meta-template-bootstrap.ts";
 
@@ -29,7 +30,7 @@ test("bootstrap creates the three Atlas utility reminder language variants with 
   });
 
   assert.equal(requests.length, 3);
-  assert.deepEqual(requests.map((request) => request.body.language), ["ku", "ar", "en_US"]);
+  assert.deepEqual(requests.map((request) => request.body.language), [ATLAS_SORANI_META_LANGUAGE, "ar", "en_US"]);
   for (const request of requests) {
     assert.equal(request.url, `https://graph.facebook.com/${graphApiVersion}/${wabaId}/message_templates`);
     assert.equal(request.body.name, ATLAS_APPOINTMENT_REMINDER_TEMPLATE);
@@ -57,7 +58,7 @@ test("bootstrap does not recreate an existing language variant", async () => {
     wabaId,
     existingTemplates: [{
       name: ATLAS_APPOINTMENT_REMINDER_TEMPLATE,
-      language: "ku",
+      language: ATLAS_SORANI_META_LANGUAGE,
       status: "APPROVED",
       category: "UTILITY",
     }],
@@ -65,6 +66,29 @@ test("bootstrap does not recreate an existing language variant", async () => {
   });
 
   assert.equal(calls, 2);
-  assert.equal(result.find((variant) => variant.language === "ku")?.created, false);
-  assert.equal(result.find((variant) => variant.language === "ku")?.status, "APPROVED");
+  assert.equal(result.find((variant) => variant.language === ATLAS_SORANI_META_LANGUAGE)?.created, false);
+  assert.equal(result.find((variant) => variant.language === ATLAS_SORANI_META_LANGUAGE)?.status, "APPROVED");
+});
+
+test("bootstrap returns safe Meta diagnostics without leaking the access token", async () => {
+  const fakeFetch = (async () => Response.json({
+    error: {
+      code: 100,
+      error_subcode: 2388003,
+      message: `Invalid parameter ${accessToken}`,
+    },
+  }, { status: 400 })) as typeof fetch;
+
+  const result = await bootstrapAtlasAppointmentReminderTemplates({
+    accessToken,
+    graphApiVersion,
+    wabaId,
+    existingTemplates: [],
+    fetchImplementation: fakeFetch,
+  });
+
+  assert.equal(result[0].errorCode, "meta_100");
+  assert.equal(result[0].errorSubcode, "2388003");
+  assert.equal(result[0].errorDetail?.includes("[redacted]"), true);
+  assert.equal(JSON.stringify(result).includes(accessToken), false);
 });
