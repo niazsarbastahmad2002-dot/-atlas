@@ -108,3 +108,10 @@ Internal engineering memory. Product behavior should be read together with `ATLA
 - Added source-level product contract tests so critical UX/security decisions become regressions rather than memories.
 - Added a machine-readable Meta readiness auditor so Atlas can check phone display-name status, WABA access and reminder-template variants itself.
 - Added a protected readiness/activation route that can only turn provider sending on after the automated checks are genuinely green.
+
+## 2026-08-20 live Meta readiness checkpoint
+- Confirmed production WABA `1553173296558731` directly contains the configured Atlas phone and is approved.
+- Confirmed the existing production token can manage this WABA with `whatsapp_business_management` and `whatsapp_business_messaging`; `business_management` is not required for this direct WABA path.
+- Added and deployed a protected server-side template bootstrap route plus a private Supabase invocation; secrets remain server-side.
+- Submitted `atlas_appointment_reminder` Arabic (`ar`) and English (`en_US`) utility variants; both are currently `PENDING` Meta review.
+- Meta rejected creation of the requested Sorani `ku` language variant with provider error code `100`; automatic messaging remains disabled while Sorani provider handling and template approvals are unresolved.
