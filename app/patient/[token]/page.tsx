@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { formatIraqiMobile } from "@/lib/appointments";
+import { localizeDigits } from "@/lib/i18n/format";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updatePatientAppointment } from "./actions";
@@ -18,6 +20,8 @@ type PatientPageProps = {
 type PatientAppointment = {
   clinic_name: string;
   doctor_name: string;
+  doctor_specialty: string | null;
+  receptionist_phone: string | null;
   appointment_at: string;
   appointment_status: string;
   reminder_language: string;
@@ -35,7 +39,11 @@ const patientCopy = {
     dateLocale: "en-IQ",
     eyebrow: "Your appointment",
     doctor: "Doctor",
+    specialty: "Specialty",
+    contact: "Reception contact",
     dateTime: "Date & time",
+    am: "AM",
+    pm: "PM",
     order: "Your order today",
     first: "You’re first for this doctor.",
     ahead: "appointment before yours",
@@ -59,7 +67,11 @@ const patientCopy = {
     dateLocale: "ckb-IQ",
     eyebrow: "کاتەکەت",
     doctor: "پزیشک",
+    specialty: "پسپۆڕی",
+    contact: "ژمارەی پێشخانە",
     dateTime: "ڕێکەوت و کات",
+    am: "پێش نیوەڕۆ",
+    pm: "دوای نیوەڕۆ",
     order: "ڕیزت بۆ ئەمڕۆ",
     first: "تۆ یەکەم کەسیت بۆ ئەم پزیشکە.",
     ahead: "وادە پێش تۆیە",
@@ -83,7 +95,11 @@ const patientCopy = {
     dateLocale: "ar-IQ",
     eyebrow: "موعدك",
     doctor: "الطبيب",
+    specialty: "الاختصاص",
+    contact: "رقم الاستقبال",
     dateTime: "التاريخ والوقت",
+    am: "صباحاً",
+    pm: "مساءً",
     order: "ترتيبك اليوم",
     first: "أنت الأول عند هذا الطبيب.",
     ahead: "موعد قبلك",
@@ -105,6 +121,27 @@ const patientCopy = {
 
 function patientLocale(value: string): PatientLocale {
   return value === "ku" || value === "ar" ? value : "en";
+}
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function baghdadClock(date: Date, locale: PatientLocale) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Baghdad",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const hour24 = Number(values.hour ?? 0);
+  const minute = Number(values.minute ?? 0);
+  const hour12 = hour24 % 12 || 12;
+  return {
+    clock: `${localizeDigits(pad(hour12), locale)}:${localizeDigits(pad(minute), locale)}`,
+    period: hour24 >= 12 ? patientCopy[locale].pm : patientCopy[locale].am,
+  };
 }
 
 export default async function PatientAppointmentPage({ params, searchParams }: PatientPageProps) {
@@ -142,17 +179,14 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
     month: "long",
     day: "numeric",
   }).format(appointmentDate);
-  const timeText = new Intl.DateTimeFormat(text.dateLocale, {
-    timeZone: "Asia/Baghdad",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(appointmentDate);
+  const time = baghdadClock(appointmentDate, locale);
   const status = appointment.appointment_status;
   const isPending = status === "pending";
   const isConfirmed = status === "confirmed";
   const isActive = isPending || isConfirmed;
   const reminderView = query.view === "reminder";
   const ahead = appointment.appointments_ahead ?? 0;
+  const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
   const statusMessage = isConfirmed
     ? text.confirmed
     : status === "cancelled"
@@ -170,18 +204,36 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           <span className="app-brand-mark" aria-hidden="true">A</span>
           <span className="app-brand-word">Atlas</span>
         </a>
-        <div className="eyebrow">{text.eyebrow}</div>
-        <h1>{appointment.clinic_name}</h1>
+        <div className="eyebrow patient-eyebrow">{text.eyebrow}</div>
+        <h1 className="patient-clinic-name">{appointment.clinic_name}</h1>
 
         <div className="patient-time-card">
-          <span>{text.dateTime}</span>
-          <strong>{dateText}</strong>
-          <bdi>{timeText}</bdi>
+          <span className="patient-time-label">{text.dateTime}</span>
+          <strong className="patient-date-value">{dateText}</strong>
+          <div className="patient-time-value">
+            <bdi dir="ltr">{time.clock}</bdi>
+            <span>{time.period}</span>
+          </div>
         </div>
 
-        <dl className="appointment-details patient-appointment-details">
-          <div><dt>{text.doctor}</dt><dd>{appointment.doctor_name}</dd></div>
-        </dl>
+        <section className="patient-doctor-card" aria-label={text.doctor}>
+          <div className="patient-detail-block">
+            <span>{text.doctor}</span>
+            <strong>{appointment.doctor_name}</strong>
+          </div>
+          {appointment.doctor_specialty ? (
+            <div className="patient-detail-block">
+              <span>{text.specialty}</span>
+              <strong className="patient-detail-secondary">{appointment.doctor_specialty}</strong>
+            </div>
+          ) : null}
+          {receptionPhone ? (
+            <div className="patient-detail-block patient-contact-block">
+              <span>{text.contact}</span>
+              <a href={`tel:${appointment.receptionist_phone}`} dir="ltr">{receptionPhone}</a>
+            </div>
+          ) : null}
+        </section>
 
         {isActive && appointment.queue_position ? (
           <div className="patient-order-card" aria-label={`${text.order} ${appointment.queue_position}`}>
@@ -230,24 +282,40 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         <p className="quiet patient-privacy">{text.privacy}</p>
 
         <style>{`
-          .patient-time-card { margin: 2px 0 14px; border: 1px solid #cfe7dd; border-radius: 17px; padding: 15px 17px; background: linear-gradient(145deg,#f5fcf9,#edf8f3); }
-          .patient-time-card > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-          .patient-time-card strong { display: block; color: var(--ink); font-size: 18px; line-height: 1.35; }
-          .patient-time-card bdi { display: block; margin-top: 6px; color: var(--accent); direction: ltr; font-size: 28px; font-weight: 880; line-height: 1; font-variant-numeric: tabular-nums; }
-          .patient-appointment-details { grid-template-columns: 1fr; margin-bottom: 14px; }
-          .patient-order-card { margin: 0 0 16px; border: 1px solid #cfe7dd; border-radius: 15px; padding: 13px 15px; background: #effaf6; }
-          .patient-order-card > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-          .patient-order-card span { color: var(--muted); font-size: 11px; font-weight: 760; }
-          .patient-order-card strong { color: var(--accent); font-size: 24px; line-height: 1; }
-          .patient-order-card p { margin: 7px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.45; }
-          .patient-initial-response, .patient-response-block { margin-top: 8px; }
-          .patient-initial-response h2, .patient-response-block h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
-          .patient-confirm-primary { width: 100%; min-height: 48px; }
-          .patient-cancel-small { float: inline-end; margin-top: 10px; border: 0; padding: 4px 0; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-          .patient-status-message { clear: both; margin-top: 18px; border-radius: 14px; padding: 15px; background: var(--surface-soft); color: var(--ink-soft); line-height: 1.5; }
+          .patient-card { width: min(100%, 610px); padding: clamp(24px,5vw,38px); }
+          .patient-eyebrow { margin-top: 20px; }
+          .patient-clinic-name { margin: 8px 0 24px; font-size: clamp(30px,7vw,42px); line-height: 1.08; }
+          .patient-time-card { margin: 0 0 22px; border: 1px solid #cfe7dd; border-radius: 20px; padding: clamp(20px,4vw,28px); background: linear-gradient(145deg,#f5fcf9,#edf8f3); }
+          .patient-time-label { display: block; margin-bottom: 13px; color: var(--muted); font-size: 11px; font-weight: 820; letter-spacing: .08em; text-transform: uppercase; }
+          .patient-date-value { display: block; max-width: 100%; color: var(--ink); font-size: clamp(21px,5vw,29px); line-height: 1.5; text-wrap: balance; }
+          .patient-time-value { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; margin-top: 18px; color: var(--accent); }
+          .patient-time-value bdi { direction: ltr; font-size: clamp(34px,8vw,48px); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+          .patient-time-value span { font-size: clamp(16px,4vw,21px); font-weight: 820; }
+          .patient-doctor-card { display: grid; gap: 0; margin: 0 0 22px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: #fff; }
+          .patient-detail-block { display: grid; gap: 7px; padding: 17px 19px; }
+          .patient-detail-block + .patient-detail-block { border-top: 1px solid var(--line); }
+          .patient-detail-block > span { color: var(--muted); font-size: 10px; font-weight: 820; letter-spacing: .06em; text-transform: uppercase; }
+          .patient-detail-block > strong { color: var(--ink); font-size: clamp(24px,6vw,32px); line-height: 1.25; }
+          .patient-detail-block > .patient-detail-secondary { font-size: clamp(17px,4vw,21px); font-weight: 790; }
+          .patient-contact-block a { width: fit-content; color: var(--accent); font-size: clamp(19px,4.5vw,24px); font-weight: 850; text-decoration: none; }
+          .patient-order-card { margin: 0 0 22px; border: 1px solid #cfe7dd; border-radius: 17px; padding: 17px 19px; background: #effaf6; }
+          .patient-order-card > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+          .patient-order-card span { color: var(--muted); font-size: 12px; font-weight: 780; }
+          .patient-order-card strong { color: var(--accent); font-size: 30px; line-height: 1; }
+          .patient-order-card p { margin: 10px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+          .patient-initial-response, .patient-response-block { margin-top: 12px; }
+          .patient-initial-response h2, .patient-response-block h2 { margin: 0 0 14px; font-size: clamp(22px,5vw,28px); letter-spacing: -.02em; }
+          .patient-confirm-primary { width: 100%; min-height: 54px; font-size: 16px; }
+          .patient-actions .button { min-height: 54px; }
+          .patient-cancel-small { float: inline-end; margin-top: 12px; border: 0; padding: 7px 2px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 720; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+          .patient-status-message { clear: both; margin-top: 22px; border-radius: 16px; padding: 18px; background: var(--surface-soft); color: var(--ink-soft); font-size: 15px; line-height: 1.55; }
           .patient-status-message.is-confirmed { background: var(--success-bg); color: var(--success); }
-          .patient-change-mind { margin-top: 10px; border: 0; padding: 3px 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-          .patient-privacy { clear: both; padding-top: 10px; }
+          .patient-change-mind { margin-top: 12px; border: 0; padding: 5px 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 720; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+          .patient-privacy { clear: both; padding-top: 14px; }
+          .patient-card button, .patient-card a { -webkit-tap-highlight-color: rgba(8,119,90,.15); }
+          .patient-card button { transition: transform .1s ease, box-shadow .12s ease, filter .12s ease; }
+          .patient-card button:active { transform: scale(.985); filter: brightness(.97); }
+          .patient-card button:focus-visible, .patient-card a:focus-visible { outline: 3px solid rgba(8,119,90,.28); outline-offset: 3px; }
         `}</style>
       </section>
     </main>
