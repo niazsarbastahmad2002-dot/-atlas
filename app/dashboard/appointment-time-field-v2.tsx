@@ -71,7 +71,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     const form = rootRef.current?.closest("form");
     const doctor = form?.querySelector<HTMLInputElement>("#doctor_id");
     const clinic = form?.querySelector<HTMLInputElement>('input[name="clinic_id"]');
-    if (!doctor) return;
+    if (!form || !doctor) return;
     const nextDoctor = doctor.value;
     setDoctorId(nextDoctor);
     if (!clinic?.value || !nextDoctor) return;
@@ -123,9 +123,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     chooseParts(nextDefault);
   }, [custom, nextDefault, touched]);
 
-  useEffect(() => {
-    setTouched(false);
-  }, [date, doctorId]);
+  useEffect(() => { setTouched(false); }, [date, doctorId]);
 
   const time = to24(hour, minute, period);
   const value = `${date}T${time}`;
@@ -141,13 +139,11 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     <div className="atlas-time-v2" ref={rootRef}>
       <label htmlFor="atlas-appointment-date-v2">{text.date} <small>· {timeZoneLabel}</small></label>
       <input id="atlas-appointment-date-v2" type="date" value={date} min={minDate} max={maxDate} onChange={(event) => { setDate(event.target.value); setTouched(false); }} />
-
-      <div className="atlas-time-heading"><strong>{text.time} · {interval} min</strong><button type="button" onClick={() => { setCustom((value) => !value); setTouched(true); }}>{custom ? text.quick : text.custom}</button></div>
+      <div className="atlas-time-heading"><strong>{text.time} · {interval} min</strong><button type="button" onClick={() => { setCustom((current) => !current); setTouched(true); }}>{custom ? text.quick : text.custom}</button></div>
       <div className="atlas-period-tabs" role="group" aria-label={text.time}>
         <button className={period === "am" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "am")}>{text.am}</button>
         <button className={period === "pm" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "pm")}>{text.pm}</button>
       </div>
-
       {custom ? (
         <div className="atlas-custom-time">
           <label><span>{text.hour}</span><input inputMode="numeric" type="number" min="1" max="12" value={hour} onChange={(event) => select(Math.max(1, Math.min(12, Number(event.target.value) || 1)), minute, period)} /></label>
@@ -166,19 +162,10 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
           })}</div>
         </>
       )}
-
       <input type="hidden" name="appointment_at" value={usable ? value : ""} />
       <div className={`atlas-selected-time ${usable ? "" : "is-error"}`}><span>{usable ? text.selected : exactBooked ? text.booked : text.doctor}</span><strong dir="ltr">{usable ? `${pad(hour)}:${pad(minute)} ${period.toUpperCase()}` : "—"}</strong></div>
-
       <style>{`
-        .atlas-time-v2{display:grid;gap:10px}.atlas-time-v2>label{font-size:12px;font-weight:800}.atlas-time-v2>label small{font-weight:600;color:var(--muted)}
-        .atlas-time-v2 input[type=date]{min-height:48px;border:1px solid var(--line-strong);border-radius:13px;padding:10px 13px;background:#fff;color:var(--ink);font:inherit}
-        .atlas-time-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:3px}.atlas-time-heading strong{font-size:12px}.atlas-time-heading button{border:0;background:transparent;color:var(--accent);font-size:11px;font-weight:800;cursor:pointer}
-        .atlas-period-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;border-radius:13px;padding:4px;background:var(--surface-soft)}.atlas-period-tabs button,.atlas-hour-grid button,.atlas-minute-grid button{min-height:42px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font-weight:800;cursor:pointer}.atlas-period-tabs button.is-selected,.atlas-hour-grid button.is-selected,.atlas-minute-grid button.is-selected{border-color:rgba(8,119,90,.35);background:#fff;color:var(--accent);box-shadow:0 2px 8px rgba(8,119,90,.08)}
-        .atlas-time-grid-label{margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}.atlas-hour-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-minute-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-hour-grid button,.atlas-minute-grid button{border-color:var(--line);background:#fff}.atlas-hour-grid button:disabled,.atlas-minute-grid button:disabled{opacity:.28;cursor:not-allowed}
-        .atlas-custom-time{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px}.atlas-custom-time label{display:grid;gap:5px;color:var(--muted);font-size:10px;font-weight:800}.atlas-custom-time input{min-height:54px;border:1px solid var(--line-strong);border-radius:13px;padding:8px 12px;text-align:center;font-size:22px;font-weight:850}.atlas-time-colon{padding-bottom:13px;font-size:24px;font-weight:900}
-        .atlas-selected-time{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:11px 13px;background:var(--accent-soft);color:var(--accent)}.atlas-selected-time span{font-size:11px;font-weight:750}.atlas-selected-time strong{font-size:14px}.atlas-selected-time.is-error{background:#fff2ef;color:#a64a3a}
-        @media(max-width:560px){.atlas-hour-grid,.atlas-minute-grid{grid-template-columns:repeat(4,1fr)}}
+        .atlas-time-v2{display:grid;gap:10px}.atlas-time-v2>label{font-size:12px;font-weight:800}.atlas-time-v2>label small{font-weight:600;color:var(--muted)}.atlas-time-v2 input[type=date]{min-height:48px;border:1px solid var(--line-strong);border-radius:13px;padding:10px 13px;background:#fff;color:var(--ink);font:inherit}.atlas-time-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:3px}.atlas-time-heading strong{font-size:12px}.atlas-time-heading button{border:0;background:transparent;color:var(--accent);font-size:11px;font-weight:800;cursor:pointer}.atlas-period-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;border-radius:13px;padding:4px;background:var(--surface-soft)}.atlas-period-tabs button,.atlas-hour-grid button,.atlas-minute-grid button{min-height:42px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font-weight:800;cursor:pointer}.atlas-period-tabs button.is-selected,.atlas-hour-grid button.is-selected,.atlas-minute-grid button.is-selected{border-color:rgba(8,119,90,.35);background:#fff;color:var(--accent);box-shadow:0 2px 8px rgba(8,119,90,.08)}.atlas-time-grid-label{margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}.atlas-hour-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-minute-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-hour-grid button,.atlas-minute-grid button{border-color:var(--line);background:#fff}.atlas-hour-grid button:disabled,.atlas-minute-grid button:disabled{opacity:.28;cursor:not-allowed}.atlas-custom-time{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px}.atlas-custom-time label{display:grid;gap:5px;color:var(--muted);font-size:10px;font-weight:800}.atlas-custom-time input{min-height:54px;border:1px solid var(--line-strong);border-radius:13px;padding:8px 12px;text-align:center;font-size:22px;font-weight:850}.atlas-time-colon{padding-bottom:13px;font-size:24px;font-weight:900}.atlas-selected-time{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:11px 13px;background:var(--accent-soft);color:var(--accent)}.atlas-selected-time span{font-size:11px;font-weight:750}.atlas-selected-time strong{font-size:14px}.atlas-selected-time.is-error{background:#fff2ef;color:#a64a3a}@media(max-width:560px){.atlas-hour-grid,.atlas-minute-grid{grid-template-columns:repeat(4,1fr)}}
       `}</style>
     </div>
   );
