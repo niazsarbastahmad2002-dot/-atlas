@@ -1,0 +1,124 @@
+name: Atlas Meta template audit
+
+on:
+  push:
+    branches: [atlas-meta-template-audit-20260819]
+    paths: [.github/workflows/meta-template-audit.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_TEAM_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Read production WhatsApp configuration safely
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_TEAM_ID&decrypt=true" \
+            > /tmp/env.json
+          python - <<'PY'
+          import json,sys
+          rows=json.load(open('/tmp/env.json')).get('envs',[])
+          def targets(r):
+              x=r.get('target') or []
+              return [x] if isinstance(x,str) else list(x)
+          def value(key):
+              rs=[r for r in rows if r.get('key')==key and 'production' in targets(r) and not r.get('gitBranch')]
+              if not rs: return ''
+              rs=sorted(rs,key=lambda r:r.get('updatedAt') or r.get('createdAt') or 0)
+              return str(rs[-1].get('value',''))
+          vals={k:value(k) for k in ['WHATSAPP_ACCESS_TOKEN','WHATSAPP_PHONE_NUMBER_ID','WHATSAPP_GRAPH_API_VERSION']}
+          if not vals['WHATSAPP_ACCESS_TOKEN'] or not vals['WHATSAPP_PHONE_NUMBER_ID'] or not vals['WHATSAPP_GRAPH_API_VERSION']:
+              sys.exit('missing production WhatsApp configuration')
+          for k,v in vals.items(): open('/tmp/'+k,'w').write(v)
+          PY
+          chmod 600 /tmp/WHATSAPP_*
+
+      - name: Ask Meta which WhatsApp assets the token can access
+        id: meta
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          TOKEN=$(cat /tmp/WHATSAPP_ACCESS_TOKEN)
+          PHONE=$(cat /tmp/WHATSAPP_PHONE_NUMBER_ID)
+          VERSION=$(cat /tmp/WHATSAPP_GRAPH_API_VERSION)
+          BASE="https://graph.facebook.com/$VERSION"
+
+          curl --silent --show-error --max-time 20 \
+            -G --data-urlencode "input_token=$TOKEN" --data-urlencode "access_token=$TOKEN" \
+            "$BASE/debug_token" > /tmp/debug.json
+
+          curl --silent --show-error --max-time 20 \
+            -H "Authorization: Bearer $TOKEN" \
+            "$BASE/$PHONE?fields=id,display_phone_number,verified_name,quality_rating" > /tmp/phone.json
+
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/debug.json')).get('data') or {}
+          ids=[]
+          for g in d.get('granular_scopes') or []:
+              if g.get('scope') in ('whatsapp_business_management','whatsapp_business_messaging'):
+                  ids.extend(str(x) for x in (g.get('target_ids') or []))
+          ids=list(dict.fromkeys(ids))
+          open('/tmp/waba_ids','w').write('\n'.join(ids))
+          phone=json.load(open('/tmp/phone.json'))
+          ok=bool(phone.get('id')) and not phone.get('error')
+          with open('/tmp/report.md','w') as f:
+              f.write('## Atlas Meta / WhatsApp audit\n\n')
+              f.write(f'- Phone-number API access: **{"pass" if ok else "fail"}**\n')
+              if ok:
+                  f.write(f'- Meta verified business display: **{phone.get("verified_name") or "available"}**\n')
+                  f.write(f'- Meta quality rating: **{phone.get("quality_rating") or "unknown"}**\n')
+              f.write(f'- WABA assets exposed by token: **{len(ids)}**\n')
+          PY
+
+          : > /tmp/templates.jsonl
+          while IFS= read -r WABA; do
+            [ -n "$WABA" ] || continue
+            curl --silent --show-error --max-time 20 \
+              -H "Authorization: Bearer $TOKEN" \
+              "$BASE/$WABA/message_templates?fields=id,name,status,language,category&limit=100" \
+              >> /tmp/templates.jsonl
+            printf '\n' >> /tmp/templates.jsonl
+          done < /tmp/waba_ids
+
+          python - <<'PY'
+          import json
+          rows=[]
+          for line in open('/tmp/templates.jsonl'):
+              line=line.strip()
+              if not line: continue
+              try: obj=json.loads(line)
+              except: continue
+              rows.extend({k:r.get(k) for k in ('name','status','language','category')} for r in (obj.get('data') or []))
+          atlas=[r for r in rows if str(r.get('name') or '').startswith('atlas_') or str(r.get('name') or '').startswith('_atlas_')]
+          with open('/tmp/report.md','a') as f:
+              f.write(f'- Message templates visible: **{len(rows)}**\n')
+              if atlas:
+                  f.write('- Atlas templates:\n')
+                  for r in sorted(atlas,key=lambda x:(str(x.get('name')),str(x.get('language')))):
+                      f.write(f"  - `{r.get('name')}` — `{r.get('language')}` — **{r.get('status')}** — {r.get('category')}\n")
+              else:
+                  f.write('- Atlas templates: **none found**\n')
+          PY
+
+      - name: Publish sanitized audit
+        if: always()
+        run: |
+          cat /tmp/report.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          gh issue comment 59 --repo niazsarbastahmad2002-dot/-atlas --body-file /tmp/report.md 2>/dev/null || true
+
+      - name: Require Meta audit success
+        if: always()
+        run: test "${{ steps.meta.outcome }}" = success
