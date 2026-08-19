@@ -1,0 +1,177 @@
+name: Atlas existing preview runtime probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/probe-existing-preview-runtime.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      TEAM_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      DEPLOYMENT_ID: dpl_BaB4V1SCwFRYEgExBEpFqFsN7R6o
+      DEPLOYMENT_HOST: atlasdemofixed-2m4wd2e1z-atlas-fca2.vercel.app
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Load only required Production secrets without printing them
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v10/projects/$PROJECT_ID/env?teamId=$TEAM_ID&decrypt=true" > /tmp/env.json
+          python - <<'PY'
+          import json
+          rows=json.load(open('/tmp/env.json')).get('envs',[])
+          def tg(r):
+              t=r.get('target') or []
+              return [t] if isinstance(t,str) else list(t)
+          def value(key):
+              rs=[r for r in rows if r.get('key')==key and 'production' in tg(r) and not r.get('gitBranch')]
+              if not rs: return ''
+              rs=sorted(rs,key=lambda r:r.get('updatedAt') or r.get('createdAt') or 0)
+              return str(rs[-1].get('value',''))
+          for key,path in [('CRON_SECRET','/tmp/cron-secret'),('WHATSAPP_VERIFY_TOKEN','/tmp/verify-token')]:
+              v=value(key)
+              if not v: raise SystemExit(f'{key} unavailable')
+              open(path,'w').write(v)
+          print('Required Production comparison secrets loaded without exposing values.')
+          PY
+
+      - name: Create temporary protection bypass for this preview
+        id: bypass
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/bypass.json -w '%{http_code}' -X PATCH \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' \
+            --data '{"ttl":600}' \
+            "https://api.vercel.com/aliases/$DEPLOYMENT_ID/protection-bypass?teamId=$TEAM_ID")
+          [ "$HTTP" = 200 ]
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/bypass.json'))
+          secret=x.get('value') or (x.get('protectionBypass') or {}).get('value')
+          if not secret: raise SystemExit('No bypass secret returned')
+          open('/tmp/bypass-secret','w').write(str(secret))
+          print('Temporary preview bypass created; value is not logged.')
+          PY
+
+      - name: Probe actual preview runtime
+        id: runtime
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          BYPASS=$(cat /tmp/bypass-secret)
+          CRON=$(cat /tmp/cron-secret)
+          VERIFY=$(cat /tmp/verify-token)
+          report=/tmp/runtime-report.md
+          cat > "$report" <<'EOF'
+          ## Atlas existing preview runtime probe
+
+          The probe used a temporary, unprinted protection bypass and made no database changes.
+          EOF
+          fail=0
+
+          probe_page() {
+            path="$1"; marker="$2"; label="$3"
+            code=$(curl --silent --show-error --max-time 20 -o /tmp/body -w '%{http_code}' \
+              -H "x-vercel-protection-bypass: $BYPASS" \
+              "https://$DEPLOYMENT_HOST$path" || true)
+            if [ "$code" = 200 ] && grep -qi "$marker" /tmp/body; then
+              echo "- $label: **pass**" >> "$report"
+            else
+              echo "- $label: **fail** (HTTP $code)" >> "$report"
+              fail=1
+            fi
+          }
+
+          probe_page '/login' 'Atlas' 'Login page/runtime'
+          probe_page '/privacy' 'Atlas' 'Privacy route'
+          probe_page '/terms' 'Atlas' 'Terms route'
+
+          webhook_code=$(curl --silent --show-error --max-time 20 -o /tmp/webhook-body -w '%{http_code}' -G \
+            -H "x-vercel-protection-bypass: $BYPASS" \
+            --data-urlencode 'hub.mode=subscribe' \
+            --data-urlencode "hub.verify_token=$VERIFY" \
+            --data-urlencode 'hub.challenge=atlas-runtime-probe' \
+            "https://$DEPLOYMENT_HOST/api/whatsapp/webhook" || true)
+          if [ "$webhook_code" = 200 ] && [ "$(cat /tmp/webhook-body 2>/dev/null || true)" = 'atlas-runtime-probe' ]; then
+            echo '- WhatsApp webhook Production-secret parity: **pass**' >> "$report"
+          else
+            echo "- WhatsApp webhook Production-secret parity: **fail** (HTTP $webhook_code)" >> "$report"
+            fail=1
+          fi
+
+          cron_code=$(curl --silent --show-error --max-time 30 -o /tmp/cron-body -w '%{http_code}' \
+            -H "x-vercel-protection-bypass: $BYPASS" \
+            -H "Authorization: Bearer $CRON" \
+            "https://$DEPLOYMENT_HOST/api/cron/reminders" || true)
+          if [ "$cron_code" = 200 ]; then
+            claimed=$(python - <<'PY'
+          import json
+          try: print(int(json.load(open('/tmp/cron-body')).get('claimed',-1)))
+          except: print(-1)
+          PY
+          )
+            if [ "$claimed" = 0 ]; then
+              echo '- Supabase/service-key + cron + WhatsApp runtime config: **pass** (0 reminders available)' >> "$report"
+            else
+              echo "- Cron runtime returned unexpected claimed count: **$claimed**" >> "$report"
+              fail=1
+            fi
+          else
+            err=$(python - <<'PY'
+          import json
+          try: print(json.load(open('/tmp/cron-body')).get('error','unknown'))
+          except: print('unknown')
+          PY
+          )
+            echo "- Supabase/service-key + cron + WhatsApp runtime config: **fail** (HTTP $cron_code, $err)" >> "$report"
+            fail=1
+          fi
+
+          if [ "$fail" -eq 0 ]; then
+            echo >> "$report"
+            echo '**Runtime verdict: SAFE to move traffic to this existing deployment without rebuilding.**' >> "$report"
+          else
+            echo >> "$report"
+            echo '**Runtime verdict: NOT safe to move traffic to this preview. Production was not touched.**' >> "$report"
+          fi
+          exit "$fail"
+
+      - name: Revoke temporary preview bypass
+        if: always() && steps.bypass.outcome == 'success'
+        run: |
+          set -euo pipefail
+          SECRET=$(cat /tmp/bypass-secret)
+          python - <<'PY' > /tmp/revoke.json
+          import json
+          secret=open('/tmp/bypass-secret').read()
+          print(json.dumps({'revoke':{'secret':secret,'regenerate':False}}))
+          PY
+          curl --fail --silent --show-error -X PATCH \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' \
+            --data @/tmp/revoke.json \
+            "https://api.vercel.com/aliases/$DEPLOYMENT_ID/protection-bypass?teamId=$TEAM_ID" >/dev/null
+          echo 'Temporary preview bypass revoked.'
+
+      - name: Publish sanitized result
+        if: always()
+        run: |
+          if [ -f /tmp/runtime-report.md ]; then
+            cat /tmp/runtime-report.md >> "$GITHUB_STEP_SUMMARY"
+            gh issue comment 59 --body-file /tmp/runtime-report.md
+          fi
+
+      - name: Require safe runtime
+        if: always()
+        run: test "${{ steps.runtime.outcome }}" = success
