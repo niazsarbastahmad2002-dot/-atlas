@@ -12,6 +12,7 @@ import "./atlas-brand-v2.css";
 import "./atlas-orbit.css";
 import "./atlas-reception-flow.css";
 import "./atlas-instant-flow.css";
+import "./atlas-interactions.css";
 import "./patient-clarity.css";
 
 export const metadata: Metadata = {
