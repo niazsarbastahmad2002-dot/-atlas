@@ -4,6 +4,9 @@ on:
   push:
     branches: [atlas-meta-template-audit-20260819]
     paths: [.github/workflows/meta-template-audit.yml]
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/meta-template-audit.yml]
   workflow_dispatch:
 
 permissions:
