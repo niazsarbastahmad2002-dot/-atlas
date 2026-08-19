@@ -16,6 +16,19 @@
   gap: 18px;
 }
 
+.polished-appointment .patient-cell::before {
+  display: block;
+  margin-bottom: 5px;
+  color: #869189;
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+html[lang="en"] .polished-appointment .patient-cell::before { content: "Patient"; }
+html[lang="ckb"] .polished-appointment .patient-cell::before { content: "نەخۆش"; }
+html[lang="ar"] .polished-appointment .patient-cell::before { content: "المريض"; }
+
 .polished-appointment .patient-cell strong {
   font-size: 18px;
   line-height: 1.25;
@@ -29,10 +42,10 @@
 }
 
 .polished-details {
-  grid-template-columns: minmax(180px, 1.2fr) minmax(140px, .8fr) minmax(170px, .9fr);
-  gap: 20px;
-  margin: 20px 0 18px;
-  padding-block: 4px;
+  grid-template-columns: minmax(200px, 1.25fr) minmax(160px, .8fr) minmax(180px, .9fr);
+  gap: 22px;
+  margin: 21px 0 19px;
+  padding-block: 5px;
 }
 
 .polished-details dt {
@@ -42,17 +55,22 @@
 }
 
 .polished-details dd {
-  font-size: 14px;
+  font-size: 14.5px;
   line-height: 1.55;
-  font-weight: 690;
+  font-weight: 720;
+}
+
+.polished-details > div:nth-child(2) dd {
+  font-size: 16px;
+  font-weight: 820;
 }
 
 .polished-details .appointment-time-value {
-  font-size: 15.5px;
-  font-weight: 820;
-  line-height: 1.6;
+  font-size: 16px;
+  font-weight: 840;
+  line-height: 1.65;
   font-variant-numeric: tabular-nums;
-  word-spacing: .12em;
+  word-spacing: .14em;
 }
 
 .appointment-badges {
