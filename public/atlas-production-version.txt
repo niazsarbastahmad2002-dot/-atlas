@@ -1,0 +1,2 @@
+Atlas production refresh: 2026-08-19 doctor workflow release
+Commit source: PR #61
