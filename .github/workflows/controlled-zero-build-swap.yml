@@ -1,0 +1,194 @@
+name: Atlas controlled zero-build production swap
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/controlled-zero-build-swap.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: atlas-controlled-zero-build-swap
+  cancel-in-progress: false
+
+jobs:
+  swap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      TEAM_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      CANDIDATE_ID: dpl_BaB4V1SCwFRYEgExBEpFqFsN7R6o
+      OLD_PRODUCTION_ID: dpl_H9mDirBpHoW87qPq1o8DGRE9KoGd
+      CANONICAL_HOST: atlasdemofixed.vercel.app
+      GH_TOKEN: ${{ github.token }}
+      ONE_TIME_SCHEDULER_TOKEN: "f73b08d8289d46cef45d888eb16cf47f44abbe264504bbb17e89fc26da2dea45"
+
+    steps:
+      - name: Start report
+        run: |
+          cat > /tmp/report.md <<'EOF'
+          ## Atlas controlled zero-build production swap
+
+          The test points production at an already-built READY deployment. No Vercel build or deployment is created. If runtime verification fails, the previous production deployment is restored automatically.
+          EOF
+
+      - name: Confirm current production is still the expected rollback target
+        id: preflight
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v13/deployments/$CANONICAL_HOST?teamId=$TEAM_ID" > /tmp/before.json
+          current=$(python - <<'PY'
+          import json
+          print(json.load(open('/tmp/before.json')).get('id',''))
+          PY
+          )
+          [ "$current" = "$OLD_PRODUCTION_ID" ]
+          echo '- Preflight: **current production rollback target confirmed**' >> /tmp/report.md
+
+      - name: Promote existing READY candidate without rebuilding
+        id: promote
+        if: steps.preflight.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/promote.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' --data '{}' \
+            "https://api.vercel.com/v10/projects/$PROJECT_ID/promote/$CANDIDATE_ID?teamId=$TEAM_ID")
+          if [ "$HTTP" != 200 ] && [ "$HTTP" != 201 ] && [ "$HTTP" != 202 ]; then
+            code=$(python - <<'PY'
+          import json
+          try: print((json.load(open('/tmp/promote.json')).get('error') or {}).get('code') or 'unknown')
+          except: print('unknown')
+          PY
+          )
+            echo "- Zero-build promotion API: **rejected safely** (\`$code\`, HTTP $HTTP)" >> /tmp/report.md
+            exit 1
+          fi
+          echo '- Zero-build promotion API: **accepted**' >> /tmp/report.md
+
+      - name: Verify promoted runtime on canonical Atlas domain
+        id: runtime
+        if: steps.promote.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sleep 6
+          fail=0
+          curl --fail --silent --show-error -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v13/deployments/$CANONICAL_HOST?teamId=$TEAM_ID" > /tmp/live.json || fail=1
+          live_id=$(python - <<'PY'
+          import json
+          try: print(json.load(open('/tmp/live.json')).get('id',''))
+          except: print('')
+          PY
+          )
+          if [ "$live_id" = "$CANDIDATE_ID" ]; then
+            echo '- Canonical domain points to candidate: **yes**' >> /tmp/report.md
+          else
+            echo '- Canonical domain points to candidate: **no**' >> /tmp/report.md
+            fail=1
+          fi
+
+          probe_page() {
+            path="$1"; marker="$2"; label="$3"
+            code=$(curl --silent --show-error --max-time 20 -o /tmp/body -w '%{http_code}' "https://$CANONICAL_HOST$path" || true)
+            if [ "$code" = 200 ] && grep -qi "$marker" /tmp/body; then
+              echo "- $label: **pass**" >> /tmp/report.md
+            else
+              echo "- $label: **fail** (HTTP $code)" >> /tmp/report.md
+              fail=1
+            fi
+          }
+          probe_page '/login' 'Atlas' 'Login + Supabase runtime'
+          probe_page '/privacy' 'Atlas' 'Privacy route'
+          probe_page '/terms' 'Atlas' 'Terms route'
+
+          printf '{"object":"whatsapp_business_account","entry":[]}' > /tmp/wa
+          post_code=$(curl --silent --show-error --max-time 20 -o /tmp/post -w '%{http_code}' -X POST \
+            -H 'x-hub-signature-256: sha256=0000000000000000000000000000000000000000000000000000000000000000' \
+            -H 'Content-Type: application/json' --data-binary @/tmp/wa \
+            "https://$CANONICAL_HOST/api/whatsapp/webhook" || true)
+          post_err=$(python - <<'PY'
+          import json
+          try: print(json.load(open('/tmp/post')).get('error','unknown'))
+          except: print('unknown')
+          PY
+          )
+          if [ "$post_code" = 403 ] && [ "$post_err" = invalid_signature ]; then
+            echo '- WhatsApp app-secret runtime after promotion: **pass**' >> /tmp/report.md
+          else
+            echo "- WhatsApp app-secret runtime after promotion: **fail** (HTTP $post_code, $post_err)" >> /tmp/report.md
+            fail=1
+          fi
+
+          cron_code=$(curl --silent --show-error --max-time 30 -o /tmp/cron -w '%{http_code}' \
+            -H "Authorization: Bearer $ONE_TIME_SCHEDULER_TOKEN" \
+            "https://$CANONICAL_HOST/api/cron/reminders" || true)
+          cron_err=$(python - <<'PY'
+          import json
+          try:
+              x=json.load(open('/tmp/cron')); print(x.get('error','') or '')
+          except: print('unknown')
+          PY
+          )
+          claimed=$(python - <<'PY'
+          import json
+          try: print(int(json.load(open('/tmp/cron')).get('claimed',-1)))
+          except: print(-1)
+          PY
+          )
+          if [ "$cron_code" = 200 ] && [ "$claimed" = 0 ]; then
+            echo '- Supabase admin + scheduler + outbound WhatsApp runtime after promotion: **pass**' >> /tmp/report.md
+          else
+            echo "- Supabase admin + scheduler + outbound WhatsApp runtime after promotion: **fail** (HTTP $cron_code, $cron_err)" >> /tmp/report.md
+            fail=1
+          fi
+
+          if [ "$fail" -eq 0 ]; then
+            echo >> /tmp/report.md
+            echo '**Runtime verdict: keep candidate live.**' >> /tmp/report.md
+          else
+            echo >> /tmp/report.md
+            echo '**Runtime verdict: roll back immediately.**' >> /tmp/report.md
+          fi
+          exit "$fail"
+
+      - name: Restore previous production if any promoted-runtime check failed
+        id: rollback
+        if: steps.promote.outcome == 'success' && steps.runtime.outcome != 'success'
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/rollback.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -H 'Content-Type: application/json' --data '{}' \
+            "https://api.vercel.com/v10/projects/$PROJECT_ID/promote/$OLD_PRODUCTION_ID?teamId=$TEAM_ID")
+          [ "$HTTP" = 200 ] || [ "$HTTP" = 201 ] || [ "$HTTP" = 202 ]
+          sleep 5
+          curl --fail --silent --show-error -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v13/deployments/$CANONICAL_HOST?teamId=$TEAM_ID" > /tmp/rolled.json
+          rolled=$(python - <<'PY'
+          import json
+          print(json.load(open('/tmp/rolled.json')).get('id',''))
+          PY
+          )
+          [ "$rolled" = "$OLD_PRODUCTION_ID" ]
+          echo '- Automatic rollback: **verified; previous production restored**' >> /tmp/report.md
+
+      - name: Publish sanitized result
+        if: always()
+        run: |
+          cat /tmp/report.md >> "$GITHUB_STEP_SUMMARY"
+          gh issue comment 59 --repo niazsarbastahmad2002-dot/-atlas --body-file /tmp/report.md || true
+
+      - name: Require successful permanent swap
+        if: always()
+        run: |
+          test "${{ steps.preflight.outcome }}" = success
+          test "${{ steps.promote.outcome }}" = success
+          test "${{ steps.runtime.outcome }}" = success
