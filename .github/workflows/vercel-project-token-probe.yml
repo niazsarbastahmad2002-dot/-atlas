@@ -1,0 +1,39 @@
+name: Vercel project-token capability probe
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/vercel-project-token-probe.yml]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      VERCEL_ORG_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      GH_TOKEN: ${{ github.token }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe scoped token without exposing it
+        shell: bash
+        run: |
+          set +e
+          project_status=$(curl -sS -o /tmp/project.json -w '%{http_code}' -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID")
+          user_status=$(curl -sS -o /tmp/user.json -w '%{http_code}' -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v2/user")
+          env_status=$(curl -sS -o /tmp/env.json -w '%{http_code}' -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_ORG_ID")
+          env_count=$(python - <<'PY'
+          import json
+          try:
+              data=json.load(open('/tmp/env.json'))
+              print(len(data.get('envs', [])))
+          except Exception:
+              print(0)
+          PY
+          )
+          gh issue comment 59 --body "Scoped Vercel token probe — project API: HTTP $project_status; user API: HTTP $user_status; environment list: HTTP $env_status ($env_count variables). No secret values were logged."
+          test "$project_status" = "200"
