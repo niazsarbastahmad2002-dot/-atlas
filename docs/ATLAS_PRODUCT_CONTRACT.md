@@ -143,12 +143,13 @@ Provider activation is a separate external state. Atlas must not present WhatsAp
 
 Current Meta state at this contract revision:
 
-- Atlas can reach Meta's Graph API from production.
-- A controlled real send reached Meta and was rejected with `131037` (display-name approval required for the configured sending number).
-- Automatic sending is therefore intentionally gated off until provider readiness can be verified.
-- The doctor-specific reminder preferences remain stored while the provider is blocked.
-
-Future provider readiness should be machine-audited where possible (phone display-name status, WABA review, template presence/status) and only activate sending when the checks are actually green.
+- Atlas can reach Meta's Graph API from production and has proven the real scheduler-to-Meta path with a controlled send.
+- The configured phone `+1 555-376-1113` reports verified name `Atlas Clinic Platform`, quality `GREEN`, and display-name status `AVAILABLE_WITHOUT_REVIEW`; display-name approval is therefore not the current blocker.
+- The permanent system-user token currently exposes `public_profile`, `whatsapp_business_management`, and `whatsapp_business_messaging`, but not `business_management`.
+- Atlas exhausted safe API-only WABA discovery paths available to that token, including granular-scope targets, direct phone relation probing, system-user/business edges, Business-owned/shared WABA edges, and app-ownership probing; no Business portfolio or WABA ID was exposed.
+- Because the WABA cannot be identified through the current token, Atlas cannot inspect or create the required Sorani (`ku`), Arabic (`ar`), and English (`en_US`) `atlas_appointment_reminder` template variants yet.
+- Automatic sending is intentionally gated off. Doctor-specific reminder preferences remain stored while provider readiness is blocked.
+- Atlas now has a protected machine-readiness endpoint plus a private Supabase invocation path. When the missing Meta asset access is supplied, Atlas can re-audit phone/WABA/templates and only activate sending when every required check is green.
 
 ## Appointment sharing / patient communication contract
 
@@ -201,8 +202,8 @@ When a new user-approved behavior is introduced, update this contract and add a 
 
 These are not forgotten work; they are explicit remaining edges:
 
-- Meta display-name/provider approval is external and currently blocks production WhatsApp sends.
-- Confirm the approved reminder template variants for all supported patient languages before enabling automatic sends.
+- Meta asset discovery currently needs either a Business portfolio/WABA identifier or a replacement system-user token that includes the business-level access needed to discover the portfolio automatically.
+- Confirm or create approved `atlas_appointment_reminder` variants for Sorani (`ku`), Arabic (`ar`), and English (`en_US`) after WABA access is available.
 - Complete the automatic immediate appointment WhatsApp message/Flow after the provider assets are approved; manual sharing remains the fallback until then.
 - Populate real doctor specialty and reception-contact data instead of inventing it.
 - Keep improving production email deliverability before broad clinic rollout.
