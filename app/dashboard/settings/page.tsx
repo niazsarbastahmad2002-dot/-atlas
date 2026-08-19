@@ -5,6 +5,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
+import { DoctorPatientDetailsCard } from "../doctor-patient-details-card";
 import { SettingsReminderCard } from "../settings-reminder-card";
 import { PasskeyManager } from "./passkey-manager";
 import {
@@ -53,9 +54,9 @@ const settingsCopy: Record<UiLocale, {
   access: string;
   accessHelp: string;
   manageAccess: string;
-  administrationOnly: string;
   accountHelp: string;
   signOutHelp: string;
+  readOnlyClinic: string;
 }> = {
   en: {
     clinicBasics: "Clinic & scheduling",
@@ -65,9 +66,9 @@ const settingsCopy: Record<UiLocale, {
     access: "Clinic access",
     accessHelp: "Add or remove reception staff without changing the daily schedule experience.",
     manageAccess: "Manage clinic access",
-    administrationOnly: "Administration only",
     accountHelp: "Atlas normally keeps this trusted device signed in.",
     signOutHelp: "Sign out only when you want this device to require sign-in again.",
+    readOnlyClinic: "Clinic administration manages the clinic name.",
   },
   ku: {
     clinicBasics: "کلینیک و خشتەی کات",
@@ -77,9 +78,9 @@ const settingsCopy: Record<UiLocale, {
     access: "دەسەڵاتی کلینیک",
     accessHelp: "ستافی پێشخانە زیاد یان لاببە، بەبێ ئاڵۆزکردنی خشتەی ڕۆژانە.",
     manageAccess: "بەڕێوەبردنی دەسەڵاتی کلینیک",
-    administrationOnly: "تەنها بەڕێوەبردن",
     accountHelp: "Atlas بە ئاسایی ئەم ئامێرە متمانەپێکراوە بە چوونەژوورەوە دەهێڵێتەوە.",
     signOutHelp: "تەنها کاتێک بچۆ دەرەوە کە دەتەوێت ئەم ئامێرە دووبارە داوای چوونەژوورەوە بکات.",
+    readOnlyClinic: "بەڕێوەبەری کلینیک ناوی کلینیک بەڕێوە دەبات.",
   },
   ar: {
     clinicBasics: "العيادة والجدولة",
@@ -89,9 +90,9 @@ const settingsCopy: Record<UiLocale, {
     access: "صلاحيات العيادة",
     accessHelp: "أضف أو أزل موظفي الاستقبال دون تعقيد الجدول اليومي.",
     manageAccess: "إدارة صلاحيات العيادة",
-    administrationOnly: "للإدارة فقط",
     accountHelp: "يبقي Atlas هذا الجهاز الموثوق مسجلاً للدخول عادةً.",
     signOutHelp: "سجّل الخروج فقط عندما تريد أن يطلب هذا الجهاز تسجيل الدخول من جديد.",
+    readOnlyClinic: "تدير إدارة العيادة اسم العيادة.",
   },
 };
 
@@ -149,7 +150,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const noticeMessage = params.notice ? noticeCopy[params.notice] : null;
 
   return (
-    <main className="settings-page shell">
+    <main className={`settings-page shell ${canManage ? "is-administration" : "is-reception"}`}>
       <header className="page-heading settings-heading">
         <div>
           <div className="eyebrow">{t.interface}</div>
@@ -206,14 +207,20 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             </div>
           </div>
 
-          <form action={updateClinicName} className="settings-form">
-            <input type="hidden" name="clinic_id" value={clinic.id} />
-            <label htmlFor="clinic_name">{t.clinicName}</label>
-            <div className="settings-control-row">
-              <input id="clinic_name" name="clinic_name" defaultValue={clinic.name} minLength={2} maxLength={120} disabled={!canManage} required />
-              <SubmitButton pendingLabel={t.saving} disabled={!canManage}>{t.saveName}</SubmitButton>
+          {canManage ? (
+            <form action={updateClinicName} className="settings-form">
+              <input type="hidden" name="clinic_id" value={clinic.id} />
+              <label htmlFor="clinic_name">{t.clinicName}</label>
+              <div className="settings-control-row">
+                <input id="clinic_name" name="clinic_name" defaultValue={clinic.name} minLength={2} maxLength={120} required />
+                <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
+              </div>
+            </form>
+          ) : (
+            <div className="settings-readonly-clinic">
+              <span>{t.clinicName}</span><strong>{clinic.name}</strong><small>{copy.readOnlyClinic}</small>
             </div>
-          </form>
+          )}
 
           <form action={updateClinicInterval} className="settings-form">
             <input type="hidden" name="clinic_id" value={clinic.id} />
@@ -229,71 +236,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   <option value={minutes} key={minutes}>{minutes} min</option>
                 ))}
               </select>
-              <SubmitButton pendingLabel={t.saving} disabled={!canManage}>{t.saveInterval}</SubmitButton>
+              {canManage ? <SubmitButton pendingLabel={t.saving}>{t.saveInterval}</SubmitButton> : null}
             </div>
             <p className="field-help">{t.intervalHelp}</p>
           </form>
         </section>
 
-        <section className="settings-card settings-card-wide">
-          <div className="settings-card-heading">
-            <span className="settings-card-icon" aria-hidden="true">+</span>
-            <div>
-              <div className="eyebrow">{t.clinic}</div>
-              <h2>{copy.doctors}</h2>
-              <p>{copy.doctorsHelp}</p>
-            </div>
-          </div>
-
-          {canManage ? (
-            <form action={createDoctor} className="settings-form settings-form-inline">
-              <input type="hidden" name="clinic_id" value={clinic.id} />
-              <label className="sr-only" htmlFor="new_doctor_name">{t.doctorName}</label>
-              <input id="new_doctor_name" name="doctor_name" placeholder={t.doctorName} minLength={2} maxLength={120} required />
-              <SubmitButton pendingLabel={t.saving}>{t.addDoctor}</SubmitButton>
-            </form>
-          ) : null}
-
-          <div className="doctor-settings-list">
-            {(doctors ?? []).map((doctor, index) => (
-              <article className={`doctor-settings-row ${doctor.active ? "" : "is-archived"}`} key={doctor.id}>
-                <form action={updateDoctor} className="doctor-name-form">
-                  <input type="hidden" name="clinic_id" value={clinic.id} />
-                  <input type="hidden" name="doctor_id" value={doctor.id} />
-                  <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
-                  <input
-                    id={`doctor-${doctor.id}`}
-                    name="doctor_name"
-                    defaultValue={doctor.name}
-                    minLength={2}
-                    maxLength={120}
-                    disabled={!canManage}
-                    required
-                  />
-                  {canManage ? <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton> : null}
-                </form>
-                <div className="doctor-row-meta">
-                  <span>{doctor.active ? t.doctorAvailable : t.doctorArchived}</span>
-                  {canManage ? (
-                    <div className="compact-actions">
-                      <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}>
-                        <button type="submit" disabled={index === 0}>{t.moveUp}</button>
-                      </form>
-                      <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}>
-                        <button type="submit" disabled={index === (doctors?.length ?? 0) - 1}>{t.moveDown}</button>
-                      </form>
-                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, !doctor.active)}>
-                        <button className={doctor.active ? "danger-link" : ""} type="submit">
-                          {doctor.active ? t.archive : t.restore}
-                        </button>
-                      </form>
-                    </div>
-                  ) : null}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <DoctorPatientDetailsCard clinicId={clinic.id} locale={locale} />
 
         <SettingsReminderCard
           clinicId={clinic.id}
@@ -308,23 +257,65 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           }}
         />
 
-        <section className="settings-card settings-link-card">
-          <div className="settings-card-heading">
-            <span className="settings-card-icon" aria-hidden="true">👥</span>
-            <div>
-              <div className="eyebrow">{t.team}</div>
-              <h2>{copy.access}</h2>
-              <p>{copy.accessHelp}</p>
+        {canManage ? (
+          <section className="settings-card settings-card-wide">
+            <div className="settings-card-heading">
+              <span className="settings-card-icon" aria-hidden="true">+</span>
+              <div>
+                <div className="eyebrow">{t.clinic}</div>
+                <h2>{copy.doctors}</h2>
+                <p>{copy.doctorsHelp}</p>
+              </div>
             </div>
-          </div>
-          {isOwner ? (
+
+            <form action={createDoctor} className="settings-form settings-form-inline">
+              <input type="hidden" name="clinic_id" value={clinic.id} />
+              <label className="sr-only" htmlFor="new_doctor_name">{t.doctorName}</label>
+              <input id="new_doctor_name" name="doctor_name" placeholder={t.doctorName} minLength={2} maxLength={120} required />
+              <SubmitButton pendingLabel={t.saving}>{t.addDoctor}</SubmitButton>
+            </form>
+
+            <div className="doctor-settings-list">
+              {(doctors ?? []).map((doctor, index) => (
+                <article className={`doctor-settings-row ${doctor.active ? "" : "is-archived"}`} key={doctor.id}>
+                  <form action={updateDoctor} className="doctor-name-form">
+                    <input type="hidden" name="clinic_id" value={clinic.id} />
+                    <input type="hidden" name="doctor_id" value={doctor.id} />
+                    <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
+                    <input id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
+                    <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
+                  </form>
+                  <div className="doctor-row-meta">
+                    <span>{doctor.active ? t.doctorAvailable : t.doctorArchived}</span>
+                    <div className="compact-actions">
+                      <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><button type="submit" disabled={index === 0}>{t.moveUp}</button></form>
+                      <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><button type="submit" disabled={index === (doctors?.length ?? 0) - 1}>{t.moveDown}</button></form>
+                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, !doctor.active)}>
+                        <button className={doctor.active ? "danger-link" : ""} type="submit">{doctor.active ? t.archive : t.restore}</button>
+                      </form>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {isOwner ? (
+          <section className="settings-card settings-link-card">
+            <div className="settings-card-heading">
+              <span className="settings-card-icon" aria-hidden="true">👥</span>
+              <div>
+                <div className="eyebrow">{t.team}</div>
+                <h2>{copy.access}</h2>
+                <p>{copy.accessHelp}</p>
+              </div>
+            </div>
             <Link className="settings-link" href={`/dashboard/staff?clinic=${clinic.id}`} prefetch>
               <span>{copy.manageAccess}</span><span aria-hidden="true">→</span>
             </Link>
-          ) : (
-            <span className="settings-muted-action">{copy.administrationOnly}</span>
-          )}
-        </section>
+          </section>
+        ) : null}
 
         <section className="settings-card">
           <div className="settings-card-heading">
@@ -338,15 +329,16 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
           <p className="field-help">{copy.accountHelp}</p>
           <PasskeyManager locale={locale} />
-
           <div className="settings-account-signout">
             <p className="field-help">{copy.signOutHelp}</p>
-            <form action={signOut}>
-              <SubmitButton className="button button-ghost settings-signout" pendingLabel={t.saving}>{t.signOut}</SubmitButton>
-            </form>
+            <form action={signOut}><SubmitButton className="button button-ghost settings-signout" pendingLabel={t.saving}>{t.signOut}</SubmitButton></form>
           </div>
         </section>
       </div>
+
+      <style>{`
+        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}
+      `}</style>
     </main>
   );
 }

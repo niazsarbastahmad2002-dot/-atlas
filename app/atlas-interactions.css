@@ -1,0 +1,69 @@
+/* Consistent interaction feedback across Atlas: users should always know what is tappable and what they selected. */
+:where(button, [role="button"], summary, a[href], select, input[type="checkbox"], input[type="radio"]) {
+  -webkit-tap-highlight-color: rgba(8, 119, 90, .16);
+}
+
+:where(button, [role="button"], summary, a[href]) {
+  touch-action: manipulation;
+}
+
+:where(button, [role="button"], summary):not(:disabled) {
+  cursor: pointer;
+  transition: transform .1s ease, box-shadow .14s ease, background-color .14s ease, border-color .14s ease, color .14s ease, filter .14s ease;
+}
+
+:where(button, [role="button"], summary):not(:disabled):active,
+:where(a.button, a.icon-button, a.settings-link, a.patient-contact-link):active {
+  transform: scale(.982);
+  filter: brightness(.965);
+}
+
+:where(button, [role="button"], summary, a[href], input, select, textarea):focus-visible {
+  outline: 3px solid rgba(8, 119, 90, .28) !important;
+  outline-offset: 3px;
+}
+
+:where(button.is-selected, button[aria-pressed="true"], [role="button"][aria-pressed="true"], a[aria-current="page"], .icon-button.is-active) {
+  box-shadow: 0 0 0 2px rgba(8, 119, 90, .18), 0 5px 15px rgba(8, 119, 90, .08);
+}
+
+:where(button.is-selected, button[aria-pressed="true"])::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: .55;
+  inset-block-start: 5px;
+  inset-inline-end: 6px;
+  pointer-events: none;
+}
+
+:where(button.is-selected, button[aria-pressed="true"]) {
+  position: relative;
+}
+
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed !important;
+  filter: saturate(.6);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(button, [role="button"], summary):not(:disabled):hover {
+    box-shadow: 0 5px 15px rgba(20, 36, 28, .07);
+  }
+  :where(a[href]):hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(button, [role="button"], summary, a[href]) {
+    transition: none !important;
+  }
+}
