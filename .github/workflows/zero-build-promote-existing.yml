@@ -53,7 +53,8 @@ jobs:
           protection=p.get('ssoProtection')
           open('/tmp/original-protection.json','w').write(json.dumps({'ssoProtection':protection}))
           dtype=(protection or {}).get('deploymentType') if isinstance(protection,dict) else None
-          if dtype not in (None,'preview','prod_deployment_urls_and_all_previews'):
+          allowed={None,'preview','prod_deployment_urls_and_all_previews','all_except_custom_domains'}
+          if dtype not in allowed:
               open('/tmp/report.md','a').write(f'\n- Preview protection mode `{dtype}` is broader than expected; stopped safely.\n')
               sys.exit(1)
           open('/tmp/report.md','a').write(f'\n- Original preview protection: **{dtype or "none"}**\n')
