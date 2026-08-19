@@ -1,0 +1,47 @@
+.patient-page .patient-card .patient-time-card {
+  padding: 18px 20px !important;
+}
+
+.patient-page .patient-card .patient-time-card > span {
+  margin-bottom: 10px !important;
+}
+
+.patient-page .patient-card .patient-time-card strong {
+  display: block;
+  max-width: 100%;
+  font-size: 21px !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0 !important;
+  text-wrap: balance;
+}
+
+.patient-page .patient-card .patient-time-card bdi {
+  margin-top: 10px !important;
+  font-size: 30px !important;
+  letter-spacing: .02em;
+}
+
+.patient-page .patient-card .patient-appointment-details {
+  margin-top: 4px;
+}
+
+.patient-page .patient-card .patient-appointment-details > div {
+  padding: 14px 16px;
+}
+
+.patient-page .patient-card .patient-appointment-details dt {
+  margin-bottom: 5px;
+}
+
+.patient-page .patient-card .patient-appointment-details dd {
+  color: var(--ink);
+  font-size: 20px !important;
+  font-weight: 850 !important;
+  line-height: 1.4;
+}
+
+@media (max-width: 520px) {
+  .patient-page .patient-card .patient-time-card strong { font-size: 19px !important; }
+  .patient-page .patient-card .patient-time-card bdi { font-size: 27px !important; }
+  .patient-page .patient-card .patient-appointment-details dd { font-size: 18px !important; }
+}

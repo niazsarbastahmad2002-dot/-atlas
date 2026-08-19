@@ -16,6 +16,23 @@ function rememberedSchedule() {
   }
 }
 
+function rememberedDoctorId() {
+  try {
+    const href = rememberedSchedule();
+    const url = new URL(href, window.location.origin);
+    return url.searchParams.get("doctor") ?? "";
+  } catch {
+    return "";
+  }
+}
+
+type DoctorWorkflow = {
+  doctorId: string;
+  doctorName: string;
+  doctors: Array<{ id: string; name: string }>;
+  appointmentIntervalMinutes: number;
+};
+
 export function InstantSettingChoices() {
   const router = useRouter();
 
@@ -33,24 +50,17 @@ export function InstantSettingChoices() {
       if (prepared.has(select)) return;
       prepared.add(select);
       select.dataset.atlasLastSaved = select.value;
-
       select.addEventListener("change", (event) => {
         event.stopImmediatePropagation();
         const value = select.value as UiLocale;
         const version = nextVersion(select);
         const previous = select.dataset.atlasLastSaved ?? "en";
-
         document.documentElement.lang = value === "ku" ? "ckb" : value;
         document.documentElement.dir = value === "en" ? "ltr" : "rtl";
-
         void queueSettingWrite(async () => {
           const response = await fetch("/api/ui-language", {
-            method: "POST",
-            credentials: "same-origin",
-            cache: "no-store",
-            keepalive: true,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ locale: value }),
+            method: "POST", credentials: "same-origin", cache: "no-store", keepalive: true,
+            headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: value }),
           });
           if (!response.ok) throw new Error("language_update_failed");
           if (version === versions.get(select)) {
@@ -66,32 +76,83 @@ export function InstantSettingChoices() {
       }, true);
     };
 
+    const clinicIdFor = (select: HTMLSelectElement) => select.form?.querySelector<HTMLInputElement>('input[name="clinic_id"]')?.value
+      ?? new URLSearchParams(window.location.search).get("clinic")
+      ?? "";
+
+    const loadDoctorWorkflow = async (select: HTMLSelectElement, requestedDoctorId = "") => {
+      const clinicId = clinicIdFor(select);
+      if (!clinicId) return null;
+      const params = new URLSearchParams({ clinic_id: clinicId });
+      const doctorId = requestedDoctorId || select.dataset.atlasDoctorId || rememberedDoctorId();
+      if (doctorId) params.set("doctor_id", doctorId);
+      const response = await fetch(`/api/settings/doctor-workflow?${params}`, { credentials: "same-origin", cache: "no-store" });
+      if (!response.ok) return null;
+      const data = await response.json() as DoctorWorkflow;
+      if (!data.doctorId || !Number.isFinite(data.appointmentIntervalMinutes)) return null;
+      select.dataset.atlasDoctorId = data.doctorId;
+      select.dataset.atlasLastSaved = String(data.appointmentIntervalMinutes);
+      select.value = String(data.appointmentIntervalMinutes);
+      select.disabled = false;
+
+      const label = select.form?.querySelector<HTMLLabelElement>('label[for="appointment_interval_minutes"]');
+      if (label) {
+        const base = label.dataset.atlasBaseLabel ?? label.textContent?.split(" · ")[0]?.trim() ?? "Default appointment interval";
+        label.dataset.atlasBaseLabel = base;
+        label.textContent = `${base} · ${data.doctorName}`;
+      }
+
+      if (data.doctors.length > 1 && select.form && !select.form.querySelector("[data-atlas-doctor-settings-picker]")) {
+        const wrapper = document.createElement("label");
+        wrapper.dataset.atlasDoctorSettingsPicker = "true";
+        wrapper.className = "atlas-doctor-settings-picker";
+        const caption = document.createElement("span");
+        caption.textContent = document.documentElement.dir === "rtl" ? "پزیشک" : "Doctor";
+        const picker = document.createElement("select");
+        for (const doctor of data.doctors) {
+          const option = document.createElement("option");
+          option.value = doctor.id;
+          option.textContent = doctor.name;
+          option.selected = doctor.id === data.doctorId;
+          picker.appendChild(option);
+        }
+        picker.addEventListener("change", () => { void loadDoctorWorkflow(select, picker.value); });
+        wrapper.append(caption, picker);
+        select.form.insertBefore(wrapper, label ?? select);
+      } else {
+        const picker = select.form?.querySelector<HTMLSelectElement>("[data-atlas-doctor-settings-picker] select");
+        if (picker) picker.value = data.doctorId;
+      }
+      return data;
+    };
+
     const bindInterval = (select: HTMLSelectElement) => {
       if (prepared.has(select)) return;
       prepared.add(select);
-      select.dataset.atlasLastSaved = select.value;
+      void loadDoctorWorkflow(select);
 
       select.addEventListener("change", (event) => {
         event.stopImmediatePropagation();
-        const value = select.value;
+        const value = Number(select.value);
         const version = nextVersion(select);
-        const previous = select.dataset.atlasLastSaved ?? value;
-        const clinicId = select.form?.querySelector<HTMLInputElement>('input[name="clinic_id"]')?.value ?? "";
-
+        const previous = select.dataset.atlasLastSaved ?? String(value);
+        const clinicId = clinicIdFor(select);
+        const doctorId = select.dataset.atlasDoctorId ?? "";
+        if (!clinicId || !doctorId) {
+          select.value = previous;
+          return;
+        }
         void queueSettingWrite(async () => {
-          const response = await fetch("/api/settings/clinic", {
-            method: "POST",
-            credentials: "same-origin",
-            cache: "no-store",
-            keepalive: true,
+          const response = await fetch("/api/settings/doctor-workflow", {
+            method: "POST", credentials: "same-origin", cache: "no-store", keepalive: true,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ clinicId, appointmentIntervalMinutes: Number(value) }),
+            body: JSON.stringify({ clinicId, doctorId, appointmentIntervalMinutes: value }),
           });
           if (!response.ok) throw new Error("interval_update_failed");
           const saved = await response.json() as { appointmentIntervalMinutes?: number };
-          if (saved.appointmentIntervalMinutes !== Number(value)) throw new Error("interval_not_persisted");
+          if (saved.appointmentIntervalMinutes !== value) throw new Error("interval_not_persisted");
           if (version === versions.get(select)) {
-            select.dataset.atlasLastSaved = value;
+            select.dataset.atlasLastSaved = String(value);
             router.refresh();
           }
         }).catch(() => {
@@ -104,7 +165,6 @@ export function InstantSettingChoices() {
     const install = () => {
       const locale = document.querySelector<HTMLSelectElement>("#locale");
       if (locale) bindLocale(locale);
-
       const interval = document.querySelector<HTMLSelectElement>("#appointment_interval_minutes");
       if (interval) bindInterval(interval);
     };
@@ -129,11 +189,7 @@ export function InstantSettingChoices() {
     const observer = new MutationObserver(install);
     observer.observe(document.body, { childList: true, subtree: true });
     document.addEventListener("click", handleSettingsBack);
-
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("click", handleSettingsBack);
-    };
+    return () => { observer.disconnect(); document.removeEventListener("click", handleSettingsBack); };
   }, [router]);
 
   return null;

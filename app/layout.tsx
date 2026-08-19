@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AtlasAnalytics } from "@/app/components/atlas-analytics";
+import { LivePageRefresh } from "@/app/components/live-page-refresh";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
 import "./globals.css";
@@ -11,6 +12,7 @@ import "./atlas-brand-v2.css";
 import "./atlas-orbit.css";
 import "./atlas-reception-flow.css";
 import "./atlas-instant-flow.css";
+import "./patient-clarity.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
@@ -44,6 +46,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={meta.language} dir={meta.direction}>
       <body>
         {children}
+        <LivePageRefresh />
         <AtlasAnalytics />
       </body>
     </html>
