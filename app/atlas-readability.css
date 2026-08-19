@@ -94,6 +94,12 @@ html[lang="ar"] .polished-appointment .patient-cell::before { content: "المر
   font-size: 11px;
 }
 
+/* Archived doctors stay available to the data model/history, but do not add a
+   confusing disclosure control to the everyday clinic settings screen. */
+.atlas-removed-doctors-toggle {
+  display: none !important;
+}
+
 /* Fill settings rows instead of leaving obvious dead rectangles between cards. */
 .settings-grid {
   align-items: stretch !important;
