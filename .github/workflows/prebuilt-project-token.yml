@@ -35,10 +35,66 @@ jobs:
         run: |
           npm ci
           npm install --global vercel@latest
-      - name: Link project locally without user lookup
+
+      - name: Materialize project settings from project-scoped API
         run: |
+          set -euo pipefail
           mkdir -p .vercel
-          printf '%s\n' '{"orgId":"team_12LjTXJIxUILoIdh54kXsRUc","projectId":"prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ"}' > .vercel/project.json
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID" \
+            > /tmp/vercel-project.json
+          python - <<'PY'
+          import json
+          src=json.load(open('/tmp/vercel-project.json'))
+          out={
+            'projectId': src['id'],
+            'orgId': src.get('accountId') or 'team_12LjTXJIxUILoIdh54kXsRUc',
+            'projectName': src.get('name'),
+            'settings': {
+              'createdAt': src.get('createdAt'),
+              'framework': src.get('framework'),
+              'devCommand': src.get('devCommand'),
+              'installCommand': src.get('installCommand'),
+              'buildCommand': src.get('buildCommand'),
+              'outputDirectory': src.get('outputDirectory'),
+              'rootDirectory': src.get('rootDirectory'),
+              'directoryListing': src.get('directoryListing', False),
+              'nodeVersion': src.get('nodeVersion', '24.x'),
+            },
+          }
+          with open('.vercel/project.json','w') as f:
+            json.dump(out,f,indent=2)
+          PY
+
+      - name: Materialize production environment without logging values
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_ORG_ID&decrypt=true" \
+            > /tmp/vercel-env.json
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/vercel-env.json'))
+          envs=data.get('envs', data if isinstance(data,list) else [])
+          def quote(value):
+            value='' if value is None else str(value)
+            return "'" + value.replace("'", "'\"'\"'") + "'"
+          rows=[]
+          for item in envs:
+            target=item.get('target') or []
+            if isinstance(target,str): target=[target]
+            if target and 'production' not in target: continue
+            key=item.get('key')
+            value=item.get('value')
+            if key and value is not None:
+              rows.append(f"{key}={quote(value)}")
+          with open('.vercel/.env.production.local','w') as f:
+            f.write('\n'.join(rows) + ('\n' if rows else ''))
+          print(f"Prepared {len(rows)} production environment variables without printing values.")
+          PY
+
       - name: Build Vercel output on GitHub
         id: build
         continue-on-error: true
@@ -46,11 +102,12 @@ jobs:
           set +e
           vercel build --prod --token="$VERCEL_TOKEN" > /tmp/vercel-build.log 2>&1
           status=$?
-          tail -c 3500 /tmp/vercel-build.log | sed "s/$VERCEL_TOKEN/[REDACTED]/g" > /tmp/vercel-build-tail.txt
+          tail -c 5000 /tmp/vercel-build.log | sed "s/$VERCEL_TOKEN/[REDACTED]/g" > /tmp/vercel-build-tail.txt
           printf 'Vercel local build exit code: %s\n\n' "$status" > /tmp/build-comment.txt
           cat /tmp/vercel-build-tail.txt >> /tmp/build-comment.txt
           gh issue comment 59 --body-file /tmp/build-comment.txt
           exit "$status"
+
       - name: Deploy prebuilt output to production
         id: deploy
         if: steps.build.outcome == 'success'
@@ -59,11 +116,12 @@ jobs:
           set +e
           vercel deploy --prebuilt --archive=tgz --prod --token="$VERCEL_TOKEN" > /tmp/vercel-deploy.log 2>&1
           status=$?
-          tail -c 3500 /tmp/vercel-deploy.log | sed "s/$VERCEL_TOKEN/[REDACTED]/g" > /tmp/vercel-deploy-tail.txt
+          tail -c 5000 /tmp/vercel-deploy.log | sed "s/$VERCEL_TOKEN/[REDACTED]/g" > /tmp/vercel-deploy-tail.txt
           printf 'Vercel prebuilt deploy exit code: %s\n\n' "$status" > /tmp/deploy-comment.txt
           cat /tmp/vercel-deploy-tail.txt >> /tmp/deploy-comment.txt
           gh issue comment 59 --body-file /tmp/deploy-comment.txt
           exit "$status"
+
       - name: Require production deployment
         if: always()
         run: |
