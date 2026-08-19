@@ -105,6 +105,7 @@ export async function POST(request: Request) {
       phoneNumberId: config.phoneNumberId,
       graphApiVersion: config.graphApiVersion,
       expectedTemplateName: templateName,
+      expectedLanguages: ["ckb", "ar", "en_US"],
       fetchImplementation: metaFetch,
     });
     audits.push({ templateName, ...result });
