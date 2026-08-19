@@ -7,16 +7,19 @@ const phoneNumberId = "1234567890";
 const version = "v23.0";
 const templateName = "atlas_appointment_reminder";
 const wabaId = "987654321";
+const businessId = "555666777";
 
 type FixtureOptions = {
   nameStatus?: string;
   templates?: Array<{ name: string; language: string; status: string; category?: string }>;
   reviewStatus?: string;
+  discoverViaBusiness?: boolean;
 };
 
 function fixtureFetch({
   nameStatus = "APPROVED",
   reviewStatus = "APPROVED",
+  discoverViaBusiness = false,
   templates = [
     { name: templateName, language: "ku", status: "APPROVED", category: "UTILITY" },
     { name: templateName, language: "ar", status: "APPROVED", category: "UTILITY" },
@@ -29,8 +32,34 @@ function fixtureFetch({
       return Response.json({
         data: {
           is_valid: true,
-          granular_scopes: [{ scope: "whatsapp_business_management", target_ids: [wabaId] }],
+          user_id: "111222333",
+          scopes: discoverViaBusiness
+            ? ["business_management", "whatsapp_business_management", "whatsapp_business_messaging"]
+            : ["whatsapp_business_management", "whatsapp_business_messaging"],
+          granular_scopes: discoverViaBusiness
+            ? [{ scope: "business_management", target_ids: [businessId] }]
+            : [{ scope: "whatsapp_business_management", target_ids: [wabaId] }],
         },
+      });
+    }
+    if (url.pathname === `/v23.0/me/businesses` || url.pathname === `/v23.0/111222333/businesses`) {
+      return Response.json({ data: discoverViaBusiness ? [{ id: businessId, name: "Atlas Business" }] : [] });
+    }
+    if (url.pathname === `/v23.0/${businessId}/owned_whatsapp_business_accounts`) {
+      return Response.json({ data: discoverViaBusiness ? [{ id: wabaId, name: "Atlas WABA" }] : [] });
+    }
+    if (url.pathname === `/v23.0/${businessId}/client_whatsapp_business_accounts`) {
+      return Response.json({ data: [] });
+    }
+    if (url.pathname.endsWith(`/${wabaId}/phone_numbers`)) {
+      return Response.json({
+        data: [{
+          id: phoneNumberId,
+          display_phone_number: "+1 555 000 0000",
+          verified_name: "Atlas Clinic Platform",
+          name_status: nameStatus,
+          quality_rating: "GREEN",
+        }],
       });
     }
     if (url.pathname.endsWith(`/${phoneNumberId}`)) {
@@ -64,7 +93,23 @@ test("Meta readiness becomes green only when display name and every supported te
   assert.equal(result.ready, true);
   assert.deepEqual(result.blockers, []);
   assert.equal(result.nameStatus, "APPROVED");
+  assert.equal(result.wabaCount, 1);
   assert.equal(result.templates.length, 3);
+});
+
+test("WABA can be discovered through business-management assets when granular WhatsApp targets are absent", async () => {
+  const result = await auditMetaWhatsAppReadiness({
+    accessToken,
+    phoneNumberId,
+    graphApiVersion: version,
+    expectedTemplateName: templateName,
+    fetchImplementation: fixtureFetch({ discoverViaBusiness: true }),
+  });
+
+  assert.equal(result.ready, true);
+  assert.equal(result.businessCount, 1);
+  assert.equal(result.wabaCount, 1);
+  assert.ok(result.tokenScopes.includes("business_management"));
 });
 
 test("pending display-name review blocks activation", async () => {
