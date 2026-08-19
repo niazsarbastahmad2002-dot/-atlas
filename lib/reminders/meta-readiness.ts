@@ -128,6 +128,7 @@ async function discoverBusinessIds(
   base: string,
   accessToken: string,
   userId: string | null,
+  appId: string | null,
   fetchImplementation: typeof fetch,
   businessIds: string[],
 ) {
@@ -152,6 +153,19 @@ async function discoverBusinessIds(
     collectDataIds(result.body, businessIds);
     const businesses = object(result.body?.businesses);
     collectDataIds(businesses, businessIds);
+  }
+
+  // Final self-service discovery path: the token debugger gives us the app ID.
+  // If Meta exposes the app's owning Business portfolio to this same system user,
+  // use it without requiring the operator to copy an ID from Business Manager.
+  if (appId) {
+    for (const fields of ["business", "business{id}"]) {
+      const appUrl = new URL(`${base}/${appId}`);
+      appUrl.searchParams.set("fields", fields);
+      const result = await graphJson(appUrl, accessToken, fetchImplementation);
+      if (!result.ok) continue;
+      addId(businessIds, object(result.body?.business)?.id);
+    }
   }
 }
 
@@ -226,8 +240,6 @@ export async function auditMetaWhatsAppReadiness({
     addBlocker(blockers, displayNameBlocker(nameStatus));
   }
 
-  // Some Graph versions expose the WABA relation directly on a phone-number node.
-  // This is opportunistic only; unsupported-field responses are ignored safely.
   const directWabaUrl = new URL(`${base}/${phoneNumberId}`);
   directWabaUrl.searchParams.set("fields", "whatsapp_business_account");
   const directWabaResponse = await graphJson(directWabaUrl, accessToken, fetchImplementation);
@@ -238,6 +250,7 @@ export async function auditMetaWhatsAppReadiness({
   const debugResponse = await graphJson(debugUrl, accessToken, fetchImplementation);
   const debugData = object(debugResponse.body?.data);
   const userId = numericId(debugData?.user_id);
+  const appId = numericId(debugData?.app_id);
 
   if (debugResponse.ok && debugData?.is_valid === true) {
     if (Array.isArray(debugData.scopes)) {
@@ -264,7 +277,7 @@ export async function auditMetaWhatsAppReadiness({
     addBlocker(blockers, "access_token_unverifiable");
   }
 
-  await discoverBusinessIds(base, accessToken, userId, fetchImplementation, businessIds);
+  await discoverBusinessIds(base, accessToken, userId, appId, fetchImplementation, businessIds);
   await discoverWabasFromBusinesses(base, accessToken, fetchImplementation, businessIds, candidateWabaIds);
   const matchedWabaIds = await selectPhoneWabas(
     base,
