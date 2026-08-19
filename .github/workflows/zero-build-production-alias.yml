@@ -1,0 +1,275 @@
+name: Atlas zero-build production release
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/zero-build-production-alias.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: atlas-zero-build-production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_TEAM_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      CANDIDATE_DEPLOYMENT: dpl_BaB4V1SCwFRYEgExBEpFqFsN7R6o
+      CANDIDATE_COMMIT: 066de8fc8aa8a859893756bed1245045cad71da1
+      PRODUCT_COMMIT: d88d94c9f192abcd973c2f587f3945950139af2a
+      CANDIDATE_BRANCH: atlas-patient-clarity-calendar-pass
+      CANONICAL_ALIAS: atlasdemofixed.vercel.app
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout Atlas with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Start sanitized report
+        run: |
+          cat > /tmp/atlas-zero-build-report.md <<'EOF'
+          ## Atlas zero-build production release
+
+          This release path does **not** create a new Vercel deployment or consume build quota.
+          EOF
+
+      - name: Verify already-built candidate matches merged runtime code
+        id: runtime
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          git fetch origin "$CANDIDATE_COMMIT" "$PRODUCT_COMMIT" >/dev/null 2>&1 || true
+          git cat-file -e "$CANDIDATE_COMMIT^{commit}"
+          git cat-file -e "$PRODUCT_COMMIT^{commit}"
+
+          DIFF="$(git diff --name-only "$CANDIDATE_COMMIT" "$PRODUCT_COMMIT" -- app lib public supabase package.json package-lock.json 'next.config.*' middleware.ts tsconfig.json || true)"
+          if [ -n "$DIFF" ]; then
+            {
+              echo
+              echo '- Runtime tree match: **no**'
+              echo '- Safety result: **stopped before touching production**'
+              echo '- Runtime files that differ:'
+              while IFS= read -r file; do [ -n "$file" ] && printf '  - `%s`\n' "$file"; done <<< "$DIFF"
+            } >> /tmp/atlas-zero-build-report.md
+            exit 1
+          fi
+          echo >> /tmp/atlas-zero-build-report.md
+          echo '- Runtime tree match: **yes**' >> /tmp/atlas-zero-build-report.md
+
+      - name: Verify preview and production runtime environment parity
+        id: envcheck
+        if: steps.runtime.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          test -n "$VERCEL_TOKEN"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_TEAM_ID&decrypt=true" \
+            > /tmp/vercel-env.json
+
+          python - <<'PY'
+          import json, os, sys
+          data=json.load(open('/tmp/vercel-env.json'))
+          rows=data.get('envs', data if isinstance(data,list) else [])
+          branch=os.environ['CANDIDATE_BRANCH']
+
+          def targets(row):
+              t=row.get('target') or []
+              return [t] if isinstance(t,str) else list(t)
+
+          def choose(key, target):
+              matching=[r for r in rows if r.get('key')==key and target in targets(r)]
+              if target=='preview':
+                  specific=[r for r in matching if r.get('gitBranch')==branch]
+                  generic=[r for r in matching if not r.get('gitBranch')]
+                  pool=specific or generic
+              else:
+                  pool=[r for r in matching if not r.get('gitBranch')] or matching
+              if not pool:
+                  return None
+              pool=sorted(pool, key=lambda r: r.get('updatedAt') or r.get('createdAt') or 0)
+              return str(pool[-1].get('value',''))
+
+          production_keys=sorted({r.get('key') for r in rows if r.get('key') and 'production' in targets(r)})
+          mismatches=[]
+          for key in production_keys:
+              p=choose(key,'production')
+              v=choose(key,'preview')
+              if p is None or v is None or p != v:
+                  mismatches.append(key)
+
+          required=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SITE_URL','CRON_SECRET']
+          missing=[k for k in required if choose(k,'production') in (None,'') or choose(k,'preview') in (None,'')]
+          server_keys=['SUPABASE_SECRET_KEY','SUPABASE_SERVICE_ROLE_KEY']
+          if not any(choose(k,'production') not in (None,'') and choose(k,'preview')==choose(k,'production') for k in server_keys):
+              missing.append('SUPABASE_SECRET_KEY_or_SERVICE_ROLE_KEY')
+
+          if mismatches or missing:
+              with open('/tmp/atlas-zero-build-report.md','a') as f:
+                  f.write('\n- Production/preview environment parity: **no**\n')
+                  f.write('- Safety result: **stopped before touching production**\n')
+                  if mismatches:
+                      f.write('- Keys with different or missing Preview values: ' + ', '.join(f'`{k}`' for k in mismatches) + '\n')
+                  if missing:
+                      f.write('- Required runtime configuration missing: ' + ', '.join(f'`{k}`' for k in missing) + '\n')
+              sys.exit(1)
+
+          verify=choose('WHATSAPP_VERIFY_TOKEN','preview') or ''
+          open('/tmp/whatsapp-verify-token','w').write(verify)
+          with open('/tmp/atlas-zero-build-report.md','a') as f:
+              f.write('\n- Production/preview environment parity: **yes**\n')
+              f.write(f'- Runtime configuration keys compared: **{len(production_keys)}**\n')
+          PY
+
+      - name: Verify candidate deployment and capture current production
+        id: candidate
+        if: steps.envcheck.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v13/deployments/$CANDIDATE_DEPLOYMENT?teamId=$VERCEL_TEAM_ID" \
+            > /tmp/candidate.json
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v13/deployments/$CANONICAL_ALIAS?teamId=$VERCEL_TEAM_ID" \
+            > /tmp/current.json
+
+          python - <<'PY'
+          import json, os, sys
+          c=json.load(open('/tmp/candidate.json'))
+          current=json.load(open('/tmp/current.json'))
+          ok=(str(c.get('id'))==os.environ['CANDIDATE_DEPLOYMENT']
+              and str(c.get('projectId') or (c.get('project') or {}).get('id'))==os.environ['VERCEL_PROJECT_ID']
+              and str(c.get('readyState') or c.get('state'))=='READY'
+              and str((c.get('meta') or {}).get('githubCommitSha'))==os.environ['CANDIDATE_COMMIT'])
+          old=current.get('id')
+          if not ok or not old:
+              with open('/tmp/atlas-zero-build-report.md','a') as f:
+                  f.write('\n- Candidate deployment validation: **failed**\n- Safety result: **stopped before touching production**\n')
+              sys.exit(1)
+          open('/tmp/old-deployment-id','w').write(str(old))
+          with open('/tmp/atlas-zero-build-report.md','a') as f:
+              f.write('\n- Candidate deployment validation: **READY and correct**\n')
+          PY
+
+      - name: Move canonical Atlas alias without rebuilding
+        id: alias
+        if: steps.candidate.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/alias-response.json -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "{\"alias\":\"$CANONICAL_ALIAS\"}" \
+            "https://api.vercel.com/v2/deployments/$CANDIDATE_DEPLOYMENT/aliases?teamId=$VERCEL_TEAM_ID")
+          if [ "$HTTP" != "200" ]; then
+            python - <<'PY'
+          import json
+          try:
+              x=json.load(open('/tmp/alias-response.json'))
+              e=x.get('error') or {}
+              code=e.get('code') or 'unknown'
+          except Exception:
+              code='unknown'
+          with open('/tmp/atlas-zero-build-report.md','a') as f:
+              f.write(f'\n- Alias move: **failed safely** (Vercel code: `{code}`)\n')
+              f.write('- Production was not intentionally changed.\n')
+          PY
+            exit 1
+          fi
+          echo >> /tmp/atlas-zero-build-report.md
+          echo '- Alias move: **accepted by Vercel**' >> /tmp/atlas-zero-build-report.md
+
+      - name: Verify canonical production routes and runtime secrets
+        id: verify
+        if: steps.alias.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sleep 4
+          fail=0
+
+          check_page() {
+            path="$1"
+            marker="$2"
+            curl --silent --show-error --max-time 20 -D /tmp/h -o /tmp/b "https://$CANONICAL_ALIAS$path" || { fail=1; return; }
+            status=$(awk 'NR==1{print $2}' /tmp/h)
+            if grep -qi '^location: https://vercel.com/sso-api' /tmp/h; then fail=1; return; fi
+            if [ "$status" != "200" ]; then fail=1; return; fi
+            if [ -n "$marker" ] && ! grep -qi "$marker" /tmp/b; then fail=1; return; fi
+          }
+
+          check_page '/login' 'Atlas'
+          check_page '/privacy' 'Atlas'
+          check_page '/terms' 'Atlas'
+
+          VERIFY_TOKEN="$(cat /tmp/whatsapp-verify-token)"
+          if [ -n "$VERIFY_TOKEN" ]; then
+            status=$(curl --silent --show-error --max-time 20 -o /tmp/webhook-body -w '%{http_code}' -G \
+              --data-urlencode 'hub.mode=subscribe' \
+              --data-urlencode "hub.verify_token=$VERIFY_TOKEN" \
+              --data-urlencode 'hub.challenge=atlas-zero-build-check' \
+              "https://$CANONICAL_ALIAS/api/whatsapp/webhook" || true)
+            body=$(cat /tmp/webhook-body 2>/dev/null || true)
+            if [ "$status" != "200" ] || [ "$body" != 'atlas-zero-build-check' ]; then fail=1; fi
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            echo >> /tmp/atlas-zero-build-report.md
+            echo '- Canonical route/runtime verification: **failed**' >> /tmp/atlas-zero-build-report.md
+            exit 1
+          fi
+          echo >> /tmp/atlas-zero-build-report.md
+          echo '- Canonical route/runtime verification: **passed**' >> /tmp/atlas-zero-build-report.md
+          echo '- Result: **Atlas is live on the already-built release without a new Vercel build.**' >> /tmp/atlas-zero-build-report.md
+
+      - name: Roll back alias automatically if verification failed
+        id: rollback
+        if: steps.alias.outcome == 'success' && steps.verify.outcome != 'success'
+        run: |
+          set -euo pipefail
+          OLD="$(cat /tmp/old-deployment-id)"
+          HTTP=$(curl --silent --show-error -o /tmp/rollback-response.json -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "{\"alias\":\"$CANONICAL_ALIAS\"}" \
+            "https://api.vercel.com/v2/deployments/$OLD/aliases?teamId=$VERCEL_TEAM_ID")
+          if [ "$HTTP" != "200" ]; then
+            echo >> /tmp/atlas-zero-build-report.md
+            echo '- Automatic rollback: **FAILED — immediate attention required**' >> /tmp/atlas-zero-build-report.md
+            exit 1
+          fi
+          echo >> /tmp/atlas-zero-build-report.md
+          echo '- Automatic rollback: **completed; previous production restored**' >> /tmp/atlas-zero-build-report.md
+
+      - name: Publish sanitized result
+        if: always()
+        run: |
+          cat /tmp/atlas-zero-build-report.md >> "$GITHUB_STEP_SUMMARY"
+          gh issue comment 59 --body-file /tmp/atlas-zero-build-report.md
+
+      - name: Require successful release
+        if: always()
+        run: |
+          test "${{ steps.runtime.outcome }}" = success
+          test "${{ steps.envcheck.outcome }}" = success
+          test "${{ steps.candidate.outcome }}" = success
+          test "${{ steps.alias.outcome }}" = success
+          test "${{ steps.verify.outcome }}" = success
