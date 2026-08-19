@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { withExplicitMetaWabaCandidate } from "@/lib/reminders/meta-explicit-waba";
 import { auditMetaWhatsAppReadiness } from "@/lib/reminders/meta-readiness";
 import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
@@ -59,9 +60,16 @@ export async function POST(request: Request) {
   }
 
   let activate = false;
+  let wabaId: string | undefined;
   try {
-    const body = await request.json() as { activate?: unknown };
+    const body = await request.json() as { activate?: unknown; wabaId?: unknown };
     activate = body.activate === true;
+    if (body.wabaId !== undefined) {
+      if (typeof body.wabaId !== "string" || !/^\d{5,32}$/.test(body.wabaId)) {
+        return NextResponse.json({ error: "invalid_waba_id" }, { status: 400 });
+      }
+      wabaId = body.wabaId;
+    }
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
@@ -88,6 +96,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "settings_unavailable" }, { status: 404 });
   }
 
+  const metaFetch = withExplicitMetaWabaCandidate(wabaId);
   const templateNames = [...new Set(settings.map((row) => row.template_name).filter(Boolean))];
   const audits = [];
   for (const templateName of templateNames) {
@@ -96,6 +105,7 @@ export async function POST(request: Request) {
       phoneNumberId: config.phoneNumberId,
       graphApiVersion: config.graphApiVersion,
       expectedTemplateName: templateName,
+      fetchImplementation: metaFetch,
     });
     audits.push({ templateName, ...result });
   }
@@ -143,6 +153,7 @@ export async function POST(request: Request) {
       qualityRating: audit.qualityRating,
       businessCount: audit.businessCount,
       wabaCount: audit.wabaCount,
+      wabaIds: audit.wabaIds,
       tokenScopes: audit.tokenScopes,
       wabaReviewStatuses: audit.wabaReviewStatuses,
       templates: audit.templates,
