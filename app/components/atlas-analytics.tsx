@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { createAtlasClientErrorGate, shouldTrackAtlasWindowError } from "@/lib/analytics/client-errors";
 import { classifyAtlasScreen, surfaceForScreen } from "@/lib/analytics/schema";
 import { trackAtlasEvent } from "@/lib/analytics/client";
 
@@ -14,11 +15,18 @@ export function AtlasAnalytics() {
   }, [pathname]);
 
   useEffect(() => {
-    const onWindowError = () => {
-      trackAtlasEvent("atlas_client_error", { error_kind: "window", interaction: "system" });
+    const allowError = createAtlasClientErrorGate();
+    const trackClientError = (kind: "window" | "unhandled_rejection") => {
+      if (!allowError(kind)) return;
+      trackAtlasEvent("atlas_client_error", { error_kind: kind, interaction: "system" });
+    };
+
+    const onWindowError = (event: ErrorEvent) => {
+      if (!shouldTrackAtlasWindowError(event)) return;
+      trackClientError("window");
     };
     const onUnhandledRejection = () => {
-      trackAtlasEvent("atlas_client_error", { error_kind: "unhandled_rejection", interaction: "system" });
+      trackClientError("unhandled_rejection");
     };
 
     window.addEventListener("error", onWindowError);
