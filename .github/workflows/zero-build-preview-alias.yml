@@ -1,0 +1,89 @@
+name: Atlas zero-build newer release alias
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/zero-build-preview-alias.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  alias:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      TEAM_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      CANDIDATE_ID: dpl_BaB4V1SCwFRYEgExBEpFqFsN7R6o
+      RELEASE_ALIAS: atlasdemofixed-next.vercel.app
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Assign public alias to existing READY deployment
+        id: alias
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error -o /tmp/alias.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "{\"alias\":\"$RELEASE_ALIAS\"}" \
+            "https://api.vercel.com/v2/deployments/$CANDIDATE_ID/aliases?teamId=$TEAM_ID")
+          if [ "$HTTP" != 200 ]; then
+            python - <<'PY' > /tmp/report.md
+          import json,os
+          try:
+              e=(json.load(open('/tmp/alias.json')).get('error') or {})
+              code=e.get('code') or 'unknown'
+              msg=e.get('message') or 'unknown'
+          except Exception:
+              code=msg='unknown'
+          print('## Atlas zero-build newer release alias')
+          print(f'\n- Alias assignment: **failed safely** (`{code}`, HTTP {os.environ.get("HTTP_CODE","unknown")})')
+          print(f'- Vercel message: {msg[:300]}')
+          print('- Canonical production was not changed.')
+          PY
+            exit 1
+          fi
+          cat > /tmp/report.md <<EOF
+          ## Atlas zero-build newer release alias
+
+          - Alias assignment: **accepted**
+          - Existing deployment reused: **yes — no build/deployment created**
+          - Canonical production changed: **no**
+          EOF
+
+      - name: Verify aliased app routes
+        id: verify
+        if: always() && steps.alias.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sleep 3
+          fail=0
+          for path in /login /privacy /terms; do
+            code=$(curl --silent --show-error --max-time 20 -o /tmp/body -w '%{http_code}' "https://$RELEASE_ALIAS$path" || true)
+            if [ "$code" != 200 ] || ! grep -qi Atlas /tmp/body; then fail=1; fi
+          done
+          if [ "$fail" -eq 0 ]; then
+            echo '- Public route verification: **passed**' >> /tmp/report.md
+            echo "- URL: **https://$RELEASE_ALIAS**" >> /tmp/report.md
+          else
+            echo '- Public route verification: **failed**' >> /tmp/report.md
+            exit 1
+          fi
+
+      - name: Publish result
+        if: always()
+        run: |
+          cat /tmp/report.md >> "$GITHUB_STEP_SUMMARY"
+          gh issue comment 59 --repo niazsarbastahmad2002-dot/-atlas --body-file /tmp/report.md || true
+
+      - name: Require success
+        if: always()
+        run: |
+          test "${{ steps.alias.outcome }}" = success
+          test "${{ steps.verify.outcome }}" = success
