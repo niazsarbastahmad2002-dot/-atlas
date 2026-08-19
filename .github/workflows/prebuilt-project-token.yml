@@ -1,0 +1,68 @@
+name: Atlas project-token prebuilt deploy
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/prebuilt-project-token.yml]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: atlas-project-token-prebuilt
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      VERCEL_ORG_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install Atlas and Vercel CLI
+        run: |
+          npm ci
+          npm install --global vercel@latest
+      - name: Link project locally without user lookup
+        run: |
+          mkdir -p .vercel
+          printf '%s\n' '{"orgId":"team_12LjTXJIxUILoIdh54kXsRUc","projectId":"prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ"}' > .vercel/project.json
+      - name: Build Vercel output on GitHub
+        id: build
+        continue-on-error: true
+        run: |
+          set +e
+          vercel build --prod --token="$VERCEL_TOKEN" > /tmp/vercel-build.log 2>&1
+          status=$?
+          tail -c 3500 /tmp/vercel-build.log | sed "s/$VERCEL_TOKEN/[REDACTED]/g" > /tmp/vercel-build-tail.txt
+          printf 'Vercel local build exit code: %s\n\n' "$status" > /tmp/build-comment.txt
+          cat /tmp/vercel-build-tail.txt >> /tmp/build-comment.txt
+          gh issue comment 59 --body-file /tmp/build-comment.txt
+          exit "$status"
+      - name: Deploy prebuilt output to production
+        id: deploy
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set +e
+          vercel deploy --prebuilt --archive=tgz --prod --token="$VERCEL_TOKEN" > /tmp/vercel-deploy.log 2>&1
+          status=$?
+          tail -c 3500 /tmp/vercel-deploy.log | sed "s/$VERCEL_TOKEN/[REDACTED]/g" > /tmp/vercel-deploy-tail.txt
+          printf 'Vercel prebuilt deploy exit code: %s\n\n' "$status" > /tmp/deploy-comment.txt
+          cat /tmp/vercel-deploy-tail.txt >> /tmp/deploy-comment.txt
+          gh issue comment 59 --body-file /tmp/deploy-comment.txt
+          exit "$status"
+      - name: Require production deployment
+        if: always()
+        run: |
+          echo "build=${{ steps.build.outcome }} deploy=${{ steps.deploy.outcome }}"
+          test "${{ steps.deploy.outcome }}" = "success"
