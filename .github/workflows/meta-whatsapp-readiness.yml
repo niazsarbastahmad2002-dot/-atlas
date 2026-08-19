@@ -1,0 +1,239 @@
+name: Atlas Meta WhatsApp readiness
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/meta-whatsapp-readiness.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      VERCEL_ORG_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      META_APP_ID: "1444517747585211"
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Fetch Atlas production environment securely
+        run: |
+          set -euo pipefail
+          test -n "$VERCEL_TOKEN"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_ORG_ID&decrypt=true" \
+            > /tmp/vercel-env.json
+
+      - name: Probe Meta without exposing credentials
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request, urllib.error
+          from datetime import datetime, timezone
+
+          APP_ID = os.environ["META_APP_ID"]
+          raw = json.load(open("/tmp/vercel-env.json"))
+          items = raw.get("envs", raw if isinstance(raw, list) else [])
+          env = {}
+          for item in items:
+              target = item.get("target") or []
+              if isinstance(target, str):
+                  target = [target]
+              if target and "production" not in target:
+                  continue
+              key = item.get("key")
+              value = item.get("value")
+              if key and value is not None:
+                  env[key] = str(value)
+
+          required = [
+              "WHATSAPP_ENABLED", "WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID",
+              "WHATSAPP_APP_SECRET", "WHATSAPP_VERIFY_TOKEN", "WHATSAPP_GRAPH_API_VERSION",
+              "WHATSAPP_GLOBAL_DAILY_LIMIT",
+          ]
+          present = {key: bool(env.get(key, "").strip()) for key in required}
+          enabled = env.get("WHATSAPP_ENABLED", "").strip().lower() == "true"
+          token = env.get("WHATSAPP_ACCESS_TOKEN", "").strip()
+          phone_id = env.get("WHATSAPP_PHONE_NUMBER_ID", "").strip()
+          app_secret = env.get("WHATSAPP_APP_SECRET", "").strip()
+          version = env.get("WHATSAPP_GRAPH_API_VERSION", "").strip() or "v26.0"
+
+          def request_json(url, bearer=None):
+              req = urllib.request.Request(url)
+              if bearer:
+                  req.add_header("Authorization", f"Bearer {bearer}")
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as response:
+                      return response.status, json.loads(response.read().decode("utf-8"))
+              except urllib.error.HTTPError as exc:
+                  try:
+                      body = json.loads(exc.read().decode("utf-8"))
+                  except Exception:
+                      body = {"error": {"code": exc.code}}
+                  return exc.code, body
+              except Exception:
+                  return 0, {"error": {"code": "transport"}}
+
+          def error_code(body):
+              if isinstance(body, dict) and isinstance(body.get("error"), dict):
+                  return body["error"].get("code")
+              return None
+
+          phone_ok = False
+          phone_last4 = None
+          quality = None
+          verified_name_present = False
+          phone_error = None
+          if token and phone_id:
+              status, body = request_json(
+                  f"https://graph.facebook.com/{version}/{urllib.parse.quote(phone_id)}?fields=id,display_phone_number,verified_name,quality_rating",
+                  token,
+              )
+              phone_ok = status == 200 and isinstance(body, dict) and str(body.get("id", "")) == phone_id
+              if phone_ok:
+                  digits = "".join(ch for ch in str(body.get("display_phone_number", "")) if ch.isdigit())
+                  phone_last4 = digits[-4:] if len(digits) >= 4 else None
+                  quality = body.get("quality_rating")
+                  verified_name_present = bool(body.get("verified_name"))
+              else:
+                  phone_error = error_code(body) or status
+
+          token_valid = False
+          token_expiry = "unknown"
+          scopes = []
+          target_ids = []
+          if token and app_secret:
+              app_access = f"{APP_ID}|{app_secret}"
+              query = urllib.parse.urlencode({"input_token": token, "access_token": app_access})
+              status, body = request_json(f"https://graph.facebook.com/{version}/debug_token?{query}")
+              data = body.get("data", {}) if isinstance(body, dict) else {}
+              token_valid = bool(data.get("is_valid"))
+              scopes = sorted(set(str(x) for x in (data.get("scopes") or [])))
+              expiry = data.get("expires_at")
+              if isinstance(expiry, (int, float)):
+                  token_expiry = "never" if expiry == 0 else datetime.fromtimestamp(expiry, timezone.utc).strftime("%Y-%m-%d")
+              for granular in data.get("granular_scopes") or []:
+                  if not isinstance(granular, dict):
+                      continue
+                  if granular.get("scope") in {"whatsapp_business_management", "whatsapp_business_messaging"}:
+                      target_ids.extend(str(x) for x in (granular.get("target_ids") or []))
+
+          waba_candidates = []
+          seen = set()
+          for candidate in target_ids:
+              if candidate not in seen:
+                  seen.add(candidate)
+                  waba_candidates.append(candidate)
+
+          # If granular targets are absent, try businesses available to the token without logging IDs.
+          if token and "business_management" in scopes and not waba_candidates:
+              status, body = request_json(f"https://graph.facebook.com/{version}/me/businesses?fields=id&limit=25", token)
+              if status == 200 and isinstance(body, dict):
+                  for business in body.get("data") or []:
+                      business_id = str(business.get("id", ""))
+                      if not business_id:
+                          continue
+                      for edge in ("owned_whatsapp_business_accounts", "client_whatsapp_business_accounts"):
+                          s2, b2 = request_json(f"https://graph.facebook.com/{version}/{business_id}/{edge}?fields=id&limit=25", token)
+                          if s2 == 200 and isinstance(b2, dict):
+                              for item in b2.get("data") or []:
+                                  candidate = str(item.get("id", ""))
+                                  if candidate and candidate not in seen:
+                                      seen.add(candidate)
+                                      waba_candidates.append(candidate)
+
+          waba_id = None
+          review_status = None
+          funding_present = None
+          template_rows = []
+          for candidate in waba_candidates[:20]:
+              status, body = request_json(
+                  f"https://graph.facebook.com/{version}/{candidate}?fields=id,name,account_review_status,primary_funding_id",
+                  token,
+              )
+              if status != 200 or not isinstance(body, dict) or str(body.get("id", "")) != candidate:
+                  continue
+              # Verify this WABA owns the configured phone number when possible.
+              s2, b2 = request_json(f"https://graph.facebook.com/{version}/{candidate}/phone_numbers?fields=id&limit=100", token)
+              numbers = [str(x.get("id", "")) for x in (b2.get("data") or [])] if s2 == 200 and isinstance(b2, dict) else []
+              if phone_id and numbers and phone_id not in numbers:
+                  continue
+              waba_id = candidate
+              review_status = body.get("account_review_status")
+              funding_present = bool(body.get("primary_funding_id"))
+              qs = urllib.parse.urlencode({
+                  "name": "atlas_appointment_reminder",
+                  "fields": "name,status,language,category",
+                  "limit": "50",
+              })
+              s3, b3 = request_json(f"https://graph.facebook.com/{version}/{candidate}/message_templates?{qs}", token)
+              if s3 == 200 and isinstance(b3, dict):
+                  for row in b3.get("data") or []:
+                      if row.get("name") == "atlas_appointment_reminder":
+                          template_rows.append({
+                              "status": str(row.get("status", "UNKNOWN")),
+                              "language": str(row.get("language", "UNKNOWN")),
+                              "category": str(row.get("category", "UNKNOWN")),
+                          })
+              break
+
+          has_management = "whatsapp_business_management" in scopes
+          has_messaging = "whatsapp_business_messaging" in scopes
+          template_summary = ", ".join(f"{r['language']}={r['status']} ({r['category']})" for r in template_rows) or "not found"
+
+          next_action = "none"
+          if not enabled or not all(present.values()):
+              next_action = "Atlas server configuration is incomplete."
+          elif not token_valid or not phone_ok:
+              next_action = "The stored Meta access token or phone-number access needs repair."
+          elif not has_management or not has_messaging:
+              next_action = "The Meta access token is missing WhatsApp management/messaging permissions."
+          elif not waba_id:
+              next_action = "The token works, but its WhatsApp Business Account could not be discovered automatically."
+          elif not template_rows:
+              next_action = "Create the Atlas utility template, then wait for Meta approval."
+          elif not any(r["status"] == "APPROVED" for r in template_rows):
+              next_action = "The Atlas template exists but is not approved yet."
+          elif funding_present is False:
+              next_action = "The template is approved, but no WABA funding/payment method is visible."
+          else:
+              next_action = "Meta is ready for Atlas to activate messaging approval."
+
+          lines = [
+              "## Atlas Meta / WhatsApp readiness probe",
+              "",
+              f"- Atlas WhatsApp switch configured: **{'yes' if enabled else 'no'}**",
+              f"- Required production variables present: **{'yes' if all(present.values()) else 'no'}**",
+              f"- Meta access token valid: **{'yes' if token_valid else 'no'}** (expiry: {token_expiry})",
+              f"- Configured phone reachable: **{'yes' if phone_ok else 'no'}**" + (f" (last 4: {phone_last4}, quality: {quality or 'unknown'})" if phone_ok else f" (Meta error: {phone_error or 'unknown'})"),
+              f"- Verified display name present: **{'yes' if verified_name_present else 'no'}**",
+              f"- whatsapp_business_management permission: **{'yes' if has_management else 'no'}**",
+              f"- whatsapp_business_messaging permission: **{'yes' if has_messaging else 'no'}**",
+              f"- WABA discovered: **{'yes' if waba_id else 'no'}**",
+              f"- WABA review status: **{review_status or 'unknown'}**",
+              f"- WABA payment/funding method visible: **{'yes' if funding_present is True else 'no' if funding_present is False else 'unknown'}**",
+              f"- atlas_appointment_reminder template: **{template_summary}**",
+              "",
+              f"**Next action:** {next_action}",
+              "",
+              "No access tokens, app secrets, IDs, or environment values are printed by this probe.",
+          ]
+          open("/tmp/meta-report.md", "w").write("\n".join(lines) + "\n")
+          print("Meta readiness probe completed; sensitive values were not printed.")
+          PY
+
+      - name: Publish sanitized result
+        if: always()
+        run: |
+          if [ -f /tmp/meta-report.md ]; then
+            cat /tmp/meta-report.md >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/meta-report.md
+            fi
+          fi
