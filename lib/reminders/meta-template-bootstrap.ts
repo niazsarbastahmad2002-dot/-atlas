@@ -30,14 +30,12 @@ function providerError(body: JsonRecord | null, status: number, accessToken: str
 }
 
 export const ATLAS_APPOINTMENT_REMINDER_TEMPLATE = "atlas_appointment_reminder";
-export const ATLAS_SORANI_META_LANGUAGE = "ckb";
+export const ATLAS_WHATSAPP_REQUIRED_LANGUAGES = ["ar", "en_US"] as const;
 
+// Meta currently rejects Atlas's Sorani/Badini template locales. Keep the patient's
+// Atlas language unchanged, but use the approved Iraqi-Arabic provider template as
+// the WhatsApp fallback for Kurdish recipients until Meta supports those locales.
 export const ATLAS_APPOINTMENT_REMINDER_VARIANTS = [
-  {
-    language: ATLAS_SORANI_META_LANGUAGE,
-    text: "بیرخستنەوەی کاتی پزیشک لە {{1}}. کاتی پزیشکت بۆ {{2}} دیاریکراوە. ئەگەر ناتوانیت ئامادە بیت، تکایە پەیوەندی بە کلینیکەوە بکە.",
-    examples: ["کلینیکی ئەتڵەس", "20/8/2026، 10:30 پ.ن"],
-  },
   {
     language: "ar",
     text: "تذكير من {{1}}: موعدك بوقت {{2}}. إذا ما تگدر تجي، رجاءً تواصل ويّا العيادة.",

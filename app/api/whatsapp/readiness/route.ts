@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withExplicitMetaWabaCandidate } from "@/lib/reminders/meta-explicit-waba";
 import { auditMetaWhatsAppReadiness } from "@/lib/reminders/meta-readiness";
+import { ATLAS_WHATSAPP_REQUIRED_LANGUAGES } from "@/lib/reminders/meta-template-bootstrap";
 import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
       phoneNumberId: config.phoneNumberId,
       graphApiVersion: config.graphApiVersion,
       expectedTemplateName: templateName,
-      expectedLanguages: ["ckb", "ar", "en_US"],
+      expectedLanguages: [...ATLAS_WHATSAPP_REQUIRED_LANGUAGES],
       fetchImplementation: metaFetch,
     });
     audits.push({ templateName, ...result });
