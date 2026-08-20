@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { auditMetaWhatsAppReadiness } from "../lib/reminders/meta-readiness.ts";
+import {
+  auditMetaWhatsAppReadiness,
+  isMetaTestDisplayPhoneNumber,
+} from "../lib/reminders/meta-readiness.ts";
 
 const accessToken = "test-system-user-access-token-that-must-never-leak";
 const phoneNumberId = "1234567890";
@@ -11,6 +14,7 @@ const businessId = "555666777";
 
 type FixtureOptions = {
   nameStatus?: string;
+  displayPhoneNumber?: string;
   templates?: Array<{ name: string; language: string; status: string; category?: string }>;
   reviewStatus?: string;
   discoverViaBusiness?: boolean;
@@ -18,10 +22,10 @@ type FixtureOptions = {
 
 function fixtureFetch({
   nameStatus = "APPROVED",
+  displayPhoneNumber = "+1 415 555 0100",
   reviewStatus = "APPROVED",
   discoverViaBusiness = false,
   templates = [
-    { name: templateName, language: "ku", status: "APPROVED", category: "UTILITY" },
     { name: templateName, language: "ar", status: "APPROVED", category: "UTILITY" },
     { name: templateName, language: "en_US", status: "APPROVED", category: "UTILITY" },
   ],
@@ -55,7 +59,7 @@ function fixtureFetch({
       return Response.json({
         data: [{
           id: phoneNumberId,
-          display_phone_number: "+1 555 000 0000",
+          display_phone_number: displayPhoneNumber,
           verified_name: "Atlas Clinic Platform",
           name_status: nameStatus,
           quality_rating: "GREEN",
@@ -65,7 +69,7 @@ function fixtureFetch({
     if (url.pathname.endsWith(`/${phoneNumberId}`)) {
       return Response.json({
         id: phoneNumberId,
-        display_phone_number: "+1 555 000 0000",
+        display_phone_number: displayPhoneNumber,
         verified_name: "Atlas Clinic Platform",
         name_status: nameStatus,
         quality_rating: "GREEN",
@@ -81,7 +85,7 @@ function fixtureFetch({
   }) as typeof fetch;
 }
 
-test("Meta readiness becomes green only when display name and every supported template variant are approved", async () => {
+test("Meta readiness becomes green only when a real sender and every required template are approved", async () => {
   const result = await auditMetaWhatsAppReadiness({
     accessToken,
     phoneNumberId,
@@ -94,7 +98,23 @@ test("Meta readiness becomes green only when display name and every supported te
   assert.deepEqual(result.blockers, []);
   assert.equal(result.nameStatus, "APPROVED");
   assert.equal(result.wabaCount, 1);
-  assert.equal(result.templates.length, 3);
+  assert.equal(result.templates.length, 2);
+});
+
+test("Meta-provided +1 555 sandbox sender can never activate production reminders", async () => {
+  assert.equal(isMetaTestDisplayPhoneNumber("+1 555-376-1113"), true);
+  assert.equal(isMetaTestDisplayPhoneNumber("+1 415 555 0100"), false);
+
+  const result = await auditMetaWhatsAppReadiness({
+    accessToken,
+    phoneNumberId,
+    graphApiVersion: version,
+    expectedTemplateName: templateName,
+    fetchImplementation: fixtureFetch({ displayPhoneNumber: "+1 555-376-1113" }),
+  });
+
+  assert.equal(result.ready, false);
+  assert.ok(result.blockers.includes("test_sender_number"));
 });
 
 test("WABA can be discovered through business-management assets when granular WhatsApp targets are absent", async () => {
@@ -125,7 +145,7 @@ test("pending display-name review blocks activation", async () => {
   assert.ok(result.blockers.includes("display_name_pending"));
 });
 
-test("a missing or unapproved patient-language template blocks activation", async () => {
+test("a missing or unapproved required provider-language template blocks activation", async () => {
   const result = await auditMetaWhatsAppReadiness({
     accessToken,
     phoneNumberId,
@@ -133,7 +153,6 @@ test("a missing or unapproved patient-language template blocks activation", asyn
     expectedTemplateName: templateName,
     fetchImplementation: fixtureFetch({
       templates: [
-        { name: templateName, language: "ku", status: "APPROVED" },
         { name: templateName, language: "ar", status: "REJECTED" },
       ],
     }),
