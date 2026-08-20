@@ -8,6 +8,12 @@ Use the official Kurdistan Regional Government business-registration process wit
 
 Working first-choice name: **Atlas Appointments Technologies**, subject to official name approval and proper trademark/name review.
 
+### Recommended legal form
+
+For a solo founder, the current KRG company-type guide makes a **Private Limited Company** the preferred Atlas starting point, subject to confirmation by the registrar/lawyer handling the incorporation. KRG states that a Private Limited Company can have **1–25 shareholders** and may use an invented name. By contrast, KRG's Individual Project Company has one shareholder but its company name is based on the owner's personal full name. Atlas needs a genuine legal-entity path for Apple organization enrollment, not a sole-proprietor-style workaround.
+
+Do not translate, abbreviate, or append a legal-form suffix to the final company name by guesswork. Use exactly the English and local-language legal names printed on the registration certificate.
+
 Current official KRG service requirements checked 21 August 2026 include:
 
 - company capital of at least **1,000,000 IQD**, supported by confirmation from an authorized public/private bank;
@@ -18,9 +24,25 @@ Current official KRG service requirements checked 21 August 2026 include:
 - bank confirmation of deposited company capital;
 - stated service time of **3–10 days**.
 
-The official portal's listed base fees should be rechecked immediately before payment because government fees can change. Lawyer, accountant, bank, tax, office, translation, notarization and incidental costs are separate.
+The official KRG pages currently expose overlapping fee schedules for company/trade-name registration and Authorized Manager steps. Do not assume a manually summed total is the final amount; recheck the live portal/registrar immediately before payment. Lawyer, accountant, bank, tax, office, translation, notarization and incidental costs are separate.
 
-Official service: https://services.gov.krd/en/service/moti-01-en
+Official resources:
+
+- Service overview: https://services.gov.krd/en/service/moti-01-en
+- Business registration portal: https://business.digital.gov.krd/
+- Local-company registration guide: https://business.digital.gov.krd/en/guidelines/local-company
+- Local company types: https://business.digital.gov.krd/en/guidelines/local-company-types
+
+### Registration sequence
+
+The KRG service describes this sequence:
+
+1. reserve/register the company trade name and enter the company information in the electronic business-registration system;
+2. receive the incorporation contract by email;
+3. take the contract to an authorized bank and obtain the required capital-deposit confirmation;
+4. present original documents for verification against the electronic submission;
+5. pay the applicable government fees and receive the original company registration certificate;
+6. after the company certificate and Authorized Manager appointment, complete the required lawyer/accountant, tax and related registration follow-up identified by the Directorate of Companies.
 
 ## 2. Safe information to return to Atlas engineering
 
