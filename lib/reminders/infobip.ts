@@ -72,7 +72,11 @@ function safeErrorCode(body: unknown, status: number) {
   return `infobip_http_${status}`;
 }
 
-export function buildInfobipTemplatePayload(input: InfobipTemplateInput, sender: string, messageId = randomUUID()) {
+export function buildInfobipTemplatePayload(
+  input: InfobipTemplateInput,
+  sender: string,
+  messageId: string = randomUUID(),
+) {
   return {
     messages: [{
       from: sender,
