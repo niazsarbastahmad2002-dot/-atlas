@@ -138,7 +138,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ?? activeDoctors[0]
     : activeDoctors[0] ?? null;
   const selectedDoctorId = multiDoctor ? selectedDoctor?.id ?? null : null;
-  const defaultReminderLanguage = (doctorWorkflowRows ?? []).find((row) => row.doctor_id === selectedDoctor?.id)?.default_reminder_language ?? reminderSettings?.default_reminder_language ?? "ku";
+  const defaultReminderLanguage = (doctorWorkflowRows ?? []).find((row: { doctor_id: string; default_reminder_language: string }) => row.doctor_id === selectedDoctor?.id)?.default_reminder_language ?? reminderSettings?.default_reminder_language ?? "ku";
   const visibleRows = multiDoctor && selectedDoctor
     ? rows.filter((row) => row.doctor_id === selectedDoctor.id)
     : rows;
