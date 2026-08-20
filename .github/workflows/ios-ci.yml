@@ -1,0 +1,47 @@
+name: Atlas iOS CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - "app/auth/native/**"
+      - "app/api/auth/apple/**"
+      - "lib/apple-*.ts"
+      - "supabase/migrations/*apple*.sql"
+      - ".github/workflows/ios-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-ios-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios:
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate --spec project.yml
+
+      - name: Compile Atlas for iOS Simulator
+        working-directory: ios
+        run: >-
+          xcodebuild
+          -project Atlas.xcodeproj
+          -scheme Atlas
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          CODE_SIGNING_REQUIRED=NO
+          build
