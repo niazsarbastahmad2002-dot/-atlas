@@ -99,6 +99,7 @@ jobs:
           raw = json.load(open("/tmp/vercel-env.json"))
           items = raw.get("envs", raw if isinstance(raw, list) else [])
           env = {}
+          present_keys = set()
           for item in items:
               target = item.get("target") or []
               if isinstance(target, str):
@@ -107,6 +108,8 @@ jobs:
                   continue
               key = item.get("key")
               value = item.get("value")
+              if key:
+                  present_keys.add(str(key))
               if key and value is not None:
                   env[key] = str(value)
 
@@ -139,9 +142,12 @@ jobs:
               "",
               f"- Atlas readiness configured: **{'yes' if not blockers else 'no'}**",
               f"- Embedded Signup enabled: **{'yes' if enabled else 'no'}**",
+              f"- Meta app ID key exists: **{'yes' if 'META_APP_ID' in present_keys else 'no'}**",
               f"- Meta app ID valid: **{'yes' if app_id_valid else 'no'}**",
               f"- Meta app ID matches Atlas: **{'yes' if expected_app else 'no'}**",
+              f"- Embedded Signup configuration ID key exists: **{'yes' if 'META_EMBEDDED_SIGNUP_CONFIG_ID' in present_keys else 'no'}**",
               f"- Embedded Signup configuration ID valid: **{'yes' if config_id_valid else 'no'}**",
+              f"- Graph API version key exists: **{'yes' if 'WHATSAPP_GRAPH_API_VERSION' in present_keys else 'no'}**",
               f"- Graph API version valid: **{'yes' if graph_version_valid else 'no'}**",
               f"- Meta app secret present: **{'yes' if app_secret_present else 'no'}**",
               f"- Exact blockers: **{', '.join(blockers) if blockers else 'none'}**",
