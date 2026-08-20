@@ -31,9 +31,9 @@ jobs:
           probe_dir="$(mktemp -d)"
           trap 'rm -f "$env_file"; rm -rf "$probe_dir"' EXIT
           mkdir -p "$probe_dir/.vercel"
-          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > "$probe_dir/.vercel/project.json"
+          printf '{"orgId":"%s","projectId":"%s","projectName":"atlas_demo_fixed"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > "$probe_dir/.vercel/project.json"
 
-          if ! npx --yes vercel@latest env pull "$env_file" --cwd "$probe_dir" --environment=production --yes --token="$VERCEL_TOKEN" >/tmp/vercel-env-pull.log 2>&1; then
+          if ! npx --yes vercel@latest env pull "$env_file" --cwd "$probe_dir" --environment=production --yes --scope="atlas-fca2" --token="$VERCEL_TOKEN" >/tmp/vercel-env-pull.log 2>&1; then
             reason="unknown"
             if grep -Eqi 'rate.?limit|too many requests' /tmp/vercel-env-pull.log; then reason="rate_limited"; fi
             if grep -Eqi 'unauthorized|invalid token|authentication' /tmp/vercel-env-pull.log; then reason="auth_failed"; fi
