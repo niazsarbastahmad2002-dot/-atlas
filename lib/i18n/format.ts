@@ -22,7 +22,7 @@ export function localizeDigits(value: string | number, locale: UiLocale) {
 
 export function formatMinutes(minutes: number, locale: UiLocale) {
   const value = localizeDigits(minutes, locale);
-  if (locale === "ku") return `${value} خولەک`;
+  if (locale === "ku" || locale === "bd") return `${value} خولەک`;
   if (locale === "ar") return `${value} دقيقة`;
   return `${value} min`;
 }
@@ -32,13 +32,14 @@ export function formatLeadTime(minutes: number, locale: UiLocale) {
   if (minutes % 1440 === 0) {
     const days = minutes / 1440;
     const value = localizeDigits(days, locale);
-    if (locale === "ku") return `${value} ڕۆژ`;
+    if (locale === "ku" || locale === "bd") return `${value} ڕۆژ`;
     if (locale === "ar") return `${value} يوم`;
     return `${value} ${days === 1 ? "day" : "days"}`;
   }
   const hours = minutes / 60;
   const value = localizeDigits(hours, locale);
   if (locale === "ku") return `${value} کاتژمێر`;
+  if (locale === "bd") return `${value} دەمژمێر`;
   if (locale === "ar") return `${value} ساعة`;
   return `${value} ${hours === 1 ? "hour" : "hours"}`;
 }
@@ -48,9 +49,23 @@ function dateLocale(locale: UiLocale) {
   return locale === "en" ? `${base}-u-ca-gregory-nu-latn` : `${base}-u-ca-gregory-nu-arab`;
 }
 
+function badiniNumericParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(date);
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+
 export function formatLocalDateValue(value: string, locale: UiLocale) {
   const date = new Date(`${value}T12:00:00+03:00`);
   if (Number.isNaN(date.getTime())) return value;
+  if (locale === "bd") {
+    const parts = badiniNumericParts(date, "Asia/Baghdad");
+    return localizeDigits(`${parts.day}/${parts.month}/${parts.year}`, locale);
+  }
   return new Intl.DateTimeFormat(dateLocale(locale), {
     timeZone: "Asia/Baghdad",
     year: "numeric",
@@ -60,6 +75,10 @@ export function formatLocalDateValue(value: string, locale: UiLocale) {
 }
 
 export function formatMonthYear(date: Date, locale: UiLocale) {
+  if (locale === "bd") {
+    const parts = badiniNumericParts(date, "UTC");
+    return localizeDigits(`${parts.month}/${parts.year}`, locale);
+  }
   return new Intl.DateTimeFormat(dateLocale(locale), {
     timeZone: "UTC",
     year: "numeric",
@@ -72,6 +91,10 @@ export function formatWeekday(date: Date, locale: UiLocale) {
     const shortKurdish = ["یەک", "دوو", "سێ", "چوار", "پێنج", "هەینی", "شەم"];
     return shortKurdish[date.getUTCDay()];
   }
+  if (locale === "bd") {
+    const badini = ["یەکشەم", "دووشەم", "سێشەم", "چوارشەم", "پێنجشەم", "هەینی", "شەمبی"];
+    return badini[date.getUTCDay()];
+  }
   return new Intl.DateTimeFormat(dateLocale(locale), {
     timeZone: "UTC",
     weekday: "short",
@@ -80,6 +103,7 @@ export function formatWeekday(date: Date, locale: UiLocale) {
 
 export function formatDayPeriod(period: DayPeriod, locale: UiLocale) {
   if (locale === "ku") return period === "am" ? "پ.ن" : "د.ن";
+  if (locale === "bd") return period === "am" ? "بەری نیڤرۆ" : "پشتی نیڤرۆ";
   if (locale === "ar") return period === "am" ? "ص" : "م";
   return period === "am" ? "AM" : "PM";
 }

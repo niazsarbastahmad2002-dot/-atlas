@@ -30,7 +30,7 @@ type PatientAppointment = {
   appointments_ahead: number | null;
 };
 
-type PatientLocale = "ku" | "ar" | "en";
+type PatientLocale = "ku" | "bd" | "ar" | "en";
 
 const patientCopy = {
   en: {
@@ -68,7 +68,7 @@ const patientCopy = {
     eyebrow: "کاتەکەت",
     doctor: "پزیشک",
     specialty: "پسپۆڕی",
-    contact: "ژمارەی پێشخانە",
+    contact: "ژمارەی ڕیسێپشن",
     dateTime: "ڕێکەوت و کات",
     am: "پێش نیوەڕۆ",
     pm: "دوای نیوەڕۆ",
@@ -88,6 +88,34 @@ const patientCopy = {
     noShow: "کاتەکەت تێپەڕی.",
     changeMind: "ناتوانم بێم",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
+  },
+  bd: {
+    lang: "ku",
+    dir: "rtl" as const,
+    dateLocale: "ckb-IQ",
+    eyebrow: "وادەیا تە",
+    doctor: "دکتۆر",
+    specialty: "تایبەتمەندی",
+    contact: "ژمارا ڕیسێپشنێ",
+    dateTime: "ڕێکەفت و کات",
+    am: "بەری نیڤرۆ",
+    pm: "پشتی نیڤرۆ",
+    order: "ڕێزا تە یا ئەڤرۆ",
+    first: "تو یێ ئێکێ ی بۆ ڤی دکتۆری.",
+    ahead: "وادە بەری تەیە",
+    aheadMany: "وادە بەری تە نە",
+    confirmTitle: "وادەیا خۆ پشتڕاست بکە",
+    confirmInitial: "وادەیێ پشتڕاست بکە",
+    cancelSmall: "دخوازیت هەلوەشێنیت؟",
+    question: "تو دێی؟",
+    confirm: "بەلێ، دێم",
+    cancel: "نەخێر، هەلوەشێنە",
+    confirmed: "پشتڕاست بوو. چاڤەڕێیا تە دکەین.",
+    cancelled: "وادەیا تە هاتە هەلوەشاندن.",
+    completed: "وادەیا تە تەمام بوو.",
+    noShow: "دەمێ وادەیا تە دەرباز بوو.",
+    changeMind: "نەشێم بهێم",
+    privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
   },
   ar: {
     lang: "ar",
@@ -120,7 +148,7 @@ const patientCopy = {
 } as const;
 
 function patientLocale(value: string): PatientLocale {
-  return value === "ku" || value === "ar" ? value : "en";
+  return value === "ku" || value === "bd" || value === "ar" ? value : "en";
 }
 
 function pad(value: number) {
@@ -139,7 +167,7 @@ function baghdadClock(date: Date, locale: PatientLocale) {
   const minute = Number(values.minute ?? 0);
   const hour12 = hour24 % 12 || 12;
   return {
-    clock: `${localizeDigits(pad(hour12), locale)}:${localizeDigits(pad(minute), locale)}`,
+    clock: `${localizeDigits(hour12, locale)}:${localizeDigits(pad(minute), locale)}`,
     period: hour24 >= 12 ? patientCopy[locale].pm : patientCopy[locale].am,
   };
 }

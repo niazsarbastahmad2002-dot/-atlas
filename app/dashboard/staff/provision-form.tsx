@@ -18,12 +18,20 @@ const copy = {
     help: "Atlas emails them automatically. They stay Pending until they open the email, then access turns on for this doctor.",
   },
   ku: {
-    email: "ئیمەیڵی پێشخانە",
-    doctor: "پزیشکی پێشخانە",
+    email: "ئیمەیڵی ستافی ڕیسێپشن",
+    doctor: "پزیشکی ستافی ڕیسێپشن",
     chooseDoctor: "یەک پزیشک هەڵبژێرە",
-    add: "پێشخانە زیاد بکە",
+    add: "ستافی ڕیسێپشن زیاد بکە",
     adding: "بانگهێشتنامە دەنێردرێت…",
     help: "Atlas خۆکارانە ئیمەیڵێکی بۆ دەنێرێت. تا ئیمەیڵەکە نەکاتەوە Pending دەمێنێتەوە، پاشان دەسەڵاتی ئەم پزیشکە چالاک دەبێت.",
+  },
+  bd: {
+    email: "ئیمەیلا ستافێ ڕیسێپشنێ",
+    doctor: "دکتۆرێ ستافێ ڕیسێپشنێ",
+    chooseDoctor: "ئێک دکتۆر هەلبژێرە",
+    add: "ستافێ ڕیسێپشنێ زێدە بکە",
+    adding: "بانگهێشت دهێتە هنارتن…",
+    help: "Atlas خودکار ئیمەیلێ دهنێریت. تا ئیمەیلێ ڤەنەکەت Pending دمینیت، پاشی دەستهەلاتا ڤی دکتۆری چالاک دبیت.",
   },
   ar: {
     email: "بريد موظف الاستقبال",

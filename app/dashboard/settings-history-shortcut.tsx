@@ -7,6 +7,7 @@ import type { UiLocale } from "@/lib/i18n/ui";
 const copy = {
   en: { eyebrow: "Records", title: "Appointment history", help: "Search old appointments, review removed records, and permanently delete removed records when needed.", open: "Open history" },
   ku: { eyebrow: "تۆمارەکان", title: "مێژووی وادەکان", help: "لە وادە کۆنەکان بگەڕێ، تۆمارە لابراوەکان ببینە، و ئەگەر پێویست بوو بۆ هەمیشە بیانسڕەوە.", open: "مێژوو بکەرەوە" },
+  bd: { eyebrow: "تۆمار", title: "مێژوویا وادەیان", help: "ل وادەیێن کەڤن بگەڕێ، تۆمارێن لابری ببینە، و ئەگەر پێدڤی بوو بۆ هەمیشە ژێببە.", open: "مێژوویێ ڤەکە" },
   ar: { eyebrow: "السجلات", title: "سجل المواعيد", help: "ابحث في المواعيد القديمة وراجع السجلات المحذوفة واحذفها نهائياً عند الحاجة.", open: "فتح السجل" },
 } as const;
 

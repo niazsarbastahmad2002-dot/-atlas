@@ -7,7 +7,7 @@ import {
   toBaghdadInputValue,
 } from "@/lib/appointments";
 import { baghdadDate } from "@/lib/i18n/config";
-import { formatLeadTime } from "@/lib/i18n/format";
+import { formatLeadTime, localizeDigits } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { formatBaghdadDateTime, formatBaghdadDay, uiLocaleMeta, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { getDashboardMessage } from "@/lib/messages";
@@ -33,6 +33,7 @@ const dayCopy: Record<UiLocale, {
 }> = {
   en: { previous: "Previous", today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow", next: "Next", nextUp: "Next appointment", appointments: "Appointments", empty: "No appointments on this day.", emptyHelp: "Add an appointment when the first patient calls or walks in.", add: "Add appointment", reminders: "Patient reminders", order: "Appointment order", quickDates: "Quick schedule dates", doctorSchedules: "Doctor schedules" },
   ku: { previous: "پێشوو", today: "ئەمڕۆ", yesterday: "دوێنێ", tomorrow: "سبەی", next: "داهاتوو", nextUp: "وادەی داهاتوو", appointments: "وادەکان", empty: "لەم ڕۆژە هیچ وادەیەک نییە.", emptyHelp: "کاتێک یەکەم نەخۆش پەیوەندی کرد یان هات، وادەکە زیاد بکە.", add: "وادە زیاد بکە", reminders: "بیرخستنەوەی نەخۆش", order: "ڕیزی وادە", quickDates: "ڕۆژە خێراکان", doctorSchedules: "خشتەی پزیشکەکان" },
+  bd: { previous: "بەرێ", today: "ئەڤرۆ", yesterday: "دووهی", tomorrow: "سبەهێ", next: "پاش", nextUp: "وادەیا پاش", appointments: "وادە", empty: "ل ڤێ ڕۆژێ چ وادە نینن.", emptyHelp: "دەمێ نەخۆشێ ئێکێ پەیوەندی دکەت یان دهێت، وادەیێ زێدە بکە.", add: "وادە زێدە بکە", reminders: "بیرخستنەوەیێن نەخۆشی", order: "ڕێزا وادەیان", quickDates: "ڕۆژێن خێرا", doctorSchedules: "خشتەیێن دکتۆران" },
   ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد", quickDates: "أيام سريعة", doctorSchedules: "جداول الأطباء" },
 };
 
@@ -56,6 +57,10 @@ function scheduleHref(clinicId: string, day: string, doctorId?: string | null) {
 }
 
 function formatShortcutDay(day: string, locale: UiLocale) {
+  if (locale === "bd") {
+    const [, month, date] = day.split("-");
+    return localizeDigits(`${date}/${month}`, locale);
+  }
   return new Intl.DateTimeFormat(uiLocaleMeta[locale].dateLocale, {
     timeZone: "Asia/Baghdad",
     weekday: "short",
@@ -69,6 +74,7 @@ function reminderPlanLabel(first: number, second: number | null, locale: UiLocal
   if (!second) return firstLabel;
   const secondLabel = formatLeadTime(second, locale);
   if (locale === "ku") return `${firstLabel} + ${secondLabel} پێش وادە`;
+  if (locale === "bd") return `${firstLabel} + ${secondLabel} بەری وادەیێ`;
   if (locale === "ar") return `${firstLabel} + ${secondLabel} قبل الموعد`;
   return `${firstLabel} + ${secondLabel} before appointment`;
 }
@@ -140,8 +146,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const noShow = visibleRows.filter((row) => row.status === "no_show").length;
   const cancelled = visibleRows.filter((row) => row.status === "cancelled").length;
 
-  // The visible doctor's schedule is the source of truth for appointment
-  // creation. Reception can never view one doctor and silently book another.
   const appointmentOrder = new Map<string, number>();
   let activeOrder = 0;
   for (const row of visibleRows) {
@@ -180,7 +184,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const defaultReminderLanguage = reminderSettings?.default_reminder_language ?? "ku";
   const statusLabels: Record<string, string> = { pending: t.pending, confirmed: t.confirmed, cancelled: t.cancelled, completed: t.completed, no_show: t.noShow };
   const reminderLabels: Record<string, string> = { queued: t.reminderQueued, processing: t.reminderSending, sent: t.reminderSent, delivered: t.reminderDelivered, read: t.reminderRead, failed: t.reminderFailed };
-  const reminderLanguageLabels: Record<string, string> = { ku: "کوردی (سۆرانی)", ar: "العربية", en: "English" };
+  const reminderLanguageLabels: Record<string, string> = locale === "ar"
+    ? { ku: "الكردية (السورانية)", ar: "العربية", en: "الإنجليزية" }
+    : locale === "en"
+      ? { ku: "Kurdish (Sorani)", ar: "Arabic", en: "English" }
+      : { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" };
 
   return <main className="workspace-page shell" data-atlas-selected-day={selectedDay} data-atlas-clinic={clinic.id} data-atlas-memory-valid={selectedFutureHasActiveSchedule ? "true" : "false"}>
     <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{t.schedule}</div><h1>{clinic.name}</h1></div><LiveClinicClock locale={locale} /></header>

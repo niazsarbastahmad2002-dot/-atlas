@@ -6,6 +6,7 @@ import type { UiLocale } from "@/lib/i18n/ui";
 const copy = {
   en: "Change name",
   ku: "ناو بگۆڕە",
+  bd: "ناڤ بگۆڕە",
   ar: "تغيير الاسم",
 } as const;
 

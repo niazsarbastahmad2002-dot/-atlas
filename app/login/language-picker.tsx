@@ -6,6 +6,7 @@ import type { UiLocale } from "@/lib/i18n/ui";
 
 const choices: Array<{ value: UiLocale; label: string; detail: string }> = [
   { value: "ku", label: "کوردی", detail: "سۆرانی" },
+  { value: "bd", label: "کوردی", detail: "بادینی" },
   { value: "ar", label: "العربية", detail: "العراقي" },
   { value: "en", label: "English", detail: "English" },
 ];

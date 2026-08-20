@@ -19,6 +19,13 @@ const copy = {
     moveUp: "بەرەو سەرەوە",
     moveDown: "بەرەو خوارەوە",
   },
+  bd: {
+    remove: "لابرن",
+    removed: "دکتۆرێن لابری",
+    hideRemoved: "دکتۆرێن لابری ڤەشێرە",
+    moveUp: "بۆ سەر",
+    moveDown: "بۆ خوار",
+  },
   ar: {
     remove: "إزالة",
     removed: "الأطباء المُزالون",
@@ -31,6 +38,7 @@ const copy = {
 const reminderLanguageCopy = {
   en: { ku: "Kurdish (Sorani)", ar: "Arabic", en: "English" },
   ku: { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" },
+  bd: { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" },
   ar: { ku: "الكردية (السورانية)", ar: "العربية", en: "الإنجليزية" },
 } as const;
 
@@ -156,7 +164,7 @@ export function SettingsClientPolish({ locale }: { locale: UiLocale }) {
       if (!buttons.length) return;
       const one = buttons.find((button) => {
         const digits = toAsciiDigits(button.textContent ?? "").replace(/\D/g, "");
-        return digits === "01" && !button.disabled;
+        return (digits === "01" || digits === "1") && !button.disabled;
       });
       if (!one) return;
 
@@ -183,7 +191,7 @@ export function SettingsClientPolish({ locale }: { locale: UiLocale }) {
 
       select.form?.addEventListener("submit", () => {
         const value = select.value as UiLocale;
-        document.documentElement.lang = value === "ku" ? "ckb" : value;
+        document.documentElement.lang = value === "ku" ? "ckb" : value === "bd" ? "ku" : value;
         document.documentElement.dir = value === "en" ? "ltr" : "rtl";
       });
     };
@@ -309,41 +317,13 @@ export function SettingsClientPolish({ locale }: { locale: UiLocale }) {
         cursor: pointer;
         touch-action: manipulation;
       }
-      .calendar-weekdays {
-        gap: 6px !important;
-      }
-      .calendar-weekdays span {
-        min-width: 0;
-        padding-inline: 1px !important;
-        font-size: 8px !important;
-        line-height: 1.15;
-        white-space: nowrap;
-      }
-      .hour-grid,
-      .minute-grid {
-        direction: ${timeDirection} !important;
-      }
-      .compact-actions {
-        gap: 6px !important;
-        align-items: center;
-      }
-      .compact-actions form[hidden] {
-        display: none !important;
-      }
-      .compact-actions button {
-        min-height: 38px !important;
-        min-width: 64px;
-        padding: 8px 10px !important;
-        border-radius: 9px !important;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-      }
-      .settings-card-accent .settings-form-inline .button {
-        min-height: 48px;
-        padding-inline: 18px;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-      }
+      .calendar-weekdays { gap: 6px !important; }
+      .calendar-weekdays span { min-width: 0; padding-inline: 1px !important; font-size: 8px !important; line-height: 1.15; white-space: nowrap; }
+      .hour-grid, .minute-grid { direction: ${timeDirection} !important; }
+      .compact-actions { gap: 6px !important; align-items: center; }
+      .compact-actions form[hidden] { display: none !important; }
+      .compact-actions button { min-height: 38px !important; min-width: 64px; padding: 8px 10px !important; border-radius: 9px !important; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+      .settings-card-accent .settings-form-inline .button { min-height: 48px; padding-inline: 18px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     `}</style>
   );
 }

@@ -26,6 +26,7 @@ type Props = {
 const copy = {
   en: { hour: "Hour", minute: "Minute", am: "AM", pm: "PM", close: "Done", previous: "Previous month", next: "Next month", custom: "Custom time" },
   ku: { hour: "کاتژمێر", minute: "خولەک", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", close: "تەواو", previous: "مانگی پێشوو", next: "مانگی داهاتوو", custom: "کاتی دیاریکراو" },
+  bd: { hour: "دەمژمێر", minute: "خولەک", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", close: "تەمام", previous: "مەها بەرێ", next: "مەها پاش", custom: "دەمێ تایبەت" },
   ar: { hour: "الساعة", minute: "الدقيقة", am: "صباحاً", pm: "مساءً", close: "تم", previous: "الشهر السابق", next: "الشهر التالي", custom: "وقت مخصص" },
 } as const;
 
