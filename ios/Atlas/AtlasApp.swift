@@ -1,5 +1,7 @@
 import AuthenticationServices
+import CryptoKit
 import SwiftUI
+import UIKit
 import WebKit
 
 private let atlasBaseURL = URL(string: "https://atlasdemofixed.vercel.app")!
@@ -17,6 +19,7 @@ struct AtlasRootView: View {
     @AppStorage("atlasHasOpened") private var hasOpened = false
     @State private var destination: URL?
     @State private var errorMessage: String?
+    @State private var appleNonce: String?
 
     var body: some View {
         Group {
@@ -45,7 +48,10 @@ struct AtlasRootView: View {
                 .multilineTextAlignment(.center)
 
             SignInWithAppleButton(.continue) { request in
+                let nonce = UUID().uuidString
+                appleNonce = nonce
                 request.requestedScopes = [.email, .fullName]
+                request.nonce = sha256(nonce)
             } onCompletion: { result in
                 completeAppleSignIn(result)
             }
@@ -73,7 +79,8 @@ struct AtlasRootView: View {
     private func completeAppleSignIn(_ result: Result<ASAuthorization, Error>) {
         do {
             let authorization = try result.get()
-            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+            guard let nonce = appleNonce,
+                  let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   let data = credential.identityToken,
                   let identityToken = String(data: data, encoding: .utf8) else {
                 throw AtlasNativeError.missingIdentityToken
@@ -88,6 +95,7 @@ struct AtlasRootView: View {
             fragment.queryItems = [
                 URLQueryItem(name: "provider", value: "apple"),
                 URLQueryItem(name: "id_token", value: identityToken),
+                URLQueryItem(name: "nonce", value: nonce),
                 URLQueryItem(name: "full_name", value: fullName.isEmpty ? nil : fullName),
             ]
 
@@ -97,12 +105,18 @@ struct AtlasRootView: View {
                 if let url = components.url { authURL = url }
             }
 
+            appleNonce = nil
             hasOpened = true
             destination = authURL
             errorMessage = nil
         } catch {
+            appleNonce = nil
             errorMessage = "Apple sign-in did not complete. You can try again or open Atlas with another sign-in method."
         }
+    }
+
+    private func sha256(_ input: String) -> String {
+        SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 }
 
