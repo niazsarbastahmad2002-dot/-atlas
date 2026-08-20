@@ -4,7 +4,8 @@ This is the single source of truth for taking Atlas from production web app to a
 
 ## Fixed product identity
 
-- App display name: **Atlas**
+- In-app display name: **Atlas**
+- Recommended App Store listing name: **Atlas Appointments** (more distinctive than the heavily used medical `Atlas` name)
 - Future legal/company identity: a distinctive Atlas software company name approved by KRG registration (avoid `Atlas Clinic` because existing healthcare products already use that name)
 - iOS bundle ID: `com.atlasappointments.app`
 - Apple Services ID: `com.atlasappointments.app.web`
@@ -100,7 +101,7 @@ Only after legal-entity funding is available:
 
 ## App Store Connect metadata draft
 
-- Name: `Atlas`
+- Name: `Atlas Appointments`
 - Subtitle: `Clinic appointments made clear`
 - Primary category: `Medical`
 - Secondary category: `Business`
