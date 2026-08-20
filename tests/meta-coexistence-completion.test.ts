@@ -51,6 +51,59 @@ test("Meta coexistence completion exchanges the code, verifies the number, and s
   assert.match(calls[2], /subscribed_apps/);
 });
 
+test("Meta coexistence completion discovers the single real sender when session info omits the phone ID", async () => {
+  const realPhoneId = "222222222222222";
+  const fakeFetch: typeof fetch = async (url) => {
+    const value = String(url);
+    if (value.includes("/oauth/access_token")) {
+      return Response.json({ access_token: "EAAB-business-token-that-is-long-enough-1234567890" });
+    }
+    if (value.includes("/phone_numbers")) {
+      return Response.json({ data: [
+        {
+          id: "111111111111111",
+          display_phone_number: "+1 (555) 376-1113",
+          verified_name: "Atlas Test",
+        },
+        {
+          id: realPhoneId,
+          display_phone_number: "+964 751 896 1148",
+        },
+      ] });
+    }
+    if (value.endsWith(`/${input.wabaId}/subscribed_apps`)) {
+      return Response.json({ success: true });
+    }
+    throw new Error("unexpected request");
+  };
+
+  const result = await completeMetaCoexistence({ ...input, phoneNumberId: null }, config, fakeFetch);
+  assert.equal(result.connected, true);
+  if (!result.connected) return;
+  assert.equal(result.phoneNumberId, realPhoneId);
+  assert.equal(result.displayPhoneNumber, "+964 751 896 1148");
+  assert.equal(result.verifiedName, null);
+});
+
+test("Meta coexistence completion refuses ambiguous WABA-only sender discovery", async () => {
+  const fakeFetch: typeof fetch = async (url) => {
+    const value = String(url);
+    if (value.includes("/oauth/access_token")) {
+      return Response.json({ access_token: "EAAB-business-token-that-is-long-enough-1234567890" });
+    }
+    if (value.includes("/phone_numbers")) {
+      return Response.json({ data: [
+        { id: "111111111111111", display_phone_number: "+964 750 000 0001" },
+        { id: "222222222222222", display_phone_number: "+964 750 000 0002" },
+      ] });
+    }
+    throw new Error("subscribe must not be reached for ambiguous phones");
+  };
+
+  const result = await completeMetaCoexistence({ ...input, phoneNumberId: null }, config, fakeFetch);
+  assert.deepEqual(result, { connected: false, errorCode: "phone_selection_required" });
+});
+
 test("Meta coexistence completion rejects the historical Meta sandbox sender", async () => {
   const fakeFetch: typeof fetch = async (url) => {
     const value = String(url);
@@ -94,6 +147,7 @@ test("Completion endpoint stores the business token server-side and never return
   assert.match(route, /auth\.getUser\(\)/);
   assert.match(route, /membership\?\.role === "owner"/);
   assert.match(route, /membership\?\.role === "manager"/);
+  assert.match(route, /validOptionalId\(body\.phoneNumberId\)/);
   assert.match(route, /store_meta_whatsapp_connection/);
   assert.match(route, /p_access_token: completion\.accessToken/);
   assert.doesNotMatch(route, /accessToken: completion\.accessToken/);
