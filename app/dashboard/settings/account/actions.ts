@@ -5,6 +5,7 @@ import {
   cleanupAppleRefreshSecret,
   getStoredAppleRevocationCredential,
   revokeAppleAuthorization,
+  type AppleRevocationCredential,
 } from "@/lib/apple-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +33,7 @@ export async function deleteAtlasAccount(formData: FormData) {
   if (ownedClinics?.length) redirect(accountUrl("owns_clinic"));
 
   const hasAppleIdentity = userData.user.identities?.some((identity) => identity.provider === "apple") ?? false;
-  let appleCredential = null;
+  let appleCredential: AppleRevocationCredential | null = null;
 
   try {
     appleCredential = await getStoredAppleRevocationCredential(userData.user.id);
