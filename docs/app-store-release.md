@@ -5,27 +5,49 @@ This is the single source of truth for taking Atlas from production web app to a
 ## Fixed product identity
 
 - App display name: **Atlas**
-- Recommended legal/company identity: a distinctive Atlas software company name approved by KRG registration (avoid `Atlas Clinic` because existing healthcare products already use that name)
+- Future legal/company identity: a distinctive Atlas software company name approved by KRG registration (avoid `Atlas Clinic` because existing healthcare products already use that name)
 - iOS bundle ID: `com.atlasappointments.app`
 - Apple Services ID: `com.atlasappointments.app.web`
 - Current production: `https://atlasdemofixed.vercel.app`
-- Planned canonical domain: `https://atlasappointments.com`
-- Planned defensive redirect domain: `https://atlasappointments.app`
+- Future canonical domain candidate: `https://atlasappointments.com`
 - Supabase project: `moazrwbalqiyoafrydkj`
 
 Do not change the bundle ID after Apple/App Store Connect registration unless there is a compelling reason. Bundle identity is much harder to change after release than product copy.
 
-## External legal/account gates
+## Budget-safe release path
 
-These cannot be truthfully automated by Atlas code because they require the founder/legal representative to provide verified identity, authority and payment details.
+Atlas currently has a hard founder spending ceiling of **USD 100** for this phase. Do not purchase a custom domain or pay company-registration costs from that budget before the native app is technically validated.
+
+Recommended sequence:
+
+1. Finish and validate all zero-cost Atlas engineering and CI work.
+2. If Apple's checkout total is within the USD 100 ceiling, enroll the founder in the Apple Developer Program as an **individual** for development, signing, Sign in with Apple credentials, device testing and TestFlight. The public healthcare App Store release is intentionally held back at this stage.
+3. Use the existing `atlasdemofixed.vercel.app` production host for web/provider testing while the product is still in the individual-development phase. Apple supports registering domains and subdomains for Sign in with Apple web configuration.
+4. Later, when Atlas can fund legal formation, register a KRG legal entity, obtain its D-U-N-S number, establish its company-domain website/work email, and request Apple to convert the founder's individual membership to an **organization** membership.
+5. Submit the public healthcare App Store release only after organization conversion. Apple App Review guidance says apps requiring sensitive information or providing services in highly regulated fields such as healthcare should be submitted by the legal entity providing the service rather than an individual developer.
+
+This sequence preserves the value of the USD 99 Apple membership: Apple supports converting an individual founder/cofounder membership to an organization later after legal-entity verification.
+
+## External identity/payment gates
+
+These cannot be truthfully automated by Atlas code because they require the founder/legal representative to provide verified identity, authority or payment details.
+
+### Phase 1 — individual development membership
+
+1. Use the founder's real Apple Account with two-factor authentication and legal identity information.
+2. Purchase the Apple Developer Program membership only if Apple's displayed local checkout total stays within the USD 100 cap.
+3. Register the App ID, Services ID and Sign in with Apple key described in `docs/provider-activation.md`.
+4. Do not represent the individual membership as the final healthcare seller identity and do not submit the public release yet.
+
+### Phase 2 — organization conversion before public healthcare release
 
 1. Register a legal company through the Kurdistan Region business-registration process using a distinctive approved legal name.
-2. Purchase and control `atlasappointments.com` (recommended) and optionally `atlasappointments.app` defensively.
-3. Configure a working company-domain mailbox before Apple organization enrollment, for example `developer@atlasappointments.com` or `support@atlasappointments.com`.
-4. Request/confirm the legal entity's D-U-N-S number.
-5. Enroll the legal entity in the Apple Developer Program as an **Organization**, not by inventing another country or address.
-6. Create the Apple App ID, Services ID and Sign in with Apple key described in `docs/provider-activation.md`.
-7. Create Google web and iOS OAuth client IDs in one Google Cloud project when Google sign-in is activated.
+2. Purchase and control a company domain at that stage and configure a company-domain work mailbox.
+3. Request/confirm the legal entity's D-U-N-S number.
+4. Request Apple to convert the founder's individual membership to the legal organization's membership.
+5. Re-verify seller name, company domain, support contact and App Store Connect agreements before public submission.
+
+Never invent another country, address, entity name or D-U-N-S identity.
 
 ## Atlas code already prepared
 
@@ -34,6 +56,7 @@ These cannot be truthfully automated by Atlas code because they require the foun
 - Nonce binding for Apple ID-token authentication.
 - One-time Apple authorization-code exchange on Atlas server.
 - Apple refresh-token storage in Supabase Vault for later authorization revocation.
+- Two-phase account deletion that preserves Apple revocation credentials until Atlas account deletion succeeds.
 - In-app Atlas account deletion.
 - Automatic Apple token revocation during account deletion, with Apple's manual-revocation fallback if the provider cannot be reached.
 - Database-level prevention of deleting an auth user who still owns a clinic.
@@ -45,6 +68,7 @@ These cannot be truthfully automated by Atlas code because they require the foun
 - App Store 1024×1024 icon asset.
 - `PrivacyInfo.xcprivacy` with the approved app-only UserDefaults reason.
 - Public Privacy, Terms, Support and Data Deletion URLs.
+- Dedicated macOS/Xcode CI that compiles the generated iOS project for the simulator.
 
 ## Environment values after Apple enrollment
 
@@ -57,17 +81,18 @@ Set these only in secure server/deployment configuration; never commit secrets:
 - `ATLAS_IOS_BUNDLE_ID=com.atlasappointments.app`
 - `ATLAS_APPLE_WEB_CLIENT_ID=com.atlasappointments.app.web`
 
-After setting the App Identifier Prefix, verify both URLs return a valid JSON association file with no redirect:
+During the individual-development phase, the existing Vercel host can be used for association/provider testing. After setting the App Identifier Prefix, verify this URL returns a valid JSON association file with no redirect:
 
-- `https://atlasappointments.com/.well-known/apple-app-site-association`
 - `https://atlasdemofixed.vercel.app/.well-known/apple-app-site-association`
 
-## Custom domain cutover
+After a future custom-domain cutover, verify the equivalent path on the final domain too.
 
-Only after purchase:
+## Future custom-domain cutover
 
-1. Attach `atlasappointments.com` to the existing Atlas Vercel production project.
-2. Redirect `atlasappointments.app` to `https://atlasappointments.com` if purchased.
+Only after legal-entity funding is available:
+
+1. Purchase the final Atlas company domain.
+2. Attach it to the existing Atlas Vercel production project.
 3. Keep the Vercel domain active as a fallback during the first release.
 4. Configure the company-domain mailbox.
 5. Update the public Support/Privacy/Terms contact email from the temporary Gmail address to the company-domain address.
@@ -79,10 +104,12 @@ Only after purchase:
 - Subtitle: `Clinic appointments made clear`
 - Primary category: `Medical`
 - Secondary category: `Business`
-- Privacy Policy URL: `https://atlasappointments.com/privacy`
-- Support URL: `https://atlasappointments.com/support`
-- Marketing URL: `https://atlasappointments.com`
-- Data deletion information: `https://atlasappointments.com/data-deletion`
+- Current development Privacy Policy URL: `https://atlasdemofixed.vercel.app/privacy`
+- Current development Support URL: `https://atlasdemofixed.vercel.app/support`
+- Current development Marketing URL: `https://atlasdemofixed.vercel.app`
+- Current development Data deletion information: `https://atlasdemofixed.vercel.app/data-deletion`
+
+Switch these to the legal entity's custom domain before the public healthcare App Store submission.
 
 Draft description:
 
@@ -110,18 +137,26 @@ Confirm against the final production build immediately before submission. Atlas 
 
 Tracking: **No**, unless the production behavior changes. Atlas must not use clinic or patient data for advertising or cross-company tracking.
 
-## Final pre-submission gate
+## TestFlight gate — individual membership phase
 
-Do not submit until all are true:
+Do not upload the first TestFlight build until all are true:
 
-- Organization enrollment is approved.
+- Paid Apple Developer membership is active.
 - App ID and provisioning profile include Sign in with Apple and Associated Domains.
-- Domain and company mailbox are live.
-- Apple and Google provider credentials are configured and tested as applicable.
+- Apple provider credentials are configured in secure deployment settings.
 - Native Apple sign-in stores a revocation token successfully.
 - Account deletion revokes Apple authorization in a real test account.
 - Universal Link receptionist invitation opens the installed app and redeems correctly.
-- Privacy/Terms/Support/Data Deletion URLs are public on the final domain.
+- Production web CI and iOS compile checks are green.
+
+## Public App Store gate — organization phase
+
+Do not submit the healthcare app publicly until all are true:
+
+- Apple membership has been converted to the verified Atlas legal organization.
+- Seller/legal entity identity is correct in App Store Connect.
+- Company domain and work mailbox are live.
+- Privacy/Terms/Support/Data Deletion URLs are public on that company domain.
+- Apple and Google provider credentials are configured and tested as applicable.
 - App Store privacy answers match actual production behavior.
-- Production web CI and iOS archive/build checks are green.
 - TestFlight build is exercised on at least one real iPhone before review submission.
