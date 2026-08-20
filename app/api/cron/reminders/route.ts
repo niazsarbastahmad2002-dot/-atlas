@@ -2,9 +2,11 @@ import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { baghdadDateTime } from "@/lib/i18n/config";
 import {
-  readWhatsAppConfig,
-  sendApprovedWhatsAppTemplate,
-} from "@/lib/reminders/whatsapp";
+  createWhatsAppReminderTransport,
+  routeReminder,
+  type ReminderTransport,
+} from "@/lib/reminders/delivery";
+import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -51,7 +53,7 @@ async function processReminder(
   admin: AdminClient,
   workerId: string,
   reminder: ClaimedReminder,
-  config: NonNullable<ReturnType<typeof readWhatsAppConfig>>,
+  transport: ReminderTransport,
 ) {
   if (
     !reminder.reminder_id
@@ -84,13 +86,13 @@ async function processReminder(
     return "stale" as const;
   }
 
-  const result = await sendApprovedWhatsAppTemplate({
+  const result = await routeReminder({
     recipientPhone: reminder.patient_phone,
     clinicName: reminder.clinic_name,
     appointmentAt: baghdadDateTime.format(new Date(reminder.appointment_at)),
     templateName: reminder.template_name,
     templateLanguage: reminder.template_language,
-  }, config);
+  }, ["whatsapp"], [transport]);
 
   if (result.accepted) {
     const { data, error } = await admin.rpc("complete_whatsapp_reminder", {
@@ -136,6 +138,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
+  const transport = createWhatsAppReminderTransport(config);
   const workerId = randomUUID();
   const { data, error } = await admin.rpc("claim_due_whatsapp_reminders", {
     p_worker_id: workerId,
@@ -149,7 +152,7 @@ export async function GET(request: Request) {
   }
 
   const reminders = Array.isArray(data) ? data as ClaimedReminder[] : [];
-  const results = await Promise.all(reminders.map((reminder) => processReminder(admin, workerId, reminder, config)));
+  const results = await Promise.all(reminders.map((reminder) => processReminder(admin, workerId, reminder, transport)));
   const counts = results.reduce<Record<string, number>>((totals, result) => {
     totals[result] = (totals[result] ?? 0) + 1;
     return totals;
