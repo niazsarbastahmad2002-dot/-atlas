@@ -15,7 +15,7 @@ import {
 import { queueAtlasServerEvent } from "@/lib/analytics/server";
 import { createClient } from "@/lib/supabase/server";
 
-const reminderLanguages = new Set(["ku", "ar", "en"]);
+const reminderLanguages = new Set(["ku", "bd", "ar", "en"]);
 
 export type InlineAppointmentResult =
   | { ok: true; status?: AppointmentStatus; archived?: boolean; updated?: boolean; created?: boolean }

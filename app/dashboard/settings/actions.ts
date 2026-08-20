@@ -9,7 +9,7 @@ import { uiLocaleCookie } from "@/lib/i18n/ui-server";
 import { createClient } from "@/lib/supabase/server";
 
 const appointmentIntervals = new Set([5, 10, 15, 20, 30]);
-const reminderLanguages = new Set(["ku", "ar", "en"]);
+const reminderLanguages = new Set(["ku", "bd", "ar", "en"]);
 
 function settingsUrl(clinicId: string, key: "error" | "notice", value: string) {
   const params = new URLSearchParams({ [key]: value });
