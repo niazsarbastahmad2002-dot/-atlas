@@ -1,7 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revokeStoredAppleAuthorization } from "@/lib/apple-server";
+import {
+  cleanupAppleRefreshSecret,
+  getStoredAppleRevocationCredential,
+  revokeAppleAuthorization,
+} from "@/lib/apple-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,20 +32,53 @@ export async function deleteAtlasAccount(formData: FormData) {
   if (ownedClinics?.length) redirect(accountUrl("owns_clinic"));
 
   const hasAppleIdentity = userData.user.identities?.some((identity) => identity.provider === "apple") ?? false;
-  let manualAppleRevokeNeeded = false;
+  let appleCredential = null;
 
   try {
-    const appleResult = await revokeStoredAppleAuthorization(userData.user.id);
-    manualAppleRevokeNeeded = hasAppleIdentity && appleResult !== "revoked";
+    appleCredential = await getStoredAppleRevocationCredential(userData.user.id);
+  } catch (error) {
+    // Do not delete the Atlas account while a stored Apple credential may be
+    // unreadable. That could orphan a Vault secret and remove the automatic
+    // revocation path. The user can retry after the transient failure clears.
+    console.error("Atlas Apple revocation credential read failed", {
+      error: error instanceof Error ? error.name : "unknown",
+    });
+    redirect(accountUrl("failed"));
+  }
 
+  try {
     const admin = createAdminClient();
     const { error: deleteError } = await admin.auth.admin.deleteUser(userData.user.id);
     if (deleteError) throw deleteError;
   } catch (error) {
+    // Nothing destructive has happened to the Apple credential at this point,
+    // so a failed Atlas deletion remains fully retryable.
     console.error("Atlas account deletion failed", {
       error: error instanceof Error ? error.name : "unknown",
     });
     redirect(accountUrl("failed"));
+  }
+
+  let manualAppleRevokeNeeded = hasAppleIdentity && !appleCredential;
+
+  if (appleCredential) {
+    try {
+      const appleResult = await revokeAppleAuthorization(appleCredential);
+      manualAppleRevokeNeeded = appleResult !== "revoked";
+    } catch {
+      manualAppleRevokeNeeded = true;
+    }
+
+    try {
+      // The auth-user deletion already cascaded the private token row. Delete
+      // the Vault secret by the ID captured before deletion so no credential is
+      // retained after the user's Atlas account is gone.
+      await cleanupAppleRefreshSecret(appleCredential.refreshSecretId);
+    } catch (cleanupError) {
+      console.error("Atlas Apple refresh-secret cleanup failed", {
+        error: cleanupError instanceof Error ? cleanupError.name : "unknown",
+      });
+    }
   }
 
   // The database also RESTRICTs deletion of auth users who still own clinics,
