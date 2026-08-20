@@ -50,6 +50,10 @@ These cannot be truthfully automated by Atlas code because they require the foun
 
 Never invent another country, address, entity name or D-U-N-S identity.
 
+## Founder handoff when Apple enrollment starts
+
+The provider-console step is the first unavoidable human-authentication boundary. Atlas cannot log into or verify the founder's Apple Account on their behalf. When the zero-cost release branch is green, the founder should complete Apple enrollment in their own authenticated Apple session. Do not paste the `.p8` private key into chat or source control. Once Apple issues the identifiers, store secrets only through secure deployment/provider settings and use the non-secret Team ID, App Identifier Prefix, Key ID, App ID and Services ID to finish validation.
+
 ## Atlas code already prepared
 
 - Native SwiftUI app shell.
