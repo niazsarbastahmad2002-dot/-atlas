@@ -66,7 +66,7 @@ export function JoinClinicAuth({ token, locale, providers }: {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const [embeddedIos, setEmbeddedIos] = useState(false);
+  const [embeddedIos, setEmbeddedIos] = useState<boolean | null>(null);
 
   useEffect(() => {
     setEmbeddedIos(window.navigator.userAgent.includes("Atlas-iOS/"));
@@ -147,12 +147,12 @@ export function JoinClinicAuth({ token, locale, providers }: {
 
   return (
     <div className="settings-form">
-      {providers.apple ? (
+      {providers.apple && embeddedIos === false ? (
         <button className="button" type="button" disabled={Boolean(busy)} onClick={() => void social("apple")}>
           {busy === "apple" ? t.sending : t.apple}
         </button>
       ) : null}
-      {providers.google && !embeddedIos ? (
+      {providers.google && embeddedIos === false ? (
         <button className="button button-ghost" type="button" disabled={Boolean(busy)} onClick={() => void social("google")}>
           {busy === "google" ? t.sending : t.google}
         </button>

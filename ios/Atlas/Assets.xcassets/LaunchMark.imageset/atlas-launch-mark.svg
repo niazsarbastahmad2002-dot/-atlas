@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="a" x1="126" y1="76" x2="398" y2="438" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e4fff7"/>
+      <stop offset=".35" stop-color="#82f4d1"/>
+      <stop offset="1" stop-color="#20b987"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="82" y1="320" x2="443" y2="239" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22a97e"/>
+      <stop offset=".55" stop-color="#58e6b8"/>
+      <stop offset="1" stop-color="#c5fff0"/>
+    </linearGradient>
+  </defs>
+  <path d="M54 432 224 72c9-19 36-19 45 0l41 88-50 91-24-54-108 235H54Z" fill="url(#a)"/>
+  <path d="m270 72 188 360h-94L225 162l45-90Z" fill="#2ab487"/>
+  <path d="M182 335h174l-43-84-46 84h-85Z" fill="#06261f"/>
+  <path d="M74 320c84-68 209-91 365-67" fill="none" stroke="url(#orbit)" stroke-linecap="round" stroke-width="27"/>
+  <path d="M96 324c93-44 205-57 330-42" fill="none" stroke="#d9fff4" stroke-linecap="round" stroke-opacity=".24" stroke-width="4"/>
+  <circle cx="437" cy="254" r="17" fill="#a8ffe6"/>
+  <circle cx="437" cy="254" r="6" fill="#fff"/>
+  <path d="m247 78 22 48-24 44-22-47 24-45Z" fill="#eafff8" fill-opacity=".72"/>
+</svg>

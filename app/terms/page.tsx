@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Atlas",
-  description: "Terms of service for Atlas Clinic Platform.",
+  description: "Terms of service for Atlas Appointments.",
 };
 
 const sectionStyle = { marginTop: "28px" } as const;
@@ -15,7 +15,7 @@ export default function TermsPage() {
       <p style={{ marginTop: 0, color: "#5f6f69" }}>Effective: 18 August 2026</p>
 
       <p>
-        These terms govern use of Atlas Clinic Platform ("Atlas"), an appointment and reminder tool for clinics.
+        These terms govern use of Atlas Appointments ("Atlas"), an appointment and reminder tool for clinics.
       </p>
 
       <section style={sectionStyle}>

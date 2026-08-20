@@ -33,7 +33,8 @@ export default async function HomePage() {
         </p>
         <div className="hero-actions">
           <Link className="button" href="/dashboard">Open Atlas</Link>
-          <span className="quiet">Pilot software — use synthetic data until clinic privacy review is complete.</span>
+          <Link className="button button-ghost" href="/demo">Try with sample data</Link>
+          <span className="quiet">Scheduling only — keep medical notes in the clinic&apos;s approved record system.</span>
         </div>
       </section>
 
