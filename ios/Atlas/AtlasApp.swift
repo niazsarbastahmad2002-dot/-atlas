@@ -140,9 +140,14 @@ struct AtlasRootView: View {
             let authorization = try result.get()
             guard let nonce = appleNonce,
                   let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                  let data = credential.identityToken,
-                  let identityToken = String(data: data, encoding: .utf8) else {
+                  let tokenData = credential.identityToken,
+                  let identityToken = String(data: tokenData, encoding: .utf8) else {
                 throw AtlasNativeError.missingIdentityToken
+            }
+            guard let codeData = credential.authorizationCode,
+                  let authorizationCode = String(data: codeData, encoding: .utf8),
+                  !authorizationCode.isEmpty else {
+                throw AtlasNativeError.missingAuthorizationCode
             }
 
             var parts: [String] = []
@@ -155,6 +160,7 @@ struct AtlasRootView: View {
             fragment.queryItems = [
                 URLQueryItem(name: "provider", value: "apple"),
                 URLQueryItem(name: "id_token", value: identityToken),
+                URLQueryItem(name: "authorization_code", value: authorizationCode),
                 URLQueryItem(name: "nonce", value: nonce),
                 URLQueryItem(name: "full_name", value: fullName.isEmpty ? nil : fullName),
                 URLQueryItem(name: "next", value: next),
@@ -184,6 +190,7 @@ struct AtlasRootView: View {
 
 enum AtlasNativeError: Error {
     case missingIdentityToken
+    case missingAuthorizationCode
 }
 
 struct AtlasWebView: UIViewRepresentable {
