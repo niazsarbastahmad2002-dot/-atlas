@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ATLAS_APPOINTMENT_REMINDER_TEMPLATE,
-  ATLAS_SORANI_META_LANGUAGE,
+  ATLAS_WHATSAPP_REQUIRED_LANGUAGES,
   bootstrapAtlasAppointmentReminderTemplates,
 } from "../lib/reminders/meta-template-bootstrap.ts";
 
@@ -10,7 +10,7 @@ const accessToken = "test-meta-access-token-that-must-not-leak";
 const graphApiVersion = "v23.0";
 const wabaId = "1553173296558731";
 
-test("bootstrap creates the three Atlas utility reminder language variants with two body variables", async () => {
+test("bootstrap creates only the deliverable Atlas utility reminder variants with two body variables", async () => {
   const requests: Array<{ url: string; body: any; authorization: string | null }> = [];
   const fakeFetch = (async (input: string | URL | Request, init?: RequestInit) => {
     requests.push({
@@ -29,8 +29,8 @@ test("bootstrap creates the three Atlas utility reminder language variants with 
     fetchImplementation: fakeFetch,
   });
 
-  assert.equal(requests.length, 3);
-  assert.deepEqual(requests.map((request) => request.body.language), [ATLAS_SORANI_META_LANGUAGE, "ar", "en_US"]);
+  assert.equal(requests.length, 2);
+  assert.deepEqual(requests.map((request) => request.body.language), [...ATLAS_WHATSAPP_REQUIRED_LANGUAGES]);
   for (const request of requests) {
     assert.equal(request.url, `https://graph.facebook.com/${graphApiVersion}/${wabaId}/message_templates`);
     assert.equal(request.body.name, ATLAS_APPOINTMENT_REMINDER_TEMPLATE);
@@ -45,7 +45,7 @@ test("bootstrap creates the three Atlas utility reminder language variants with 
   assert.equal(JSON.stringify(result).includes(accessToken), false);
 });
 
-test("bootstrap does not recreate an existing language variant", async () => {
+test("bootstrap does not recreate an existing supported language variant", async () => {
   let calls = 0;
   const fakeFetch = (async () => {
     calls += 1;
@@ -58,16 +58,16 @@ test("bootstrap does not recreate an existing language variant", async () => {
     wabaId,
     existingTemplates: [{
       name: ATLAS_APPOINTMENT_REMINDER_TEMPLATE,
-      language: ATLAS_SORANI_META_LANGUAGE,
+      language: "ar",
       status: "APPROVED",
       category: "UTILITY",
     }],
     fetchImplementation: fakeFetch,
   });
 
-  assert.equal(calls, 2);
-  assert.equal(result.find((variant) => variant.language === ATLAS_SORANI_META_LANGUAGE)?.created, false);
-  assert.equal(result.find((variant) => variant.language === ATLAS_SORANI_META_LANGUAGE)?.status, "APPROVED");
+  assert.equal(calls, 1);
+  assert.equal(result.find((variant) => variant.language === "ar")?.created, false);
+  assert.equal(result.find((variant) => variant.language === "ar")?.status, "APPROVED");
 });
 
 test("bootstrap returns safe Meta diagnostics without leaking the access token", async () => {
