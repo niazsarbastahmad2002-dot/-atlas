@@ -1,9 +1,13 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { readClinicMetaWhatsAppConfig } from "@/lib/reminders/meta-clinic-config";
 import { withExplicitMetaWabaCandidate } from "@/lib/reminders/meta-explicit-waba";
-import { auditMetaWhatsAppReadiness } from "@/lib/reminders/meta-readiness";
+import {
+  auditMetaWhatsAppReadiness,
+  type MetaWhatsAppReadiness,
+} from "@/lib/reminders/meta-readiness";
 import { ATLAS_WHATSAPP_REQUIRED_LANGUAGES } from "@/lib/reminders/meta-template-bootstrap";
-import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
+import { readWhatsAppConfig, type WhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -26,6 +30,12 @@ type ReminderSetting = {
   meta_template_error_code: string | null;
 };
 
+type ClinicAudit = MetaWhatsAppReadiness & {
+  clinicId: string;
+  templateName: string;
+  connectionSource: "coexistence" | "legacy_env" | "missing";
+};
+
 async function authorized(request: Request, admin: AdminClient) {
   const header = request.headers.get("authorization");
   if (!header?.startsWith("Bearer ")) return false;
@@ -46,6 +56,74 @@ async function authorized(request: Request, admin: AdminClient) {
 function safeBlocker(value: string | undefined, fallback: string | null) {
   const candidate = value || fallback || "provider_not_ready";
   return /^[a-z0-9_]{1,96}$/i.test(candidate) ? candidate : "provider_not_ready";
+}
+
+function unavailableAudit(
+  clinicId: string,
+  templateName: string,
+): ClinicAudit {
+  return {
+    clinicId,
+    templateName,
+    connectionSource: "missing",
+    ready: false,
+    nameStatus: null,
+    verifiedName: null,
+    displayPhoneNumber: null,
+    qualityRating: null,
+    businessCount: 0,
+    wabaCount: 0,
+    wabaIds: [],
+    tokenScopes: [],
+    wabaReviewStatuses: [],
+    templates: [],
+    blockers: ["whatsapp_connection_missing"],
+  };
+}
+
+function readLegacyDiagnosticConfig(): WhatsAppConfig | null {
+  try { return readWhatsAppConfig(); } catch { return null; }
+}
+
+async function auditClinic(
+  admin: AdminClient,
+  row: ReminderSetting,
+  legacyConfig: WhatsAppConfig | null,
+  requestedWabaId: string | undefined,
+): Promise<ClinicAudit> {
+  const connection = await readClinicMetaWhatsAppConfig(admin, row.clinic_id);
+  if (connection) {
+    const result = await auditMetaWhatsAppReadiness({
+      accessToken: connection.config.accessToken,
+      phoneNumberId: connection.config.phoneNumberId,
+      graphApiVersion: connection.config.graphApiVersion,
+      expectedTemplateName: row.template_name,
+      expectedLanguages: [...ATLAS_WHATSAPP_REQUIRED_LANGUAGES],
+      fetchImplementation: withExplicitMetaWabaCandidate(connection.wabaId),
+    });
+    return {
+      clinicId: row.clinic_id,
+      templateName: row.template_name,
+      connectionSource: "coexistence",
+      ...result,
+    };
+  }
+
+  if (!legacyConfig) return unavailableAudit(row.clinic_id, row.template_name);
+  const result = await auditMetaWhatsAppReadiness({
+    accessToken: legacyConfig.accessToken,
+    phoneNumberId: legacyConfig.phoneNumberId,
+    graphApiVersion: legacyConfig.graphApiVersion,
+    expectedTemplateName: row.template_name,
+    expectedLanguages: [...ATLAS_WHATSAPP_REQUIRED_LANGUAGES],
+    fetchImplementation: withExplicitMetaWabaCandidate(requestedWabaId),
+  });
+  return {
+    clinicId: row.clinic_id,
+    templateName: row.template_name,
+    connectionSource: "legacy_env",
+    ...result,
+  };
 }
 
 export async function POST(request: Request) {
@@ -75,15 +153,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  let config: NonNullable<ReturnType<typeof readWhatsAppConfig>>;
-  try {
-    const value = readWhatsAppConfig();
-    if (!value) return NextResponse.json({ error: "whatsapp_disabled" }, { status: 503 });
-    config = value;
-  } catch {
-    return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
-  }
-
+  const legacyConfig = readLegacyDiagnosticConfig();
   const db = admin as any;
   const { data, error } = await db.from("clinic_reminder_settings")
     .select("clinic_id, template_name, messaging_approved_at, meta_template_error_code")
@@ -97,28 +167,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "settings_unavailable" }, { status: 404 });
   }
 
-  const metaFetch = withExplicitMetaWabaCandidate(wabaId);
-  const templateNames = [...new Set(settings.map((row) => row.template_name).filter(Boolean))];
-  const audits = [];
-  for (const templateName of templateNames) {
-    const result = await auditMetaWhatsAppReadiness({
-      accessToken: config.accessToken,
-      phoneNumberId: config.phoneNumberId,
-      graphApiVersion: config.graphApiVersion,
-      expectedTemplateName: templateName,
-      expectedLanguages: [...ATLAS_WHATSAPP_REQUIRED_LANGUAGES],
-      fetchImplementation: metaFetch,
-    });
-    audits.push({ templateName, ...result });
+  const audits: ClinicAudit[] = [];
+  for (const row of settings) {
+    audits.push(await auditClinic(admin, row, legacyConfig, wabaId));
   }
 
   const checkedAt = new Date().toISOString();
   let activated = false;
   if (activate) {
     for (const row of settings) {
-      const audit = audits.find((item) => item.templateName === row.template_name);
+      const audit = audits.find((item) => item.clinicId === row.clinic_id);
       if (!audit) continue;
-      const patch = audit.ready
+      // A legacy environment sender remains diagnostic only. Production activation
+      // requires a clinic-scoped Coexistence connection persisted from Embedded Signup.
+      const canActivate = audit.connectionSource === "coexistence" && audit.ready;
+      const patch = canActivate
         ? {
             enabled: true,
             messaging_approved_at: row.messaging_approved_at ?? checkedAt,
@@ -131,7 +194,12 @@ export async function POST(request: Request) {
             messaging_approved_at: null,
             meta_template_checked_at: checkedAt,
             meta_template_status: "blocked",
-            meta_template_error_code: safeBlocker(audit.blockers[0], row.meta_template_error_code),
+            meta_template_error_code: safeBlocker(
+              audit.connectionSource === "coexistence"
+                ? audit.blockers[0]
+                : "whatsapp_connection_missing",
+              row.meta_template_error_code,
+            ),
           };
       const { error: updateError } = await db.from("clinic_reminder_settings")
         .update(patch)
@@ -141,14 +209,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "activation_write_failed" }, { status: 500 });
       }
     }
-    activated = audits.length > 0 && audits.every((audit) => audit.ready);
+    activated = audits.length > 0
+      && audits.every((audit) => audit.connectionSource === "coexistence" && audit.ready);
   }
 
+  const ready = audits.length > 0
+    && audits.every((audit) => audit.connectionSource === "coexistence" && audit.ready);
+
   return NextResponse.json({
-    ready: audits.length > 0 && audits.every((audit) => audit.ready),
+    ready,
     activated,
     providers: audits.map((audit) => ({
+      clinicId: audit.clinicId,
       templateName: audit.templateName,
+      connectionSource: audit.connectionSource,
       nameStatus: audit.nameStatus,
       verifiedName: audit.verifiedName,
       displayPhoneNumber: audit.displayPhoneNumber,
