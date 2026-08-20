@@ -13,9 +13,10 @@ test("iOS release identity and privacy manifest stay explicit", async () => {
 
   assert.match(project, /PRODUCT_BUNDLE_IDENTIFIER: com\.atlasappointments\.app/);
   assert.match(project, /ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon/);
+  assert.match(project, /ATLAS_ASSOCIATED_DOMAIN: atlasappointments\.com/);
   assert.match(entitlements, /com\.apple\.developer\.applesignin/);
   assert.match(entitlements, /com\.apple\.developer\.associated-domains/);
-  assert.match(entitlements, /applinks:atlasappointments\.com/);
+  assert.match(entitlements, /applinks:\$\(ATLAS_ASSOCIATED_DOMAIN\)/);
   assert.match(privacy, /NSPrivacyAccessedAPICategoryUserDefaults/);
   assert.match(privacy, /CA92\.1/);
   assert.match(privacy, /<key>NSPrivacyTracking<\/key>\s*<false\/>/);
