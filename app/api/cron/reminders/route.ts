@@ -2,10 +2,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { baghdadDateTime } from "@/lib/i18n/config";
 import {
+  createInfobipWhatsAppReminderTransport,
   createWhatsAppReminderTransport,
   routeReminder,
   type ReminderTransport,
 } from "@/lib/reminders/delivery";
+import { readInfobipWhatsAppConfig } from "@/lib/reminders/infobip";
 import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -32,6 +34,11 @@ type SchedulerTokenRpcClient = {
   ) => Promise<{ data: boolean | null; error: { code?: string } | null }>;
 };
 
+type ConfiguredTransport = {
+  transport: ReminderTransport;
+  globalDailyLimit: number;
+};
+
 async function authorized(request: Request, admin: AdminClient) {
   const header = request.headers.get("authorization");
   if (!header?.startsWith("Bearer ")) return false;
@@ -47,6 +54,28 @@ async function authorized(request: Request, admin: AdminClient) {
     p_token_hash: tokenHash,
   });
   return !error && data === true;
+}
+
+function configuredWhatsAppTransport(): ConfiguredTransport | null {
+  if (process.env.WHATSAPP_ENABLED !== "true") return null;
+  const provider = process.env.WHATSAPP_PROVIDER?.trim().toLowerCase() || "meta";
+
+  if (provider === "infobip") {
+    const config = readInfobipWhatsAppConfig();
+    if (!config) return null;
+    return {
+      transport: createInfobipWhatsAppReminderTransport(config),
+      globalDailyLimit: config.globalDailyLimit,
+    };
+  }
+
+  if (provider !== "meta") throw new Error("Unsupported WhatsApp provider.");
+  const config = readWhatsAppConfig();
+  if (!config) return null;
+  return {
+    transport: createWhatsAppReminderTransport(config),
+    globalDailyLimit: config.globalDailyLimit,
+  };
 }
 
 async function processReminder(
@@ -129,21 +158,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  let config: NonNullable<ReturnType<typeof readWhatsAppConfig>>;
+  let configured: ConfiguredTransport | null;
   try {
-    const configured = readWhatsAppConfig();
+    configured = configuredWhatsAppTransport();
     if (!configured) return NextResponse.json({ error: "whatsapp_disabled" }, { status: 503 });
-    config = configured;
   } catch {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
-  const transport = createWhatsAppReminderTransport(config);
   const workerId = randomUUID();
   const { data, error } = await admin.rpc("claim_due_whatsapp_reminders", {
     p_worker_id: workerId,
     p_limit: 25,
-    p_global_daily_limit: config.globalDailyLimit,
+    p_global_daily_limit: configured.globalDailyLimit,
   });
 
   if (error) {
@@ -152,7 +179,9 @@ export async function GET(request: Request) {
   }
 
   const reminders = Array.isArray(data) ? data as ClaimedReminder[] : [];
-  const results = await Promise.all(reminders.map((reminder) => processReminder(admin, workerId, reminder, transport)));
+  const results = await Promise.all(reminders.map((reminder) => (
+    processReminder(admin, workerId, reminder, configured.transport)
+  )));
   const counts = results.reduce<Record<string, number>>((totals, result) => {
     totals[result] = (totals[result] ?? 0) + 1;
     return totals;
