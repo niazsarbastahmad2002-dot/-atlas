@@ -51,6 +51,36 @@ jobs:
             --data '{"key":"META_EMBEDDED_SIGNUP_ENABLED","value":"false","type":"encrypted","target":["production"],"comment":"Keep disabled until config ID and app secret are verified"}' \
             > /tmp/vercel-embedded-enabled.json
 
+      - name: Verify Vercel upsert responses
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+
+          files = {
+              "meta_app_id": "/tmp/vercel-meta-app-id.json",
+              "graph_version": "/tmp/vercel-graph-version.json",
+              "embedded_enabled": "/tmp/vercel-embedded-enabled.json",
+          }
+
+          def summarize(value):
+              if isinstance(value, list):
+                  return [summarize(item) for item in value]
+              if not isinstance(value, dict):
+                  return type(value).__name__
+              safe = {}
+              for key, item in value.items():
+                  if key in {"value", "id", "createdAt", "updatedAt"}:
+                      continue
+                  if key in {"key", "type", "target", "gitBranch", "error", "code", "status", "failed"}:
+                      safe[key] = summarize(item) if isinstance(item, (dict, list)) else item
+              return safe
+
+          for label, filename in files.items():
+              data = json.load(open(filename))
+              print(f"{label}: {json.dumps(summarize(data), sort_keys=True)}")
+          PY
+
       - name: Fetch production environment securely
         run: |
           set -euo pipefail
