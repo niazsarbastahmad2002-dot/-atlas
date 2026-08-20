@@ -45,6 +45,13 @@ export default async function HomePage() {
           </article>
         ))}
       </section>
+
+      <footer className="shell" style={{ paddingTop: 18, paddingBottom: 48, display: "flex", gap: 18, flexWrap: "wrap" }}>
+        <Link href="/support">Support</Link>
+        <Link href="/privacy">Privacy</Link>
+        <Link href="/terms">Terms</Link>
+        <Link href="/data-deletion">Data deletion</Link>
+      </footer>
     </main>
   );
 }
