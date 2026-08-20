@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AtlasAnalytics } from "@/app/components/atlas-analytics";
+import { AtlasTimePickerPolish } from "@/app/components/atlas-time-picker-polish";
 import { LivePageRefresh } from "@/app/components/live-page-refresh";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
@@ -51,6 +52,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {children}
         <LivePageRefresh />
         <AtlasAnalytics />
+        <AtlasTimePickerPolish locale={locale} />
       </body>
     </html>
   );
