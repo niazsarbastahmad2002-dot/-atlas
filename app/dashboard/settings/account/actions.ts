@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revokeAndForgetStoredAppleAuthorization } from "@/lib/apple-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,6 +19,17 @@ export async function deleteAtlasAccount(formData: FormData) {
 
   const email = user.email?.trim().toLowerCase();
   if (!email || confirmation !== email) redirect(accountUrl("email_mismatch"));
+
+  // Apple requires Sign in with Apple authorization to be revoked when an app
+  // deletes the user's account. Always continue with Atlas data deletion if Apple
+  // is temporarily unavailable; the encrypted provider token is forgotten either way.
+  try {
+    await revokeAndForgetStoredAppleAuthorization(user.id);
+  } catch (error) {
+    console.error("Atlas Apple authorization cleanup failed during account deletion", {
+      code: error instanceof Error ? error.message : "apple_cleanup_failed",
+    });
+  }
 
   const admin = createAdminClient();
   const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
