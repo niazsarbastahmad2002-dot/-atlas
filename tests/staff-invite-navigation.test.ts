@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { safeAuthDestination } from "../lib/navigation";
+import { safeAuthDestination } from "../lib/navigation.ts";
 
 const token = "A".repeat(43);
 
