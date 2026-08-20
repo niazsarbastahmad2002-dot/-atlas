@@ -1,4 +1,8 @@
 import {
+  sendInfobipWhatsAppTemplate,
+  type InfobipWhatsAppConfig,
+} from "./infobip.ts";
+import {
   sendApprovedWhatsAppTemplate,
   type WhatsAppConfig,
 } from "./whatsapp.ts";
@@ -136,6 +140,25 @@ export function createWhatsAppReminderTransport(
         // Existing WhatsApp behavior treats transport uncertainty as non-retryable.
         // Preserve that rule and also prevent cross-channel failover in the same state.
         safeToFailover: result.errorCode !== "delivery_unknown",
+      };
+    },
+  };
+}
+
+export function createInfobipWhatsAppReminderTransport(
+  config: InfobipWhatsAppConfig,
+  fetchImplementation: typeof fetch = fetch,
+): ReminderTransport {
+  return {
+    channel: "whatsapp",
+    async send(input) {
+      const result = await sendInfobipWhatsAppTemplate(input, config, fetchImplementation);
+      if (result.accepted) return result;
+      return {
+        accepted: false,
+        errorCode: result.errorCode,
+        retryable: result.retryable,
+        safeToFailover: !result.deliveryUnknown,
       };
     },
   };
