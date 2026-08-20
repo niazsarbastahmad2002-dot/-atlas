@@ -50,8 +50,7 @@ export async function POST(request: Request) {
     || !codePattern.test(body.code)
     || typeof body.wabaId !== "string"
     || !idPattern.test(body.wabaId)
-    || typeof body.phoneNumberId !== "string"
-    || !idPattern.test(body.phoneNumberId)
+    || !validOptionalId(body.phoneNumberId)
     || !validOptionalId(body.businessId)
   ) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
@@ -87,7 +86,7 @@ export async function POST(request: Request) {
   const completion = await completeMetaCoexistence({
     code: body.code,
     wabaId: body.wabaId,
-    phoneNumberId: body.phoneNumberId,
+    phoneNumberId: typeof body.phoneNumberId === "string" ? body.phoneNumberId : null,
     businessId: typeof body.businessId === "string" ? body.businessId : null,
   }, {
     appId: readiness.appId,
@@ -96,8 +95,10 @@ export async function POST(request: Request) {
   });
 
   if (!completion.connected) {
+    const conflict = completion.errorCode === "test_sender_number"
+      || completion.errorCode === "phone_selection_required";
     return NextResponse.json({ error: completion.errorCode }, {
-      status: completion.errorCode === "test_sender_number" ? 409 : 502,
+      status: conflict ? 409 : 502,
       headers: { "Cache-Control": "no-store" },
     });
   }
