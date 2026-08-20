@@ -3,7 +3,7 @@ import { formatIraqiMobile } from "@/lib/appointments";
 import { localizeDigits } from "@/lib/i18n/format";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updatePatientAppointment } from "./actions";
+import { updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +59,11 @@ const patientCopy = {
     completed: "This appointment is complete.",
     noShow: "This appointment has ended.",
     changeMind: "I can’t come",
+    earlierTitle: "Want an earlier appointment?",
+    earlierHelp: "Join the earlier-slot list. If a suitable cancellation opens, reception can offer it to you.",
+    earlierJoin: "Yes, offer me an earlier time",
+    earlierJoined: "You’re on the earlier-slot list.",
+    earlierLeave: "Leave earlier-slot list",
     privacy: "This page is private to this appointment.",
   },
   ku: {
@@ -87,6 +92,11 @@ const patientCopy = {
     completed: "کاتەکەت تەواو بوو.",
     noShow: "کاتەکەت تێپەڕی.",
     changeMind: "ناتوانم بێم",
+    earlierTitle: "مەوعیدی زووتر دەوێت؟",
+    earlierHelp: "لە لیستی مەوعیدی زووتر دابنێ. ئەگەر مەوعیدێکی گونجاو بەتاڵ بوو، ڕیسێپشن دەتوانێت پێشنیارت پێ بکات.",
+    earlierJoin: "بەڵێ، مەوعیدی زووترم پێشنیار بکە",
+    earlierJoined: "تۆ لە لیستی مەوعیدی زووتریت.",
+    earlierLeave: "لە لیستی زووتر دەرچم",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
   },
   bd: {
@@ -115,6 +125,11 @@ const patientCopy = {
     completed: "وادەیا تە تەمام بوو.",
     noShow: "دەمێ وادەیا تە دەرباز بوو.",
     changeMind: "نەشێم بهێم",
+    earlierTitle: "مەوعیدەکا زووتر دخوازیت؟",
+    earlierHelp: "خۆ بخە لیستا مەوعیدێن زووتر. ئەگەر مەوعیدەکا گونجای هاتە هەلوەشاندن، ڕیسێپشن دشێت پێشنیارا وێ بۆ تە بکەت.",
+    earlierJoin: "بەلێ، مەوعیدەکا زووتر بۆ من پێشنیار بکە",
+    earlierJoined: "تو د لیستا مەوعیدێن زووتر دای.",
+    earlierLeave: "ژ لیستا زووتر دەربکەڤم",
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
   },
   ar: {
@@ -143,6 +158,11 @@ const patientCopy = {
     completed: "هذا الموعد خلص.",
     noShow: "وقت هذا الموعد انتهى.",
     changeMind: "ما أگدر أجي",
+    earlierTitle: "تريد موعد أبكر؟",
+    earlierHelp: "انضم لقائمة المواعيد الأبكر. إذا انلغى موعد مناسب، السكرتير يگدر يعرضه عليك.",
+    earlierJoin: "إي، عرضوا عليّ موعد أبكر",
+    earlierJoined: "إنت بقائمة المواعيد الأبكر.",
+    earlierLeave: "شيلوني من قائمة الأبكر",
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
   },
 } as const;
@@ -215,6 +235,13 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const reminderView = query.view === "reminder";
   const ahead = appointment.appointments_ahead ?? 0;
   const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
+  let wantsEarlierSlot = false;
+  if (isActive) {
+    const { data: preference } = await admin.rpc("patient_get_earlier_slot_preference", {
+      p_token_hash: tokenHash,
+    });
+    wantsEarlierSlot = preference === true;
+  }
   const statusMessage = isConfirmed
     ? text.confirmed
     : status === "cancelled"
@@ -268,6 +295,18 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <div><span>{text.order}</span><strong>#{appointment.queue_position}</strong></div>
             <p>{ahead === 0 ? text.first : `${ahead} ${ahead === 1 ? text.ahead : text.aheadMany}.`}</p>
           </div>
+        ) : null}
+
+        {isActive ? (
+          <section className={`patient-earlier-card ${wantsEarlierSlot ? "is-active" : ""}`}>
+            <strong>{text.earlierTitle}</strong>
+            <p>{wantsEarlierSlot ? text.earlierJoined : text.earlierHelp}</p>
+            <form action={updateEarlierSlotPreference.bind(null, token, !wantsEarlierSlot)}>
+              <button className={wantsEarlierSlot ? "patient-earlier-leave" : "button button-ghost patient-earlier-join"} type="submit">
+                {wantsEarlierSlot ? text.earlierLeave : text.earlierJoin}
+              </button>
+            </form>
+          </section>
         ) : null}
 
         {isPending && !reminderView ? (
@@ -331,6 +370,12 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-order-card span { color: var(--muted); font-size: 12px; font-weight: 780; }
           .patient-order-card strong { color: var(--accent); font-size: 30px; line-height: 1; }
           .patient-order-card p { margin: 10px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+          .patient-earlier-card { margin: 0 0 22px; border: 1px solid var(--line); border-radius: 17px; padding: 17px 19px; background: #fff; }
+          .patient-earlier-card.is-active { border-color: #b9dfd1; background: #f3fbf8; }
+          .patient-earlier-card > strong { display: block; color: var(--ink); font-size: 16px; }
+          .patient-earlier-card > p { margin: 8px 0 14px; color: var(--ink-soft); font-size: 13px; line-height: 1.55; }
+          .patient-earlier-join { width: 100%; min-height: 48px; }
+          .patient-earlier-leave { border: 0; padding: 5px 0; background: transparent; color: var(--muted); font-size: 12px; font-weight: 720; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
           .patient-initial-response, .patient-response-block { margin-top: 12px; }
           .patient-initial-response h2, .patient-response-block h2 { margin: 0 0 14px; font-size: clamp(22px,5vw,28px); letter-spacing: -.02em; }
           .patient-confirm-primary { width: 100%; min-height: 54px; font-size: 16px; }
