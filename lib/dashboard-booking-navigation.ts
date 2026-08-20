@@ -1,4 +1,4 @@
-import { baghdadDate } from "@/lib/i18n/config";
+import { baghdadDate } from "./i18n/config.ts";
 
 export function appointmentDestination({
   clinicId,
