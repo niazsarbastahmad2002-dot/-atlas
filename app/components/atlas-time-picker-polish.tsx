@@ -4,33 +4,24 @@ import { useEffect } from "react";
 import { localizeDigits, toAsciiDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 
-function normalizeSoraniTimeText(value: string) {
-  const ascii = toAsciiDigits(value);
-  let next = value
-    .replace(/ب\.ن/g, "پ.ن")
-    .replace(/\bAM\b/g, "پ.ن")
-    .replace(/\bPM\b/g, "د.ن");
+function normalizeTimeText(value: string, locale: UiLocale) {
+  let next = value;
 
-  const clock = /(^|\s)0([1-9]):(\d{2})(?=\s|$)/.exec(ascii);
-  if (clock) {
-    const localized = localizeDigits(`${clock[2]}:${clock[3]}`, "ku");
-    next = next.replace(/[٠0]([١-٩1-9]):([٠-٩0-9]{2})/, localized);
+  if (locale === "ku") {
+    next = next
+      .replace(/ب\.ن/g, "پ.ن")
+      .replace(/\bAM\b/g, "پ.ن")
+      .replace(/\bPM\b/g, "د.ن");
   }
 
-  return next;
+  // Human-facing 12-hour clocks should read 5:05, not 05:05.
+  // Keep the underlying stored/input values zero-padded for correctness.
+  return next.replace(/(^|[\s(])[٠0]([١-٩1-9])(?=:)/g, "$1$2");
 }
 
-function normalizeHourButton(button: HTMLButtonElement, locale: UiLocale) {
+function normalizePickerButton(button: HTMLButtonElement, locale: UiLocale) {
   const value = toAsciiDigits(button.textContent ?? "").trim();
-  const match = /^0?([1-9])$/.exec(value);
-  if (!match) return;
-  const next = localizeDigits(match[1], locale);
-  if (button.textContent !== next) button.textContent = next;
-}
-
-function normalizeMinuteButton(button: HTMLButtonElement, locale: UiLocale) {
-  const value = toAsciiDigits(button.textContent ?? "").trim();
-  const match = /^0([0-9])$/.exec(value);
+  const match = /^0?([0-9])$/.exec(value);
   if (!match) return;
   const next = localizeDigits(match[1], locale);
   if (button.textContent !== next) button.textContent = next;
@@ -38,17 +29,23 @@ function normalizeMinuteButton(button: HTMLButtonElement, locale: UiLocale) {
 
 export function AtlasTimePickerPolish({ locale }: { locale: UiLocale }) {
   useEffect(() => {
-    if (locale !== "ku") return;
-
     let frame = 0;
     const polish = () => {
-      document.querySelectorAll<HTMLButtonElement>(".atlas-hour-grid button").forEach((button) => normalizeHourButton(button, locale));
-      document.querySelectorAll<HTMLButtonElement>(".atlas-minute-grid button").forEach((button) => normalizeMinuteButton(button, locale));
-      document.querySelectorAll<HTMLElement>(".appointment-time-value, .atlas-selected-time strong").forEach((element) => {
-        const current = element.textContent ?? "";
-        const next = normalizeSoraniTimeText(current);
-        if (next !== current) element.textContent = next;
-      });
+      document
+        .querySelectorAll<HTMLButtonElement>(
+          ".atlas-hour-grid button, .atlas-minute-grid button, .fast-time-picker .hour-grid button, .fast-time-picker .minute-grid button",
+        )
+        .forEach((button) => normalizePickerButton(button, locale));
+
+      document
+        .querySelectorAll<HTMLElement>(
+          ".appointment-time-value, .atlas-selected-time strong, .patient-time-value bdi, .edit-datetime-trigger > span:first-child, .edit-time-preview",
+        )
+        .forEach((element) => {
+          const current = element.textContent ?? "";
+          const next = normalizeTimeText(current, locale);
+          if (next !== current) element.textContent = next;
+        });
     };
 
     const schedule = () => {
