@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { atlasPublicCompanyProfile } from "@/lib/public-company-profile";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Atlas",
@@ -8,6 +9,8 @@ export const metadata: Metadata = {
 const sectionStyle = { marginTop: "28px" } as const;
 
 export default function TermsPage() {
+  const company = atlasPublicCompanyProfile();
+
   return (
     <main style={{ maxWidth: 820, margin: "0 auto", padding: "48px 24px 72px", color: "#10251f", lineHeight: 1.7 }}>
       <a href="/" style={{ color: "#087a5b", textDecoration: "none", fontWeight: 700 }}>← Atlas</a>
@@ -16,6 +19,7 @@ export default function TermsPage() {
 
       <p>
         These terms govern use of Atlas Appointments ("Atlas"), an appointment and reminder tool for clinics.
+        {company.isVerifiedCompanyProfile && company.legalEntityName ? ` Atlas is provided by ${company.legalEntityName}.` : ""}
       </p>
 
       <section style={sectionStyle}>
@@ -69,7 +73,7 @@ export default function TermsPage() {
       <section style={sectionStyle}>
         <h2>Contact</h2>
         <p>
-          Questions about these terms may be sent to <a href="mailto:niazsarbastahmad2002@gmail.com" style={{ color: "#087a5b" }}>niazsarbastahmad2002@gmail.com</a>.
+          Questions about these terms may be sent to <a href={`mailto:${company.supportEmail}`} style={{ color: "#087a5b" }}>{company.supportEmail}</a>.
         </p>
       </section>
     </main>

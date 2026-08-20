@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { atlasPublicCompanyProfile } from "@/lib/public-company-profile";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Atlas",
@@ -8,6 +9,8 @@ export const metadata: Metadata = {
 const sectionStyle = { marginTop: "28px" } as const;
 
 export default function PrivacyPolicyPage() {
+  const company = atlasPublicCompanyProfile();
+
   return (
     <main style={{ maxWidth: 820, margin: "0 auto", padding: "48px 24px 72px", color: "#10251f", lineHeight: 1.7 }}>
       <a href="/" style={{ color: "#087a5b", textDecoration: "none", fontWeight: 700 }}>← Atlas</a>
@@ -15,9 +18,10 @@ export default function PrivacyPolicyPage() {
       <p style={{ marginTop: 0, color: "#5f6f69" }}>Effective: 21 August 2026</p>
 
       <p>
-        Atlas Appointments ("Atlas") is an appointment, clinic workflow and reminder system for clinics. This
-        policy explains what information Atlas processes, why it is processed, the service providers involved, and
-        the choices available to clinics, staff and patients.
+        Atlas Appointments ("Atlas") is an appointment, clinic workflow and reminder system for clinics.
+        {company.isVerifiedCompanyProfile && company.legalEntityName ? ` Atlas is operated by ${company.legalEntityName}.` : ""}
+        {" "}This policy explains what information Atlas processes, why it is processed, the service providers involved,
+        and the choices available to clinics, staff and patients.
       </p>
 
       <section style={sectionStyle}>
@@ -139,8 +143,11 @@ export default function PrivacyPolicyPage() {
       <section style={sectionStyle}>
         <h2>Contact</h2>
         <p>
-          Privacy questions may be sent to <a href="mailto:niazsarbastahmad2002@gmail.com" style={{ color: "#087a5b" }}>niazsarbastahmad2002@gmail.com</a>.
+          Privacy questions may be sent to <a href={`mailto:${company.privacyEmail}`} style={{ color: "#087a5b" }}>{company.privacyEmail}</a>.
         </p>
+        {company.isVerifiedCompanyProfile && company.registeredAddress ? (
+          <p><strong>Registered address:</strong> {company.registeredAddress}</p>
+        ) : null}
       </section>
     </main>
   );
