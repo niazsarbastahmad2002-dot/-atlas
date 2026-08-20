@@ -87,10 +87,10 @@ const copy = {
 } as const;
 
 const reminderLanguageLabels = {
-  en: { ku: "Kurdish (Sorani)", ar: "Arabic", en: "English" },
-  ku: { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" },
-  bd: { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" },
-  ar: { ku: "الكردية (السورانية)", ar: "العربية", en: "الإنجليزية" },
+  en: { ku: "Kurdish (Sorani)", bd: "Kurdish (Badini)", ar: "Iraqi Arabic", en: "English" },
+  ku: { ku: "کوردی (سۆرانی)", bd: "کوردی (بادینی)", ar: "عەرەبی (عێراقی)", en: "ئینگلیزی" },
+  bd: { ku: "کوردی (سۆرانی)", bd: "کوردی (بادینی)", ar: "عەرەبی (عێراقی)", en: "ئینگلیزی" },
+  ar: { ku: "الكردية (السورانية)", bd: "الكردية (البادينية)", ar: "العربية العراقية", en: "الإنجليزية" },
 } as const;
 
 function failureText(locale: UiLocale, reason: AppointmentMutationFailure) {
@@ -208,6 +208,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           <label htmlFor={`edit-language-${appointmentId}`}>{ui.reminderLanguage}</label>
           <select id={`edit-language-${appointmentId}`} name="reminder_language" defaultValue={reminderLanguage}>
             <option value="ku">{reminderLanguageLabels[locale].ku}</option>
+            <option value="bd">{reminderLanguageLabels[locale].bd}</option>
             <option value="ar">{reminderLanguageLabels[locale].ar}</option>
             <option value="en">{reminderLanguageLabels[locale].en}</option>
           </select>

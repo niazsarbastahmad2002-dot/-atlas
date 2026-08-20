@@ -35,7 +35,6 @@ export function ScheduleNavigationPolish() {
         const href = dayLink.getAttribute("href");
         if (href) {
           event.preventDefault();
-          dayLink.closest<HTMLElement>(".day-navigation, .schedule-date-shortcuts, .doctor-schedule-tabs")?.classList.add("is-navigating");
           router.push(href, { scroll: false });
           return;
         }

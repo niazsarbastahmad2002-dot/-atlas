@@ -114,15 +114,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     { data: appointments, error: appointmentError },
     { data: occupiedAppointments, error: occupiedError },
     { data: reminderSettings },
+    { data: doctorWorkflowRows, error: workflowError },
     { data: doctors, error: doctorsError },
   ] = await Promise.all([
     supabase.from("clinic_members").select("role, assigned_doctor_id").eq("clinic_id", clinic.id).eq("user_id", userData.user.id).maybeSingle(),
     supabase.from("appointments").select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, created_at, status, reminder_status, reminder_language, reminder_consent").eq("clinic_id", clinic.id).is("voided_at", null).gte("appointment_at", dayStart).lt("appointment_at", dayEnd).order("appointment_at", { ascending: true }).order("created_at", { ascending: true }).order("id", { ascending: true }).limit(500),
     supabase.from("appointments").select("doctor_id, appointment_at").eq("clinic_id", clinic.id).is("voided_at", null).in("status", ["pending", "confirmed"]).gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString()).order("appointment_at", { ascending: true }).limit(5000),
     supabase.from("clinic_reminder_settings").select("enabled, lead_minutes, second_lead_minutes, default_reminder_language").eq("clinic_id", clinic.id).maybeSingle(),
+    supabase.from("doctor_workflow_settings").select("doctor_id, default_reminder_language").eq("clinic_id", clinic.id),
     supabase.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinic.id).order("display_order", { ascending: true }).order("name", { ascending: true }),
   ]);
-  if (membershipError || appointmentError || occupiedError || doctorsError) return <DashboardError />;
+  if (membershipError || appointmentError || occupiedError || workflowError || doctorsError) return <DashboardError />;
 
   const canMonitorDoctors = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   const rows = appointments ?? [];
@@ -136,6 +138,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ?? activeDoctors[0]
     : activeDoctors[0] ?? null;
   const selectedDoctorId = multiDoctor ? selectedDoctor?.id ?? null : null;
+  const defaultReminderLanguage = (doctorWorkflowRows ?? []).find((row) => row.doctor_id === selectedDoctor?.id)?.default_reminder_language ?? reminderSettings?.default_reminder_language ?? "ku";
   const visibleRows = multiDoctor && selectedDoctor
     ? rows.filter((row) => row.doctor_id === selectedDoctor.id)
     : rows;
@@ -181,14 +184,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const minimumInput = toBaghdadInputValue(minimum);
   const maximumInput = toBaghdadInputValue(maximum);
   const occupiedByDoctor = (occupiedAppointments ?? []).reduce<Record<string, string[]>>((result, row) => { if (!row.doctor_id) return result; const values = result[row.doctor_id] ?? []; values.push(toBaghdadInputValue(new Date(row.appointment_at))); result[row.doctor_id] = values; return result; }, {});
-  const defaultReminderLanguage = reminderSettings?.default_reminder_language ?? "ku";
   const statusLabels: Record<string, string> = { pending: t.pending, confirmed: t.confirmed, cancelled: t.cancelled, completed: t.completed, no_show: t.noShow };
   const reminderLabels: Record<string, string> = { queued: t.reminderQueued, processing: t.reminderSending, sent: t.reminderSent, delivered: t.reminderDelivered, read: t.reminderRead, failed: t.reminderFailed };
   const reminderLanguageLabels: Record<string, string> = locale === "ar"
-    ? { ku: "الكردية (السورانية)", ar: "العربية", en: "الإنجليزية" }
+    ? { ku: "الكردية (السورانية)", bd: "الكردية (البادينية)", ar: "العربية العراقية", en: "الإنجليزية" }
     : locale === "en"
-      ? { ku: "Kurdish (Sorani)", ar: "Arabic", en: "English" }
-      : { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" };
+      ? { ku: "Kurdish (Sorani)", bd: "Kurdish (Badini)", ar: "Iraqi Arabic", en: "English" }
+      : { ku: "کوردی (سۆرانی)", bd: "کوردی (بادینی)", ar: "عەرەبی (عێراقی)", en: "ئینگلیزی" };
 
   return <main className="workspace-page shell" data-atlas-selected-day={selectedDay} data-atlas-clinic={clinic.id} data-atlas-memory-valid={selectedFutureHasActiveSchedule ? "true" : "false"}>
     <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{t.schedule}</div><h1>{clinic.name}</h1></div><LiveClinicClock locale={locale} /></header>

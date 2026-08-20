@@ -16,7 +16,7 @@ import type { DashboardMessageCode } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 
 const appointmentIntervals = new Set([5, 10, 15, 20, 30]);
-const reminderLanguages = new Set(["ku", "ar", "en"]);
+const reminderLanguages = new Set(["ku", "bd", "ar", "en"]);
 
 function dashboardUrl(
   key: "error" | "notice",

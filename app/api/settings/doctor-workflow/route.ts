@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 const intervals = new Set([5, 10, 15, 20, 30]);
-const languages = new Set(["ku", "ar", "en"]);
+const languages = new Set(["ku", "bd", "ar", "en"]);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function validLead(value: unknown) {

@@ -63,10 +63,10 @@ const copy = {
 } as const;
 
 const languageLabels = {
-  en: { ku: "Kurdish (Sorani)", ar: "Arabic", en: "English" },
-  ku: { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" },
-  bd: { ku: "کوردی (سۆرانی)", ar: "عەرەبی", en: "ئینگلیزی" },
-  ar: { ku: "الكردية (السورانية)", ar: "العربية", en: "الإنجليزية" },
+  en: { ku: "Kurdish (Sorani)", bd: "Kurdish (Badini)", ar: "Iraqi Arabic", en: "English" },
+  ku: { ku: "کوردی (سۆرانی)", bd: "کوردی (بادینی)", ar: "عەرەبی (عێراقی)", en: "ئینگلیزی" },
+  bd: { ku: "کوردی (سۆرانی)", bd: "کوردی (بادینی)", ar: "عەرەبی (عێراقی)", en: "ئینگلیزی" },
+  ar: { ku: "الكردية (السورانية)", bd: "الكردية (البادينية)", ar: "العربية العراقية", en: "الإنجليزية" },
 } as const;
 
 function leadLabel(minutes: number, locale: UiLocale) {
