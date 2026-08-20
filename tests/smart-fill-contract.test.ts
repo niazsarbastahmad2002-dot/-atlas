@@ -4,7 +4,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 const migration = readFileSync(
-  join(process.cwd(), "supabase/migrations/20260820084000_add_smart_fill_foundation.sql"),
+  join(process.cwd(), "supabase/migrations/20260820053921_add_smart_fill_foundation.sql"),
   "utf8",
 );
 
