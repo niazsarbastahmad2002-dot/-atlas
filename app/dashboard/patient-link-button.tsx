@@ -32,6 +32,16 @@ const copy = {
     back: "گەڕانەوە",
     message: "کاتی پزیشکی تۆ لە Atlas:",
   },
+  bd: {
+    shareAppointment: "وادەیێ پارڤە بکە",
+    creating: "دهێتە ئامادەکرن…",
+    help: "تا واتسئاپ خودکار چالاک دبیت، ئەڤە ڕێکا دەستییە.",
+    copy: "لینکێ کۆپی بکە",
+    copied: "کۆپی بوو ✓",
+    whatsapp: "ل واتسئاپێ بهنێرە",
+    back: "ڤەگەرە",
+    message: "وادەیا تە ل Atlas:",
+  },
   ar: {
     shareAppointment: "مشاركة الموعد",
     creating: "جارٍ التجهيز…",
@@ -119,15 +129,7 @@ export function PatientLinkButton({
           </div>
           <div className="patient-link-share-actions">
             {whatsappUrl ? (
-              <a
-                className="patient-link-whatsapp"
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setShowResult(false)}
-              >
-                {t.whatsapp}
-              </a>
+              <a className="patient-link-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => setShowResult(false)}>{t.whatsapp}</a>
             ) : null}
             <button type="button" onClick={copyLink}>{copied ? t.copied : t.copy}</button>
             <button className="patient-link-back" type="button" onClick={() => setShowResult(false)}>{t.back}</button>
@@ -137,43 +139,14 @@ export function PatientLinkButton({
 
       <style jsx>{`
         .patient-link-control { display: contents; }
-        .patient-link-result {
-          flex-basis: 100%;
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) auto;
-          align-items: center;
-          gap: 14px;
-          margin-top: 4px;
-          border: 1px solid var(--line);
-          border-radius: 12px;
-          padding: 12px;
-          background: var(--surface-soft);
-        }
+        .patient-link-result { flex-basis: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; margin-top: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--surface-soft); }
         .patient-link-copy-block strong { display: block; margin-bottom: 4px; font-size: 11.5px; }
         .patient-link-copy-block p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
         .patient-link-share-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-        .patient-link-share-actions button, .patient-link-share-actions a {
-          display: inline-flex;
-          min-height: 38px;
-          align-items: center;
-          justify-content: center;
-          border: 0;
-          border-radius: 9px;
-          padding: 8px 10px;
-          background: #e9efeb;
-          color: var(--ink);
-          font-size: 10px;
-          font-weight: 760;
-          text-decoration: none;
-          cursor: pointer;
-        }
+        .patient-link-share-actions button, .patient-link-share-actions a { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; border: 0; border-radius: 9px; padding: 8px 10px; background: #e9efeb; color: var(--ink); font-size: 10px; font-weight: 760; text-decoration: none; cursor: pointer; }
         .patient-link-share-actions .patient-link-whatsapp { background: var(--accent); color: #fff; }
         .patient-link-share-actions .patient-link-back { background: transparent; color: var(--muted); }
-        @media (max-width: 720px) {
-          .patient-link-result { grid-template-columns: 1fr; align-items: stretch; }
-          .patient-link-share-actions { width: 100%; justify-content: stretch; }
-          .patient-link-share-actions button, .patient-link-share-actions a { flex: 1; }
-        }
+        @media (max-width: 720px) { .patient-link-result { grid-template-columns: 1fr; align-items: stretch; } .patient-link-share-actions { width: 100%; justify-content: stretch; } .patient-link-share-actions button, .patient-link-share-actions a { flex: 1; } }
       `}</style>
     </div>
   );
