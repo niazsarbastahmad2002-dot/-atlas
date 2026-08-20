@@ -23,10 +23,11 @@ test("iOS release identity and privacy manifest stay explicit", async () => {
 });
 
 test("Apple native sign-in preserves invite context and revocation credentials", async () => {
-  const [nativeApp, nativePage, appleServer] = await Promise.all([
+  const [nativeApp, nativePage, appleServer, retryMigration] = await Promise.all([
     read("ios/Atlas/AtlasApp.swift"),
     read("app/auth/native/page.tsx"),
     read("lib/apple-server.ts"),
+    read("supabase/migrations/20260820225813_harden_apple_revocation_retry.sql"),
   ]);
 
   assert.match(nativeApp, /authorizationCode/);
@@ -37,18 +38,32 @@ test("Apple native sign-in preserves invite context and revocation credentials",
   assert.match(appleServer, /https:\/\/appleid\.apple\.com\/auth\/token/);
   assert.match(appleServer, /https:\/\/appleid\.apple\.com\/auth\/revoke/);
   assert.match(appleServer, /store_apple_refresh_token_service/);
-  assert.match(appleServer, /delete_apple_refresh_token_service/);
+  assert.match(appleServer, /get_apple_revocation_credential_service/);
+  assert.match(appleServer, /delete_apple_refresh_secret_service/);
+  assert.match(retryMigration, /refresh_secret_id uuid/);
 });
 
-test("account deletion is in-app and owned clinics are protected at the database boundary", async () => {
+test("OAuth callback never guesses which provider owns a generic refresh token", async () => {
+  const callback = await read("app/auth/callback/route.ts");
+  assert.doesNotMatch(callback, /provider_refresh_token/);
+  assert.doesNotMatch(callback, /storeWebAppleProviderRefreshToken/);
+});
+
+test("account deletion is in-app, retry-safe, and clinic ownership is protected", async () => {
   const [accountAction, accountPage, migration] = await Promise.all([
     read("app/dashboard/settings/account/actions.ts"),
     read("app/dashboard/settings/account/page.tsx"),
     read("supabase/migrations/20260820223722_protect_clinic_ownership_on_account_delete.sql"),
   ]);
 
-  assert.match(accountAction, /revokeStoredAppleAuthorization/);
+  assert.match(accountAction, /getStoredAppleRevocationCredential/);
+  assert.match(accountAction, /revokeAppleAuthorization/);
+  assert.match(accountAction, /cleanupAppleRefreshSecret/);
   assert.match(accountAction, /auth\.admin\.deleteUser/);
+  assert.ok(
+    accountAction.indexOf("auth.admin.deleteUser") < accountAction.indexOf("revokeAppleAuthorization(appleCredential)"),
+    "Apple authorization must not be revoked until Atlas account deletion succeeds",
+  );
   assert.match(accountPage, /Settings|DELETE/);
   assert.match(migration, /ON DELETE RESTRICT/i);
 });
