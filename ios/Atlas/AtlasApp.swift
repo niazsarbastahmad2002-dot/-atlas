@@ -5,6 +5,37 @@ import UIKit
 import WebKit
 
 private let atlasBaseURL = URL(string: "https://atlasdemofixed.vercel.app")!
+private let atlasUniversalLinkHosts: Set<String> = [
+    "atlasdemofixed.vercel.app",
+    "atlasappointments.com",
+]
+private let atlasInviteTokenCharacters = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
+
+private func atlasInviteToken(from url: URL) -> String? {
+    guard url.scheme?.lowercased() == "https",
+          let host = url.host?.lowercased(),
+          atlasUniversalLinkHosts.contains(host) else {
+        return nil
+    }
+
+    let parts = url.path.split(separator: "/", omittingEmptySubsequences: true)
+    guard parts.count == 2, parts[0] == "join" else { return nil }
+
+    let token = String(parts[1])
+    guard token.count == 43,
+          token.unicodeScalars.allSatisfy({ atlasInviteTokenCharacters.contains($0) }) else {
+        return nil
+    }
+    return token
+}
+
+private func atlasInviteURL(for token: String) -> URL {
+    atlasBaseURL.appending(path: "join").appending(path: token)
+}
+
+private func atlasInviteFinishPath(for token: String) -> String {
+    "/join/\(token)/finish"
+}
 
 @main
 struct AtlasApp: App {
@@ -20,18 +51,29 @@ struct AtlasRootView: View {
     @State private var destination: URL?
     @State private var errorMessage: String?
     @State private var appleNonce: String?
+    @State private var pendingInviteToken: String?
 
     var body: some View {
         Group {
             if let destination {
                 AtlasWebView(url: destination)
+                    .id(destination.absoluteString)
                     .ignoresSafeArea(.container, edges: .bottom)
             } else if hasOpened {
-                AtlasWebView(url: atlasBaseURL.appending(path: "dashboard"))
+                let dashboardURL = atlasBaseURL.appending(path: "dashboard")
+                AtlasWebView(url: dashboardURL)
+                    .id(dashboardURL.absoluteString)
                     .ignoresSafeArea(.container, edges: .bottom)
             } else {
                 welcome
             }
+        }
+        .onOpenURL { url in
+            handleIncomingURL(url)
+        }
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+            guard let url = activity.webpageURL else { return }
+            handleIncomingURL(url)
         }
     }
 
@@ -43,7 +85,7 @@ struct AtlasRootView: View {
                 .accessibilityHidden(true)
             Text("Atlas")
                 .font(.largeTitle.bold())
-            Text("Clinic appointments. One clear flow.")
+            Text(pendingInviteToken == nil ? "Clinic appointments. One clear flow." : "Your secure clinic invitation is ready.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -59,9 +101,13 @@ struct AtlasRootView: View {
             .frame(height: 52)
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
-            Button("Open Atlas") {
+            Button(pendingInviteToken == nil ? "Open Atlas" : "Use another sign-in method") {
                 hasOpened = true
-                destination = atlasBaseURL.appending(path: "login")
+                if let pendingInviteToken {
+                    destination = atlasInviteURL(for: pendingInviteToken)
+                } else {
+                    destination = atlasBaseURL.appending(path: "login")
+                }
             }
             .buttonStyle(.bordered)
 
@@ -74,6 +120,19 @@ struct AtlasRootView: View {
             Spacer()
         }
         .padding(28)
+    }
+
+    private func handleIncomingURL(_ url: URL) {
+        guard let token = atlasInviteToken(from: url) else { return }
+        pendingInviteToken = token
+        errorMessage = nil
+
+        // Returning users keep their existing Atlas web session. The server-side
+        // invitation route will redeem immediately when that session is valid,
+        // or present the normal authentication choices if it has expired.
+        if hasOpened {
+            destination = atlasInviteURL(for: token)
+        }
     }
 
     private func completeAppleSignIn(_ result: Result<ASAuthorization, Error>) {
@@ -90,6 +149,7 @@ struct AtlasRootView: View {
             if let given = credential.fullName?.givenName { parts.append(given) }
             if let family = credential.fullName?.familyName { parts.append(family) }
             let fullName = parts.joined(separator: " ")
+            let next = pendingInviteToken.map(atlasInviteFinishPath) ?? "/dashboard"
 
             var fragment = URLComponents()
             fragment.queryItems = [
@@ -97,6 +157,7 @@ struct AtlasRootView: View {
                 URLQueryItem(name: "id_token", value: identityToken),
                 URLQueryItem(name: "nonce", value: nonce),
                 URLQueryItem(name: "full_name", value: fullName.isEmpty ? nil : fullName),
+                URLQueryItem(name: "next", value: next),
             ]
 
             var authURL = atlasBaseURL.appending(path: "auth/native")
@@ -106,6 +167,7 @@ struct AtlasRootView: View {
             }
 
             appleNonce = nil
+            pendingInviteToken = nil
             hasOpened = true
             destination = authURL
             errorMessage = nil
