@@ -14,14 +14,15 @@ export default function NativeAuthPage() {
         const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
         const provider = params.get("provider");
         const token = params.get("id_token");
+        const nonce = params.get("nonce");
         const fullName = params.get("full_name")?.trim() ?? "";
 
-        // Remove the identity token from the visible browser history immediately.
+        // Remove the identity token and nonce from browser history immediately.
         window.history.replaceState(null, "", "/auth/native");
 
-        if (provider !== "apple" || !token) throw new Error("invalid_native_auth");
+        if (provider !== "apple" || !token || !nonce) throw new Error("invalid_native_auth");
         const supabase = createClient();
-        const { error } = await supabase.auth.signInWithIdToken({ provider: "apple", token });
+        const { error } = await supabase.auth.signInWithIdToken({ provider: "apple", token, nonce });
         if (error) throw error;
 
         if (fullName) {
