@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatLeadTime } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { queueSettingWrite } from "./setting-write-barrier";
+import { WhatsAppCoexistencePanel } from "./whatsapp-coexistence-panel";
 
 type ReminderSettings = {
   enabled: boolean;
@@ -82,7 +83,7 @@ function rememberedDoctorId() {
   } catch { return ""; }
 }
 
-export function SettingsReminderCard({ clinicId, locale }: Props) {
+export function SettingsReminderCard({ clinicId, locale, canManage }: Props) {
   const t = copy[locale];
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [saving, setSaving] = useState(false);
@@ -182,6 +183,8 @@ export function SettingsReminderCard({ clinicId, locale }: Props) {
 
         <p className={saveError ? "notice notice-error" : "field-help"}>{saveError ? t.failed : saving ? "…" : t.saved}</p>
       </div> : null}
+
+      <WhatsAppCoexistencePanel clinicId={clinicId} locale={locale} canManage={canManage} />
 
       <style>{`
         .atlas-reminder-form{display:grid;gap:12px}.atlas-reminder-times{display:grid;grid-template-columns:1fr 1fr;gap:12px}.atlas-reminder-form label:not(.toggle-row){display:grid;gap:6px;font-size:12px;font-weight:800}.atlas-reminder-form select{min-height:44px;border:1px solid var(--line-strong);border-radius:12px;padding:8px 12px;background:#fff;color:var(--ink);font:inherit}.reminder-provider-note{margin:0;border-radius:11px;padding:9px 11px;background:var(--surface-soft);color:var(--muted);font-size:11px;line-height:1.5}@media(max-width:620px){.atlas-reminder-times{grid-template-columns:1fr}}
