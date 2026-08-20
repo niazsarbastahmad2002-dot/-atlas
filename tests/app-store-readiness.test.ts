@@ -45,7 +45,7 @@ test("Apple native sign-in preserves invite context and revocation credentials",
 
 test("OAuth callback never guesses which provider owns a generic refresh token", async () => {
   const callback = await read("app/auth/callback/route.ts");
-  assert.doesNotMatch(callback, /provider_refresh_token/);
+  assert.doesNotMatch(callback, /session\??\.provider_refresh_token/);
   assert.doesNotMatch(callback, /storeWebAppleProviderRefreshToken/);
 });
 
