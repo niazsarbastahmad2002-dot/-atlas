@@ -14,6 +14,14 @@ test("Badini uses secretary wording and keeps the common genitive form", () => {
   assert.equal(applyClinicTerminology("کارێ ریسپشنێ", "bd"), "کارێ سکرتێرێ");
 });
 
+test("Kurdish uses دکتۆر instead of پزیشک for doctor wording", () => {
+  assert.equal(applyClinicTerminology("پزیشک", "ku"), "دکتۆر");
+  assert.equal(applyClinicTerminology("ناوی پزیشک", "ku"), "ناوی دکتۆر");
+  assert.equal(applyClinicTerminology("پزیشکەکان", "ku"), "دکتۆرەکان");
+  assert.equal(applyClinicTerminology("پزیشکی سکرتێر", "ku"), "دکتۆری سکرتێر");
+  assert.equal(applyClinicTerminology("پزیشک", "bd"), "دکتۆر");
+});
+
 test("Sorani uses مەوعید instead of وادە for appointment wording", () => {
   assert.equal(applyClinicTerminology("وادەی نوێ", "ku"), "مەوعیدی نوێ");
   assert.equal(applyClinicTerminology("وادەکانی ئەمڕۆ", "ku"), "مەوعیدەکانی ئەمڕۆ");
@@ -31,6 +39,8 @@ test("Badini uses مەوعید instead of وادە for appointment wording", () 
 test("English and Arabic terminology is unchanged", () => {
   assert.equal(applyClinicTerminology("Reception", "en"), "Reception");
   assert.equal(applyClinicTerminology("Appointment", "en"), "Appointment");
+  assert.equal(applyClinicTerminology("Doctor", "en"), "Doctor");
   assert.equal(applyClinicTerminology("الاستقبال", "ar"), "الاستقبال");
   assert.equal(applyClinicTerminology("المواعيد", "ar"), "المواعيد");
+  assert.equal(applyClinicTerminology("الطبيب", "ar"), "الطبيب");
 });
