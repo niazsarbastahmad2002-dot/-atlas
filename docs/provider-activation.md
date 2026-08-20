@@ -5,8 +5,7 @@ Atlas web and iOS code is prepared for Google and Apple authentication. This doc
 ## Production identity
 
 - Current production origin: `https://atlasdemofixed.vercel.app`
-- Planned canonical company/app domain: `https://atlasappointments.com`
-- Planned defensive app domain: `https://atlasappointments.app`
+- Future legal-entity custom domain: choose and purchase only when organization conversion is funded
 - Supabase project ref: `moazrwbalqiyoafrydkj`
 - Supabase OAuth callback: `https://moazrwbalqiyoafrydkj.supabase.co/auth/v1/callback`
 - Current web callback after provider auth: `https://atlasdemofixed.vercel.app/auth/callback`
@@ -15,15 +14,14 @@ Atlas web and iOS code is prepared for Google and Apple authentication. This doc
 - Universal Link path: `/join/*`
 - App Store display name: `Atlas`
 
-Do not replace production URLs with the custom domain until that domain is purchased, attached to Vercel, verified, and serving Atlas over HTTPS.
+Keep the Vercel production origin active throughout the individual-development phase. A custom company domain is not required merely to create Google OAuth clients or to register a Sign in with Apple website subdomain; it becomes important for the later Apple organization-verification/public-release phase.
 
 ## Google — web
 
 Create a Google Auth Platform OAuth client of type **Web application**.
 
-Authorized JavaScript origins:
+Authorized JavaScript origin:
 - `https://atlasdemofixed.vercel.app`
-- `https://atlasappointments.com` after the domain is live and verified
 
 Authorized redirect URI:
 - `https://moazrwbalqiyoafrydkj.supabase.co/auth/v1/callback`
@@ -45,22 +43,34 @@ Google blocks OAuth authorization inside `WKWebView`. When the Google Cloud proj
 
 Use the official Google Sign-In for iOS SDK (or another system-browser native OAuth flow) rather than embedded web authorization. Until that native client ID is issued and configured, Atlas iOS intentionally suppresses the Google button inside its embedded web shell. Apple, passkey, and email flows remain available.
 
-## Apple
+## Apple — individual development phase
 
-Enroll the legal Atlas entity in the Apple Developer Program. Register:
+After the founder's real individual Apple Developer Program membership is active, register:
 
 1. App ID / bundle ID: `com.atlasappointments.app`
 2. Enable **Sign in with Apple** capability.
 3. Enable **Associated Domains** capability.
 4. Services ID: `com.atlasappointments.app.web`
 5. Associate the Services ID with the App ID.
-6. Website domain: `atlasappointments.com` after purchase and production attachment.
-7. Return URL for Supabase web OAuth: `https://moazrwbalqiyoafrydkj.supabase.co/auth/v1/callback`
+6. Register the current web domain/subdomain: `atlasdemofixed.vercel.app`.
+7. Return URL for Supabase web OAuth: `https://moazrwbalqiyoafrydkj.supabase.co/auth/v1/callback`.
 8. Create a Sign in with Apple key and securely retain the `.p8` private key.
 9. Record the Apple Team ID / App Identifier Prefix and configure Atlas server environment `ATLAS_APPLE_APP_PREFIX` so the Apple App Site Association file becomes active.
 
 Configure Supabase Auth with the Apple Services ID first in the Client IDs list, followed by the native App ID when both web and native Apple sign-in are active.
 
-The iOS app uses native `AuthenticationServices` and a nonce-bound Apple identity token. It sends only the short-lived identity token, nonce, optional first-login name, and a validated Atlas destination to `/auth/native`, where Supabase creates the web session. Invite destinations are restricted to `/join/<43-character-token>/finish`.
+The iOS app uses native `AuthenticationServices`, a nonce-bound Apple identity token and Apple's one-time authorization code. Atlas exchanges that authorization code server-side, stores the resulting Apple refresh token in Supabase Vault, and uses it only for Apple authorization revocation when the Atlas account is deleted.
+
+The individual membership is for technical development/TestFlight. Do not submit Atlas publicly as the final healthcare seller identity until the membership has been converted to the verified Atlas legal organization.
+
+## Apple — later organization conversion
+
+After the legal Atlas entity, D-U-N-S record, company-domain website and work email exist, request Apple to convert the founder's membership to an organization. Then:
+
+1. Confirm the organization seller/legal name in App Store Connect.
+2. Add the company domain to Sign in with Apple and Associated Domains.
+3. Update Atlas public Support/Privacy/Terms contacts to company-domain addresses.
+4. Keep existing bundle/service IDs unless Apple requires a change during conversion.
+5. Re-test Apple sign-in, account deletion revocation and Universal Links before public submission.
 
 Never commit Apple `.p8` keys, generated client secrets, Google client secrets, Supabase management tokens, or signing certificates to Git.
