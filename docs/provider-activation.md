@@ -74,4 +74,8 @@ After the legal Atlas entity, D-U-N-S record, company-domain website and work em
 4. Keep existing bundle/service IDs unless Apple requires a change during conversion.
 5. Re-test Apple sign-in, account deletion revocation and Universal Links before public submission.
 
+## What Atlas can and cannot automate
+
+Atlas code can validate identifiers, callbacks, native builds, Universal Links, token storage/revocation and provider readiness. Provider-account creation itself cannot be completed without the founder's authenticated Apple/Google account session. Apple enrollment additionally requires the founder's verified identity and payment. No secret keys should be pasted into source control or committed to Git.
+
 Never commit Apple `.p8` keys, generated client secrets, Google client secrets, Supabase management tokens, or signing certificates to Git.
