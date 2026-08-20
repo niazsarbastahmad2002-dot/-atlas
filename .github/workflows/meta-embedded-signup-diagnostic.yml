@@ -158,6 +158,25 @@ jobs:
           print("Meta Embedded Signup diagnostic completed without printing secrets.")
           PY
 
+      - name: Redeploy production with updated environment
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://api.vercel.com/v13/deployments?forceNew=1&teamId=$VERCEL_ORG_ID" \
+            --data '{"deploymentId":"dpl_BJENsa3rBrCcG7F7DNDz7zWc7xdo","name":"atlas_demo_fixed","project":"prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ","target":"production"}' \
+            > /tmp/vercel-redeploy.json
+          python - <<'PY'
+          import json
+          data = json.load(open("/tmp/vercel-redeploy.json"))
+          print("Production redeploy requested:", {
+              "created": bool(data.get("id")),
+              "status": data.get("status") or data.get("readyState"),
+          })
+          PY
+
       - name: Publish sanitized result
         if: always()
         run: |
