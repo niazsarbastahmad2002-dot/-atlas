@@ -1,6 +1,10 @@
 name: Meta Embedded Signup diagnostic
 
 on:
+  push:
+    branches: [diagnose-meta-onboarding-env]
+    paths:
+      - .github/workflows/meta-embedded-signup-diagnostic.yml
   pull_request:
     branches: [main]
     paths:
@@ -97,6 +101,7 @@ jobs:
         if: always()
         run: |
           if [ -f /tmp/meta-embedded-report.md ]; then
+            cat /tmp/meta-embedded-report.md
             cat /tmp/meta-embedded-report.md >> "$GITHUB_STEP_SUMMARY"
             if [ "${{ github.event_name }}" = "pull_request" ]; then
               gh pr comment "${{ github.event.pull_request.number }}" \
