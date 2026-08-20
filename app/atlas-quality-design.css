@@ -153,6 +153,88 @@
   box-shadow: 0 10px 26px rgba(7,31,25,.055);
 }
 
+/* Smart booking flow: make the composer and resulting schedule feel like one
+   continuous task, with stronger time/status hierarchy for front-desk scanning. */
+.workspace-page .appointment-composer {
+  border-color: rgba(191, 214, 203, .96);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(104, 220, 181, .08), transparent 15rem),
+    linear-gradient(180deg, #ffffff 0%, #fbfefd 100%);
+  box-shadow: 0 16px 42px rgba(7, 31, 25, .055);
+}
+.workspace-page .composer-heading {
+  margin-bottom: 16px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid rgba(213, 228, 221, .8);
+}
+.workspace-page .composer-shortcut {
+  box-shadow: 0 6px 18px rgba(8,119,90,.12);
+}
+.workspace-page .schedule-card {
+  border-color: rgba(201, 219, 210, .96);
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,253,252,.98));
+  box-shadow: 0 16px 42px rgba(7, 31, 25, .05);
+}
+.workspace-page .schedule-heading {
+  margin-bottom: 13px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid rgba(213, 228, 221, .82);
+}
+.workspace-page .schedule-heading h2 {
+  letter-spacing: -.025em;
+}
+.workspace-page .count-pill {
+  min-width: 34px;
+  min-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(8,119,90,.14);
+  background: #ecf8f3;
+  color: #087457;
+  font-weight: 900;
+}
+.workspace-page .polished-appointment-list {
+  gap: 10px;
+}
+.workspace-page .polished-appointment {
+  overflow: hidden;
+  border-color: rgba(211, 225, 218, .95);
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(7,31,25,.035);
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.workspace-page .polished-appointment:hover {
+  transform: translateY(-1px);
+  border-color: rgba(160, 198, 180, .95);
+  box-shadow: 0 11px 30px rgba(7,31,25,.065);
+}
+.workspace-page .polished-appointment:active {
+  transform: translateY(0) scale(.998);
+}
+.workspace-page .patient-cell strong {
+  letter-spacing: -.014em;
+}
+.workspace-page .appointment-time-value {
+  color: #102a21;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: -.012em;
+}
+.workspace-page .appointment-badges {
+  align-items: center;
+}
+.workspace-page .appointment-order-badge {
+  border-color: rgba(8,119,90,.16);
+  background: #eef9f5;
+  color: #087457;
+  font-weight: 900;
+}
+.workspace-page .workspace-notice.notice-success {
+  border-color: rgba(25, 150, 111, .23);
+  background: linear-gradient(180deg, #f1fbf7, #eaf8f2);
+  box-shadow: 0 8px 24px rgba(8,119,90,.06);
+}
+
 @media (max-width: 900px) {
   .workspace-page > .schedule-date-shortcuts {
     scroll-snap-type: x proximity;
@@ -162,6 +244,9 @@
   }
   .polished-appointment.is-next-appointment {
     scroll-margin-top: 84px;
+  }
+  .workspace-page .polished-appointment:hover {
+    transform: none;
   }
 }
 
@@ -182,5 +267,13 @@
   }
   .workspace-page > .day-navigation .day-current {
     min-height: 46px;
+  }
+  .workspace-page .composer-heading,
+  .workspace-page .schedule-heading {
+    margin-bottom: 11px;
+    padding-bottom: 11px;
+  }
+  .workspace-page .appointment-time-value {
+    font-size: 13.5px;
   }
 }

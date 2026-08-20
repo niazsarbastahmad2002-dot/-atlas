@@ -11,6 +11,7 @@ import {
   normalizeIraqiMobile,
   parseBaghdadDateTime,
 } from "@/lib/appointments";
+import { appointmentDestination } from "@/lib/dashboard-booking-navigation";
 import type { DashboardMessageCode } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 
@@ -270,14 +271,19 @@ export async function createAppointment(formData: FormData) {
 
   if (error) {
     if (error.code === "23505") {
-      redirect(dashboardUrl("notice", "appointment_duplicate", clinicId));
+      redirect(appointmentDestination({
+        clinicId,
+        doctorId: doctor.id,
+        appointmentAt,
+        notice: "appointment_duplicate",
+      }));
     }
     console.error("Atlas appointment creation failed", { code: error.code });
     redirect(dashboardUrl("error", "appointment_create_failed", clinicId));
   }
 
   revalidatePath("/dashboard");
-  redirect(dashboardUrl("notice", "appointment_created", clinicId));
+  redirect(appointmentDestination({ clinicId, doctorId: doctor.id, appointmentAt }));
 }
 
 export async function updateAppointmentStatus(clinicId: string, id: string, status: string) {
