@@ -121,7 +121,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     supabase.from("appointments").select("id, patient_name, patient_phone, doctor_id, doctor_name, appointment_at, created_at, status, reminder_status, reminder_language, reminder_consent").eq("clinic_id", clinic.id).is("voided_at", null).gte("appointment_at", dayStart).lt("appointment_at", dayEnd).order("appointment_at", { ascending: true }).order("created_at", { ascending: true }).order("id", { ascending: true }).limit(500),
     supabase.from("appointments").select("doctor_id, appointment_at").eq("clinic_id", clinic.id).is("voided_at", null).in("status", ["pending", "confirmed"]).gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString()).order("appointment_at", { ascending: true }).limit(5000),
     supabase.from("clinic_reminder_settings").select("enabled, lead_minutes, second_lead_minutes, default_reminder_language").eq("clinic_id", clinic.id).maybeSingle(),
-    supabase.from("doctor_workflow_settings").select("doctor_id, default_reminder_language").eq("clinic_id", clinic.id),
+    (supabase as any).from("doctor_workflow_settings").select("doctor_id, default_reminder_language").eq("clinic_id", clinic.id),
     supabase.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinic.id).order("display_order", { ascending: true }).order("name", { ascending: true }),
   ]);
   if (membershipError || appointmentError || occupiedError || workflowError || doctorsError) return <DashboardError />;
