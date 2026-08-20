@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { appointmentDestination } from "../lib/dashboard-booking-navigation.ts";
+import {
+  appointmentDestination,
+  appointmentFormDestination,
+} from "../lib/dashboard-booking-navigation.ts";
 
 test("new appointments return to their actual Baghdad schedule day", () => {
   const destination = appointmentDestination({
@@ -15,6 +18,28 @@ test("new appointments return to their actual Baghdad schedule day", () => {
   assert.equal(url.searchParams.get("clinic"), "11111111-1111-4111-8111-111111111111");
   assert.equal(url.searchParams.get("doctor"), "22222222-2222-4222-8222-222222222222");
   assert.equal(url.searchParams.get("day"), "2026-08-21");
+});
+
+test("fast-save follows the date selected inside the appointment form", () => {
+  const destination = appointmentFormDestination({
+    clinicId: "11111111-1111-4111-8111-111111111111",
+    doctorId: "22222222-2222-4222-8222-222222222222",
+    appointmentAt: "2026-08-22T09:15",
+  });
+
+  assert.ok(destination);
+  const url = new URL(destination, "https://atlas.example");
+  assert.equal(url.searchParams.get("day"), "2026-08-22");
+  assert.equal(url.searchParams.get("doctor"), "22222222-2222-4222-8222-222222222222");
+  assert.equal(url.searchParams.get("notice"), "appointment_created");
+});
+
+test("fast-save navigation rejects malformed appointment values", () => {
+  assert.equal(appointmentFormDestination({
+    clinicId: "11111111-1111-4111-8111-111111111111",
+    doctorId: "22222222-2222-4222-8222-222222222222",
+    appointmentAt: "tomorrow",
+  }), null);
 });
 
 test("duplicate booking feedback also stays on the attempted appointment day", () => {

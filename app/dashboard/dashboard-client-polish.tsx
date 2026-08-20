@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { appointmentFormDestination } from "@/lib/dashboard-booking-navigation";
 import { formatTimeValue, localizeDigits, toAsciiDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createAppointmentInline } from "./instant-actions";
@@ -92,8 +93,6 @@ function localizeVisibleText(value: string, locale: UiLocale) {
   if (locale === "en") return value;
 
   const trimmed = value.trim();
-  // Email addresses are literal account identifiers, not translated UI. Their
-  // ASCII spelling and digits must remain exactly as entered in every locale.
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return value;
 
   const exact = exactCopy[locale][trimmed];
@@ -222,6 +221,11 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
             return;
           }
 
+          const destination = appointmentFormDestination({
+            clinicId: String(formData.get("clinic_id") ?? ""),
+            doctorId: String(formData.get("doctor_id") ?? ""),
+            appointmentAt,
+          });
           const nameInput = form.querySelector<HTMLInputElement>('#patient_name');
           const phoneInput = form.querySelector<HTMLInputElement>('#patient_phone');
           const consentInput = form.querySelector<HTMLInputElement>('#reminder_consent');
@@ -233,7 +237,8 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
 
           toast.success();
           if (button) button.textContent = `✓ ${fastSaveCopy[locale].saved}`;
-          router.refresh();
+          if (destination) router.push(destination);
+          else router.refresh();
         } catch {
           toast.fail(false);
         } finally {
