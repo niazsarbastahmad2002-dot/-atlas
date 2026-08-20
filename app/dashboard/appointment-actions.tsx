@@ -39,6 +39,13 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
     if (reason === "invalid") return "ئەم گۆڕانکارییە بۆ ئەم وادەیە ڕێگەپێدراو نییە.";
     return "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.";
   }
+  if (locale === "bd") {
+    if (reason === "busy") return "وادە هێشتا دهێتە نوێکرن. دووبارە هەول بدە.";
+    if (reason === "too_early") return "هێشتا دەمێ وادەیێ نەهاتییە. پشتی دەمێ وادەیێ ئەنجامێ تۆمار بکە.";
+    if (reason === "past_cancelled") return "وادەیا هەلوەشاندی یا دەربازبووی ناهێتە ڤەگەراندن؛ وادەیا نوو دروست بکە.";
+    if (reason === "invalid") return "ئەڤ گۆڕین بۆ ڤێ وادەیێ بەردەست نینە.";
+    return "گۆڕین نەهاتە پاراستن. دووبارە هەول بدە.";
+  }
   if (locale === "ar") {
     if (reason === "busy") return "الموعد قيد التحديث. حاول مرة أخرى.";
     if (reason === "too_early") return "لم يحن وقت الموعد بعد. سجّل النتيجة بعد وقت الموعد.";
@@ -65,6 +72,12 @@ const correctionCopy = {
     backToPending: "بگەڕێنەوە بۆ چاوەڕوان",
     undoCompleted: "کۆتایی هەڵبوەشێنەوە",
     undoNoShow: "نەهاتن هەڵبوەشێنەوە",
+  },
+  bd: {
+    restore: "ڤەگەرینە",
+    backToPending: "ڤەگەرینە بۆ چاڤەڕێ",
+    undoCompleted: "تەمامبوونێ هەلوەشێنە",
+    undoNoShow: "نەهاتنێ هەلوەشێنە",
   },
   ar: {
     restore: "استعادة",
@@ -104,12 +117,14 @@ export function AppointmentActions({
     completed: t.completed,
     no_show: t.noShow,
   };
-  const removeLabel = locale === "ku" ? "لابردن" : locale === "ar" ? "إزالة" : "Remove";
+  const removeLabel = locale === "ku" ? "لابردن" : locale === "bd" ? "لابرن" : locale === "ar" ? "إزالة" : "Remove";
   const removeQuestion = locale === "ku"
     ? "ئەم وادەیە لە خشتە لاببرێت؟ مێژووەکەی لە Atlas دەپارێزرێت."
-    : locale === "ar"
-      ? "إزالة هذا الموعد من الجدول؟ سيحتفظ Atlas بسجله."
-      : "Remove this appointment from the schedule? Atlas will keep its history.";
+    : locale === "bd"
+      ? "ئەڤ وادە ژ خشتەیێ لاببەین؟ Atlas مێژوویا وێ دپارێزیت."
+      : locale === "ar"
+        ? "إزالة هذا الموعد من الجدول؟ سيحتفظ Atlas بسجله."
+        : "Remove this appointment from the schedule? Atlas will keep its history.";
   const scheduledAt = new Date(appointmentAt).getTime();
   const tooEarlyForOutcome = Number.isFinite(scheduledAt) && scheduledAt > Date.now() + 5 * 60 * 1000;
   const tooLateToRestore = Number.isFinite(scheduledAt) && scheduledAt < Date.now() - 5 * 60 * 1000;
@@ -135,8 +150,6 @@ export function AppointmentActions({
 
   function shouldShowTransition(nextStatus: AppointmentStatus) {
     if (unavailableReason(nextStatus)) return false;
-    // Once the appointment time has arrived, reception only needs to record
-    // the outcome; "Back to pending" is no longer useful on the main row.
     if (optimisticStatus === "confirmed" && nextStatus === "pending" && !tooEarlyForOutcome) return false;
     return true;
   }
