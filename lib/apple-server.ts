@@ -102,7 +102,7 @@ export async function storeAppleRefreshToken(userId: string, refreshToken: strin
 export async function exchangeAndStoreNativeAppleAuthorization(input: {
   userId: string;
   authorizationCode: string;
-  expectedAppleSubject?: string | null;
+  expectedAppleSubject: string;
 }) {
   const clientId = atlasAppleNativeClientId();
   const body = new URLSearchParams({
@@ -124,7 +124,7 @@ export async function exchangeAndStoreNativeAppleAuthorization(input: {
   }
 
   const appleSubject = decodeJwtSubject(payload.id_token);
-  if (input.expectedAppleSubject && appleSubject !== input.expectedAppleSubject) {
+  if (!appleSubject || appleSubject !== input.expectedAppleSubject) {
     throw new Error("apple_authorization_subject_mismatch");
   }
 

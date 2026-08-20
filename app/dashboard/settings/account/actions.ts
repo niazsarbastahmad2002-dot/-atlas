@@ -38,9 +38,7 @@ export async function deleteAtlasAccount(formData: FormData) {
   try {
     appleCredential = await getStoredAppleRevocationCredential(userData.user.id);
   } catch (error) {
-    // Do not delete the Atlas account while a stored Apple credential may be
-    // unreadable. That could orphan a Vault secret and remove the automatic
-    // revocation path. The user can retry after the transient failure clears.
+    // Keep deletion retryable while an Apple credential may be unreadable.
     console.error("Atlas Apple revocation credential read failed", {
       error: error instanceof Error ? error.name : "unknown",
     });
@@ -52,8 +50,7 @@ export async function deleteAtlasAccount(formData: FormData) {
     const { error: deleteError } = await admin.auth.admin.deleteUser(userData.user.id);
     if (deleteError) throw deleteError;
   } catch (error) {
-    // Nothing destructive has happened to the Apple credential at this point,
-    // so a failed Atlas deletion remains fully retryable.
+    // Do not revoke Apple authorization until Atlas account deletion succeeds.
     console.error("Atlas account deletion failed", {
       error: error instanceof Error ? error.name : "unknown",
     });
@@ -71,9 +68,8 @@ export async function deleteAtlasAccount(formData: FormData) {
     }
 
     try {
-      // The auth-user deletion already cascaded the private token row. Delete
-      // the Vault secret by the ID captured before deletion so no credential is
-      // retained after the user's Atlas account is gone.
+      // The auth-user deletion cascaded the private token row. Remove the
+      // captured Vault secret so Atlas retains no revocation credential.
       await cleanupAppleRefreshSecret(appleCredential.refreshSecretId);
     } catch (cleanupError) {
       console.error("Atlas Apple refresh-secret cleanup failed", {

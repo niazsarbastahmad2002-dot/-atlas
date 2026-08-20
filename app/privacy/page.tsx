@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Atlas",
-  description: "Privacy policy for Atlas Clinic Platform.",
+  description: "Privacy policy for Atlas Appointments.",
 };
 
 const sectionStyle = { marginTop: "28px" } as const;
@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
       <p style={{ marginTop: 0, color: "#5f6f69" }}>Effective: 21 August 2026</p>
 
       <p>
-        Atlas Clinic Platform ("Atlas") is an appointment, clinic workflow and reminder system for clinics. This
+        Atlas Appointments ("Atlas") is an appointment, clinic workflow and reminder system for clinics. This
         policy explains what information Atlas processes, why it is processed, the service providers involved, and
         the choices available to clinics, staff and patients.
       </p>
@@ -66,10 +66,24 @@ export default function PrivacyPolicyPage() {
         <p>
           Atlas relies on infrastructure and service providers only as needed to operate the platform. These may
           include Vercel for hosting, Supabase for database and authentication infrastructure, Apple or Google for an
-          authentication option chosen by the user, and Meta/WhatsApp or another configured messaging provider for
-          clinic reminders. Atlas does not sell clinic, staff or patient personal information. Providers that process
-          personal information for Atlas are required to handle it under their applicable privacy, security and
-          contractual obligations in a manner consistent with the protections described in this policy and applicable law.
+          authentication option chosen by the user, PostHog for privacy-minimized product analytics, and Meta/WhatsApp
+          or another configured messaging provider for clinic reminders. Atlas does not sell clinic, staff or patient
+          personal information. Providers that process personal information for Atlas are required to handle it under
+          their applicable privacy, security and contractual obligations in a manner consistent with the protections
+          described in this policy and applicable law.
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2>Product analytics and diagnostics</h2>
+        <p>
+          Atlas records a limited, allow-listed set of product interactions and error categories so the service can be
+          improved and kept reliable. These events use a random session identifier and categorical values such as the
+          screen type, interaction outcome and interface language. Atlas does not place patient names, phone numbers,
+          clinic-entered text, appointment details, email addresses, error messages or stack traces in these analytics
+          events. Browser analytics are sent through Atlas so the analytics provider does not receive the clinic
+          user&apos;s request headers or IP address directly from the app. Atlas does not use this information for
+          advertising or cross-company tracking.
         </p>
       </section>
 

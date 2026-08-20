@@ -17,7 +17,8 @@ type Copy = {
   warning: string;
   membership: string;
   ownerBlock: string;
-  ownerAction: string;
+  ownerTransfer: string;
+  ownerDelete: string;
   confirm: string;
   acknowledge: string;
   button: string;
@@ -35,7 +36,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     warning: "This permanently removes your Atlas identity, active sessions, saved passkeys and clinic memberships. This cannot be undone.",
     membership: "Clinic appointment records are controlled by the clinic. Historical audit entries may remain without your account identity where record integrity requires it.",
     ownerBlock: "You still own a clinic. Transfer administration or permanently delete every clinic you own before deleting your Atlas account.",
-    ownerAction: "Manage clinic ownership",
+    ownerTransfer: "Transfer administration",
+    ownerDelete: "Delete an owned clinic",
     confirm: "Type DELETE to confirm",
     acknowledge: "I understand that my Atlas account will be permanently deleted.",
     button: "Permanently delete my account",
@@ -51,7 +53,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     warning: "ئەم کارە ناسنامەی Atlas، سێشنە چالاکەکان، پاسکییە هەڵگیراوەکان و ئەندامێتی کلینیکەکانت بە هەمیشەیی دەسڕێتەوە. ناگەڕێتەوە.",
     membership: "تۆمارەکانی مەوعیدی کلینیک لەلایەن کلینیکەوە بەڕێوەدەبرێن. بۆ پاراستنی دروستی تۆمار، هەندێک تۆماری مێژوویی لەوانەیە بەبێ ناسنامەی هەژمارەکەت بمێننەوە.",
     ownerBlock: "هێشتا خاوەنی کلینیکێکیت. پێش سڕینەوەی هەژماری Atlas، بەڕێوەبردن بگوازەوە یان هەموو کلینیکە خاوەندارەکانت بە هەمیشەیی بسڕەوە.",
-    ownerAction: "بەڕێوەبردنی خاوەندارێتی کلینیک",
+    ownerTransfer: "گواستنەوەی بەڕێوەبردن",
+    ownerDelete: "سڕینەوەی کلینیکی خاوەندار",
     confirm: "DELETE بنووسە بۆ پشتڕاستکردنەوە",
     acknowledge: "تێدەگەم کە هەژماری Atlas ـەکەم بە هەمیشەیی دەسڕێتەوە.",
     button: "هەژمارەکەم بە هەمیشەیی بسڕەوە",
@@ -67,7 +70,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     warning: "ئەم کارە ناسناما Atlas، سێشنێن چالاک، پاسکییێن پاراستی و ئەندامەتیا کلینیکان بۆ هەردەم ژێ دبەت. ناگەڕێتەڤە.",
     membership: "تۆمارێن مەوعیدێ کلینیکێ ژ لایێ کلینیکێ ڤە دهێنە بەڕێڤەبرن. بۆ پاراستنا دروستیا تۆماران، هەندەک تۆمارێن مێژوویی دکارن بێ ناسناما هەژمارا تە بمینن.",
     ownerBlock: "هێشتا تو خاوەنێ کلینیکەکێی. بەری ژێبرنا هەژمارا Atlas، بەڕێڤەبرنێ بگوهێزە یان هەمی کلینیکێن خۆ بۆ هەردەم ژێ ببە.",
-    ownerAction: "بەڕێڤەبرنا خاوەنداریا کلینیکێ",
+    ownerTransfer: "گوهەستنا بەڕێڤەبرنێ",
+    ownerDelete: "ژێبرنا کلینیکا خاوەندار",
     confirm: "DELETE بنڤیسە بۆ پشتڕاستکرنێ",
     acknowledge: "دزانم هەژمارا Atlas یا من بۆ هەردەم دهێتە ژێبرن.",
     button: "هەژمارا من بۆ هەردەم ژێ ببە",
@@ -83,7 +87,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     warning: "هذا يحذف هوية Atlas والجلسات الحالية ومفاتيح الدخول المحفوظة وعضويات العيادات نهائياً. ما تقدر ترجع الحساب بعد الحذف.",
     membership: "سجلات مواعيد العيادة تديرها العيادة. بعض سجلات التدقيق التاريخية قد تبقى بدون هوية حسابك إذا كان هذا مطلوباً للحفاظ على سلامة السجل.",
     ownerBlock: "أنت ما زلت مالك عيادة. انقل الإدارة أو احذف كل عيادة تملكها نهائياً قبل حذف حساب Atlas.",
-    ownerAction: "إدارة ملكية العيادة",
+    ownerTransfer: "نقل إدارة العيادة",
+    ownerDelete: "حذف عيادة تملكها",
     confirm: "اكتب DELETE للتأكيد",
     acknowledge: "أفهم أن حسابي في Atlas سيتم حذفه نهائياً.",
     button: "حذف حسابي نهائياً",
@@ -141,8 +146,17 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
         {ownedClinics?.length ? (
           <div className="notice notice-error" role="status">
             <strong>{copy.ownerBlock}</strong>
-            <div className="field-help">{ownedClinics.map((clinic) => clinic.name).join(" · ")}</div>
-            <Link className="button button-ghost button-small" href="/dashboard/settings/delete">{copy.ownerAction}</Link>
+            <div className="settings-form">
+              {ownedClinics.map((clinic) => (
+                <div key={clinic.id}>
+                  <div className="field-help">{clinic.name}</div>
+                  <Link className="button button-ghost button-small" href={`/dashboard/staff?clinic=${clinic.id}`}>
+                    {copy.ownerTransfer}
+                  </Link>
+                </div>
+              ))}
+              <Link className="button button-ghost button-small" href="/dashboard/settings/delete">{copy.ownerDelete}</Link>
+            </div>
           </div>
         ) : (
           <form action={deleteAtlasAccount} className="settings-form">

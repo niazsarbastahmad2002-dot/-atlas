@@ -33,11 +33,16 @@ export async function POST(request: Request) {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) return NextResponse.json({ ok: false }, { status: 401 });
 
+  const expectedAppleSubject = appleSubject(userData.user);
+  if (!expectedAppleSubject) {
+    return NextResponse.json({ ok: false }, { status: 403 });
+  }
+
   try {
     await exchangeAndStoreNativeAppleAuthorization({
       userId: userData.user.id,
       authorizationCode,
-      expectedAppleSubject: appleSubject(userData.user),
+      expectedAppleSubject,
     });
     return NextResponse.json({ ok: true });
   } catch (error) {
