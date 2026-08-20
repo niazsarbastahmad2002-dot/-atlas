@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { atlasPublicCompanyProfile } from "@/lib/public-company-profile";
 
 export const metadata: Metadata = {
   title: "Data Deletion — Atlas",
@@ -8,6 +9,8 @@ export const metadata: Metadata = {
 const sectionStyle = { marginTop: "28px" } as const;
 
 export default function DataDeletionPage() {
+  const company = atlasPublicCompanyProfile();
+
   return (
     <main style={{ maxWidth: 820, margin: "0 auto", padding: "48px 24px 72px", color: "#10251f", lineHeight: 1.7 }}>
       <a href="/" style={{ color: "#087a5b", textDecoration: "none", fontWeight: 700 }}>← Atlas</a>
@@ -48,7 +51,7 @@ export default function DataDeletionPage() {
         <h2>Need help?</h2>
         <p>
           If you cannot access the in-app deletion control, email
-          <a href="mailto:niazsarbastahmad2002@gmail.com" style={{ color: "#087a5b" }}> niazsarbastahmad2002@gmail.com</a>
+          <a href={`mailto:${company.supportEmail}`} style={{ color: "#087a5b" }}> {company.supportEmail}</a>
           with the subject <strong>Atlas Data Deletion Request</strong>. Additional verification may be required to
           protect against unauthorized requests.
         </p>
