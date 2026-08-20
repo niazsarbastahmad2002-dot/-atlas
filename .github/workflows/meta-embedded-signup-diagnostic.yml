@@ -25,10 +25,45 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Fetch production environment securely
+      - name: Set safe known production values
         run: |
           set -euo pipefail
           test -n "$VERCEL_TOKEN"
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_ORG_ID&upsert=true" \
+            --data-binary @- \
+            > /tmp/vercel-env-upsert.json <<'JSON'
+          [
+            {
+              "key": "META_APP_ID",
+              "value": "1444517747585211",
+              "type": "encrypted",
+              "target": ["production"],
+              "comment": "Atlas Clinic Platform Meta app ID"
+            },
+            {
+              "key": "WHATSAPP_GRAPH_API_VERSION",
+              "value": "v26.0",
+              "type": "encrypted",
+              "target": ["production"],
+              "comment": "Current supported Meta Graph API version"
+            },
+            {
+              "key": "META_EMBEDDED_SIGNUP_ENABLED",
+              "value": "false",
+              "type": "encrypted",
+              "target": ["production"],
+              "comment": "Keep disabled until config ID and app secret are verified"
+            }
+          ]
+          JSON
+
+      - name: Fetch production environment securely
+        run: |
+          set -euo pipefail
           curl --fail --silent --show-error \
             -H "Authorization: Bearer $VERCEL_TOKEN" \
             "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_ORG_ID&decrypt=true" \
