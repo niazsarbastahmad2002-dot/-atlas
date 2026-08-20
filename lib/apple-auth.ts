@@ -21,6 +21,20 @@ type AppleIdClaims = {
   sub?: string;
 };
 
+type ServiceRpcResult<T> = {
+  data: T;
+  error: { code?: string; message?: string } | null;
+};
+
+function serviceRpc<T>(fn: string, args: Record<string, unknown>) {
+  const admin = createAdminClient();
+  const rpc = admin.rpc as unknown as (
+    functionName: string,
+    functionArgs: Record<string, unknown>,
+  ) => Promise<ServiceRpcResult<T>>;
+  return rpc(fn, args);
+}
+
 function base64Url(value: string | Buffer) {
   return Buffer.from(value).toString("base64url");
 }
@@ -138,8 +152,7 @@ export async function revokeAppleRefreshToken(refreshToken: string, clientId: st
 }
 
 export async function retainAppleRefreshToken(userId: string, refreshToken: string, clientId: string) {
-  const admin = createAdminClient();
-  const { data, error } = await admin.rpc("store_apple_refresh_token_service", {
+  const { data, error } = await serviceRpc<boolean>("store_apple_refresh_token_service", {
     p_user_id: userId,
     p_refresh_token: refreshToken,
     p_client_id: clientId,
@@ -148,8 +161,10 @@ export async function retainAppleRefreshToken(userId: string, refreshToken: stri
 }
 
 export async function revokeAndForgetStoredAppleAuthorization(userId: string) {
-  const admin = createAdminClient();
-  const { data, error } = await admin.rpc("get_apple_refresh_token_service", { p_user_id: userId });
+  const { data, error } = await serviceRpc<Array<{ refresh_token: string; client_id: string }>>(
+    "get_apple_refresh_token_service",
+    { p_user_id: userId },
+  );
   if (error) throw new Error("apple_refresh_read_failed");
 
   const stored = data?.[0];
@@ -164,7 +179,7 @@ export async function revokeAndForgetStoredAppleAuthorization(userId: string) {
 
   // Forget the Atlas-held provider token even when Apple is temporarily unavailable.
   // Account deletion must never be held hostage by an external provider outage.
-  const { error: deleteError } = await admin.rpc("delete_apple_refresh_token_service", { p_user_id: userId });
+  const { error: deleteError } = await serviceRpc<boolean>("delete_apple_refresh_token_service", { p_user_id: userId });
   if (deleteError) throw new Error("apple_refresh_delete_failed");
   if (revokeError) throw revokeError;
 }
