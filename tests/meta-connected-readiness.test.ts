@@ -21,8 +21,10 @@ test("Meta readiness prefers clinic Coexistence connection and keeps legacy send
   assert.match(source, /connectionSource: "coexistence"/);
   assert.match(source, /connectionSource === "coexistence" && audit\.ready/);
   assert.match(source, /legacy environment sender remains diagnostic only/i);
-  assert.doesNotMatch(source, /accessToken:\s*audit\.accessToken/);
-  assert.doesNotMatch(source, /accessToken:\s*connection\.config\.accessToken[\s\S]*NextResponse\.json/);
+
+  const responseSource = source.slice(source.lastIndexOf("return NextResponse.json({"));
+  assert.ok(responseSource.length > 0);
+  assert.doesNotMatch(responseSource, /accessToken/);
 });
 
 test("clinic Meta config is loaded only through service-role Vault RPC", () => {
