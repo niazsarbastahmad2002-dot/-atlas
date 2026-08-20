@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildMetaCoexistenceLaunch } from "@/lib/reminders/meta-coexistence";
 import { readMetaEmbeddedSignupReadiness } from "@/lib/reminders/meta-embedded-signup";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,32 @@ export async function GET(request: Request) {
   const provider = safeProviderConfiguration();
   const launch = buildMetaCoexistenceLaunch(embeddedSignup);
 
+  let connection: Record<string, unknown> | null = null;
+  try {
+    const admin = createAdminClient() as any;
+    const { data, error } = await admin.rpc("get_meta_whatsapp_connection_status", {
+      p_clinic_id: clinicId,
+    });
+    if (!error && Array.isArray(data) && data[0] && typeof data[0] === "object") {
+      const row = data[0] as Record<string, unknown>;
+      connection = {
+        provider: row.provider,
+        mode: row.connection_mode,
+        wabaId: row.waba_id,
+        phoneNumberId: row.phone_number_id,
+        businessId: row.business_id,
+        displayPhoneNumber: row.display_phone_number,
+        verifiedName: row.verified_name,
+        status: row.status,
+        connectedAt: row.connected_at,
+      };
+    }
+  } catch {
+    // Status remains useful even if server-side connection metadata is temporarily unavailable.
+  }
+
+  const alreadyConnected = connection?.status === "connected";
+
   return NextResponse.json({
     provider,
     embeddedSignup: {
@@ -81,7 +108,8 @@ export async function GET(request: Request) {
       graphApiVersion: embeddedSignup.graphApiVersion,
       blockers: embeddedSignup.blockers,
     },
+    connection,
     launch,
-    canStartEmbeddedSignup: launch !== null,
+    canStartEmbeddedSignup: launch !== null && !alreadyConnected,
   }, { headers: { "Cache-Control": "no-store" } });
 }
