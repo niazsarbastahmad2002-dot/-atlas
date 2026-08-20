@@ -1,7 +1,7 @@
 import {
   sendApprovedWhatsAppTemplate,
   type WhatsAppConfig,
-} from "@/lib/reminders/whatsapp";
+} from "./whatsapp.ts";
 
 export type ReminderChannel = "whatsapp" | "viber" | "messenger" | "sms";
 
