@@ -10,6 +10,7 @@ private let atlasUniversalLinkHosts: Set<String> = [
     "atlasappointments.com",
 ]
 private let atlasInviteTokenCharacters = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
+private let atlasNonReplayableAuthPaths: Set<String> = ["/auth/callback", "/auth/invite"]
 
 private func atlasInviteToken(from url: URL) -> String? {
     guard url.scheme?.lowercased() == "https",
@@ -37,6 +38,31 @@ private func atlasInviteFinishPath(for token: String) -> String {
     "/join/\(token)/finish"
 }
 
+private func atlasRetryURL(currentURL: URL?, initialURL: URL, nativeFallbackURL: URL?) -> URL {
+    let dashboard = atlasBaseURL.appending(path: "dashboard")
+    let candidate = currentURL ?? initialURL
+    guard candidate.scheme?.lowercased() == "https",
+          let host = candidate.host?.lowercased(),
+          atlasUniversalLinkHosts.contains(host) else {
+        return dashboard
+    }
+
+    // Authorization codes and native Apple fragments are one-time credentials.
+    // Retry from the post-auth destination instead of ever replaying them.
+    if candidate.path == "/auth/native" {
+        return nativeFallbackURL ?? dashboard
+    }
+    if atlasNonReplayableAuthPaths.contains(candidate.path) {
+        return dashboard
+    }
+
+    guard var components = URLComponents(url: candidate, resolvingAgainstBaseURL: false) else {
+        return dashboard
+    }
+    components.fragment = nil
+    return components.url ?? dashboard
+}
+
 @main
 struct AtlasApp: App {
     var body: some Scene {
@@ -56,6 +82,7 @@ struct AtlasRootView: View {
     @State private var isWebLoading = false
     @State private var webErrorMessage: String?
     @State private var webReloadID = UUID()
+    @State private var nativeAuthFallbackURL: URL?
 
     var body: some View {
         Group {
@@ -121,6 +148,13 @@ struct AtlasRootView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     Button("Try again") {
+                        let retryURL = atlasRetryURL(
+                            currentURL: currentWebURL,
+                            initialURL: url,
+                            nativeFallbackURL: nativeAuthFallbackURL
+                        )
+                        destination = retryURL
+                        currentWebURL = retryURL
                         self.webErrorMessage = nil
                         isWebLoading = true
                         webReloadID = UUID()
@@ -189,6 +223,7 @@ struct AtlasRootView: View {
 
             Button(pendingInviteToken == nil ? "Open Atlas" : "Use another sign-in method") {
                 hasOpened = true
+                nativeAuthFallbackURL = nil
                 if let pendingInviteToken {
                     destination = atlasInviteURL(for: pendingInviteToken)
                 } else {
@@ -199,6 +234,7 @@ struct AtlasRootView: View {
 
             if pendingInviteToken == nil {
                 Button("Try with sample data") {
+                    nativeAuthFallbackURL = nil
                     destination = atlasBaseURL.appending(path: "demo")
                 }
                 .buttonStyle(.plain)
@@ -230,6 +266,7 @@ struct AtlasRootView: View {
     private func handleIncomingURL(_ url: URL) {
         guard let token = atlasInviteToken(from: url) else { return }
         pendingInviteToken = token
+        nativeAuthFallbackURL = nil
         errorMessage = nil
         webErrorMessage = nil
 
@@ -261,6 +298,9 @@ struct AtlasRootView: View {
             if let family = credential.fullName?.familyName { parts.append(family) }
             let fullName = parts.joined(separator: " ")
             let next = pendingInviteToken.map(atlasInviteFinishPath) ?? "/dashboard"
+            nativeAuthFallbackURL = pendingInviteToken.map {
+                atlasInviteURL(for: $0).appending(path: "finish")
+            } ?? atlasBaseURL.appending(path: "dashboard")
 
             var fragment = URLComponents()
             fragment.queryItems = [

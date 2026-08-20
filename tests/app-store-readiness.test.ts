@@ -123,6 +123,10 @@ test("native shell adds real app states and never offers embedded provider OAuth
   assert.match(nativeApp, /Try with sample data/);
   assert.match(nativeApp, /shouldOfferNativeAppleSignIn/);
   assert.match(nativeApp, /atlasInviteToken\(from: currentWebURL\)/);
+  assert.match(nativeApp, /atlasRetryURL\(currentURL: URL\?, initialURL: URL, nativeFallbackURL: URL\?\)/);
+  assert.match(nativeApp, /candidate\.path == "\/auth\/native"/);
+  assert.match(nativeApp, /components\.fragment = nil/);
+  assert.match(nativeApp, /destination = retryURL/);
   assert.match(ownerAuth, /apple: !embeddedIos && settings\.external\?\.apple === true/);
   assert.match(inviteAuth, /providers\.apple && embeddedIos === false/);
   assert.match(inviteAuth, /providers\.google && embeddedIos === false/);
