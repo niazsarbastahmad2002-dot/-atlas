@@ -107,6 +107,11 @@ function displayNameBlocker(status: string | null) {
   return "display_name_not_approved";
 }
 
+export function isMetaTestDisplayPhoneNumber(value: string | null) {
+  const digits = value?.replace(/\D/g, "") ?? "";
+  return /^1555\d{7}$/.test(digits);
+}
+
 function initialFailure(): MetaWhatsAppReadiness {
   return {
     ready: false,
@@ -155,9 +160,6 @@ async function discoverBusinessIds(
     collectDataIds(businesses, businessIds);
   }
 
-  // Final self-service discovery path: the token debugger gives us the app ID.
-  // If Meta exposes the app's owning Business portfolio to this same system user,
-  // use it without requiring the operator to copy an ID from Business Manager.
   if (appId) {
     for (const fields of ["business", "business{id}"]) {
       const appUrl = new URL(`${base}/${appId}`);
@@ -211,7 +213,7 @@ export async function auditMetaWhatsAppReadiness({
   phoneNumberId,
   graphApiVersion,
   expectedTemplateName,
-  expectedLanguages = ["ku", "ar", "en_US"],
+  expectedLanguages = ["ar", "en_US"],
   fetchImplementation = fetch,
 }: AuditInput): Promise<MetaWhatsAppReadiness> {
   const blockers: string[] = [];
@@ -236,6 +238,7 @@ export async function auditMetaWhatsAppReadiness({
   const qualityRating = normalizedStatus(phone?.quality_rating);
 
   if (!phoneResponse.ok || stringValue(phone?.id) !== phoneNumberId) addBlocker(blockers, "phone_number_unavailable");
+  if (isMetaTestDisplayPhoneNumber(displayPhoneNumber)) addBlocker(blockers, "test_sender_number");
   if (nameStatus !== "APPROVED" && nameStatus !== "AVAILABLE_WITHOUT_REVIEW") {
     addBlocker(blockers, displayNameBlocker(nameStatus));
   }
