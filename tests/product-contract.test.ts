@@ -28,6 +28,10 @@ test("patient appointment stays doctor-aware, localized, and queue-aware", () =>
   assert.match(patientPage, /پێش نیوەڕۆ/);
   assert.match(patientPage, /دوای نیوەڕۆ/);
   assert.match(patientPage, /Confirm appointment/);
+  assert.match(patientPage, /نەخۆش لە پێشتە/);
+  assert.match(patientPage, /patients ahead of you/);
+  assert.match(patientPage, /مرضى قبلك/);
+  assert.doesNotMatch(patientPage, /وادە پێش تۆیە/);
 });
 
 test("appointment history remains administration-only", () => {
