@@ -14,6 +14,8 @@ type LoginPageCopy = {
   subtitle: string;
   invalid: string;
   signedOut: string;
+  accountDeleted: string;
+  appleRevokeNeeded: string;
   stageSignal: string;
   stagePulse: string;
   language: string;
@@ -26,6 +28,8 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     subtitle: "Appointments ready. Reception in control.",
     invalid: "That email link expired or was already used. Request a fresh Atlas email below.",
     signedOut: "You signed out safely.",
+    accountDeleted: "Your Atlas account was permanently deleted.",
+    appleRevokeNeeded: "Your Atlas account was deleted. Apple access could not be revoked automatically. On iPhone, open Settings → your name → Sign in with Apple → Atlas, then tap Delete / Stop Using.",
     stageSignal: "Clinic day. One clear flow.",
     stagePulse: "Secure reception workspace",
     language: "Choose your language",
@@ -36,6 +40,8 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     subtitle: "کاتەکان ئامادەن. کاری سکرتێر ڕوون و خێرایە.",
     invalid: "ئەم بەستەرە بەسەرچووە یان پێشتر بەکارهاتووە. ئیمەیڵێکی نوێی Atlas داوا بکە.",
     signedOut: "بە سەلامەتی چوویتە دەرەوە.",
+    accountDeleted: "هەژماری Atlas ـەکەت بە هەمیشەیی سڕایەوە.",
+    appleRevokeNeeded: "هەژماری Atlas ـەکەت سڕایەوە، بەڵام دەسەڵاتی Apple خۆکارانە هەڵنەوەشایەوە. لە iPhone: Settings → ناوت → Sign in with Apple → Atlas، پاشان Delete / Stop Using دابگرە.",
     stageSignal: "ڕۆژی کلینیک، بە یەک ڕەوت.",
     stagePulse: "شوێنی کاری پارێزراوی سکرتێر",
     language: "زمانەکەت هەڵبژێرە",
@@ -46,6 +52,8 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     subtitle: "وادە ئامادەن. کارێ سکرتێرێ ڕوون و خێرایە.",
     invalid: "ئەم لینکە بەسەرچووە یان پێشتر هاتییە بکارئینان. ئیمەیلا نوو یا Atlas بخوازە.",
     signedOut: "ب سەلامەتی چوویە دەرڤە.",
+    accountDeleted: "هەژمارا Atlas یا تە بۆ هەردەم هاتە ژێبرن.",
+    appleRevokeNeeded: "هەژمارا Atlas یا تە هاتە ژێبرن، لێ دەستهەلاتا Apple خودکار نەهاتە هەلوەشاندن. ل iPhone: Settings → ناڤێ تە → Sign in with Apple → Atlas، پاشی Delete / Stop Using بکە.",
     stageSignal: "ڕۆژا کلینیکێ، ب ڕێکەکا ڕوون.",
     stagePulse: "شوێنێ کاری پاراستی یێ سکرتێرێ",
     language: "زمانێ خۆ هەلبژێرە",
@@ -56,6 +64,8 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     subtitle: "المواعيد جاهزة. الاستقبال مسيطر على اليوم.",
     invalid: "رابط الدخول انتهت صلاحيته أو انستخدم قبل. اطلب إيميل Atlas جديد من جوه.",
     signedOut: "تم تسجيل الخروج بأمان.",
+    accountDeleted: "تم حذف حسابك في Atlas نهائياً.",
+    appleRevokeNeeded: "تم حذف حساب Atlas، لكن تعذر إلغاء صلاحية Apple تلقائياً. على iPhone افتح Settings → اسمك → Sign in with Apple → Atlas، وبعدها اضغط Delete / Stop Using.",
     stageSignal: "يوم العيادة. بمسار واحد.",
     stagePulse: "مساحة استقبال آمنة",
     language: "اختار لغتك",
@@ -82,7 +92,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const locale = await getUiLocale();
   const copy = pageCopy[locale];
   const errorMessage = error === "invalid_link" ? copy.invalid : null;
-  const noticeMessage = notice === "signed_out" ? copy.signedOut : null;
+  const noticeMessage = notice === "signed_out" ? copy.signedOut
+    : notice === "account_deleted" ? copy.accountDeleted
+      : notice === "account_deleted_apple_revoke_needed" ? copy.appleRevokeNeeded
+        : null;
 
   return (
     <main className="login-page">

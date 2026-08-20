@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import type { AtlasSocialProviders } from "@/lib/auth-providers";
 import { createClient } from "@/lib/supabase/client";
@@ -66,6 +66,11 @@ export function JoinClinicAuth({ token, locale, providers }: {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [embeddedIos, setEmbeddedIos] = useState(false);
+
+  useEffect(() => {
+    setEmbeddedIos(window.navigator.userAgent.includes("Atlas-iOS/"));
+  }, []);
 
   const finishPath = `/join/${encodeURIComponent(token)}/finish`;
 
@@ -147,7 +152,7 @@ export function JoinClinicAuth({ token, locale, providers }: {
           {busy === "apple" ? t.sending : t.apple}
         </button>
       ) : null}
-      {providers.google ? (
+      {providers.google && !embeddedIos ? (
         <button className="button button-ghost" type="button" disabled={Boolean(busy)} onClick={() => void social("google")}>
           {busy === "google" ? t.sending : t.google}
         </button>

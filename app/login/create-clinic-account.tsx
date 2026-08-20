@@ -101,9 +101,12 @@ export function CreateClinicAccount({ locale }: { locale: UiLocale }) {
         const response = await fetch(`${url.replace(/\/$/, "")}/auth/v1/settings`, { headers: { apikey: key } });
         if (!response.ok) return;
         const settings = await response.json() as { external?: Record<string, boolean | undefined> };
+        const embeddedIos = window.navigator.userAgent.includes("Atlas-iOS/");
         if (!cancelled) {
           setProviders({
-            google: settings.external?.google === true,
+            // Google explicitly blocks OAuth authorization in WKWebView. The
+            // native shell will add Google through its iOS client once issued.
+            google: !embeddedIos && settings.external?.google === true,
             apple: settings.external?.apple === true,
           });
         }

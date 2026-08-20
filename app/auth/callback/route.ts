@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { safeAuthDestination } from "@/lib/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -17,6 +17,11 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (!error) {
+    // Do not persist Supabase's generic provider_refresh_token here. An Atlas
+    // account can link multiple OAuth identities, and this callback does not
+    // cryptographically identify which provider issued that token. Native
+    // Sign in with Apple exchanges Apple's authorization code directly and
+    // stores its revocation credential through the dedicated server endpoint.
     const activationUrl = new URL("/auth/activate", requestUrl.origin);
     activationUrl.searchParams.set("next", next);
     return NextResponse.redirect(activationUrl);

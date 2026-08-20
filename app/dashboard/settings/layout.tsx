@@ -20,10 +20,14 @@ export default async function SettingsLayout({ children }: { children: ReactNode
   return (
     <>
       {children}
-      {ownedClinicId ? (
-        <div className="shell" style={{ paddingTop: 0, paddingBottom: 32, display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link className="button button-ghost button-small" href={`/dashboard/staff/invite?clinic=${ownedClinicId}`}>Invite receptionist</Link>
-          <Link className="danger-link" href="/dashboard/settings/delete">Delete a clinic permanently</Link>
+      {userData.user ? (
+        <div className="shell" style={{ paddingTop: 0, paddingBottom: 32, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          {ownedClinicId ? <Link className="button button-ghost button-small" href={`/dashboard/staff/invite?clinic=${ownedClinicId}`}>Invite receptionist</Link> : null}
+          <Link className="button button-ghost button-small" href="/support">Support</Link>
+          <Link className="button button-ghost button-small" href="/privacy">Privacy</Link>
+          <Link className="button button-ghost button-small" href="/terms">Terms</Link>
+          <Link className="button button-ghost button-small" href="/dashboard/settings/account">Account & deletion</Link>
+          {ownedClinicId ? <Link className="danger-link" href="/dashboard/settings/delete">Delete a clinic permanently</Link> : null}
         </div>
       ) : null}
     </>
