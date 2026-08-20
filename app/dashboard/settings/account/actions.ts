@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revokeStoredAppleAuthorization } from "@/lib/apple-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,20 +27,27 @@ export async function deleteAtlasAccount(formData: FormData) {
   if (ownedClinicsError) redirect(accountUrl("failed"));
   if (ownedClinics?.length) redirect(accountUrl("owns_clinic"));
 
+  const hasAppleIdentity = userData.user.identities?.some((identity) => identity.provider === "apple") ?? false;
+  let manualAppleRevokeNeeded = false;
+
   try {
+    const appleResult = await revokeStoredAppleAuthorization(userData.user.id);
+    manualAppleRevokeNeeded = hasAppleIdentity && appleResult !== "revoked";
+
     const admin = createAdminClient();
     const { error: deleteError } = await admin.auth.admin.deleteUser(userData.user.id);
-    if (deleteError) {
-      console.error("Atlas account deletion failed", { code: deleteError.code ?? "delete_failed" });
-      redirect(accountUrl("failed"));
-    }
+    if (deleteError) throw deleteError;
   } catch (error) {
-    console.error("Atlas account deletion failed", { error: error instanceof Error ? error.name : "unknown" });
+    console.error("Atlas account deletion failed", {
+      error: error instanceof Error ? error.name : "unknown",
+    });
     redirect(accountUrl("failed"));
   }
 
-  // The auth user deletion cascades identities, sessions, passkeys and clinic memberships.
-  // Historical audit actor references are preserved as NULL by database foreign keys.
+  // The database also RESTRICTs deletion of auth users who still own clinics,
+  // so a concurrent ownership change cannot accidentally cascade a clinic.
   await supabase.auth.signOut().catch(() => undefined);
-  redirect("/login?notice=account_deleted");
+  redirect(manualAppleRevokeNeeded
+    ? "/login?notice=account_deleted_apple_revoke_needed"
+    : "/login?notice=account_deleted");
 }
