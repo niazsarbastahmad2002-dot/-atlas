@@ -18,7 +18,12 @@ type AppleTokenResponse = {
   error?: string;
 };
 
-export type AppleRevocationResult = "none" | "revoked" | "manual_required";
+export type AppleRevocationResult = "revoked" | "manual_required";
+export type AppleRevocationCredential = {
+  refreshToken: string;
+  clientId: string;
+  refreshSecretId: string;
+};
 
 function base64url(value: Buffer | string) {
   const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value, "utf8");
@@ -126,26 +131,32 @@ export async function exchangeAndStoreNativeAppleAuthorization(input: {
   await storeAppleRefreshToken(input.userId, payload.refresh_token, clientId);
 }
 
-export async function storeWebAppleProviderRefreshToken(userId: string, refreshToken: string) {
-  await storeAppleRefreshToken(userId, refreshToken, atlasAppleWebClientId());
-}
-
-export async function revokeStoredAppleAuthorization(userId: string): Promise<AppleRevocationResult> {
+export async function getStoredAppleRevocationCredential(userId: string): Promise<AppleRevocationCredential | null> {
   const { rpc } = adminRpc();
-  const { data, error } = await rpc("get_apple_refresh_token_service", { p_user_id: userId });
+  const { data, error } = await rpc("get_apple_revocation_credential_service", { p_user_id: userId });
   if (error) throw new Error("apple_refresh_token_read_failed");
 
   const row = Array.isArray(data) && data.length > 0
-    ? data[0] as { refresh_token?: unknown; client_id?: unknown }
+    ? data[0] as { refresh_token?: unknown; client_id?: unknown; refresh_secret_id?: unknown }
     : null;
-  if (!row || typeof row.refresh_token !== "string" || typeof row.client_id !== "string") return "none";
+  if (!row) return null;
+  if (typeof row.refresh_token !== "string" || typeof row.client_id !== "string" || typeof row.refresh_secret_id !== "string") {
+    throw new Error("apple_refresh_token_invalid");
+  }
 
-  let result: AppleRevocationResult = "manual_required";
+  return {
+    refreshToken: row.refresh_token,
+    clientId: row.client_id,
+    refreshSecretId: row.refresh_secret_id,
+  };
+}
+
+export async function revokeAppleAuthorization(credential: AppleRevocationCredential): Promise<AppleRevocationResult> {
   try {
     const body = new URLSearchParams({
-      client_id: row.client_id,
-      client_secret: appleClientSecret(row.client_id),
-      token: row.refresh_token,
+      client_id: credential.clientId,
+      client_secret: appleClientSecret(credential.clientId),
+      token: credential.refreshToken,
       token_type_hint: "refresh_token",
     });
     const response = await fetch(APPLE_REVOKE_URL, {
@@ -154,14 +165,14 @@ export async function revokeStoredAppleAuthorization(userId: string): Promise<Ap
       body,
       cache: "no-store",
     });
-    if (response.ok) result = "revoked";
+    return response.ok ? "revoked" : "manual_required";
   } catch {
-    // The Atlas account can still be deleted. Apple documents manual revocation
-    // as the fallback when a valid revocation token cannot be used.
-    result = "manual_required";
+    return "manual_required";
   }
+}
 
-  const { error: deleteError } = await rpc("delete_apple_refresh_token_service", { p_user_id: userId });
-  if (deleteError) throw new Error("apple_refresh_token_cleanup_failed");
-  return result;
+export async function cleanupAppleRefreshSecret(refreshSecretId: string) {
+  const { rpc } = adminRpc();
+  const { error } = await rpc("delete_apple_refresh_secret_service", { p_secret_id: refreshSecretId });
+  if (error) throw new Error("apple_refresh_token_cleanup_failed");
 }
