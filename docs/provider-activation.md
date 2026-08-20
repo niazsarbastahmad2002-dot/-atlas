@@ -12,7 +12,8 @@ Atlas web and iOS code is prepared for Google and Apple authentication. This doc
 - iOS bundle ID: `com.atlasappointments.app`
 - Apple Services ID: `com.atlasappointments.app.web`
 - Universal Link path: `/join/*`
-- App Store display name: `Atlas`
+- In-app display name: `Atlas`
+- Recommended App Store listing name: `Atlas Appointments`
 
 Keep the Vercel production origin active throughout the individual-development phase. A custom company domain is not required merely to create Google OAuth clients or to register a Sign in with Apple website subdomain; it becomes important for the later Apple organization-verification/public-release phase.
 
