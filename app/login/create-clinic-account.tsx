@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { UiLocale } from "@/lib/i18n/ui";
 
@@ -22,7 +22,7 @@ type Copy = {
 const copyByLocale: Record<UiLocale, Copy> = {
   en: {
     title: "New to Atlas? Create your clinic",
-    help: "Use any email you can open. Atlas will create your account, then you choose your clinic name.",
+    help: "Use Apple or Google when available for the fastest setup. Any email also works.",
     email: "Your email",
     send: "Create my Atlas clinic",
     sending: "Sending…",
@@ -36,7 +36,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
   ku: {
     title: "تازەی بۆ Atlas؟ کلینیکەکەت دروست بکە",
-    help: "هەر ئیمەیڵێک بەکاربهێنە کە دەتوانیت بیکەیتەوە. Atlas هەژمارەکەت دروست دەکات، پاشان ناوی کلینیکەکەت هەڵدەبژێریت.",
+    help: "کاتێک بەردەستن Apple یان Google بەکاربهێنە بۆ خێراترین ڕێکخستن. هەر ئیمەیڵێکیش کار دەکات.",
     email: "ئیمەیڵەکەت",
     send: "کلینیکی Atlas ـەکەم دروست بکە",
     sending: "دەنێردرێت…",
@@ -50,7 +50,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
   bd: {
     title: "تازەی بۆ Atlas؟ کلینیکا خۆ دروست بکە",
-    help: "هەر ئیمەیلەکێ بکاربینە کو دکاری ڤەکەی. Atlas هەژمارا تە دروست دکەت، پاشی تو ناڤێ کلینیکا خۆ هەلدبژێری.",
+    help: "دەمێ بەردەستن Apple یان Google بکاربینە بۆ خێراترین ڕێکخستن. هەر ئیمەیلەک ژی کار دکەت.",
     email: "ئیمەیلا تە",
     send: "کلینیکا Atlas یا من دروست بکە",
     sending: "دهێتە هنارتن…",
@@ -64,7 +64,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
   ar: {
     title: "جديد على Atlas؟ أنشئ عيادتك",
-    help: "استخدم أي بريد تقدر تفتحه. Atlas ينشئ حسابك، وبعدها تختار اسم عيادتك.",
+    help: "استخدم Apple أو Google لما يكونون متاحين لأسرع دخول. وأي بريد إلكتروني يشتغل أيضاً.",
     email: "بريدك الإلكتروني",
     send: "إنشاء عيادتي على Atlas",
     sending: "جارٍ الإرسال…",
@@ -89,8 +89,31 @@ export function CreateClinicAccount({ locale }: { locale: UiLocale }) {
   const [oauthBusy, setOauthBusy] = useState<"google" | "apple" | null>(null);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const googleEnabled = process.env.NEXT_PUBLIC_ATLAS_GOOGLE_OAUTH === "true";
-  const appleEnabled = process.env.NEXT_PUBLIC_ATLAS_APPLE_OAUTH === "true";
+  const [providers, setProviders] = useState({ google: false, apple: false });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProviders() {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+      if (!url || !key) return;
+      try {
+        const response = await fetch(`${url.replace(/\/$/, "")}/auth/v1/settings`, { headers: { apikey: key } });
+        if (!response.ok) return;
+        const settings = await response.json() as { external?: Record<string, boolean | undefined> };
+        if (!cancelled) {
+          setProviders({
+            google: settings.external?.google === true,
+            apple: settings.external?.apple === true,
+          });
+        }
+      } catch {
+        // Email remains a safe fallback when provider discovery is unavailable.
+      }
+    }
+    void loadProviders();
+    return () => { cancelled = true; };
+  }, []);
 
   async function createWithEmail(event: FormEvent) {
     event.preventDefault();
@@ -152,6 +175,19 @@ export function CreateClinicAccount({ locale }: { locale: UiLocale }) {
         <p className="login-method-help">{copy.help}</p>
       </div>
 
+      {providers.apple ? (
+        <button className="button" type="button" disabled={busy || Boolean(oauthBusy)} onClick={() => void continueWith("apple")}>
+          {oauthBusy === "apple" ? copy.sending : copy.apple}
+        </button>
+      ) : null}
+      {providers.google ? (
+        <button className="button button-ghost" type="button" disabled={busy || Boolean(oauthBusy)} onClick={() => void continueWith("google")}>
+          {oauthBusy === "google" ? copy.sending : copy.google}
+        </button>
+      ) : null}
+
+      {(providers.google || providers.apple) ? <div className="login-method-help" aria-hidden="true">{copy.divider}</div> : null}
+
       {sent ? (
         <div className="notice notice-success login-notice" role="status">
           <strong>{copy.sent}</strong><br />
@@ -171,23 +207,11 @@ export function CreateClinicAccount({ locale }: { locale: UiLocale }) {
             dir="ltr"
             required
           />
-          <button className="button" type="submit" disabled={busy || Boolean(oauthBusy)}>
+          <button className="button button-ghost" type="submit" disabled={busy || Boolean(oauthBusy)}>
             {busy ? copy.sending : copy.send}
           </button>
         </form>
       )}
-
-      {(googleEnabled || appleEnabled) ? <div className="login-method-help" aria-hidden="true">{copy.divider}</div> : null}
-      {googleEnabled ? (
-        <button className="button button-ghost" type="button" disabled={busy || Boolean(oauthBusy)} onClick={() => void continueWith("google")}>
-          {oauthBusy === "google" ? copy.sending : copy.google}
-        </button>
-      ) : null}
-      {appleEnabled ? (
-        <button className="button button-ghost" type="button" disabled={busy || Boolean(oauthBusy)} onClick={() => void continueWith("apple")}>
-          {oauthBusy === "apple" ? copy.sending : copy.apple}
-        </button>
-      ) : null}
 
       {error ? <p className="notice notice-error login-notice" role="alert">{error}</p> : null}
     </section>
