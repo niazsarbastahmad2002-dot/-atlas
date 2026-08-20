@@ -23,6 +23,7 @@ export default async function SettingsLayout({ children }: { children: ReactNode
       {userData.user ? (
         <div className="shell" style={{ paddingTop: 0, paddingBottom: 32, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           {ownedClinicId ? <Link className="button button-ghost button-small" href={`/dashboard/staff/invite?clinic=${ownedClinicId}`}>Invite receptionist</Link> : null}
+          <Link className="button button-ghost button-small" href="/support">Support</Link>
           <Link className="button button-ghost button-small" href="/privacy">Privacy</Link>
           <Link className="button button-ghost button-small" href="/terms">Terms</Link>
           <Link className="button button-ghost button-small" href="/dashboard/settings/account">Account & deletion</Link>
