@@ -10,7 +10,10 @@ import {
 } from "@/lib/reminders/delivery";
 import { readD360WhatsAppConfig } from "@/lib/reminders/d360";
 import { readInfobipWhatsAppConfig } from "@/lib/reminders/infobip";
-import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
+import {
+  readClinicMetaWhatsAppConfig,
+  readMetaRuntimeBase,
+} from "@/lib/reminders/meta-clinic-config";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -20,6 +23,7 @@ export const maxDuration = 60;
 
 type ClaimedReminder = {
   reminder_id: string;
+  clinic_id: string;
   patient_phone: string;
   clinic_name: string;
   appointment_at: string;
@@ -36,9 +40,10 @@ type SchedulerTokenRpcClient = {
   ) => Promise<{ data: boolean | null; error: { code?: string } | null }>;
 };
 
-type ConfiguredTransport = {
-  transport: ReminderTransport;
+type ConfiguredProvider = {
+  provider: "meta" | "infobip" | "360dialog";
   globalDailyLimit: number;
+  transport: ReminderTransport | null;
 };
 
 async function authorized(request: Request, admin: AdminClient) {
@@ -58,7 +63,7 @@ async function authorized(request: Request, admin: AdminClient) {
   return !error && data === true;
 }
 
-function configuredWhatsAppTransport(): ConfiguredTransport | null {
+function configuredWhatsAppProvider(): ConfiguredProvider | null {
   if (process.env.WHATSAPP_ENABLED !== "true") return null;
   const provider = process.env.WHATSAPP_PROVIDER?.trim().toLowerCase() || "meta";
 
@@ -66,6 +71,7 @@ function configuredWhatsAppTransport(): ConfiguredTransport | null {
     const config = readInfobipWhatsAppConfig();
     if (!config) return null;
     return {
+      provider,
       transport: createInfobipWhatsAppReminderTransport(config),
       globalDailyLimit: config.globalDailyLimit,
     };
@@ -75,40 +81,64 @@ function configuredWhatsAppTransport(): ConfiguredTransport | null {
     const config = readD360WhatsAppConfig();
     if (!config) return null;
     return {
+      provider,
       transport: createD360WhatsAppReminderTransport(config),
       globalDailyLimit: config.globalDailyLimit,
     };
   }
 
   if (provider !== "meta") throw new Error("Unsupported WhatsApp provider.");
-  const config = readWhatsAppConfig();
-  if (!config) return null;
+  const base = readMetaRuntimeBase();
+  if (!base) return null;
   return {
-    transport: createWhatsAppReminderTransport(config),
-    globalDailyLimit: config.globalDailyLimit,
+    provider: "meta",
+    transport: null,
+    globalDailyLimit: base.globalDailyLimit,
   };
+}
+
+async function resolveReminderTransport(
+  admin: AdminClient,
+  configured: ConfiguredProvider,
+  reminder: ClaimedReminder,
+) {
+  if (configured.provider !== "meta") return configured.transport;
+  const clinicConfig = await readClinicMetaWhatsAppConfig(admin, reminder.clinic_id);
+  return clinicConfig ? createWhatsAppReminderTransport(clinicConfig.config) : null;
+}
+
+async function failReminder(
+  admin: AdminClient,
+  workerId: string,
+  reminderId: string,
+  errorCode: string,
+  retryable = false,
+) {
+  const { error } = await admin.rpc("fail_whatsapp_reminder", {
+    p_reminder_id: reminderId,
+    p_worker_id: workerId,
+    p_error_code: errorCode,
+    p_retryable: retryable,
+  });
+  if (error) console.error("Atlas reminder failure write failed", { code: error.code });
 }
 
 async function processReminder(
   admin: AdminClient,
   workerId: string,
   reminder: ClaimedReminder,
-  transport: ReminderTransport,
+  configured: ConfiguredProvider,
 ) {
   if (
     !reminder.reminder_id
+    || !/^[0-9a-f-]{36}$/i.test(reminder.clinic_id)
     || !/^\+9647\d{9}$/.test(reminder.patient_phone)
     || !reminder.clinic_name
     || Number.isNaN(new Date(reminder.appointment_at).getTime())
     || !/^[a-z0-9_]{1,512}$/.test(reminder.template_name)
     || !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(reminder.template_language)
   ) {
-    await admin.rpc("fail_whatsapp_reminder", {
-      p_reminder_id: reminder.reminder_id,
-      p_worker_id: workerId,
-      p_error_code: "invalid_job",
-      p_retryable: false,
-    });
+    await failReminder(admin, workerId, reminder.reminder_id, "invalid_job");
     return "failed" as const;
   }
 
@@ -117,13 +147,14 @@ async function processReminder(
     { p_reminder_id: reminder.reminder_id, p_worker_id: workerId },
   );
   if (validationError || claimIsCurrent !== true) {
-    await admin.rpc("fail_whatsapp_reminder", {
-      p_reminder_id: reminder.reminder_id,
-      p_worker_id: workerId,
-      p_error_code: "stale_claim",
-      p_retryable: false,
-    });
+    await failReminder(admin, workerId, reminder.reminder_id, "stale_claim");
     return "stale" as const;
+  }
+
+  const transport = await resolveReminderTransport(admin, configured, reminder);
+  if (!transport) {
+    await failReminder(admin, workerId, reminder.reminder_id, "whatsapp_connection_missing");
+    return "failed" as const;
   }
 
   const result = await routeReminder({
@@ -147,13 +178,13 @@ async function processReminder(
     return "sent" as const;
   }
 
-  const { error } = await admin.rpc("fail_whatsapp_reminder", {
-    p_reminder_id: reminder.reminder_id,
-    p_worker_id: workerId,
-    p_error_code: result.errorCode,
-    p_retryable: result.retryable,
-  });
-  if (error) console.error("Atlas reminder failure write failed", { code: error.code });
+  await failReminder(
+    admin,
+    workerId,
+    reminder.reminder_id,
+    result.errorCode,
+    result.retryable,
+  );
   return result.retryable ? "retry" as const : "failed" as const;
 }
 
@@ -169,16 +200,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  let configured: ConfiguredTransport | null;
+  let configured: ConfiguredProvider | null;
   try {
-    configured = configuredWhatsAppTransport();
+    configured = configuredWhatsAppProvider();
     if (!configured) return NextResponse.json({ error: "whatsapp_disabled" }, { status: 503 });
   } catch {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
   const workerId = randomUUID();
-  const { data, error } = await admin.rpc("claim_due_whatsapp_reminders", {
+  const rpcClient = admin as any;
+  const { data, error } = await rpcClient.rpc("claim_due_whatsapp_reminders_v2", {
     p_worker_id: workerId,
     p_limit: 25,
     p_global_daily_limit: configured.globalDailyLimit,
@@ -191,7 +223,7 @@ export async function GET(request: Request) {
 
   const reminders = Array.isArray(data) ? data as ClaimedReminder[] : [];
   const results = await Promise.all(reminders.map((reminder) => (
-    processReminder(admin, workerId, reminder, configured.transport)
+    processReminder(admin, workerId, reminder, configured)
   )));
   const counts = results.reduce<Record<string, number>>((totals, result) => {
     totals[result] = (totals[result] ?? 0) + 1;
