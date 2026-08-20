@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
+import { CreateClinicAccount } from "./create-clinic-account";
 import { LoginForm } from "./login-form";
 import { LoginLanguagePicker } from "./language-picker";
 
@@ -107,6 +108,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
         {noticeMessage ? <p className="notice notice-success login-notice" role="status">{noticeMessage}</p> : null}
+        <CreateClinicAccount locale={locale} />
         <LoginForm locale={locale} />
       </section>
     </main>
