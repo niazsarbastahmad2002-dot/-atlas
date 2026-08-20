@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
+import { setPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 async function patientMutationAdmin(token: string) {
@@ -49,11 +50,12 @@ export async function updateEarlierSlotPreference(token: string, enabled: boolea
   const context = await patientMutationAdmin(token);
   if (!context) return;
 
-  const { data, error } = await context.admin.rpc("patient_set_earlier_slot_preference", {
-    p_token_hash: context.tokenHash,
-    p_enabled: enabled,
-  });
-  if (error || data !== true) {
+  const { updated, error } = await setPatientEarlierSlotPreference(
+    context.admin,
+    context.tokenHash,
+    enabled,
+  );
+  if (error || !updated) {
     console.error("Atlas earlier-slot preference update failed", {
       code: error?.code ?? "not_updated",
     });
