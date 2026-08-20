@@ -61,6 +61,28 @@ const copy = {
     failed: "Atlas نەیتوانی ئەم تۆمارانە بسڕێتەوە. پەڕەکە نوێ بکەرەوە و دووبارە هەوڵ بدە.",
     notAllowed: "تەنها بەڕێوەبردنی کلینیک دەتوانێت تۆماری لابراو بۆ هەمیشە بسڕێتەوە.",
   },
+  bd: {
+    search: "ب ناڤێ نەخۆشی، ژمارە یان دکتۆر بگەڕێ",
+    all: "هەمی مێژوو",
+    removed: "تەنێ یێن لابری",
+    newest: "نووترین ل سەرێ",
+    oldest: "کەڤنترین ل سەرێ",
+    patient: "نەخۆش",
+    doctor: "دکتۆر",
+    time: "وادە",
+    status: "بار",
+    removedLabel: "لابری",
+    selectAll: "هەمی یێن لابری هەلبژێرە",
+    selected: "هەلبژارتی",
+    clear: "پاک بکە",
+    delete: "بۆ هەمیشە ژێببە",
+    deleting: "دهێتە ژێبرن…",
+    deleteConfirm: "وادەیێن لابری یێن هەلبژارتی بۆ هەمیشە ژێببەین؟ ئەڤ کار ناگەڕیتە پاش.",
+    adminOnly: "تەنێ بەڕێڤەبرنا کلینیکێ دشێت تۆمارێن لابری بۆ هەمیشە ژێببەت.",
+    empty: "چ تۆمار ل ڤێ دیمەنێ نینن.",
+    failed: "Atlas نەشیا ئەڤ تۆمارە ژێببەت. پەرەیێ نوێ بکە و دووبارە هەول بدە.",
+    notAllowed: "تەنێ بەڕێڤەبرنا کلینیکێ دشێت تۆمارێن لابری بۆ هەمیشە ژێببەت.",
+  },
   ar: {
     search: "ابحث باسم المريض أو الرقم أو الطبيب",
     all: "كل السجل",
@@ -88,6 +110,7 @@ const copy = {
 const statusLabels: Record<UiLocale, Record<string, string>> = {
   en: { pending: "Pending", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "No-show", voided: "Removed" },
   ku: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراوە", cancelled: "هەڵوەشێنراوەتەوە", completed: "تەواوبوو", no_show: "نەهات", voided: "لابراوە" },
+  bd: { pending: "چاڤەڕێ", confirmed: "پشتڕاستکری", cancelled: "هەلوەشاندی", completed: "تەمام", no_show: "نەهات", voided: "لابری" },
   ar: { pending: "قيد الانتظار", confirmed: "مؤكد", cancelled: "ملغي", completed: "مكتمل", no_show: "لم يحضر", voided: "تمت الإزالة" },
 };
 
@@ -163,53 +186,29 @@ export function HistoryClient({
   return (
     <section className="history-card">
       <div className="history-toolbar">
-        <input
-          aria-label={t.search}
-          placeholder={t.search}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+        <input aria-label={t.search} placeholder={t.search} value={query} onChange={(event) => setQuery(event.target.value)} />
         <select aria-label="History filter" value={filter} onChange={(event) => setFilter(event.target.value as "all" | "removed")}>
-          <option value="all">{t.all}</option>
-          <option value="removed">{t.removed}</option>
+          <option value="all">{t.all}</option><option value="removed">{t.removed}</option>
         </select>
         <select aria-label="History sort" value={sort} onChange={(event) => setSort(event.target.value as "newest" | "oldest")}>
-          <option value="newest">{t.newest}</option>
-          <option value="oldest">{t.oldest}</option>
+          <option value="newest">{t.newest}</option><option value="oldest">{t.oldest}</option>
         </select>
       </div>
 
       {canDelete && removableVisible.length > 0 ? (
-        <label className="history-select-all">
-          <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} />
-          <span>{t.selectAll}</span>
-        </label>
+        <label className="history-select-all"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} /><span>{t.selectAll}</span></label>
       ) : null}
 
       <div className="history-list">
         {visibleRows.length === 0 ? <div className="history-empty">{t.empty}</div> : visibleRows.map((row) => (
           <article className={`history-row ${row.removed ? "is-removed" : ""}`} key={row.id}>
             <div className="history-check">
-              {canDelete && row.removed ? (
-                <input
-                  aria-label={`${t.patient}: ${row.patientName}`}
-                  type="checkbox"
-                  checked={selected.has(row.id)}
-                  onChange={() => toggle(row.id)}
-                />
-              ) : <span className="history-check-spacer" />}
+              {canDelete && row.removed ? <input aria-label={`${t.patient}: ${row.patientName}`} type="checkbox" checked={selected.has(row.id)} onChange={() => toggle(row.id)} /> : <span className="history-check-spacer" />}
             </div>
-            <div className="history-patient">
-              <strong>{row.patientName}</strong>
-              <span dir="ltr">{row.patientPhone}</span>
-            </div>
+            <div className="history-patient"><strong>{row.patientName}</strong><span dir="ltr">{row.patientPhone}</span></div>
             <div><span className="history-label">{t.doctor}</span><strong>{row.doctorName}</strong></div>
             <div><span className="history-label">{t.time}</span><strong>{row.displayTime}</strong></div>
-            <div className="history-status">
-              <span className={`status status-${row.removed ? "cancelled" : row.status}`}>
-                {row.removed ? t.removedLabel : statusLabels[locale][row.status] ?? row.status}
-              </span>
-            </div>
+            <div className="history-status"><span className={`status status-${row.removed ? "cancelled" : row.status}`}>{row.removed ? t.removedLabel : statusLabels[locale][row.status] ?? row.status}</span></div>
           </article>
         ))}
       </div>
@@ -218,13 +217,7 @@ export function HistoryClient({
       {feedback ? <p className="notice notice-error history-feedback" role="alert">{feedback}</p> : null}
 
       {canDelete && selected.size > 0 ? (
-        <div className="history-selection-bar">
-          <strong>{selected.size} {t.selected}</strong>
-          <div>
-            <button className="button button-ghost button-small" type="button" disabled={pending} onClick={() => setSelected(new Set())}>{t.clear}</button>
-            <button className="button button-danger button-small" type="button" disabled={pending} onClick={permanentlyDelete}>{pending ? t.deleting : t.delete}</button>
-          </div>
-        </div>
+        <div className="history-selection-bar"><strong>{selected.size} {t.selected}</strong><div><button className="button button-ghost button-small" type="button" disabled={pending} onClick={() => setSelected(new Set())}>{t.clear}</button><button className="button button-danger button-small" type="button" disabled={pending} onClick={permanentlyDelete}>{pending ? t.deleting : t.delete}</button></div></div>
       ) : null}
     </section>
   );
