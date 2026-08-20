@@ -1,6 +1,6 @@
 name: Atlas
 options:
-  bundleIdPrefix: com.atlasclinic
+  bundleIdPrefix: com.atlasappointments
 targets:
   Atlas:
     type: application
@@ -10,16 +10,22 @@ targets:
       - path: Atlas
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.atlasclinic.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.atlasappointments.app
         PRODUCT_NAME: Atlas
         SWIFT_VERSION: 6.0
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0.0
+        CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: Atlas/Atlas.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        ATLAS_ASSOCIATED_DOMAIN: atlasappointments.com
     info:
       path: Atlas/Info.plist
       properties:
         CFBundleDisplayName: Atlas
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
