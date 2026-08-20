@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { buildMetaCoexistenceLaunch } from "@/lib/reminders/meta-coexistence";
 import { readMetaEmbeddedSignupReadiness } from "@/lib/reminders/meta-embedded-signup";
 import { createClient } from "@/lib/supabase/server";
 
@@ -67,6 +68,7 @@ export async function GET(request: Request) {
 
   const embeddedSignup = readMetaEmbeddedSignupReadiness();
   const provider = safeProviderConfiguration();
+  const launch = buildMetaCoexistenceLaunch(embeddedSignup);
 
   return NextResponse.json({
     provider,
@@ -79,6 +81,7 @@ export async function GET(request: Request) {
       graphApiVersion: embeddedSignup.graphApiVersion,
       blockers: embeddedSignup.blockers,
     },
-    canStartEmbeddedSignup: embeddedSignup.configured,
+    launch,
+    canStartEmbeddedSignup: launch !== null,
   }, { headers: { "Cache-Control": "no-store" } });
 }
