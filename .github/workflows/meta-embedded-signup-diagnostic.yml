@@ -1,0 +1,106 @@
+name: Meta Embedded Signup diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/meta-embedded-signup-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      VERCEL_ORG_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Fetch production environment securely
+        run: |
+          set -euo pipefail
+          test -n "$VERCEL_TOKEN"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env?teamId=$VERCEL_ORG_ID&decrypt=true" \
+            > /tmp/vercel-env.json
+
+      - name: Evaluate Atlas readiness contract
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import re
+
+          raw = json.load(open("/tmp/vercel-env.json"))
+          items = raw.get("envs", raw if isinstance(raw, list) else [])
+          env = {}
+          for item in items:
+              target = item.get("target") or []
+              if isinstance(target, str):
+                  target = [target]
+              if target and "production" not in target:
+                  continue
+              key = item.get("key")
+              value = item.get("value")
+              if key and value is not None:
+                  env[key] = str(value)
+
+          enabled = env.get("META_EMBEDDED_SIGNUP_ENABLED", "").strip().lower() == "true"
+          app_id = env.get("META_APP_ID", "").strip()
+          config_id = env.get("META_EMBEDDED_SIGNUP_CONFIG_ID", "").strip()
+          graph_version = env.get("WHATSAPP_GRAPH_API_VERSION", "").strip()
+          app_secret = env.get("WHATSAPP_APP_SECRET", "").strip()
+
+          app_id_valid = bool(re.fullmatch(r"\d{5,32}", app_id))
+          config_id_valid = bool(re.fullmatch(r"\d{5,64}", config_id))
+          graph_version_valid = bool(re.fullmatch(r"v\d+\.\d+", graph_version))
+          app_secret_present = len(app_secret) >= 16
+
+          blockers = []
+          if not enabled:
+              blockers.append("embedded_signup_disabled")
+          if not app_id_valid:
+              blockers.append("meta_app_id_missing")
+          if not config_id_valid:
+              blockers.append("embedded_signup_config_missing")
+          if not graph_version_valid:
+              blockers.append("graph_api_version_missing")
+          if not app_secret_present:
+              blockers.append("meta_app_secret_missing")
+
+          expected_app = app_id == "1444517747585211"
+          lines = [
+              "## Meta Embedded Signup production diagnostic",
+              "",
+              f"- Atlas readiness configured: **{'yes' if not blockers else 'no'}**",
+              f"- Embedded Signup enabled: **{'yes' if enabled else 'no'}**",
+              f"- Meta app ID valid: **{'yes' if app_id_valid else 'no'}**",
+              f"- Meta app ID matches Atlas: **{'yes' if expected_app else 'no'}**",
+              f"- Embedded Signup configuration ID valid: **{'yes' if config_id_valid else 'no'}**",
+              f"- Graph API version valid: **{'yes' if graph_version_valid else 'no'}**",
+              f"- Meta app secret present: **{'yes' if app_secret_present else 'no'}**",
+              f"- Exact blockers: **{', '.join(blockers) if blockers else 'none'}**",
+              "",
+              "No IDs, credentials, environment values, or patient data are printed.",
+          ]
+          open("/tmp/meta-embedded-report.md", "w").write("\n".join(lines) + "\n")
+          print("Meta Embedded Signup diagnostic completed without printing secrets.")
+          PY
+
+      - name: Publish sanitized result
+        if: always()
+        run: |
+          if [ -f /tmp/meta-embedded-report.md ]; then
+            cat /tmp/meta-embedded-report.md >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              gh pr comment "${{ github.event.pull_request.number }}" \
+                --repo "niazsarbastahmad2002-dot/-atlas" \
+                --body-file /tmp/meta-embedded-report.md
+            fi
+          fi
