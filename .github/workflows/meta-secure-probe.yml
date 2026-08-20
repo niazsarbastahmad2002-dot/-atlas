@@ -39,6 +39,9 @@ jobs:
             if grep -Eqi 'unauthorized|invalid token|authentication' /tmp/vercel-env-pull.log; then reason="auth_failed"; fi
             if grep -Eqi 'project.*not found|not linked|scope' /tmp/vercel-env-pull.log; then reason="project_link_failed"; fi
             echo "ATLAS_META_SAFE_PROBE={\"vercelEnvPull\":false,\"reason\":\"$reason\"}"
+            echo "VERCEL_CLI_DIAGNOSTIC_BEGIN"
+            python -c 'import os,re; s=open("/tmp/vercel-env-pull.log","r",errors="replace").read(); t=os.environ.get("VERCEL_TOKEN",""); s=s.replace(t,"[redacted]") if t else s; s=re.sub(r"[A-Za-z0-9_-]{48,}","[redacted]",s); print("\\n".join(s.splitlines()[-20:]))'
+            echo "VERCEL_CLI_DIAGNOSTIC_END"
             exit 1
           fi
 
