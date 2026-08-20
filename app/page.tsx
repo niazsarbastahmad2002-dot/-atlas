@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { atlasPublicCompanyProfile } from "@/lib/public-company-profile";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export default async function HomePage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (data.user) redirect("/dashboard");
+  const company = atlasPublicCompanyProfile();
 
   return (
     <main className="marketing-page">
@@ -52,6 +54,9 @@ export default async function HomePage() {
         <Link href="/privacy">Privacy</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/data-deletion">Data deletion</Link>
+        {company.isVerifiedCompanyProfile && company.legalEntityName ? (
+          <span className="quiet">Operated by {company.legalEntityName}</span>
+        ) : null}
       </footer>
     </main>
   );
