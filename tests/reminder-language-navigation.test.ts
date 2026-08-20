@@ -13,6 +13,7 @@ const editor = source("../app/dashboard/appointment-editor.tsx");
 const settings = source("../app/dashboard/settings-reminder-card.tsx");
 const actions = source("../app/dashboard/actions.ts");
 const instantActions = source("../app/dashboard/instant-actions.ts");
+const settingsActions = source("../app/dashboard/settings/actions.ts");
 const workflowRoute = source("../app/api/settings/doctor-workflow/route.ts");
 const patient = source("../app/patient/[token]/page.tsx");
 
@@ -31,9 +32,14 @@ test("patient reminder selectors include Sorani Badini Iraqi Arabic and English"
 });
 
 test("Badini reminder language is accepted by appointment and doctor settings validators", () => {
-  assert.match(actions, /new Set\(\["ku", "bd", "ar", "en"\]\)/);
-  assert.match(instantActions, /new Set\(\["ku", "bd", "ar", "en"\]\)/);
-  assert.match(workflowRoute, /new Set\(\["ku", "bd", "ar", "en"\]\)/);
+  for (const value of [actions, instantActions, settingsActions, workflowRoute]) {
+    assert.match(value, /new Set\(\["ku", "bd", "ar", "en"\]\)/);
+  }
+});
+
+test("new appointments use the selected doctor's reminder language default", () => {
+  assert.match(dashboard, /doctor_workflow_settings/);
+  assert.match(dashboard, /defaultReminderLanguage = \(doctorWorkflowRows/);
 });
 
 test("Iraqi Arabic patient copy uses simple Iraqi wording", () => {
