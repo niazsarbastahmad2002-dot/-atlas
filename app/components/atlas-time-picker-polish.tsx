@@ -28,6 +28,14 @@ function normalizeHourButton(button: HTMLButtonElement, locale: UiLocale) {
   if (button.textContent !== next) button.textContent = next;
 }
 
+function normalizeMinuteButton(button: HTMLButtonElement, locale: UiLocale) {
+  const value = toAsciiDigits(button.textContent ?? "").trim();
+  const match = /^0([0-9])$/.exec(value);
+  if (!match) return;
+  const next = localizeDigits(match[1], locale);
+  if (button.textContent !== next) button.textContent = next;
+}
+
 export function AtlasTimePickerPolish({ locale }: { locale: UiLocale }) {
   useEffect(() => {
     if (locale !== "ku") return;
@@ -35,6 +43,7 @@ export function AtlasTimePickerPolish({ locale }: { locale: UiLocale }) {
     let frame = 0;
     const polish = () => {
       document.querySelectorAll<HTMLButtonElement>(".atlas-hour-grid button").forEach((button) => normalizeHourButton(button, locale));
+      document.querySelectorAll<HTMLButtonElement>(".atlas-minute-grid button").forEach((button) => normalizeMinuteButton(button, locale));
       document.querySelectorAll<HTMLElement>(".appointment-time-value, .atlas-selected-time strong").forEach((element) => {
         const current = element.textContent ?? "";
         const next = normalizeSoraniTimeText(current);
