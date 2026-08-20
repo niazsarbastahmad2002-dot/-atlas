@@ -15,18 +15,35 @@ export default function NativeAuthPage() {
         const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
         const provider = params.get("provider");
         const token = params.get("id_token");
+        const authorizationCode = params.get("authorization_code");
         const nonce = params.get("nonce");
         const fullName = params.get("full_name")?.trim() ?? "";
         const next = safeAuthDestination(params.get("next"));
 
-        // Remove the identity token, nonce, and invite destination from browser
+        // Remove every Apple credential and the invite destination from browser
         // history before making any network request.
         window.history.replaceState(null, "", "/auth/native");
 
-        if (provider !== "apple" || !token || !nonce) throw new Error("invalid_native_auth");
+        if (provider !== "apple" || !token || !authorizationCode || !nonce) {
+          throw new Error("invalid_native_auth");
+        }
+
         const supabase = createClient();
         const { error } = await supabase.auth.signInWithIdToken({ provider: "apple", token, nonce });
         if (error) throw error;
+
+        // Apple authorization codes are short-lived and single-use. Exchange the
+        // code immediately on Atlas's server and retain only the refresh token in
+        // Supabase Vault so account deletion can revoke Apple authorization.
+        const linkResponse = await fetch("/api/auth/apple/link", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ authorization_code: authorizationCode }),
+        });
+        if (!linkResponse.ok) {
+          await supabase.auth.signOut().catch(() => undefined);
+          throw new Error("apple_revocation_link_failed");
+        }
 
         if (fullName) {
           await supabase.auth.updateUser({ data: { full_name: fullName } });
@@ -35,7 +52,7 @@ export default function NativeAuthPage() {
         if (!cancelled) window.location.replace(`/auth/activate?next=${encodeURIComponent(next)}`);
       } catch {
         if (!cancelled) {
-          setMessage("Apple sign-in could not be completed. Open Atlas and try again.");
+          setMessage("Apple sign-in could not be completed securely. Open Atlas and try again.");
           window.setTimeout(() => window.location.replace("/login"), 1600);
         }
       }
