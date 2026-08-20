@@ -5,22 +5,24 @@ import { createClient } from "@/lib/supabase/server";
 export default async function SettingsLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
-  let ownsClinic = false;
+  let ownedClinicId: string | null = null;
 
   if (userData.user) {
     const { data } = await supabase
       .from("clinics")
       .select("id")
       .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: true })
       .limit(1);
-    ownsClinic = Boolean(data?.length);
+    ownedClinicId = data?.[0]?.id ?? null;
   }
 
   return (
     <>
       {children}
-      {ownsClinic ? (
-        <div className="shell" style={{ paddingTop: 0, paddingBottom: 32 }}>
+      {ownedClinicId ? (
+        <div className="shell" style={{ paddingTop: 0, paddingBottom: 32, display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Link className="button button-ghost button-small" href={`/dashboard/staff/invite?clinic=${ownedClinicId}`}>Invite receptionist</Link>
           <Link className="danger-link" href="/dashboard/settings/delete">Delete a clinic permanently</Link>
         </div>
       ) : null}
