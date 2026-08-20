@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { formatIraqiMobile } from "@/lib/appointments";
 import { localizeDigits } from "@/lib/i18n/format";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
+import { getPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
 
@@ -237,10 +238,8 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
   let wantsEarlierSlot = false;
   if (isActive) {
-    const { data: preference } = await admin.rpc("patient_get_earlier_slot_preference", {
-      p_token_hash: tokenHash,
-    });
-    wantsEarlierSlot = preference === true;
+    const { enabled } = await getPatientEarlierSlotPreference(admin, tokenHash);
+    wantsEarlierSlot = enabled;
   }
   const statusMessage = isConfirmed
     ? text.confirmed
