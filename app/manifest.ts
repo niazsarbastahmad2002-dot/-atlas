@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Atlas Clinic Appointments",
+    name: "Atlas Appointments",
     short_name: "Atlas",
     description: "A focused appointment and reminder workspace for private clinics.",
     start_url: "/dashboard",

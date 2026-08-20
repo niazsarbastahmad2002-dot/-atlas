@@ -17,11 +17,9 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (!error) {
-    // Do not persist Supabase's generic provider_refresh_token here. An Atlas
-    // account can link multiple OAuth identities, and this callback does not
-    // cryptographically identify which provider issued that token. Native
-    // Sign in with Apple exchanges Apple's authorization code directly and
-    // stores its revocation credential through the dedicated server endpoint.
+    // Supabase exposes a generic provider refresh token here, but an account
+    // can link multiple providers. Native Apple authorization is stored only
+    // through Atlas's provider-specific, subject-bound exchange endpoint.
     const activationUrl = new URL("/auth/activate", requestUrl.origin);
     activationUrl.searchParams.set("next", next);
     return NextResponse.redirect(activationUrl);

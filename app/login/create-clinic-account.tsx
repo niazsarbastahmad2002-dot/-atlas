@@ -104,10 +104,11 @@ export function CreateClinicAccount({ locale }: { locale: UiLocale }) {
         const embeddedIos = window.navigator.userAgent.includes("Atlas-iOS/");
         if (!cancelled) {
           setProviders({
-            // Google explicitly blocks OAuth authorization in WKWebView. The
-            // native shell will add Google through its iOS client once issued.
+            // Provider OAuth must not run inside WKWebView. Native Apple auth
+            // is supplied by the iOS shell; native Google remains pending its
+            // issued iOS client ID.
             google: !embeddedIos && settings.external?.google === true,
-            apple: settings.external?.apple === true,
+            apple: !embeddedIos && settings.external?.apple === true,
           });
         }
       } catch {

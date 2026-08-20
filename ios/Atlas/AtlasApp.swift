@@ -52,18 +52,15 @@ struct AtlasRootView: View {
     @State private var errorMessage: String?
     @State private var appleNonce: String?
     @State private var pendingInviteToken: String?
+    @State private var currentWebURL: URL?
+    @State private var isWebLoading = false
+    @State private var webErrorMessage: String?
+    @State private var webReloadID = UUID()
 
     var body: some View {
         Group {
-            if let destination {
-                AtlasWebView(url: destination)
-                    .id(destination.absoluteString)
-                    .ignoresSafeArea(.container, edges: .bottom)
-            } else if hasOpened {
-                let dashboardURL = atlasBaseURL.appending(path: "dashboard")
-                AtlasWebView(url: dashboardURL)
-                    .id(dashboardURL.absoluteString)
-                    .ignoresSafeArea(.container, edges: .bottom)
+            if let activeWebDestination {
+                webExperience(activeWebDestination)
             } else {
                 welcome
             }
@@ -75,6 +72,98 @@ struct AtlasRootView: View {
             guard let url = activity.webpageURL else { return }
             handleIncomingURL(url)
         }
+    }
+
+    private var activeWebDestination: URL? {
+        if let destination { return destination }
+        return hasOpened ? atlasBaseURL.appending(path: "dashboard") : nil
+    }
+
+    private var shouldOfferNativeAppleSignIn: Bool {
+        guard let currentWebURL,
+              currentWebURL.scheme?.lowercased() == "https",
+              let host = currentWebURL.host?.lowercased(),
+              atlasUniversalLinkHosts.contains(host) else {
+            return false
+        }
+        return currentWebURL.path == "/login" || atlasInviteToken(from: currentWebURL) != nil
+    }
+
+    @ViewBuilder
+    private func webExperience(_ url: URL) -> some View {
+        ZStack {
+            AtlasWebView(
+                url: url,
+                currentURL: $currentWebURL,
+                isLoading: $isWebLoading,
+                errorMessage: $webErrorMessage
+            )
+            .id("\(url.absoluteString)-\(webReloadID.uuidString)")
+            .ignoresSafeArea(.container, edges: .bottom)
+
+            if isWebLoading && webErrorMessage == nil {
+                ProgressView("Opening Atlas…")
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+                    .accessibilityLabel("Opening Atlas")
+            }
+
+            if let webErrorMessage {
+                VStack(spacing: 16) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.system(size: 42, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                    Text("Atlas could not open")
+                        .font(.title2.bold())
+                    Text(webErrorMessage)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Try again") {
+                        self.webErrorMessage = nil
+                        isWebLoading = true
+                        webReloadID = UUID()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(28)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(uiColor: .systemBackground))
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if shouldOfferNativeAppleSignIn {
+                nativeAppleSignInBar
+            }
+        }
+    }
+
+    private var nativeAppleSignInBar: some View {
+        VStack(spacing: 8) {
+            Text(pendingInviteToken == nil ? "Sign in securely without leaving Atlas" : "Use Apple to accept this clinic invitation")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            SignInWithAppleButton(.continue) { request in
+                prepareAppleRequest(request)
+            } onCompletion: { result in
+                completeAppleSignIn(result)
+            }
+            .signInWithAppleButtonStyle(.black)
+            .frame(height: 50)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(.regularMaterial)
     }
 
     private var welcome: some View {
@@ -90,10 +179,7 @@ struct AtlasRootView: View {
                 .multilineTextAlignment(.center)
 
             SignInWithAppleButton(.continue) { request in
-                let nonce = UUID().uuidString
-                appleNonce = nonce
-                request.requestedScopes = [.email, .fullName]
-                request.nonce = sha256(nonce)
+                prepareAppleRequest(request)
             } onCompletion: { result in
                 completeAppleSignIn(result)
             }
@@ -111,6 +197,14 @@ struct AtlasRootView: View {
             }
             .buttonStyle(.bordered)
 
+            if pendingInviteToken == nil {
+                Button("Try with sample data") {
+                    destination = atlasBaseURL.appending(path: "demo")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            }
+
             if let errorMessage {
                 Text(errorMessage)
                     .font(.footnote)
@@ -122,10 +216,22 @@ struct AtlasRootView: View {
         .padding(28)
     }
 
+    private func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
+        if let currentWebURL, let inviteToken = atlasInviteToken(from: currentWebURL) {
+            pendingInviteToken = inviteToken
+        }
+        let nonce = UUID().uuidString
+        appleNonce = nonce
+        errorMessage = nil
+        request.requestedScopes = [.email, .fullName]
+        request.nonce = sha256(nonce)
+    }
+
     private func handleIncomingURL(_ url: URL) {
         guard let token = atlasInviteToken(from: url) else { return }
         pendingInviteToken = token
         errorMessage = nil
+        webErrorMessage = nil
 
         // Returning users keep their existing Atlas web session. The server-side
         // invitation route will redeem immediately when that session is valid,
@@ -195,6 +301,9 @@ enum AtlasNativeError: Error {
 
 struct AtlasWebView: UIViewRepresentable {
     let url: URL
+    @Binding var currentURL: URL?
+    @Binding var isLoading: Bool
+    @Binding var errorMessage: String?
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -204,28 +313,73 @@ struct AtlasWebView: UIViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
         webView.scrollView.keyboardDismissMode = .interactive
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(context.coordinator, action: #selector(Coordinator.refresh(_:)), for: .valueChanged)
+        webView.scrollView.refreshControl = refreshControl
+        context.coordinator.webView = webView
+        currentURL = url
+        isLoading = true
+        errorMessage = nil
         webView.load(URLRequest(url: url))
         return webView
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
+        context.coordinator.parent = self
         guard webView.url == nil else { return }
         webView.load(URLRequest(url: url))
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+    func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
+        var parent: AtlasWebView
+        weak var webView: WKWebView?
+
+        init(parent: AtlasWebView) {
+            self.parent = parent
+        }
+
+        @objc func refresh(_ sender: UIRefreshControl) {
+            parent.errorMessage = nil
+            parent.isLoading = true
+            webView?.reload()
+        }
+
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            parent.currentURL = webView.url
+            parent.isLoading = true
+            parent.errorMessage = nil
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            parent.currentURL = webView.url
+            parent.isLoading = false
+            webView.scrollView.refreshControl?.endRefreshing()
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            finishWithError(webView)
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            finishWithError(webView)
+        }
+
+        private func finishWithError(_ webView: WKWebView) {
+            parent.currentURL = webView.url ?? parent.currentURL
+            parent.isLoading = false
+            parent.errorMessage = "Check your internet connection, then try again. Your Atlas session is kept on this device."
+            webView.scrollView.refreshControl?.endRefreshing()
+        }
+
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
             guard let target = navigationAction.request.url else { return .cancel }
-            if target.host == atlasBaseURL.host || target.scheme == "about" {
+            if target.scheme == "about" || target.host.map({ atlasUniversalLinkHosts.contains($0.lowercased()) }) == true {
                 return .allow
             }
-            if navigationAction.navigationType == .linkActivated {
-                await MainActor.run { UIApplication.shared.open(target) }
-                return .cancel
-            }
-            return .allow
+            await MainActor.run { UIApplication.shared.open(target) }
+            return .cancel
         }
     }
 }
