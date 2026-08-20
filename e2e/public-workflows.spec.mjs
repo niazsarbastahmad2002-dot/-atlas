@@ -7,7 +7,8 @@ async function setLocale(context, locale) {
 test("unauthenticated receptionist sees language choice, work email and optional quick sign-in", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Open Atlas. Start the clinic day." })).toBeVisible();
-  await expect(page.getByRole("button", { name: /کوردی/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "کوردی سۆرانی" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "کوردی بادینی" })).toBeVisible();
   await expect(page.getByRole("button", { name: /العربية/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /English/ })).toBeVisible();
   await expect(page.getByLabel("Work email")).toBeVisible();
@@ -15,11 +16,18 @@ test("unauthenticated receptionist sees language choice, work email and optional
   await expect(page.getByRole("button", { name: "Use quick sign-in" })).toBeVisible();
 });
 
-test("language picker persists a pre-auth choice", async ({ page }) => {
+test("language picker persists a pre-auth Sorani choice", async ({ page }) => {
   await page.goto("/login");
-  await page.getByRole("button", { name: /کوردی/ }).click();
+  await page.getByRole("button", { name: "کوردی سۆرانی" }).click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: /Atlas بکەرەوە/ })).toBeVisible();
+});
+
+test("language picker persists a pre-auth Badini choice", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "کوردی بادینی" }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: /Atlas ڤەکە/ })).toBeVisible();
 });
 
 test("expired or consumed email link shows plain recovery language with email ready", async ({ page }) => {
@@ -32,6 +40,7 @@ test("expired or consumed email link shows plain recovery language with email re
 
 test("signed-out state confirms logout without technical jargon", async ({ page }) => { await page.goto("/login?notice=signed_out"); await expect(page.getByRole("status")).toContainText("signed out safely"); });
 test("Sorani login is RTL and work email is immediately available", async ({ context, page }) => { await setLocale(context, "ku"); await page.goto("/login"); await expect(page.locator("html")).toHaveAttribute("dir", "rtl"); await expect(page.getByRole("heading", { name: /Atlas بکەرەوە/ })).toBeVisible(); await expect(page.getByLabel("ئیمەیڵی کار")).toBeVisible(); await expect(page.getByRole("button", { name: "ئیمەیڵی Atlas بنێرە" })).toBeVisible(); });
+test("Badini login is RTL", async ({ context, page }) => { await setLocale(context, "bd"); await page.goto("/login"); await expect(page.locator("html")).toHaveAttribute("dir", "rtl"); await expect(page.getByRole("heading", { name: /Atlas ڤەکە/ })).toBeVisible(); });
 test("Arabic login is RTL", async ({ context, page }) => { await setLocale(context, "ar"); await page.goto("/login"); await expect(page.locator("html")).toHaveAttribute("dir", "rtl"); await expect(page.getByRole("heading", { name: /افتح Atlas/ })).toBeVisible(); await expect(page.getByLabel(/بريد العمل/)).toBeVisible(); });
 test("English login is LTR", async ({ context, page }) => { await setLocale(context, "en"); await page.goto("/login"); await expect(page.locator("html")).toHaveAttribute("dir", "ltr"); });
 
