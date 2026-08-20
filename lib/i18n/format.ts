@@ -118,6 +118,6 @@ export function formatTimeValue(value: string, locale: UiLocale) {
 
   const period: DayPeriod = hour24 >= 12 ? "pm" : "am";
   const hour12 = hour24 % 12 || 12;
-  const clock = `${hour12}:${String(minute).padStart(2, "0")}`;
+  const clock = `${String(hour12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
   return `${localizeDigits(clock, locale)} ${formatDayPeriod(period, locale)}`;
 }
