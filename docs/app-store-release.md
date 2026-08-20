@@ -9,7 +9,7 @@ This is the single source of truth for taking Atlas from production web app to a
 - iOS bundle ID: `com.atlasappointments.app`
 - Apple Services ID: `com.atlasappointments.app.web`
 - Current production: `https://atlasdemofixed.vercel.app`
-- Future canonical domain candidate: `https://atlasappointments.com`
+- Future canonical domain candidate: choose only after legal-entity formation
 - Supabase project: `moazrwbalqiyoafrydkj`
 
 Do not change the bundle ID after Apple/App Store Connect registration unless there is a compelling reason. Bundle identity is much harder to change after release than product copy.
@@ -21,7 +21,7 @@ Atlas currently has a hard founder spending ceiling of **USD 100** for this phas
 Recommended sequence:
 
 1. Finish and validate all zero-cost Atlas engineering and CI work.
-2. If Apple's checkout total is within the USD 100 ceiling, enroll the founder in the Apple Developer Program as an **individual** for development, signing, Sign in with Apple credentials, device testing and TestFlight. The public healthcare App Store release is intentionally held back at this stage.
+2. If Apple's checkout total is within the USD 100 ceiling, enroll the founder in the Apple Developer Program as an **individual** for development, signing, Sign in with Apple credentials, device testing and TestFlight. Apple's published annual fee is USD 99, but the founder must stop if Apple's actual local-currency/tax/payment checkout exceeds the USD 100 cap.
 3. Use the existing `atlasdemofixed.vercel.app` production host for web/provider testing while the product is still in the individual-development phase. Apple supports registering domains and subdomains for Sign in with Apple web configuration.
 4. Later, when Atlas can fund legal formation, register a KRG legal entity, obtain its D-U-N-S number, establish its company-domain website/work email, and request Apple to convert the founder's individual membership to an **organization** membership.
 5. Submit the public healthcare App Store release only after organization conversion. Apple App Review guidance says apps requiring sensitive information or providing services in highly regulated fields such as healthcare should be submitted by the legal entity providing the service rather than an individual developer.
@@ -35,7 +35,7 @@ These cannot be truthfully automated by Atlas code because they require the foun
 ### Phase 1 — individual development membership
 
 1. Use the founder's real Apple Account with two-factor authentication and legal identity information.
-2. Purchase the Apple Developer Program membership only if Apple's displayed local checkout total stays within the USD 100 cap.
+2. Purchase the Apple Developer Program membership only if Apple's displayed final checkout total stays within the USD 100 cap.
 3. Register the App ID, Services ID and Sign in with Apple key described in `docs/provider-activation.md`.
 4. Do not represent the individual membership as the final healthcare seller identity and do not submit the public release yet.
 
@@ -91,7 +91,7 @@ After a future custom-domain cutover, verify the equivalent path on the final do
 
 Only after legal-entity funding is available:
 
-1. Purchase the final Atlas company domain.
+1. Choose and purchase the final Atlas company domain after checking current availability and naming conflicts again.
 2. Attach it to the existing Atlas Vercel production project.
 3. Keep the Vercel domain active as a fallback during the first release.
 4. Configure the company-domain mailbox.
