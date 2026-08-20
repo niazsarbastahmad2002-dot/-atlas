@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { safeAuthDestination } from "@/lib/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function NativeAuthPage() {
@@ -16,8 +17,10 @@ export default function NativeAuthPage() {
         const token = params.get("id_token");
         const nonce = params.get("nonce");
         const fullName = params.get("full_name")?.trim() ?? "";
+        const next = safeAuthDestination(params.get("next"));
 
-        // Remove the identity token and nonce from browser history immediately.
+        // Remove the identity token, nonce, and invite destination from browser
+        // history before making any network request.
         window.history.replaceState(null, "", "/auth/native");
 
         if (provider !== "apple" || !token || !nonce) throw new Error("invalid_native_auth");
@@ -29,7 +32,7 @@ export default function NativeAuthPage() {
           await supabase.auth.updateUser({ data: { full_name: fullName } });
         }
 
-        if (!cancelled) window.location.replace("/auth/activate?next=/dashboard");
+        if (!cancelled) window.location.replace(`/auth/activate?next=${encodeURIComponent(next)}`);
       } catch {
         if (!cancelled) {
           setMessage("Apple sign-in could not be completed. Open Atlas and try again.");
