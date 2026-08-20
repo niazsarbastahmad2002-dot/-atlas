@@ -2,11 +2,13 @@ import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { baghdadDateTime } from "@/lib/i18n/config";
 import {
+  createD360WhatsAppReminderTransport,
   createInfobipWhatsAppReminderTransport,
   createWhatsAppReminderTransport,
   routeReminder,
   type ReminderTransport,
 } from "@/lib/reminders/delivery";
+import { readD360WhatsAppConfig } from "@/lib/reminders/d360";
 import { readInfobipWhatsAppConfig } from "@/lib/reminders/infobip";
 import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
@@ -65,6 +67,15 @@ function configuredWhatsAppTransport(): ConfiguredTransport | null {
     if (!config) return null;
     return {
       transport: createInfobipWhatsAppReminderTransport(config),
+      globalDailyLimit: config.globalDailyLimit,
+    };
+  }
+
+  if (provider === "360dialog") {
+    const config = readD360WhatsAppConfig();
+    if (!config) return null;
+    return {
+      transport: createD360WhatsAppReminderTransport(config),
       globalDailyLimit: config.globalDailyLimit,
     };
   }

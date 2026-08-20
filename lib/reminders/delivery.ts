@@ -1,4 +1,8 @@
 import {
+  sendD360WhatsAppTemplate,
+  type D360WhatsAppConfig,
+} from "./d360.ts";
+import {
   sendInfobipWhatsAppTemplate,
   type InfobipWhatsAppConfig,
 } from "./infobip.ts";
@@ -153,6 +157,25 @@ export function createInfobipWhatsAppReminderTransport(
     channel: "whatsapp",
     async send(input) {
       const result = await sendInfobipWhatsAppTemplate(input, config, fetchImplementation);
+      if (result.accepted) return result;
+      return {
+        accepted: false,
+        errorCode: result.errorCode,
+        retryable: result.retryable,
+        safeToFailover: !result.deliveryUnknown,
+      };
+    },
+  };
+}
+
+export function createD360WhatsAppReminderTransport(
+  config: D360WhatsAppConfig,
+  fetchImplementation: typeof fetch = fetch,
+): ReminderTransport {
+  return {
+    channel: "whatsapp",
+    async send(input) {
+      const result = await sendD360WhatsAppTemplate(input, config, fetchImplementation);
       if (result.accepted) return result;
       return {
         accepted: false,
