@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
+  hasMetaCoexistenceWebhook,
+  summarizeMetaCoexistenceWebhook,
+} from "@/lib/reminders/meta-coexistence";
+import {
   extractDeliveryStatuses,
   readBodyWithLimit,
   verifyWebhookSignature,
@@ -61,8 +65,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
+  const coexistence = summarizeMetaCoexistenceWebhook(payload);
+  if (hasMetaCoexistenceWebhook(coexistence)) {
+    // Deliberately keep observability content-free. Atlas does not persist synced
+    // WhatsApp history, contacts, or app-originated messages at this stage.
+    console.info("Atlas WhatsApp coexistence webhook accepted", coexistence);
+  }
+
   const events = extractDeliveryStatuses(payload);
-  if (!events.length) return NextResponse.json({ accepted: true }, { status: 200 });
+  if (!events.length) {
+    return NextResponse.json({ accepted: true }, {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
 
   let admin: ReturnType<typeof createAdminClient>;
   try { admin = createAdminClient(); } catch {
