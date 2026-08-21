@@ -107,7 +107,7 @@ test("OAuth callback never guesses which provider owns a generic refresh token",
   assert.doesNotMatch(callback, /storeWebAppleProviderRefreshToken/);
 });
 
-test("native shell adds real app states and every user-facing auth entry is phone-first", async () => {
+test("native shell has real app states and every visible web auth entry is WhatsApp-first", async () => {
   const [nativeApp, ownerAuth, inviteAuth] = await Promise.all([
     read("ios/Atlas/AtlasApp.swift"),
     read("app/login/login-form.tsx"),
@@ -123,17 +123,15 @@ test("native shell adds real app states and every user-facing auth entry is phon
   assert.match(nativeApp, /components\.fragment = nil/);
   assert.match(nativeApp, /destination = retryURL/);
   assert.doesNotMatch(nativeApp, /shouldOfferNativeAppleSignIn/);
-  assert.match(ownerAuth, /signInWithOtp/);
-  assert.match(ownerAuth, /phone/);
-  assert.doesNotMatch(ownerAuth, /signInWithOAuth/);
-  assert.doesNotMatch(ownerAuth, /type="email"/);
-  assert.match(inviteAuth, /signInWithOtp/);
-  assert.match(inviteAuth, /phone/);
-  assert.doesNotMatch(inviteAuth, /signInWithOAuth/);
-  assert.doesNotMatch(inviteAuth, /type="email"/);
+  assert.match(ownerAuth, /\/api\/auth\/whatsapp\/start/);
+  assert.match(ownerAuth, /\/api\/auth\/whatsapp\/verify/);
+  assert.match(ownerAuth, /Send code to WhatsApp/);
+  assert.doesNotMatch(ownerAuth, /signInWithOAuth|type="email"|signInWithOtp/);
+  assert.match(inviteAuth, /LoginForm/);
+  assert.doesNotMatch(inviteAuth, /signInWithOAuth|type="email"|signInWithOtp/);
 });
 
-test("account deletion is in-app, retry-safe, and clinic ownership is protected", async () => {
+test("account deletion is in-app, retry-safe, deletes owned clinics, then deletes the identity", async () => {
   const [accountAction, accountPage, migration] = await Promise.all([
     read("app/dashboard/settings/account/actions.ts"),
     read("app/dashboard/settings/account/page.tsx"),
@@ -143,15 +141,20 @@ test("account deletion is in-app, retry-safe, and clinic ownership is protected"
   assert.match(accountAction, /getStoredAppleRevocationCredential/);
   assert.match(accountAction, /revokeAppleAuthorization/);
   assert.match(accountAction, /cleanupAppleRefreshSecret/);
-  assert.match(accountAction, /auth\.admin\.deleteUser/);
+  assert.match(accountAction, /from\("clinics"\)[\s\S]*\.delete\(\)[\s\S]*\.eq\("owner_id", userId\)/);
+  assert.match(accountAction, /auth\.admin\.deleteUser\(userId\)/);
+  assert.ok(
+    accountAction.indexOf('from("clinics")') < accountAction.indexOf("auth.admin.deleteUser"),
+    "Owned clinic workspaces must be deleted before the protected auth identity deletion",
+  );
   assert.ok(
     accountAction.indexOf("auth.admin.deleteUser") < accountAction.indexOf("revokeAppleAuthorization(appleCredential)"),
     "Apple authorization must not be revoked until Atlas account deletion succeeds",
   );
   assert.match(accountAction, /auth\.signOut/);
-  assert.match(accountPage, /Settings|DELETE/);
-  assert.match(accountPage, /\/dashboard\/staff\?clinic=/);
-  assert.match(accountPage, /\/dashboard\/settings\/delete/);
+  assert.match(accountPage, /Delete Atlas account permanently/);
+  assert.match(accountPage, /every clinic I own/);
+  assert.match(accountPage, /Type DELETE to confirm/);
   assert.match(migration, /ON DELETE RESTRICT/i);
 });
 
