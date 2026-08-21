@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createReceptionistInviteLink, type InviteLinkState } from "./invite-actions";
 
@@ -9,48 +9,44 @@ type DoctorOption = { id: string; name: string };
 
 const copy = {
   en: {
-    title: "Share a secure join link",
-    help: "Choose the receptionist's doctor, create a one-use link, then share it through WhatsApp, Messages, AirDrop, or any app. The receptionist verifies their phone before Atlas grants this clinic membership.",
+    title: "Invite receptionist by WhatsApp",
+    help: "Enter the receptionist's WhatsApp number. Atlas sends a secure one-use link to that exact number. They open it, verify the same phone through WhatsApp, and Atlas joins them to this clinic as a receptionist.",
+    phone: "Receptionist WhatsApp number",
+    phoneHelp: "Iraq: 0750… is accepted. Other countries: enter the full +country-code number.",
     doctor: "Receptionist's doctor",
     choose: "Choose one doctor",
-    create: "Create secure join link",
-    creating: "Creating…",
-    copy: "Copy link",
-    copied: "Copied",
-    share: "Share",
+    send: "Send invitation on WhatsApp",
+    sending: "Sending WhatsApp invitation…",
   },
   ku: {
-    title: "بەستەری پارێزراوی چوونەژوورەوە بنێرە",
-    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە، بەستەرێکی یەکجارە دروست بکە و بە WhatsApp، Messages، AirDrop یان هەر ئەپێک بنێرە. ستافەکە ژمارەی مۆبایلەکەی پشتڕاست دەکاتەوە پێش ئەوەی Atlas ئەندامێتی ئەم کلینیکە بدات.",
+    title: "ستافی ڕیسێپشن بە WhatsApp بانگهێشت بکە",
+    help: "ژمارەی WhatsApp ـی ستافەکە بنووسە. Atlas بەستەرێکی پارێزراوی یەکجارە بۆ هەمان ژمارە دەنێرێت. بەستەرەکە دەکاتەوە، هەمان ژمارە لە WhatsApp پشتڕاست دەکاتەوە و Atlas وەک ستافی ڕیسێپشن بە کلینیکەکەی دەبەستێتەوە.",
+    phone: "ژمارەی WhatsApp ـی ستافی ڕیسێپشن",
+    phoneHelp: "عێراق: 0750… قبوڵە. وڵاتی تر: ژمارەی تەواو لەگەڵ +کۆدی وڵات بنووسە.",
     doctor: "دکتۆری ستافی ڕیسێپشن",
     choose: "یەک دکتۆر هەڵبژێرە",
-    create: "بەستەری پارێزراو دروست بکە",
-    creating: "دروست دەکرێت…",
-    copy: "بەستەر کۆپی بکە",
-    copied: "کۆپی کرا",
-    share: "بنێرە",
+    send: "بانگهێشت لە WhatsApp بنێرە",
+    sending: "بانگهێشتی WhatsApp دەنێردرێت…",
   },
   bd: {
-    title: "لینکا پاراستی یا چوونەژوورێ بهنێرە",
-    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە، لینکەکا ئێکجارە دروست بکە و ب WhatsApp، Messages، AirDrop یان هەر ئەپەکێ بهنێرە. ستاف ژمارا موبایلا خۆ پشتڕاست دکەت بەری کو Atlas ئەندامەتیا ڤێ کلینیکێ بدەت.",
+    title: "ستافێ ڕیسێپشنێ ب WhatsApp بانگهێشت بکە",
+    help: "ژمارا WhatsApp یا ستافی بنڤیسە. Atlas لینکەکا پاراستی یا ئێکجارە بۆ هەمان ژمارێ دهنێریت. لینکێ ڤەدکەت، هەمان ژمارە ل WhatsApp پشتڕاست دکەت و Atlas وی وەک ستافێ ڕیسێپشنێ ب کلینیکێ گرێددەت.",
+    phone: "ژمارا WhatsApp یا ستافێ ڕیسێپشنێ",
+    phoneHelp: "عێراق: 0750… دهێتە قبولکرن. وەلاتێ دی: ژمارا تەمام لگەل +کۆدێ وەلاتی بنڤیسە.",
     doctor: "دکتۆرێ ستافێ ڕیسێپشنێ",
     choose: "ئێک دکتۆر هەلبژێرە",
-    create: "لینکا پاراستی دروست بکە",
-    creating: "دهێتە دروستکرن…",
-    copy: "لینکێ کۆپی بکە",
-    copied: "هاتە کۆپیکرن",
-    share: "بهنێرە",
+    send: "بانگهێشت ل WhatsApp بهنێرە",
+    sending: "بانگهێشتا WhatsApp دهێتە هنارتن…",
   },
   ar: {
-    title: "شارك رابط انضمام آمن",
-    help: "اختر طبيب موظف الاستقبال، أنشئ رابطاً يُستخدم مرة واحدة، وشاركه عبر WhatsApp أو Messages أو AirDrop أو أي تطبيق. الموظف يوثق رقم موبايله قبل ما Atlas يمنحه عضوية هذه العيادة.",
+    title: "دعوة موظف الاستقبال عبر واتساب",
+    help: "اكتب رقم واتساب لموظف الاستقبال. Atlas يرسل رابطاً آمناً يُستخدم مرة واحدة إلى نفس الرقم. يفتح الرابط، يوثق نفس الرقم عبر واتساب، وبعدها Atlas يضيفه للعيادة كموظف استقبال.",
+    phone: "رقم واتساب لموظف الاستقبال",
+    phoneHelp: "العراق: تقدر تكتب 0750… للدول الأخرى اكتب الرقم الدولي الكامل مع +.",
     doctor: "طبيب موظف الاستقبال",
     choose: "اختر طبيباً واحداً",
-    create: "إنشاء رابط انضمام آمن",
-    creating: "جارٍ الإنشاء…",
-    copy: "نسخ الرابط",
-    copied: "تم النسخ",
-    share: "مشاركة",
+    send: "إرسال الدعوة على واتساب",
+    sending: "جارٍ إرسال دعوة واتساب…",
   },
 } as const;
 
@@ -61,23 +57,6 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
 }) {
   const t = copy[locale];
   const [state, action, pending] = useActionState(createReceptionistInviteLink, initialState);
-  const [copied, setCopied] = useState(false);
-
-  async function copyLink() {
-    if (!state.url) return;
-    await navigator.clipboard.writeText(state.url);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
-  }
-
-  async function shareLink() {
-    if (!state.url) return;
-    if (navigator.share) {
-      await navigator.share({ title: "Atlas clinic invitation", url: state.url });
-    } else {
-      await copyLink();
-    }
-  }
 
   return (
     <section className="settings-card">
@@ -91,28 +70,23 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
 
       <form action={action} className="settings-form">
         <input type="hidden" name="clinic_id" value={clinicId} />
+        <label htmlFor="invite_phone">{t.phone}</label>
+        <input id="invite_phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="0750 123 4567" required dir="ltr" />
+        <p className="field-help">{t.phoneHelp}</p>
+
         <label htmlFor="invite_assigned_doctor_id">{t.doctor}</label>
         <select id="invite_assigned_doctor_id" name="assigned_doctor_id" defaultValue="" required disabled={doctors.length === 0}>
           <option value="" disabled>{t.choose}</option>
           {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
         </select>
         <button className="button" type="submit" disabled={pending || doctors.length === 0}>
-          {pending ? t.creating : t.create}
+          {pending ? t.sending : t.send}
         </button>
       </form>
 
       {state.message ? (
         <div className={`notice ${state.status === "success" ? "notice-success" : "notice-error"}`} role={state.status === "success" ? "status" : "alert"}>
           <strong>{state.message}</strong>
-          {state.url ? (
-            <>
-              <div className="field-help" dir="ltr" style={{ overflowWrap: "anywhere", marginTop: 8 }}>{state.url}</div>
-              <div className="login-secondary-actions" style={{ marginTop: 10 }}>
-                <button className="button button-ghost button-small" type="button" onClick={() => void copyLink()}>{copied ? t.copied : t.copy}</button>
-                <button className="button button-ghost button-small" type="button" onClick={() => void shareLink()}>{t.share}</button>
-              </div>
-            </>
-          ) : null}
         </div>
       ) : null}
     </section>
