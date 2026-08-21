@@ -1,0 +1,52 @@
+name: Atlas auth env probe
+
+on:
+  push:
+    branches:
+      - feature/whatsapp-phone-auth-v2
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
+      VERCEL_ORG_ID: team_12LjTXJIxUILoIdh54kXsRUc
+    steps:
+      - name: Report only environment key presence
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json, os, urllib.request, urllib.parse
+          token = os.environ.get('VERCEL_TOKEN','')
+          if not token:
+              raise SystemExit('VERCEL_TOKEN_MISSING')
+          project = os.environ['VERCEL_PROJECT_ID']
+          team = os.environ['VERCEL_ORG_ID']
+          url = f'https://api.vercel.com/v9/projects/{project}/env?teamId={urllib.parse.quote(team)}'
+          req = urllib.request.Request(url, headers={'Authorization': f'Bearer {token}'})
+          with urllib.request.urlopen(req, timeout=20) as r:
+              data = json.load(r)
+          wanted = {
+              'WHATSAPP_ENABLED','WHATSAPP_PROVIDER','WHATSAPP_ACCESS_TOKEN',
+              'WHATSAPP_PHONE_NUMBER_ID','WHATSAPP_APP_SECRET','WHATSAPP_VERIFY_TOKEN',
+              'WHATSAPP_GRAPH_API_VERSION','WHATSAPP_GLOBAL_DAILY_LIMIT',
+              'META_APP_ID','META_EMBEDDED_SIGNUP_ENABLED','META_EMBEDDED_SIGNUP_CONFIG_ID',
+              'SUPABASE_SECRET_KEY','SUPABASE_SERVICE_ROLE_KEY','NEXT_PUBLIC_SUPABASE_URL',
+              'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'
+          }
+          entries = data.get('envs') or []
+          by_key = {e.get('key'): e for e in entries if e.get('key') in wanted}
+          for key in sorted(wanted):
+              e = by_key.get(key)
+              if not e:
+                  print(f'{key}=ABSENT')
+                  continue
+              targets = ','.join(e.get('target') or [])
+              print(f'{key}=PRESENT targets={targets} type={e.get("type","?")}')
+          PY
