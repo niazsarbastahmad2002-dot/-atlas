@@ -2,13 +2,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { hashVerifiedPhone } from "@/lib/whatsapp-verification";
 
-function internalEmail(phone: string) {
+export function internalWhatsAppEmail(phone: string) {
   return `wa_${hashVerifiedPhone(phone).slice(0, 48)}@auth.atlas.invalid`;
 }
 
 export async function establishWhatsAppAtlasSession(phone: string) {
   const admin = createAdminClient();
-  const email = internalEmail(phone);
+  const email = internalWhatsAppEmail(phone);
   let user = null as any;
   let page = 1;
 
