@@ -175,15 +175,17 @@ function isRateLimitError(error: { code?: string; message?: string } | null) {
 function phoneCandidate(mode: CountryMode, input: string) {
   const cleaned = toAsciiPhoneDigits(input.trim());
   if (mode === "international") return cleaned;
-  if (!cleaned) return cleaned;
-  if (cleaned.startsWith("+")) return cleaned;
+  if (!cleaned || cleaned.startsWith("+")) return cleaned;
 
   const digits = cleaned.replace(/\D/g, "");
   if (mode === "+964") {
     if (/^07\d{9}$/.test(digits)) return digits;
     if (/^7\d{9}$/.test(digits)) return digits;
+    return cleaned;
   }
+
   const national = digits.startsWith("0") ? digits.slice(1) : digits;
+  if (national.length < 7 || national.length > 12) return cleaned;
   return `${mode}${national}`;
 }
 
