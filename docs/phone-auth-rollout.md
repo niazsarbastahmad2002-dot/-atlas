@@ -1,115 +1,135 @@
-# Atlas phone authentication rollout
+# Atlas WhatsApp phone authentication rollout
 
-Atlas is phone-first. Supabase Auth remains the identity authority; clinic ownership and membership remain separate application authorization concepts enforced by Postgres/RLS.
+Atlas's visible identity is a verified WhatsApp phone number. Normal users never enter, receive, or depend on Gmail/email/password credentials. Supabase Auth remains the secure session and user-ID authority; clinic ownership and membership remain separate application authorization concepts enforced by Postgres/RLS.
 
-## Target production architecture
+## Production architecture
 
-- **Identity:** Supabase Auth phone OTP.
-- **Canonical phone format:** E.164 (`+9647XXXXXXXXX`, etc.).
-- **Default delivery:** SMS through a production Supabase-supported SMS provider.
-- **Recommended provider for Atlas:** Twilio Verify, because it supports reliable SMS and gives Atlas a clean path to Supabase-supported WhatsApp OTP later.
-- **WhatsApp OTP:** disabled until Twilio/Twilio Verify and a real WhatsApp sender are configured and verified end-to-end. Atlas must never display a WhatsApp OTP choice just because Meta reminders are configured; reminder delivery and Supabase Auth OTP delivery are separate systems.
-- **Authorization:** `auth.uid()` plus clinic owner/member records and RLS. A phone number never grants clinic membership by itself.
-- **OTP storage:** Atlas never stores OTP values.
+- **Visible identity:** E.164 phone number (`+9647XXXXXXXXX`, etc.).
+- **Verification channel:** WhatsApp Business only.
+- **OTP generation:** Atlas server generates a six-digit challenge.
+- **OTP storage:** only HMAC hashes are stored in `private.whatsapp_auth_challenges`; plaintext OTP values are never persisted.
+- **OTP controls:** ten-minute expiry, one-use consumption, bounded attempts, phone/IP rate limits and a client resend cooldown.
+- **Delivery:** Meta WhatsApp Cloud API using an approved authentication template with a copy-code button.
+- **Session:** after WhatsApp verification, Atlas creates/updates the Supabase user and exchanges an admin-generated internal magic-link token for a normal Supabase session cookie. The deterministic `@auth.atlas.invalid` email is an internal transport identifier only; it is never shown or sent to the user.
+- **Authorization:** `auth.uid()` plus clinic owner/member records and RLS. A verified phone never grants clinic membership by itself.
 
-## Current rollout flags
+Supabase's hosted Phone/SMS provider does not need to be enabled for this architecture.
+
+## Required server configuration
 
 ```env
-ATLAS_LEGACY_AUTH_ENABLED=false
-NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED=false
-NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED=false
+SUPABASE_SECRET_KEY=...
+ATLAS_AUTH_SECRET=... # recommended dedicated HMAC secret
+WHATSAPP_ACCESS_TOKEN=...
+WHATSAPP_PHONE_NUMBER_ID=...
+WHATSAPP_GRAPH_API_VERSION=v26.0
+ATLAS_WHATSAPP_AUTH_TEMPLATE_NAME=atlas_login_code
+ATLAS_WHATSAPP_AUTH_TEMPLATE_LANGUAGE=en_US
+ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_NAME=atlas_staff_invite
+ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_LANGUAGE=en_US
 ```
 
-`/api/auth/readiness` exposes only safe booleans for operational verification. It must never expose provider credentials.
+`/api/auth/readiness` exposes only safe credential-presence booleans. It must never expose token values.
 
-## Supabase dashboard configuration
+## Meta authentication template
 
-Before production rollout:
+Create an approved WhatsApp template for `ATLAS_WHATSAPP_AUTH_TEMPLATE_NAME`:
 
-1. Open **Supabase → Authentication → Providers → Phone** for the Atlas project.
-2. Enable Phone authentication.
-3. Configure a production SMS provider. Prefer **Twilio Verify** for Atlas if available.
-4. Configure provider credentials only in Supabase's protected provider settings. Do not put SMS provider secrets in `NEXT_PUBLIC_*` variables or Atlas client code.
-5. Review OTP rate limits and expiry. Atlas also enforces a client resend cooldown, but the provider/Supabase rate limit is the security boundary.
-6. Keep Email enabled temporarily only for the legacy-account migration window.
-7. Do not enable the Atlas WhatsApp OTP UI yet.
+- category: **Authentication**
+- one-time password / copy-code experience
+- the six-digit Atlas OTP is supplied to the template body and copy-code button
+- no sensitive Atlas data is included
 
-After configuration, verify `/api/auth/readiness` reports `reachable: true` and `supabasePhoneEnabled: true`.
+The production sender must be the actual WhatsApp Business phone-number ID represented by `WHATSAPP_PHONE_NUMBER_ID`, authorized by `WHATSAPP_ACCESS_TOKEN`.
 
-## Existing-account migration — preserve IDs
+## Owner/new-user sign-in
 
-Do **not** create replacement users and do not update `auth.users` directly with SQL.
-
-1. Deploy the migration-capable release with `ATLAS_LEGACY_AUTH_ENABLED=true` and `NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED=false`.
-2. Each pre-phone user signs in through the unlinked `/login/legacy` route. The legacy magic-link call uses `shouldCreateUser: false`, so it cannot manufacture a replacement account.
-3. In Settings, the signed-in user chooses **Add/Change phone number**.
-4. Atlas calls Supabase `auth.updateUser({ phone })` for the already-authenticated user.
-5. The user receives the provider OTP and Atlas verifies it with `type: "phone_change"`.
-6. Confirm the same Supabase auth user ID still owns/belongs to the same clinics.
-7. Repeat for every pre-phone Atlas account.
-8. Confirm the live project has no required account left without a verified phone.
-9. Set `ATLAS_LEGACY_AUTH_ENABLED=false`.
-10. Set `NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED=true`.
-11. After confirming there are no legacy invitation/migration needs, disable normal Email authentication in Supabase if desired. Historical email fields can remain inside existing auth records; they are not the Atlas primary UI identity.
-
-This sequence preserves references such as `clinics.owner_id`, `clinic_members.user_id`, `doctors.created_by`, appointment actor references, and audit actor references because the Supabase user ID never changes.
-
-## New-user behavior
-
-1. User enters a mobile number and country code.
-2. Atlas normalizes it to E.164.
-3. Supabase sends the OTP.
-4. User verifies the OTP; only then does Supabase create/authenticate the identity when open phone signup is enabled.
-5. Atlas loads clinics available under RLS.
+1. User opens Atlas.
+2. User chooses country/code and enters the mobile number used on WhatsApp.
+3. Atlas normalizes the number to E.164.
+4. `POST /api/auth/whatsapp/start` creates a private hashed challenge and sends the code through WhatsApp.
+5. User copies the code from WhatsApp into Atlas.
+6. `POST /api/auth/whatsapp/verify` consumes the one-use challenge.
+7. Atlas creates or reuses the Supabase user tied to that verified phone and opens a Supabase session.
+8. Atlas loads clinics available under RLS:
    - zero clinics → clinic creation/onboarding
    - one clinic → open it
    - multiple clinics → explicit clinic chooser
-6. A normal newly authenticated user is never inserted into another clinic.
-7. An invited user joins only after a valid one-use invitation is redeemed server-side.
 
-## Clinic deletion behavior
+A normal verified user is never inserted into another clinic automatically.
 
-Clinic deletion and account deletion are different operations.
+## Changing the sign-in phone
 
-- Deleting a clinic removes that clinic and its clinic-owned records according to the database's existing protected cascade rules.
-- It does **not** delete the Supabase auth user.
-- If the user still has another accessible clinic, Atlas opens that clinic.
-- If the deleted clinic was the user's final workspace, Atlas signs out the current session and returns to `/login?notice=clinic_deleted`.
-- After the user verifies their phone again, the zero-clinic dashboard offers clinic creation so they can experience the fresh clinic onboarding flow again.
+Settings uses exactly the same WhatsApp verification engine:
 
-## WhatsApp OTP activation
+1. Authenticated user enters the new WhatsApp number.
+2. Atlas sends a new WhatsApp code.
+3. `POST /api/auth/whatsapp/change-phone` consumes the challenge.
+4. Atlas rejects the change if the phone already belongs to another Atlas identity.
+5. Atlas updates the same Supabase user ID, including phone and the internal synthetic auth email.
+6. Clinic ownership/membership therefore remains attached to the same user ID.
 
-Only enable `NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED=true` after all of the following are true:
+No Supabase `phone_change` SMS OTP is used.
 
-1. Supabase Phone Auth is using Twilio or Twilio Verify.
-2. A real WhatsApp sender is configured for that provider.
-3. A test phone receives a WhatsApp OTP from the production provider.
-4. The newest OTP verifies successfully through Supabase and creates a session.
-5. Rate-limit and resend behavior are verified.
+## Receptionist invitation
 
-The existing Atlas Meta/WhatsApp reminder integration does not satisfy these requirements by itself.
+The clinic owner does not enter an email and does not manually provision a password.
 
-## Required release verification
+1. Owner enters the receptionist's WhatsApp phone and assigned doctor.
+2. Atlas creates a cryptographically random one-use token with 24-hour expiry.
+3. Only the SHA-256 token hash and HMAC phone hash are stored.
+4. Atlas sends an approved WhatsApp invitation template to that exact phone with a URL button linking to `/join/<token>`.
+5. Receptionist opens the link and verifies their phone through WhatsApp.
+6. Redemption succeeds only if the verified phone hash matches the phone hash originally invited.
+7. The server then inserts/updates the receptionist clinic membership.
 
-Before merging/deploying to production, require:
+Forwarding the invitation link to a different phone does not grant clinic access.
+
+## True Atlas account deletion
+
+**Delete Atlas account permanently** means identity deletion, not merely deleting one clinic.
+
+1. Atlas deletes every clinic owned by that user under the existing protected database cascade rules.
+2. Atlas deletes the Supabase auth user.
+3. Sessions, memberships and auth-linked records cascade according to the schema.
+4. Atlas returns to `/login?notice=account_deleted`.
+5. If that same phone verifies through WhatsApp later, Atlas creates a brand-new auth identity and the user experiences fresh clinic onboarding.
+
+The separate clinic-workspace deletion action may remain for users who intentionally want to delete only one clinic; it is not presented as account deletion.
+
+## Database security
+
+`private.whatsapp_auth_challenges`:
+- RLS enabled
+- no `anon` or `authenticated` table privileges
+- HMAC phone/IP/OTP values only
+- one-use `consumed_at`
+- expiry and request indexes
+
+Phone-bound staff invite RPCs are executable by `service_role` only. Browser clients cannot create or redeem membership directly.
+
+## Production release verification
+
+Before promoting this architecture, require:
 
 - TypeScript typecheck.
-- Unit and security regression suite.
+- Unit/security regression suite.
 - Production Next.js build.
 - Production dependency audit.
-- Playwright browser smoke tests, including a 390×844 iPhone viewport.
+- Browser smoke matrix including iPhone viewport.
 - iOS simulator compile.
-- Invalid/malformed phone rejection before provider contact.
-- OTP send and successful OTP verification against the real SMS provider.
-- Incorrect and expired OTP behavior.
-- Resend/cooldown/rate-limit behavior.
-- Returning-user phone login.
-- New-user phone signup with zero clinics → create clinic.
-- Explicit invite redemption → joined clinic.
-- Stranger phone signup → no membership in an existing clinic.
-- Logout/login again.
-- Existing-account migration with unchanged auth user ID and unchanged clinic ownership/membership.
-- Cross-clinic RLS checks.
-- Delete final clinic → auth account preserved → sign-in → fresh create-clinic onboarding.
+- Production `/login` contains WhatsApp phone UI and no email/Gmail field.
+- Live real-number WhatsApp OTP arrives from the production sender.
+- Correct code creates a Supabase session.
+- Incorrect, expired and exhausted-attempt behavior works.
+- Resend/rate limiting works.
+- Returning verified phone opens the same user ID.
+- New verified phone with zero clinics reaches clinic creation.
+- Phone-change flow preserves the same user ID.
+- Owner-entered receptionist phone receives a WhatsApp invitation link.
+- Correct invited phone can redeem; a different phone cannot.
+- Stranger phone verification creates no membership in an existing clinic.
+- Cross-clinic RLS checks remain green.
+- Permanent account deletion removes owned clinics + auth identity, and the same phone can subsequently start fresh.
 
-Do not promote the release while any real-provider or existing-account migration check above is incomplete.
+Do not describe WhatsApp authentication as end-to-end live until a real production sender credential and approved templates have produced successful test messages.
