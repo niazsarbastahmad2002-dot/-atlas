@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { maskPhone, normalizeAuthPhone, normalizeOtpToken } from "../lib/phone-auth.ts";
 
-const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const file = (path: string) => new URL(`../${path}`, import.meta.url);
+const read = (path: string) => readFileSync(file(path), "utf8");
 
 test("normalizes Iraq-first and international authentication phone numbers", () => {
   assert.equal(normalizeAuthPhone("0750 123 4567"), "+9647501234567");
@@ -25,44 +26,59 @@ test("normalizes localized OTP digits and masks phone display", () => {
   assert.equal(maskPhone("+9647501234567"), "+964••••567");
 });
 
-test("normal login is phone OTP only, country-aware, and open signup is rollout-gated", () => {
+test("normal Atlas login is WhatsApp-only and country-aware", () => {
   const page = read("app/login/page.tsx");
   const form = read("app/login/login-form.tsx");
 
-  assert.doesNotMatch(page, /CreateClinicAccount/);
+  assert.doesNotMatch(page, /LegacyLoginForm|CreateClinicAccount|Existing Atlas email|migration sign-in/i);
+  assert.match(page, /Enter your WhatsApp number/);
   assert.match(form, /Iraq \(\+964\)/);
   assert.match(form, /Other international \(\+…\)/);
-  assert.match(form, /signInWithOtp\(\{[\s\S]*phone/);
-  assert.match(form, /verifyOtp\(\{[\s\S]*type: "sms"/);
-  assert.match(form, /shouldCreateUser: PHONE_SIGNUP_ENABLED/);
-  assert.match(form, /POST_AUTH_DESTINATION = "\/dashboard\/select-clinic"/);
-  assert.doesNotMatch(form, /signInWithOAuth/);
-  assert.doesNotMatch(form, /type="email"/);
+  assert.match(form, /\/api\/auth\/whatsapp\/start/);
+  assert.match(form, /\/api\/auth\/whatsapp\/verify/);
+  assert.match(form, /Send code to WhatsApp/);
+  assert.match(form, /Check your WhatsApp/);
+  assert.match(form, /autoComplete="one-time-code"/);
+  assert.doesNotMatch(form, /signInWithOtp|signInWithOAuth|type="email"|type: "sms"|channel: "sms"/);
 });
 
-test("WhatsApp OTP is feature-gated and never presented as a fake default", () => {
-  const form = read("app/login/login-form.tsx");
-  const envExample = read(".env.example");
-
-  assert.match(form, /NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED/);
-  assert.match(form, /WHATSAPP_OTP_ENABLED \?/);
-  assert.match(form, /channel: "whatsapp"/);
-  assert.match(envExample, /NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED=false/);
+test("legacy Gmail/email authentication route is removed", () => {
+  const page = read("app/login/page.tsx");
+  assert.equal(existsSync(file("app/login/legacy/page.tsx")), false);
+  assert.equal(existsSync(file("app/login/legacy/legacy-login-form.tsx")), false);
+  assert.doesNotMatch(page, /email|gmail|magic link/i);
 });
 
-test("existing email-era users migrate without creating replacement auth users", () => {
-  const legacy = read("app/login/legacy/legacy-login-form.tsx");
-  const legacyPage = read("app/login/legacy/page.tsx");
-  const phoneManager = read("app/dashboard/settings/phone-number-manager.tsx");
+test("WhatsApp challenges are hashed, rate-limited, expiring and one-use", () => {
+  const verification = read("lib/whatsapp-verification.ts");
 
-  assert.match(legacy, /shouldCreateUser: false/);
-  assert.match(legacyPage, /ATLAS_LEGACY_AUTH_ENABLED/);
-  assert.match(phoneManager, /auth\.updateUser\(\{ phone \}\)/);
-  assert.match(phoneManager, /type: "phone_change"/);
-  assert.doesNotMatch(phoneManager, /admin\.createUser|signUp\(/);
+  assert.match(verification, /createHmac/);
+  assert.match(verification, /timingSafeEqual/);
+  assert.match(verification, /whatsapp_auth_challenges/);
+  assert.match(verification, /OTP_TTL_MS = 10 \* 60 \* 1000/);
+  assert.match(verification, /OTP_MAX_ATTEMPTS = 5/);
+  assert.match(verification, /\(phoneCount\.count \?\? 0\) >= 6/);
+  assert.match(verification, /\(ipCount\.count \?\? 0\) >= 20/);
+  assert.match(verification, /consumed_at/);
+  assert.match(verification, /otp_hash: hashOtp/);
+  assert.doesNotMatch(verification, /otp:\s*code|code:\s*code/);
 });
 
-test("authentication and clinic membership remain separate concepts", () => {
+test("verified WhatsApp phone opens a real Supabase session without sending email", () => {
+  const session = read("lib/whatsapp-session.ts");
+  const verifyRoute = read("app/api/auth/whatsapp/verify/route.ts");
+
+  assert.match(session, /@auth\.atlas\.invalid/);
+  assert.match(session, /atlas_phone/);
+  assert.match(session, /atlas_identity: "whatsapp_phone"/);
+  assert.match(session, /generateLink\(\{/);
+  assert.match(session, /type: "magiclink"/);
+  assert.match(session, /token_hash: generated\.data\.properties\.hashed_token/);
+  assert.match(verifyRoute, /establishWhatsAppAtlasSession/);
+  assert.doesNotMatch(session, /signInWithOtp\(\{\s*email|resend\(|send.*email/i);
+});
+
+test("authentication and clinic membership stay separate and invites require the same verified phone", () => {
   const chooser = read("app/dashboard/select-clinic/page.tsx");
   const inviteAuth = read("app/join/[token]/join-auth.tsx");
   const inviteFinish = read("app/join/[token]/finish/route.ts");
@@ -70,48 +86,62 @@ test("authentication and clinic membership remain separate concepts", () => {
   assert.match(chooser, /if \(!clinics\?\.length\) redirect\("\/dashboard"\)/);
   assert.match(chooser, /if \(clinics\.length === 1\) redirect/);
   assert.match(chooser, /Choose a clinic/);
-  assert.match(inviteAuth, /signInWithOtp/);
-  assert.match(inviteFinish, /redeem_staff_invite_link_service/);
+  assert.match(inviteAuth, /LoginForm/);
+  assert.match(inviteFinish, /redeem_phone_staff_invite_link_service/);
   assert.match(inviteFinish, /p_user_id: userData\.user\.id/);
+  assert.match(inviteFinish, /p_verified_phone_hash: hashVerifiedPhone\(verifiedPhone\)/);
   assert.doesNotMatch(inviteAuth, /clinic_members/);
 });
 
-test("clinic access management uses secure join links and phone identity instead of normal email provisioning", () => {
+test("clinic access management sends phone-bound receptionist invitations through WhatsApp", () => {
   const staffPage = read("app/dashboard/staff/page.tsx");
   const inviteForm = read("app/dashboard/staff/invite-link-form.tsx");
   const inviteAction = read("app/dashboard/staff/invite-actions.ts");
+  const inviteSender = read("lib/whatsapp-staff-invite.ts");
 
   assert.match(staffPage, /InviteLinkForm/);
   assert.doesNotMatch(staffPage, /StaffProvisionForm/);
-  assert.match(staffPage, /user\.phone \?\?/);
   assert.doesNotMatch(staffPage, /user\.email/);
-  assert.match(inviteForm, /verifies their phone/);
+  assert.match(inviteForm, /Receptionist WhatsApp number/);
+  assert.match(inviteForm, /Send invitation on WhatsApp/);
   assert.match(inviteAction, /randomBytes\(32\)/);
-  assert.match(inviteAction, /24 \* 60 \* 60 \* 1000/);
+  assert.match(inviteAction, /create_phone_staff_invite_link_service/);
+  assert.match(inviteAction, /hashVerifiedPhone\(phone\)/);
+  assert.match(inviteAction, /sendReceptionistInviteWhatsApp/);
+  assert.match(inviteSender, /graph\.facebook\.com/);
 });
 
-test("settings use phone identity and last-clinic deletion returns to sign-in without deleting auth user", () => {
-  const settings = read("app/dashboard/settings/page.tsx");
+test("permanent account deletion removes owned clinics and the auth identity", () => {
   const account = read("app/dashboard/settings/account/page.tsx");
-  const deletion = read("app/dashboard/settings/delete/actions.ts");
+  const deletion = read("app/dashboard/settings/account/actions.ts");
 
-  assert.match(settings, /userData\.user\.phone/);
-  assert.doesNotMatch(settings, /userData\.user\.email/);
-  assert.match(account, /userData\.user\.phone/);
-  assert.doesNotMatch(account, /userData\.user\.email/);
-  assert.match(deletion, /supabase\.auth\.signOut\(\)/);
-  assert.match(deletion, /\/login\?notice=clinic_deleted/);
-  assert.doesNotMatch(deletion, /admin\.deleteUser|deleteUser\(/);
+  assert.match(account, /Delete Atlas account permanently/);
+  assert.match(account, /brand-new account/);
+  assert.match(deletion, /from\("clinics"\)[\s\S]*\.delete\(\)[\s\S]*\.eq\("owner_id", userId\)/);
+  assert.match(deletion, /auth\.admin\.deleteUser\(userId\)/);
+  assert.match(deletion, /\/login\?notice=account_deleted/);
 });
 
-test("auth readiness endpoint exposes only non-secret rollout booleans", () => {
-  const readiness = read("lib/auth-readiness.ts");
+test("sign-in phone changes are verified by WhatsApp and keep the same user id", () => {
+  const manager = read("app/dashboard/settings/phone-number-manager.tsx");
+  const route = read("app/api/auth/whatsapp/change-phone/route.ts");
+
+  assert.match(manager, /\/api\/auth\/whatsapp\/start/);
+  assert.match(manager, /\/api\/auth\/whatsapp\/change-phone/);
+  assert.doesNotMatch(manager, /auth\.updateUser|type: "phone_change"/);
+  assert.match(route, /consumeWhatsAppVerification/);
+  assert.match(route, /candidate\.id !== current\.data\.user!\.id/);
+  assert.match(route, /updateUserById\(current\.data\.user\.id/);
+  assert.match(route, /phone_in_use/);
+});
+
+test("auth readiness exposes sender presence only, never sender secret values", () => {
   const route = read("app/api/auth/readiness/route.ts");
 
-  assert.match(readiness, /supabasePhoneEnabled/);
-  assert.match(readiness, /openPhoneSignupEnabled/);
-  assert.match(readiness, /whatsappOtpEnabled/);
-  assert.doesNotMatch(readiness, /SERVICE_ROLE|SECRET_KEY|access_token/);
+  assert.match(route, /directMetaSenderConfigured/);
+  assert.match(route, /whatsappAccessTokenConfigured/);
+  assert.match(route, /whatsappPhoneNumberIdConfigured/);
   assert.match(route, /Cache-Control/);
   assert.match(route, /no-store/);
+  assert.doesNotMatch(route, /accessToken\s*:/);
 });
