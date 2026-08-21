@@ -76,6 +76,20 @@ test("authentication and clinic membership remain separate concepts", () => {
   assert.doesNotMatch(inviteAuth, /clinic_members/);
 });
 
+test("clinic access management uses secure join links and phone identity instead of normal email provisioning", () => {
+  const staffPage = read("app/dashboard/staff/page.tsx");
+  const inviteForm = read("app/dashboard/staff/invite-link-form.tsx");
+  const inviteAction = read("app/dashboard/staff/invite-actions.ts");
+
+  assert.match(staffPage, /InviteLinkForm/);
+  assert.doesNotMatch(staffPage, /StaffProvisionForm/);
+  assert.match(staffPage, /user\.phone \?\?/);
+  assert.doesNotMatch(staffPage, /user\.email/);
+  assert.match(inviteForm, /verifies their phone/);
+  assert.match(inviteAction, /randomBytes\(32\)/);
+  assert.match(inviteAction, /24 \* 60 \* 60 \* 1000/);
+});
+
 test("settings use phone identity and last-clinic deletion returns to sign-in without deleting auth user", () => {
   const settings = read("app/dashboard/settings/page.tsx");
   const account = read("app/dashboard/settings/account/page.tsx");
