@@ -4,7 +4,7 @@ async function setLocale(context, locale) {
   await context.addCookies([{ name: "atlas_ui_locale", value: locale, url: "http://127.0.0.1:3100", sameSite: "Lax" }]);
 }
 
-test("unauthenticated receptionist sees language choice, country-aware phone verification and optional passkey", async ({ page }) => {
+test("unauthenticated receptionist sees language choice and WhatsApp-only phone verification", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Your clinic starts with your number." })).toBeVisible();
   await expect(page.getByRole("button", { name: "کوردی سۆرانی" })).toBeVisible();
@@ -12,36 +12,36 @@ test("unauthenticated receptionist sees language choice, country-aware phone ver
   await expect(page.getByRole("button", { name: /العربية/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /English/ })).toBeVisible();
   await expect(page.getByLabel("Country / code")).toHaveValue("+964");
-  await expect(page.getByLabel("Mobile number")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send verification code" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Use saved passkey" })).toBeVisible();
+  await expect(page.getByLabel("WhatsApp phone number")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send code to WhatsApp" })).toBeVisible();
+  await expect(page.getByText(/Existing Atlas email|migration sign-in|Gmail/i)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /passkey/i })).toHaveCount(0);
 });
 
-test("international phone mode accepts a full country-code input surface", async ({ page }) => {
+test("international WhatsApp phone mode accepts a full country-code input surface", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Country / code").selectOption("international");
-  await expect(page.getByLabel("Mobile number")).toHaveAttribute("placeholder", "+4915123456789");
+  await expect(page.getByLabel("WhatsApp phone number")).toHaveAttribute("placeholder", "+4915123456789");
 });
 
-test("phone login rejects malformed numbers before contacting the verification provider", async ({ page }) => {
+test("WhatsApp login rejects malformed numbers before creating an auth challenge", async ({ page }) => {
   const authRequests = [];
   page.on("request", (request) => {
-    if (request.url().includes("supabase.co/auth")) authRequests.push(request.url());
+    if (request.url().includes("/api/auth/whatsapp/start")) authRequests.push(request.url());
   });
   await page.goto("/login");
-  await page.getByLabel("Mobile number").fill("12345");
-  await page.getByRole("button", { name: "Send verification code" }).click();
+  await page.getByLabel("WhatsApp phone number").fill("12345");
+  await page.getByRole("button", { name: "Send code to WhatsApp" }).click();
   await expect(page.locator(".login-notice[role='alert']")).toContainText("Enter a valid mobile number");
   expect(authRequests).toEqual([]);
 });
 
-test("phone login fits an iPhone-sized viewport without horizontal overflow", async ({ page }) => {
+test("WhatsApp phone login fits an iPhone-sized viewport without horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/login");
   await expect(page.getByLabel("Country / code")).toBeVisible();
-  await expect(page.getByLabel("Mobile number")).toBeVisible();
-  await expect(page.getByLabel("Mobile number")).toHaveAttribute("type", "tel");
-  await expect(page.getByLabel("Mobile number")).toHaveAttribute("inputmode", "tel");
+  await expect(page.getByLabel("WhatsApp phone number")).toBeVisible();
+  await expect(page.getByLabel("WhatsApp phone number")).toHaveAttribute("inputmode", "tel");
   const dimensions = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
     client: document.documentElement.clientWidth,
@@ -63,12 +63,12 @@ test("language picker persists a pre-auth Badini choice", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /کلینیکا تە ب ژمارا موبایلا تە/ })).toBeVisible();
 });
 
-test("expired or consumed legacy auth link shows recovery language with phone sign-in ready", async ({ page }) => {
+test("expired auth link recovers to WhatsApp sign-in", async ({ page }) => {
   await page.goto("/auth/callback");
   await expect(page).toHaveURL(/\/login\?error=invalid_link/);
   await expect(page.locator(".login-notice[role='alert']")).toContainText("no longer valid");
-  await expect(page.getByLabel("Mobile number")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send verification code" })).toBeVisible();
+  await expect(page.getByLabel("WhatsApp phone number")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send code to WhatsApp" })).toBeVisible();
 });
 
 test("signed-out state confirms logout without technical jargon", async ({ page }) => {
@@ -76,19 +76,26 @@ test("signed-out state confirms logout without technical jargon", async ({ page 
   await expect(page.getByRole("status")).toContainText("signed out safely");
 });
 
-test("clinic deletion notice confirms the account is preserved and phone sign-in is ready", async ({ page }) => {
-  await page.goto("/login?notice=clinic_deleted");
-  await expect(page.getByRole("status")).toContainText("Atlas account is still safe");
-  await expect(page.getByLabel("Mobile number")).toBeVisible();
+test("permanent account deletion notice offers fresh WhatsApp signup", async ({ page }) => {
+  await page.goto("/login?notice=account_deleted");
+  await expect(page.getByRole("status")).toContainText("permanently deleted");
+  await expect(page.getByRole("status")).toContainText("completely new account");
+  await expect(page.getByLabel("WhatsApp phone number")).toBeVisible();
 });
 
-test("Sorani login is RTL and phone verification is immediately available", async ({ context, page }) => {
+test("clinic workspace deletion is not described as account deletion", async ({ page }) => {
+  await page.goto("/login?notice=clinic_deleted");
+  await expect(page.getByRole("status")).toContainText("clinic workspace was deleted");
+  await expect(page.getByRole("status")).not.toContainText("account is still safe");
+});
+
+test("Sorani login is RTL and WhatsApp verification is immediately available", async ({ context, page }) => {
   await setLocale(context, "ku");
   await page.goto("/login");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: /کلینیکەکەت بە ژمارەی مۆبایلەکەت/ })).toBeVisible();
-  await expect(page.getByLabel("ژمارەی مۆبایل")).toBeVisible();
-  await expect(page.getByRole("button", { name: "کۆدی پشتڕاستکردنەوە بنێرە" })).toBeVisible();
+  await expect(page.getByLabel("ژمارەی WhatsApp")).toBeVisible();
+  await expect(page.getByRole("button", { name: "کۆد بۆ WhatsApp بنێرە" })).toBeVisible();
 });
 
 test("Badini login is RTL", async ({ context, page }) => {
@@ -96,7 +103,7 @@ test("Badini login is RTL", async ({ context, page }) => {
   await page.goto("/login");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: /کلینیکا تە ب ژمارا موبایلا تە/ })).toBeVisible();
-  await expect(page.getByLabel("ژمارا موبایلێ")).toBeVisible();
+  await expect(page.getByLabel("ژمارا WhatsApp")).toBeVisible();
 });
 
 test("Arabic login is RTL", async ({ context, page }) => {
@@ -104,7 +111,7 @@ test("Arabic login is RTL", async ({ context, page }) => {
   await page.goto("/login");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: /عيادتك تبدأ من رقمك/ })).toBeVisible();
-  await expect(page.getByLabel("رقم الموبايل")).toBeVisible();
+  await expect(page.getByLabel("رقم واتساب")).toBeVisible();
 });
 
 test("English login is LTR", async ({ context, page }) => {
