@@ -8,6 +8,7 @@ import { SubmitButton } from "@/app/components/submit-button";
 import { DoctorPatientDetailsCard } from "../doctor-patient-details-card";
 import { SettingsReminderCard } from "../settings-reminder-card";
 import { PasskeyManager } from "./passkey-manager";
+import { PhoneNumberManager } from "./phone-number-manager";
 import {
   createDoctor,
   moveDoctor,
@@ -57,6 +58,7 @@ const settingsCopy: Record<UiLocale, {
   accountHelp: string;
   signOutHelp: string;
   readOnlyClinic: string;
+  phonePending: string;
 }> = {
   en: {
     clinicBasics: "Clinic & scheduling",
@@ -66,9 +68,10 @@ const settingsCopy: Record<UiLocale, {
     access: "Clinic access",
     accessHelp: "Add or remove reception staff without changing the daily schedule experience.",
     manageAccess: "Manage clinic access",
-    accountHelp: "Atlas normally keeps this trusted device signed in.",
+    accountHelp: "Your verified phone is the primary Atlas sign-in identity. Passkeys can remain as an optional trusted-device shortcut.",
     signOutHelp: "Sign out only when you want this device to require sign-in again.",
     readOnlyClinic: "Clinic administration manages the clinic name.",
+    phonePending: "Phone not verified yet",
   },
   ku: {
     clinicBasics: "کلینیک و خشتەی کات",
@@ -78,9 +81,10 @@ const settingsCopy: Record<UiLocale, {
     access: "دەسەڵاتی کلینیک",
     accessHelp: "ستافی ڕیسێپشن زیاد یان لاببە، بەبێ ئاڵۆزکردنی خشتەی ڕۆژانە.",
     manageAccess: "بەڕێوەبردنی دەسەڵاتی کلینیک",
-    accountHelp: "Atlas بە ئاسایی ئەم ئامێرە متمانەپێکراوە بە چوونەژوورەوە دەهێڵێتەوە.",
+    accountHelp: "ژمارەی پشتڕاستکراوی مۆبایل ناسنامەی سەرەکی چوونەژوورەوەی Atlas ـە. Passkey دەتوانێت تەنها وەک ڕێگای خێرای ئامێری متمانەپێکراو بمێنێتەوە.",
     signOutHelp: "تەنها کاتێک بچۆ دەرەوە کە دەتەوێت ئەم ئامێرە دووبارە داوای چوونەژوورەوە بکات.",
     readOnlyClinic: "بەڕێوەبەری کلینیک ناوی کلینیک بەڕێوە دەبات.",
+    phonePending: "ژمارەی مۆبایل هێشتا پشتڕاست نەکراوەتەوە",
   },
   bd: {
     clinicBasics: "کلینیک و وادە",
@@ -90,9 +94,10 @@ const settingsCopy: Record<UiLocale, {
     access: "دەستهەلاتا کلینیکێ",
     accessHelp: "ستافێ ڕیسێپشنێ زێدە یان کێم بکە بێ ئاڵۆزکرنا خشتەیا ڕۆژانە.",
     manageAccess: "دەستهەلاتا کلینیکێ بەڕێڤە ببە",
-    accountHelp: "Atlas ب شێوەی ئاسایی ئەڤ ئامێرە متمانەپێکری د چوونەژوورێ دا دهێلیت.",
+    accountHelp: "ژمارا پشتڕاستکری یا موبایلێ ناسناما سەرەکی یا چوونەژوورا Atlas ـە. Passkey دشێت تەنێ وەک ڕێکا خێرا یا ئامێرێ متمانەپێکری بمینیت.",
     signOutHelp: "تەنێ دەمێ تو دخوازیت ئەڤ ئامێرە دووبارە چوونەژوور بخوازیت بچۆ دەرڤە.",
     readOnlyClinic: "بەڕێڤەبرنا کلینیکێ ناڤێ کلینیکێ بەڕێڤە دبەت.",
+    phonePending: "ژمارا موبایلێ هێشتا نەهاتییە پشتڕاستکرن",
   },
   ar: {
     clinicBasics: "العيادة والجدولة",
@@ -102,9 +107,10 @@ const settingsCopy: Record<UiLocale, {
     access: "صلاحيات العيادة",
     accessHelp: "أضف أو أزل موظفي الاستقبال دون تعقيد الجدول اليومي.",
     manageAccess: "إدارة صلاحيات العيادة",
-    accountHelp: "يبقي Atlas هذا الجهاز الموثوق مسجلاً للدخول عادةً.",
+    accountHelp: "رقم الهاتف الموثق هو هوية تسجيل الدخول الأساسية في Atlas. ويمكن أن يبقى Passkey كاختصار اختياري على جهاز موثوق.",
     signOutHelp: "سجّل الخروج فقط عندما تريد أن يطلب هذا الجهاز تسجيل الدخول من جديد.",
     readOnlyClinic: "تدير إدارة العيادة اسم العيادة.",
+    phonePending: "رقم الهاتف غير موثق بعد",
   },
 };
 
@@ -335,11 +341,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             <div>
               <div className="eyebrow">{t.account}</div>
               <h2>{t.signedInAs}</h2>
-              <p className="account-email" dir="ltr">{userData.user.email ?? "Atlas user"}</p>
+              <p className="account-email" dir="ltr">{userData.user.phone ?? copy.phonePending}</p>
             </div>
           </div>
 
           <p className="field-help">{copy.accountHelp}</p>
+          <PhoneNumberManager locale={locale} currentPhone={userData.user.phone ?? null} />
           <PasskeyManager locale={locale} />
           <div className="settings-account-signout">
             <p className="field-help">{copy.signOutHelp}</p>
