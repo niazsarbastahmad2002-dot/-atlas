@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
-import { LegacyLoginForm } from "./legacy/legacy-login-form";
 import { LoginForm } from "./login-form";
 import { LoginLanguagePicker } from "./language-picker";
 
@@ -17,7 +15,6 @@ type LoginPageCopy = {
   signedOut: string;
   clinicDeleted: string;
   accountDeleted: string;
-  appleRevokeNeeded: string;
   stageSignal: string;
   stagePulse: string;
   language: string;
@@ -27,53 +24,49 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
   en: {
     eyebrow: "Front desk",
     title: "Your clinic starts with your number.",
-    subtitle: "Verify your phone, then open your clinic or create a new one.",
-    invalid: "That sign-in session is no longer valid. Request a fresh verification code below.",
+    subtitle: "Enter your WhatsApp number. Atlas sends a code there, you copy it here, and you’re in.",
+    invalid: "That sign-in session is no longer valid. Request a fresh WhatsApp code below.",
     signedOut: "You signed out safely.",
-    clinicDeleted: "Your clinic was deleted. Your Atlas account is still safe — verify your phone whenever you want to create a clinic again.",
-    accountDeleted: "Your Atlas account was permanently deleted.",
-    appleRevokeNeeded: "Your Atlas account was deleted. Apple access could not be revoked automatically. On iPhone, open Settings → your name → Sign in with Apple → Atlas, then tap Delete / Stop Using.",
+    clinicDeleted: "The clinic workspace was deleted.",
+    accountDeleted: "Your Atlas account was permanently deleted. Verify a phone number whenever you want to create a completely new account.",
     stageSignal: "One number. Your clinic workspace.",
-    stagePulse: "Secure phone verification",
+    stagePulse: "Verified through WhatsApp",
     language: "Choose your language",
   },
   ku: {
     eyebrow: "سکرتێر",
     title: "کلینیکەکەت بە ژمارەی مۆبایلەکەت دەست پێ دەکات.",
-    subtitle: "ژمارەکەت پشتڕاست بکەرەوە، پاشان کلینیکەکەت بکەرەوە یان کلینیکێکی نوێ دروست بکە.",
-    invalid: "دانیشتنی چوونەژوورەوەکە چیتر دروست نییە. کۆدێکی نوێ داوا بکە.",
+    subtitle: "ژمارەی WhatsApp ـەکەت بنووسە. Atlas کۆدێک بۆ WhatsApp دەنێرێت، کۆپی بکە و لێرە دایبنێ، پاشان دەچیتە ژوورەوە.",
+    invalid: "دانیشتنی چوونەژوورەوەکە چیتر دروست نییە. کۆدێکی نوێی WhatsApp داوا بکە.",
     signedOut: "بە سەلامەتی چوویتە دەرەوە.",
-    clinicDeleted: "کلینیکەکەت سڕایەوە، بەڵام هەژماری Atlas ـەکەت پارێزراوە. هەر کات دەتەوێت ژمارەکەت پشتڕاست بکەرەوە و کلینیکێکی نوێ دروست بکە.",
-    accountDeleted: "هەژماری Atlas ـەکەت بە هەمیشەیی سڕایەوە.",
-    appleRevokeNeeded: "هەژماری Atlas ـەکەت سڕایەوە، بەڵام دەسەڵاتی Apple خۆکارانە هەڵنەوەشایەوە. لە iPhone: Settings → ناوت → Sign in with Apple → Atlas، پاشان Delete / Stop Using دابگرە.",
+    clinicDeleted: "شوێنی کاری کلینیکەکە سڕایەوە.",
+    accountDeleted: "هەژماری Atlas ـەکەت بە هەمیشەیی سڕایەوە. هەر کات دەتەوێت هەژمارێکی تەواو نوێ دروست بکەیت، ژمارەیەک پشتڕاست بکەرەوە.",
     stageSignal: "یەک ژمارە، شوێنی کاری کلینیکەکەت.",
-    stagePulse: "پشتڕاستکردنەوەی پارێزراوی مۆبایل",
+    stagePulse: "پشتڕاستکراوە لە WhatsApp",
     language: "زمانەکەت هەڵبژێرە",
   },
   bd: {
     eyebrow: "سکرتێر",
     title: "کلینیکا تە ب ژمارا موبایلا تە دەست پێ دکەت.",
-    subtitle: "ژمارا خۆ پشتڕاست بکە، پاشی کلینیکا خۆ ڤەکە یان کلینیکەکا نوو دروست بکە.",
-    invalid: "دانیشتنا چوونەژوورێ دیگر دروست نینە. کۆدەکێ نوو بخوازە.",
+    subtitle: "ژمارا WhatsApp یا خۆ بنڤیسە. Atlas کۆدەکێ بۆ WhatsApp دهنێریت، کۆپی بکە و ل ڤێرێ دابنێ، پاشی دچیتە ژوور.",
+    invalid: "دانیشتنا چوونەژوورێ دیگر دروست نینە. کۆدەکێ نوو یێ WhatsApp بخوازە.",
     signedOut: "ب سەلامەتی چوویە دەرڤە.",
-    clinicDeleted: "کلینیکا تە هاتە ژێبرن، لێ هەژمارا Atlas یا تە پاراستییە. هەر دەم بخوازیت ژمارا خۆ پشتڕاست بکە و کلینیکەکا نوو دروست بکە.",
-    accountDeleted: "هەژمارا Atlas یا تە بۆ هەردەم هاتە ژێبرن.",
-    appleRevokeNeeded: "هەژمارا Atlas یا تە هاتە ژێبرن، لێ دەستهەلاتا Apple خودکار نەهاتە هەلوەشاندن. ل iPhone: Settings → ناڤێ تە → Sign in with Apple → Atlas، پاشی Delete / Stop Using بکە.",
+    clinicDeleted: "شوێنێ کارێ کلینیکێ هاتە ژێبرن.",
+    accountDeleted: "هەژمارا Atlas یا تە بۆ هەردەم هاتە ژێبرن. هەر دەم بخوازیت هەژمارەکا تەمام نوو دروست بکەی، ژمارەکێ پشتڕاست بکە.",
     stageSignal: "ئێک ژمارە، شوێنێ کارێ کلینیکا تە.",
-    stagePulse: "پشتڕاستکرنا پاراستی یا موبایلێ",
+    stagePulse: "ل WhatsApp هاتییە پشتڕاستکرن",
     language: "زمانێ خۆ هەلبژێرە",
   },
   ar: {
     eyebrow: "الاستقبال",
     title: "عيادتك تبدأ من رقمك.",
-    subtitle: "تحقق من رقم الهاتف، وبعدها افتح عيادتك أو أنشئ عيادة جديدة.",
-    invalid: "جلسة تسجيل الدخول لم تعد صالحة. اطلب رمز تحقق جديد بالأسفل.",
+    subtitle: "اكتب رقم واتساب. Atlas يرسل لك كود على واتساب، انسخه هنا، وتدخل مباشرة.",
+    invalid: "جلسة تسجيل الدخول لم تعد صالحة. اطلب كود واتساب جديد بالأسفل.",
     signedOut: "تم تسجيل الخروج بأمان.",
-    clinicDeleted: "تم حذف العيادة، لكن حساب Atlas ما زال محفوظاً. تحقق من رقمك عندما تريد إنشاء عيادة جديدة.",
-    accountDeleted: "تم حذف حسابك في Atlas نهائياً.",
-    appleRevokeNeeded: "تم حذف حساب Atlas، لكن تعذر إلغاء صلاحية Apple تلقائياً. على iPhone افتح Settings → اسمك → Sign in with Apple → Atlas، وبعدها اضغط Delete / Stop Using.",
+    clinicDeleted: "تم حذف مساحة العيادة.",
+    accountDeleted: "تم حذف حساب Atlas نهائياً. لما تريد تبدأ من جديد، وثّق رقمك وأنشئ حساباً جديداً بالكامل.",
     stageSignal: "رقم واحد، مساحة عيادتك.",
-    stagePulse: "تحقق آمن برقم الهاتف",
+    stagePulse: "موثّق عبر واتساب",
     language: "اختار لغتك",
   },
 };
@@ -89,25 +82,19 @@ function AtlasLoginLogo() {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error, notice } = await searchParams;
-  const e2eMode = process.env.ATLAS_E2E_NO_AUTH === "true";
-  if (!e2eMode) {
+  if (process.env.ATLAS_E2E_NO_AUTH !== "true") {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
-    if (data.user) redirect("/dashboard");
+    if (data.user) redirect("/dashboard/select-clinic");
   }
-
-  const readiness = e2eMode ? null : await getAtlasAuthReadiness();
-  const phoneFlowEnabled = e2eMode || readiness?.supabasePhoneEnabled === true;
-  const legacyFallbackEnabled = !phoneFlowEnabled && readiness?.supabaseEmailEnabled === true;
 
   const locale = await getUiLocale();
   const copy = pageCopy[locale];
-  const errorMessage = error === "invalid_link" || error === "invalid_otp" ? copy.invalid : null;
+  const errorMessage = error === "invalid_link" || error === "invalid_otp" || error === "invalid_invite" ? copy.invalid : null;
   const noticeMessage = notice === "signed_out" ? copy.signedOut
     : notice === "clinic_deleted" ? copy.clinicDeleted
       : notice === "account_deleted" ? copy.accountDeleted
-        : notice === "account_deleted_apple_revoke_needed" ? copy.appleRevokeNeeded
-          : null;
+        : null;
 
   return (
     <main className="login-page">
@@ -133,20 +120,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
         {noticeMessage ? <p className="notice notice-success login-notice" role="status">{noticeMessage}</p> : null}
-        {phoneFlowEnabled ? (
-          <LoginForm locale={locale} />
-        ) : legacyFallbackEnabled ? (
-          <>
-            <p className="notice login-notice" role="status">
-              Phone sign-in is deployed, but SMS verification is not active yet. Existing Atlas accounts can use this temporary sign-in until the SMS provider is enabled.
-            </p>
-            <LegacyLoginForm />
-          </>
-        ) : (
-          <p className="notice notice-error login-notice" role="alert">
-            Atlas authentication is temporarily unavailable because the phone verification provider is not active.
-          </p>
-        )}
+        <LoginForm locale={locale} />
       </section>
     </main>
   );
