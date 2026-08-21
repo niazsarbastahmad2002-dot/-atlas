@@ -110,10 +110,10 @@ test("OAuth callback never guesses which provider owns a generic refresh token",
   assert.doesNotMatch(callback, /storeWebAppleProviderRefreshToken/);
 });
 
-test("native shell adds real app states and never offers embedded provider OAuth", async () => {
+test("native shell adds real app states and normal login never offers embedded provider OAuth", async () => {
   const [nativeApp, ownerAuth, inviteAuth] = await Promise.all([
     read("ios/Atlas/AtlasApp.swift"),
-    read("app/login/create-clinic-account.tsx"),
+    read("app/login/login-form.tsx"),
     read("app/join/[token]/join-auth.tsx"),
   ]);
 
@@ -127,7 +127,9 @@ test("native shell adds real app states and never offers embedded provider OAuth
   assert.match(nativeApp, /candidate\.path == "\/auth\/native"/);
   assert.match(nativeApp, /components\.fragment = nil/);
   assert.match(nativeApp, /destination = retryURL/);
-  assert.match(ownerAuth, /apple: !embeddedIos && settings\.external\?\.apple === true/);
+  assert.match(ownerAuth, /signInWithOtp/);
+  assert.match(ownerAuth, /phone/);
+  assert.doesNotMatch(ownerAuth, /signInWithOAuth/);
   assert.match(inviteAuth, /providers\.apple && embeddedIos === false/);
   assert.match(inviteAuth, /providers\.google && embeddedIos === false/);
 });
