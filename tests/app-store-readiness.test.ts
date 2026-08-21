@@ -118,7 +118,7 @@ test("native shell adds real app states and every user-facing auth entry is phon
   assert.match(nativeApp, /Atlas could not open/);
   assert.match(nativeApp, /Try again/);
   assert.match(nativeApp, /Try with sample data/);
-  assert.match(nativeApp, /atlasInviteToken\(from: currentWebURL\)/);
+  assert.match(nativeApp, /atlasInviteToken\(from: url\)/);
   assert.match(nativeApp, /atlasRetryURL\(currentURL: URL\?, initialURL: URL\)/);
   assert.match(nativeApp, /components\.fragment = nil/);
   assert.match(nativeApp, /destination = retryURL/);
