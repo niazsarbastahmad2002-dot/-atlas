@@ -7,100 +7,82 @@ import { createClient } from "@/lib/supabase/server";
 import { deleteAtlasAccount } from "./actions";
 
 export const dynamic = "force-dynamic";
-
 type Props = { searchParams: Promise<{ error?: string }> };
 
 type Copy = {
-  eyebrow: string;
-  title: string;
-  intro: string;
-  warning: string;
-  membership: string;
-  ownerBlock: string;
-  ownerTransfer: string;
-  ownerDelete: string;
-  confirm: string;
-  acknowledge: string;
-  button: string;
-  deleting: string;
-  back: string;
-  confirmationError: string;
-  failed: string;
-  phonePending: string;
+  eyebrow: string; title: string; intro: string; warning: string; clinicWarning: string;
+  membership: string; confirm: string; acknowledge: string; button: string; deleting: string;
+  back: string; confirmationError: string; failed: string; phonePending: string; owned: string;
 };
 
 const copyByLocale: Record<UiLocale, Copy> = {
   en: {
     eyebrow: "Your Atlas account",
-    title: "Delete my account",
-    intro: "You can permanently delete your Atlas sign-in from inside Atlas.",
-    warning: "This permanently removes your Atlas identity, active sessions, saved passkeys and clinic memberships. This cannot be undone.",
-    membership: "Clinic appointment records are controlled by the clinic. Historical audit entries may remain without your account identity where record integrity requires it.",
-    ownerBlock: "You still own a clinic. Transfer administration or permanently delete every clinic you own before deleting your Atlas account.",
-    ownerTransfer: "Transfer administration",
-    ownerDelete: "Delete an owned clinic",
+    title: "Delete Atlas account permanently",
+    intro: "This is a true account deletion — not just sign-out and not just deleting one clinic.",
+    warning: "Atlas permanently deletes this identity, active sessions, saved passkeys and clinic memberships. The next time this phone verifies through WhatsApp, Atlas treats it as a brand-new account.",
+    clinicWarning: "Any clinic you own is permanently deleted with the account, including its operational data. This cannot be undone.",
+    membership: "Historical audit records may retain de-identified integrity data where required, but this Atlas login identity is removed.",
     confirm: "Type DELETE to confirm",
-    acknowledge: "I understand that my Atlas account will be permanently deleted.",
-    button: "Permanently delete my account",
+    acknowledge: "I understand that my Atlas account and every clinic I own will be permanently deleted.",
+    button: "Delete my Atlas account permanently",
     deleting: "Deleting account…",
     back: "Back to settings",
     confirmationError: "Type DELETE and confirm the checkbox. Nothing was deleted.",
-    failed: "Atlas could not delete your account. Nothing was changed.",
-    phonePending: "Phone not verified yet",
+    failed: "Atlas could not complete account deletion. Try again.",
+    phonePending: "Phone identity",
+    owned: "Clinics that will also be deleted",
   },
   ku: {
     eyebrow: "هەژماری Atlas ـی تۆ",
-    title: "سڕینەوەی هەژمارەکەم",
-    intro: "دەتوانیت لە ناو Atlas هەژماری چوونەژوورەوەت بە هەمیشەیی بسڕیتەوە.",
-    warning: "ئەم کارە ناسنامەی Atlas، سێشنە چالاکەکان، پاسکییە هەڵگیراوەکان و ئەندامێتی کلینیکەکانت بە هەمیشەیی دەسڕێتەوە. ناگەڕێتەوە.",
-    membership: "تۆمارەکانی مەوعیدی کلینیک لەلایەن کلینیکەوە بەڕێوەدەبرێن. بۆ پاراستنی دروستی تۆمار، هەندێک تۆماری مێژوویی لەوانەیە بەبێ ناسنامەی هەژمارەکەت بمێننەوە.",
-    ownerBlock: "هێشتا خاوەنی کلینیکێکیت. پێش سڕینەوەی هەژماری Atlas، بەڕێوەبردن بگوازەوە یان هەموو کلینیکە خاوەندارەکانت بە هەمیشەیی بسڕەوە.",
-    ownerTransfer: "گواستنەوەی بەڕێوەبردن",
-    ownerDelete: "سڕینەوەی کلینیکی خاوەندار",
+    title: "هەژماری Atlas بە هەمیشەیی بسڕەوە",
+    intro: "ئەمە سڕینەوەی ڕاستەقینەی هەژمارە؛ نە تەنها چوونەدەرەوە و نە تەنها سڕینەوەی یەک کلینیک.",
+    warning: "Atlas ناسنامەکەت، سێشنەکان، passkey و ئەندامێتی کلینیکەکان بە هەمیشەیی دەسڕێتەوە. داهاتوو کە هەمان ژمارە لە WhatsApp پشتڕاست دەکرێتەوە، وەک هەژمارێکی تەواو نوێ مامەڵەی لەگەڵ دەکرێت.",
+    clinicWarning: "هەر کلینیکێک کە خاوەنی بێت لەگەڵ هەژمارەکە بە هەمیشەیی دەسڕێتەوە، لەگەڵ داتای کارکردنی. ناگەڕێتەوە.",
+    membership: "هەندێک تۆماری مێژوویی لەوانەیە بۆ دروستی تۆمار بەبێ ناسنامە بمێنێتەوە، بەڵام ناسنامەی چوونەژوورەوەی Atlas دەسڕێتەوە.",
     confirm: "DELETE بنووسە بۆ پشتڕاستکردنەوە",
-    acknowledge: "تێدەگەم کە هەژماری Atlas ـەکەم بە هەمیشەیی دەسڕێتەوە.",
-    button: "هەژمارەکەم بە هەمیشەیی بسڕەوە",
+    acknowledge: "تێدەگەم کە هەژماری Atlas و هەموو کلینیکەکانی خاوەندارێتیم بە هەمیشەیی دەسڕێنەوە.",
+    button: "هەژماری Atlas ـەکەم بە هەمیشەیی بسڕەوە",
     deleting: "هەژمار دەسڕدرێتەوە…",
     back: "گەڕانەوە بۆ ڕێکخستنەکان",
     confirmationError: "DELETE بنووسە و خانەکە پشتڕاست بکەوە. هیچ شتێک نەسڕایەوە.",
-    failed: "Atlas نەیتوانی هەژمارەکەت بسڕێتەوە. هیچ شتێک نەگۆڕا.",
-    phonePending: "ژمارەی مۆبایل هێشتا پشتڕاست نەکراوەتەوە",
+    failed: "Atlas نەیتوانی سڕینەوەی هەژمار تەواو بکات. دووبارە هەوڵ بدە.",
+    phonePending: "ناسنامەی مۆبایل",
+    owned: "کلینیکەکانی کە هەروەها دەسڕێنەوە",
   },
   bd: {
     eyebrow: "هەژمارا Atlas یا تە",
-    title: "ژێبرنا هەژمارا من",
-    intro: "تو دشێی ژ ناڤ Atlas هەژمارا چوونەژوورا خۆ بۆ هەردەم ژێ ببەی.",
-    warning: "ئەم کارە ناسناما Atlas، سێشنێن چالاک، پاسکییێن پاراستی و ئەندامەتیا کلینیکان بۆ هەردەم ژێ دبەت. ناگەڕێتەڤە.",
-    membership: "تۆمارێن مەوعیدێ کلینیکێ ژ لایێ کلینیکێ ڤە دهێنە بەڕێڤەبرن. بۆ پاراستنا دروستیا تۆماران، هەندەک تۆمارێن مێژوویی دکارن بێ ناسناما هەژمارا تە بمینن.",
-    ownerBlock: "هێشتا تو خاوەنێ کلینیکەکێی. بەری ژێبرنا هەژمارا Atlas، بەڕێڤەبرنێ بگوهێزە یان هەمی کلینیکێن خۆ بۆ هەردەم ژێ ببە.",
-    ownerTransfer: "گوهەستنا بەڕێڤەبرنێ",
-    ownerDelete: "ژێبرنا کلینیکا خاوەندار",
+    title: "هەژمارا Atlas بۆ هەردەم ژێ ببە",
+    intro: "ئەڤە ژێبرنا ڕاستەقینا هەژمارێیە؛ نە تەنێ دەرکەفتن و نە تەنێ ژێبرنا کلینیکەکێ.",
+    warning: "Atlas ناسناما تە، سێشن، passkey و ئەندامەتیێن کلینیکان بۆ هەردەم ژێ دبەت. پشتی هندێ هەمان ژمارە ل WhatsApp بهێتە پشتڕاستکرن، وەک هەژمارەکا تەمام نوو دهێتە دیتن.",
+    clinicWarning: "هەر کلینیکەکا تو خاوەن بیت لگەل هەژمارێ بۆ هەردەم دهێتە ژێبرن، لگەل داتای کاری. ناگەڕێتەڤە.",
+    membership: "هەندەک تۆمارێن مێژوویی دکارن بێ ناسنامە بمینن بۆ دروستیا تۆمارێ، لێ ناسناما چوونەژوورا Atlas دهێتە ژێبرن.",
     confirm: "DELETE بنڤیسە بۆ پشتڕاستکرنێ",
-    acknowledge: "دزانم هەژمارا Atlas یا من بۆ هەردەم دهێتە ژێبرن.",
-    button: "هەژمارا من بۆ هەردەم ژێ ببە",
+    acknowledge: "دزانم هەژمارا Atlas و هەمی کلینیکێن من بۆ هەردەم دهێنە ژێبرن.",
+    button: "هەژمارا Atlas یا من بۆ هەردەم ژێ ببە",
     deleting: "هەژمار دهێتە ژێبرن…",
     back: "ڤەگەڕە بۆ ڕێکخستنان",
     confirmationError: "DELETE بنڤیسە و خانەکێ پشتڕاست بکە. چ تشت نەهاتە ژێبرن.",
-    failed: "Atlas نەشیا هەژمارا تە ژێ ببەت. چ تشت نەهاتە گوهارتن.",
-    phonePending: "ژمارا موبایلێ هێشتا نەهاتییە پشتڕاستکرن",
+    failed: "Atlas نەشیا ژێبرنا هەژمارێ تەمام بکەت. دیسان هەول بدە.",
+    phonePending: "ناسناما موبایلێ",
+    owned: "کلینیکێن کو ژێ دهێنە برن",
   },
   ar: {
     eyebrow: "حسابك في Atlas",
-    title: "حذف حسابي",
-    intro: "تقدر تحذف تسجيل دخولك وحسابك في Atlas نهائياً من داخل Atlas.",
-    warning: "هذا يحذف هوية Atlas والجلسات الحالية ومفاتيح الدخول المحفوظة وعضويات العيادات نهائياً. ما تقدر ترجع الحساب بعد الحذف.",
-    membership: "سجلات مواعيد العيادة تديرها العيادة. بعض سجلات التدقيق التاريخية قد تبقى بدون هوية حسابك إذا كان هذا مطلوباً للحفاظ على سلامة السجل.",
-    ownerBlock: "أنت ما زلت مالك عيادة. انقل الإدارة أو احذف كل عيادة تملكها نهائياً قبل حذف حساب Atlas.",
-    ownerTransfer: "نقل إدارة العيادة",
-    ownerDelete: "حذف عيادة تملكها",
+    title: "حذف حساب Atlas نهائياً",
+    intro: "هذا حذف حقيقي للحساب — مو مجرد تسجيل خروج ومو مجرد حذف عيادة واحدة.",
+    warning: "Atlas يحذف الهوية والجلسات ومفاتيح الدخول وعضويات العيادات نهائياً. إذا وثّقت نفس الرقم عبر واتساب لاحقاً، Atlas يعامله كحساب جديد بالكامل.",
+    clinicWarning: "أي عيادة أنت مالكها تُحذف نهائياً مع الحساب، مع بياناتها التشغيلية. ما تقدر تتراجع بعد الحذف.",
+    membership: "قد تبقى بعض سجلات التدقيق التاريخية بدون هويتك للحفاظ على سلامة السجل، لكن هوية تسجيل الدخول نفسها تُحذف.",
     confirm: "اكتب DELETE للتأكيد",
-    acknowledge: "أفهم أن حسابي في Atlas سيتم حذفه نهائياً.",
-    button: "حذف حسابي نهائياً",
+    acknowledge: "أفهم أن حساب Atlas وكل عيادة أملكها سيتم حذفها نهائياً.",
+    button: "حذف حساب Atlas نهائياً",
     deleting: "جارٍ حذف الحساب…",
     back: "الرجوع للإعدادات",
     confirmationError: "اكتب DELETE وفعّل مربع التأكيد. ما انحذف شيء.",
-    failed: "Atlas ما قدر يحذف حسابك. ما تغير شيء.",
-    phonePending: "رقم الهاتف غير موثق بعد",
+    failed: "Atlas ما قدر يكمل حذف الحساب. حاول مرة ثانية.",
+    phonePending: "هوية الهاتف",
+    owned: "العيادات التي سيتم حذفها أيضاً",
   },
 };
 
@@ -120,9 +102,9 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
   if (clinicsError) redirect("/dashboard/settings");
 
   const errorMessage = params.error === "confirmation" ? copy.confirmationError
-    : params.error === "owns_clinic" ? copy.ownerBlock
-      : params.error === "failed" ? copy.failed
-        : null;
+    : params.error === "failed" ? copy.failed
+      : null;
+  const phone = userData.user.phone || String(userData.user.user_metadata?.atlas_phone ?? "") || copy.phonePending;
 
   return (
     <main className="settings-page shell">
@@ -142,46 +124,29 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
           <span className="settings-card-icon" aria-hidden="true">!</span>
           <div>
             <div className="eyebrow">{copy.eyebrow}</div>
-            <h2 dir="ltr">{userData.user.phone ?? copy.phonePending}</h2>
+            <h2 dir="ltr">{phone}</h2>
             <p>{copy.warning}</p>
           </div>
         </div>
+        <p className="notice notice-error" role="status">{copy.clinicWarning}</p>
         <p className="field-help">{copy.membership}</p>
 
         {ownedClinics?.length ? (
-          <div className="notice notice-error" role="status">
-            <strong>{copy.ownerBlock}</strong>
-            <div className="settings-form">
-              {ownedClinics.map((clinic) => (
-                <div key={clinic.id}>
-                  <div className="field-help">{clinic.name}</div>
-                  <Link className="button button-ghost button-small" href={`/dashboard/staff?clinic=${clinic.id}`}>
-                    {copy.ownerTransfer}
-                  </Link>
-                </div>
-              ))}
-              <Link className="button button-ghost button-small" href="/dashboard/settings/delete">{copy.ownerDelete}</Link>
-            </div>
+          <div className="settings-form">
+            <strong>{copy.owned}</strong>
+            {ownedClinics.map((clinic) => <div className="field-help" key={clinic.id}>{clinic.name}</div>)}
           </div>
-        ) : (
-          <form action={deleteAtlasAccount} className="settings-form">
-            <label htmlFor="delete-account-confirmation">{copy.confirm}</label>
-            <input
-              id="delete-account-confirmation"
-              name="confirmation"
-              placeholder="DELETE"
-              autoComplete="off"
-              spellCheck={false}
-              required
-              dir="ltr"
-            />
-            <label className="checkbox-field">
-              <input type="checkbox" name="acknowledge" value="yes" required />
-              <span>{copy.acknowledge}</span>
-            </label>
-            <SubmitButton className="button danger-link" pendingLabel={copy.deleting}>{copy.button}</SubmitButton>
-          </form>
-        )}
+        ) : null}
+
+        <form action={deleteAtlasAccount} className="settings-form">
+          <label htmlFor="delete-account-confirmation">{copy.confirm}</label>
+          <input id="delete-account-confirmation" name="confirmation" placeholder="DELETE" autoComplete="off" spellCheck={false} required dir="ltr" />
+          <label className="checkbox-field">
+            <input type="checkbox" name="acknowledge" value="yes" required />
+            <span>{copy.acknowledge}</span>
+          </label>
+          <SubmitButton className="button danger-link" pendingLabel={copy.deleting}>{copy.button}</SubmitButton>
+        </form>
       </section>
     </main>
   );
