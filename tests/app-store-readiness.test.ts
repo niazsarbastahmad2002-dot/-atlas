@@ -30,7 +30,6 @@ test("iOS release identity and privacy manifest stay explicit", async () => {
   assert.match(project, /UIColorName: LaunchBackground/);
   assert.match(project, /UIImageName: LaunchMark/);
   assert.doesNotMatch(project, /CFBundleURLTypes/);
-  assert.match(entitlements, /com\.apple\.developer\.applesignin/);
   assert.match(entitlements, /com\.apple\.developer\.associated-domains/);
   assert.match(entitlements, /applinks:\$\(ATLAS_ASSOCIATED_DOMAIN\)/);
   assert.match(privacy, /NSPrivacyAccessedAPICategoryUserDefaults/);
@@ -79,20 +78,18 @@ test("App Store icon is a complete opaque 1024px PNG", async () => {
   assert.equal(reachedEnd, true, "PNG is missing IEND");
 });
 
-test("Apple native sign-in preserves invite context and binds revocation credentials to the Apple identity", async () => {
-  const [nativeApp, nativePage, appleServer, appleLinkRoute, retryMigration] = await Promise.all([
+test("phone-first iOS no longer exposes native Apple sign-in while historical Apple cleanup remains identity-bound", async () => {
+  const [nativeApp, appleServer, appleLinkRoute, retryMigration] = await Promise.all([
     read("ios/Atlas/AtlasApp.swift"),
-    read("app/auth/native/page.tsx"),
     read("lib/apple-server.ts"),
     read("app/api/auth/apple/link/route.ts"),
     read("supabase/migrations/20260820225813_harden_apple_revocation_retry.sql"),
   ]);
 
-  assert.match(nativeApp, /authorizationCode/);
-  assert.match(nativeApp, /URLQueryItem\(name: "authorization_code"/);
-  assert.match(nativeApp, /URLQueryItem\(name: "next"/);
-  assert.match(nativePage, /\/api\/auth\/apple\/link/);
-  assert.match(nativePage, /safeAuthDestination/);
+  assert.match(nativeApp, /Continue with phone/);
+  assert.match(nativeApp, /Verify phone and join/);
+  assert.doesNotMatch(nativeApp, /SignInWithAppleButton/);
+  assert.doesNotMatch(nativeApp, /AuthenticationServices/);
   assert.match(appleServer, /https:\/\/appleid\.apple\.com\/auth\/token/);
   assert.match(appleServer, /https:\/\/appleid\.apple\.com\/auth\/revoke/);
   assert.match(appleServer, /store_apple_refresh_token_service/);
@@ -110,7 +107,7 @@ test("OAuth callback never guesses which provider owns a generic refresh token",
   assert.doesNotMatch(callback, /storeWebAppleProviderRefreshToken/);
 });
 
-test("native shell adds real app states and normal login never offers embedded provider OAuth", async () => {
+test("native shell adds real app states and every user-facing auth entry is phone-first", async () => {
   const [nativeApp, ownerAuth, inviteAuth] = await Promise.all([
     read("ios/Atlas/AtlasApp.swift"),
     read("app/login/login-form.tsx"),
@@ -121,17 +118,19 @@ test("native shell adds real app states and normal login never offers embedded p
   assert.match(nativeApp, /Atlas could not open/);
   assert.match(nativeApp, /Try again/);
   assert.match(nativeApp, /Try with sample data/);
-  assert.match(nativeApp, /shouldOfferNativeAppleSignIn/);
   assert.match(nativeApp, /atlasInviteToken\(from: currentWebURL\)/);
-  assert.match(nativeApp, /atlasRetryURL\(currentURL: URL\?, initialURL: URL, nativeFallbackURL: URL\?\)/);
-  assert.match(nativeApp, /candidate\.path == "\/auth\/native"/);
+  assert.match(nativeApp, /atlasRetryURL\(currentURL: URL\?, initialURL: URL\)/);
   assert.match(nativeApp, /components\.fragment = nil/);
   assert.match(nativeApp, /destination = retryURL/);
+  assert.doesNotMatch(nativeApp, /shouldOfferNativeAppleSignIn/);
   assert.match(ownerAuth, /signInWithOtp/);
   assert.match(ownerAuth, /phone/);
   assert.doesNotMatch(ownerAuth, /signInWithOAuth/);
-  assert.match(inviteAuth, /providers\.apple && embeddedIos === false/);
-  assert.match(inviteAuth, /providers\.google && embeddedIos === false/);
+  assert.doesNotMatch(ownerAuth, /type="email"/);
+  assert.match(inviteAuth, /signInWithOtp/);
+  assert.match(inviteAuth, /phone/);
+  assert.doesNotMatch(inviteAuth, /signInWithOAuth/);
+  assert.doesNotMatch(inviteAuth, /type="email"/);
 });
 
 test("account deletion is in-app, retry-safe, and clinic ownership is protected", async () => {
