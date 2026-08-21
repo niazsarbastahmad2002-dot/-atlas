@@ -4,16 +4,23 @@ async function setLocale(context, locale) {
   await context.addCookies([{ name: "atlas_ui_locale", value: locale, url: "http://127.0.0.1:3100", sameSite: "Lax" }]);
 }
 
-test("unauthenticated receptionist sees language choice, phone verification and optional passkey", async ({ page }) => {
+test("unauthenticated receptionist sees language choice, country-aware phone verification and optional passkey", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Your clinic starts with your number." })).toBeVisible();
   await expect(page.getByRole("button", { name: "کوردی سۆرانی" })).toBeVisible();
   await expect(page.getByRole("button", { name: "کوردی بادینی" })).toBeVisible();
   await expect(page.getByRole("button", { name: /العربية/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /English/ })).toBeVisible();
+  await expect(page.getByLabel("Country / code")).toHaveValue("+964");
   await expect(page.getByLabel("Mobile number")).toBeVisible();
   await expect(page.getByRole("button", { name: "Send verification code" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Use saved passkey" })).toBeVisible();
+});
+
+test("international phone mode accepts a full country-code input surface", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Country / code").selectOption("international");
+  await expect(page.getByLabel("Mobile number")).toHaveAttribute("placeholder", "+4915123456789");
 });
 
 test("phone login rejects malformed numbers before contacting the verification provider", async ({ page }) => {
@@ -31,6 +38,7 @@ test("phone login rejects malformed numbers before contacting the verification p
 test("phone login fits an iPhone-sized viewport without horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/login");
+  await expect(page.getByLabel("Country / code")).toBeVisible();
   await expect(page.getByLabel("Mobile number")).toBeVisible();
   await expect(page.getByLabel("Mobile number")).toHaveAttribute("type", "tel");
   await expect(page.getByLabel("Mobile number")).toHaveAttribute("inputmode", "tel");
