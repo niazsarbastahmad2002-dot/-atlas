@@ -26,6 +26,7 @@ type Copy = {
   back: string;
   confirmationError: string;
   failed: string;
+  phonePending: string;
 };
 
 const copyByLocale: Record<UiLocale, Copy> = {
@@ -45,6 +46,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     back: "Back to settings",
     confirmationError: "Type DELETE and confirm the checkbox. Nothing was deleted.",
     failed: "Atlas could not delete your account. Nothing was changed.",
+    phonePending: "Phone not verified yet",
   },
   ku: {
     eyebrow: "هەژماری Atlas ـی تۆ",
@@ -62,6 +64,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     back: "گەڕانەوە بۆ ڕێکخستنەکان",
     confirmationError: "DELETE بنووسە و خانەکە پشتڕاست بکەوە. هیچ شتێک نەسڕایەوە.",
     failed: "Atlas نەیتوانی هەژمارەکەت بسڕێتەوە. هیچ شتێک نەگۆڕا.",
+    phonePending: "ژمارەی مۆبایل هێشتا پشتڕاست نەکراوەتەوە",
   },
   bd: {
     eyebrow: "هەژمارا Atlas یا تە",
@@ -79,6 +82,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     back: "ڤەگەڕە بۆ ڕێکخستنان",
     confirmationError: "DELETE بنڤیسە و خانەکێ پشتڕاست بکە. چ تشت نەهاتە ژێبرن.",
     failed: "Atlas نەشیا هەژمارا تە ژێ ببەت. چ تشت نەهاتە گوهارتن.",
+    phonePending: "ژمارا موبایلێ هێشتا نەهاتییە پشتڕاستکرن",
   },
   ar: {
     eyebrow: "حسابك في Atlas",
@@ -96,6 +100,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     back: "الرجوع للإعدادات",
     confirmationError: "اكتب DELETE وفعّل مربع التأكيد. ما انحذف شيء.",
     failed: "Atlas ما قدر يحذف حسابك. ما تغير شيء.",
+    phonePending: "رقم الهاتف غير موثق بعد",
   },
 };
 
@@ -137,7 +142,7 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
           <span className="settings-card-icon" aria-hidden="true">!</span>
           <div>
             <div className="eyebrow">{copy.eyebrow}</div>
-            <h2>{userData.user.email ?? "Atlas account"}</h2>
+            <h2 dir="ltr">{userData.user.phone ?? copy.phonePending}</h2>
             <p>{copy.warning}</p>
           </div>
         </div>
