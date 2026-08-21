@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAtlasSocialProviders } from "@/lib/auth-providers";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -19,7 +18,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
   en: {
     eyebrow: "Clinic invitation",
     title: "Join this clinic",
-    help: "Authenticate once. Atlas will connect your account to this clinic automatically—no clinic email account is required.",
+    help: "Verify your phone once. Atlas only connects this account to the clinic after this invitation is redeemed.",
     doctor: "You will work with",
     invalid: "This invitation is expired, already used, or no longer valid.",
     back: "Open Atlas",
@@ -27,7 +26,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
   ku: {
     eyebrow: "بانگهێشتی کلینیک",
     title: "بچۆ ناو ئەم کلینیکە",
-    help: "تەنها جارێک ناسنامەت پشتڕاست بکەرەوە. Atlas خۆکارانە هەژمارەکەت بە کلینیکەکەوە دەبەستێت؛ ئیمەیڵی تایبەتی کلینیک پێویست نییە.",
+    help: "تەنها جارێک ژمارەی مۆبایلەکەت پشتڕاست بکەرەوە. Atlas تەنها دوای وەرگرتنی ئەم بانگهێشتە هەژمارەکەت بە کلینیکەکەوە دەبەستێت.",
     doctor: "لەگەڵ ئەم دکتۆرە کار دەکەیت",
     invalid: "ئەم بانگهێشتە بەسەرچووە، پێشتر بەکارهاتووە یان چیتر دروست نییە.",
     back: "Atlas بکەرەوە",
@@ -35,7 +34,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
   bd: {
     eyebrow: "بانگهێشتا کلینیکێ",
     title: "بچۆ ناڤ ڤێ کلینیکێ",
-    help: "تەنێ جارەکێ ناسناما خۆ پشتڕاست بکە. Atlas خودکار هەژمارا تە ب کلینیکێ ڤە گرێددەت؛ ئیمەیلا تایبەت یا کلینیکێ پێدڤی نینە.",
+    help: "تەنێ جارەکێ ژمارا موبایلا خۆ پشتڕاست بکە. Atlas تەنێ پشتی وەرگرتنا ڤێ بانگهێشتێ هەژمارا تە ب کلینیکێ ڤە گرێددەت.",
     doctor: "تو دێ دگەل ڤی دکتۆری کار کەی",
     invalid: "ئەڤ بانگهێشتە بەسەرچووە، پێشتر هاتییە بکارئینان یان ئیدی دروست نینە.",
     back: "Atlas ڤەکە",
@@ -43,7 +42,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
   ar: {
     eyebrow: "دعوة العيادة",
     title: "انضم إلى هذه العيادة",
-    help: "وثّق حسابك مرة واحدة. Atlas يربط حسابك بالعيادة تلقائياً، وما تحتاج بريد خاص بالعيادة.",
+    help: "وثّق رقم موبايلك مرة واحدة. Atlas لا يربط الحساب بالعيادة إلا بعد استخدام هذه الدعوة.",
     doctor: "ستعمل مع",
     invalid: "هذه الدعوة انتهت أو استُخدمت أو لم تعد صالحة.",
     back: "فتح Atlas",
@@ -94,8 +93,6 @@ export default async function JoinClinicPage({ params }: PageProps) {
   const { data: userData } = await supabase.auth.getUser();
   if (userData.user) redirect(`/join/${encodeURIComponent(token)}/finish`);
 
-  const providers = await getAtlasSocialProviders();
-
   return (
     <main className="center-page">
       <section className="auth-card">
@@ -106,7 +103,7 @@ export default async function JoinClinicPage({ params }: PageProps) {
           <strong>{preview.clinic_name}</strong><br />
           {t.doctor}: {preview.doctor_name}
         </div>
-        <JoinClinicAuth token={token} locale={locale} providers={providers} />
+        <JoinClinicAuth token={token} locale={locale} />
       </section>
     </main>
   );
