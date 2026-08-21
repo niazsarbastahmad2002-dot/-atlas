@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { maskPhone, normalizeAuthPhone, normalizeOtpToken } from "@/lib/phone-auth";
+import { maskPhone, normalizeAuthPhone, normalizeOtpToken, toAsciiPhoneDigits } from "@/lib/phone-auth";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 const COOLDOWN_KEY = "atlas-phone-otp-cooldown";
@@ -173,7 +173,7 @@ function isRateLimitError(error: { code?: string; message?: string } | null) {
 }
 
 function phoneCandidate(mode: CountryMode, input: string) {
-  const cleaned = input.trim();
+  const cleaned = toAsciiPhoneDigits(input.trim());
   if (mode === "international") return cleaned;
   if (!cleaned) return cleaned;
   if (cleaned.startsWith("+")) return cleaned;
