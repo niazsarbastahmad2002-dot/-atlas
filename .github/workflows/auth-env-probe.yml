@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   probe:
@@ -15,13 +16,14 @@ jobs:
     env:
       VERCEL_PROJECT_ID: prj_L7ubUUcpmzYETAYiK0dCJsqzU4bJ
       VERCEL_ORG_ID: team_12LjTXJIxUILoIdh54kXsRUc
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Report only environment key presence
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           set -euo pipefail
-          python3 <<'PY'
+          python3 <<'PY' > /tmp/atlas-auth-env-probe.txt
           import json, os, urllib.request, urllib.parse
           token = os.environ.get('VERCEL_TOKEN','')
           if not token:
@@ -42,6 +44,7 @@ jobs:
           }
           entries = data.get('envs') or []
           by_key = {e.get('key'): e for e in entries if e.get('key') in wanted}
+          print('Atlas auth env probe (names only; no values)')
           for key in sorted(wanted):
               e = by_key.get(key)
               if not e:
@@ -50,3 +53,5 @@ jobs:
               targets = ','.join(e.get('target') or [])
               print(f'{key}=PRESENT targets={targets} type={e.get("type","?")}')
           PY
+          cat /tmp/atlas-auth-env-probe.txt
+          gh issue comment 59 --body-file /tmp/atlas-auth-env-probe.txt
