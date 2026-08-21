@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
+import { LegacyLoginForm } from "./legacy/legacy-login-form";
 import { LoginForm } from "./login-form";
 import { LoginLanguagePicker } from "./language-picker";
 
@@ -87,11 +89,16 @@ function AtlasLoginLogo() {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error, notice } = await searchParams;
-  if (process.env.ATLAS_E2E_NO_AUTH !== "true") {
+  const e2eMode = process.env.ATLAS_E2E_NO_AUTH === "true";
+  if (!e2eMode) {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     if (data.user) redirect("/dashboard");
   }
+
+  const readiness = e2eMode ? null : await getAtlasAuthReadiness();
+  const phoneFlowEnabled = e2eMode || readiness?.supabasePhoneEnabled === true;
+  const legacyFallbackEnabled = !phoneFlowEnabled && readiness?.supabaseEmailEnabled === true;
 
   const locale = await getUiLocale();
   const copy = pageCopy[locale];
@@ -126,7 +133,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
         {noticeMessage ? <p className="notice notice-success login-notice" role="status">{noticeMessage}</p> : null}
-        <LoginForm locale={locale} />
+        {phoneFlowEnabled ? (
+          <LoginForm locale={locale} />
+        ) : legacyFallbackEnabled ? (
+          <>
+            <p className="notice login-notice" role="status">
+              Phone sign-in is deployed, but SMS verification is not active yet. Existing Atlas accounts can use this temporary sign-in until the SMS provider is enabled.
+            </p>
+            <LegacyLoginForm />
+          </>
+        ) : (
+          <p className="notice notice-error login-notice" role="alert">
+            Atlas authentication is temporarily unavailable because the phone verification provider is not active.
+          </p>
+        )}
       </section>
     </main>
   );
