@@ -31,7 +31,7 @@ test("phone login rejects malformed numbers before contacting the verification p
   await page.goto("/login");
   await page.getByLabel("Mobile number").fill("12345");
   await page.getByRole("button", { name: "Send verification code" }).click();
-  await expect(page.getByRole("alert")).toContainText("Enter a valid mobile number");
+  await expect(page.locator(".login-notice[role='alert']")).toContainText("Enter a valid mobile number");
   expect(authRequests).toEqual([]);
 });
 
