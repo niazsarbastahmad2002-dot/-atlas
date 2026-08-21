@@ -1,5 +1,3 @@
-import AuthenticationServices
-import CryptoKit
 import SwiftUI
 import UIKit
 import WebKit
@@ -10,7 +8,7 @@ private let atlasUniversalLinkHosts: Set<String> = [
     "atlasappointments.com",
 ]
 private let atlasInviteTokenCharacters = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
-private let atlasNonReplayableAuthPaths: Set<String> = ["/auth/callback", "/auth/invite"]
+private let atlasNonReplayableAuthPaths: Set<String> = ["/auth/callback", "/auth/invite", "/auth/native"]
 
 private func atlasInviteToken(from url: URL) -> String? {
     guard url.scheme?.lowercased() == "https",
@@ -34,11 +32,7 @@ private func atlasInviteURL(for token: String) -> URL {
     atlasBaseURL.appending(path: "join").appending(path: token)
 }
 
-private func atlasInviteFinishPath(for token: String) -> String {
-    "/join/\(token)/finish"
-}
-
-private func atlasRetryURL(currentURL: URL?, initialURL: URL, nativeFallbackURL: URL?) -> URL {
+private func atlasRetryURL(currentURL: URL?, initialURL: URL) -> URL {
     let dashboard = atlasBaseURL.appending(path: "dashboard")
     let candidate = currentURL ?? initialURL
     guard candidate.scheme?.lowercased() == "https",
@@ -47,11 +41,7 @@ private func atlasRetryURL(currentURL: URL?, initialURL: URL, nativeFallbackURL:
         return dashboard
     }
 
-    // Authorization codes and native Apple fragments are one-time credentials.
-    // Retry from the post-auth destination instead of ever replaying them.
-    if candidate.path == "/auth/native" {
-        return nativeFallbackURL ?? dashboard
-    }
+    // One-time auth callback credentials are never replayed after a network error.
     if atlasNonReplayableAuthPaths.contains(candidate.path) {
         return dashboard
     }
@@ -75,14 +65,11 @@ struct AtlasApp: App {
 struct AtlasRootView: View {
     @AppStorage("atlasHasOpened") private var hasOpened = false
     @State private var destination: URL?
-    @State private var errorMessage: String?
-    @State private var appleNonce: String?
     @State private var pendingInviteToken: String?
     @State private var currentWebURL: URL?
     @State private var isWebLoading = false
     @State private var webErrorMessage: String?
     @State private var webReloadID = UUID()
-    @State private var nativeAuthFallbackURL: URL?
 
     var body: some View {
         Group {
@@ -104,16 +91,6 @@ struct AtlasRootView: View {
     private var activeWebDestination: URL? {
         if let destination { return destination }
         return hasOpened ? atlasBaseURL.appending(path: "dashboard") : nil
-    }
-
-    private var shouldOfferNativeAppleSignIn: Bool {
-        guard let currentWebURL,
-              currentWebURL.scheme?.lowercased() == "https",
-              let host = currentWebURL.host?.lowercased(),
-              atlasUniversalLinkHosts.contains(host) else {
-            return false
-        }
-        return currentWebURL.path == "/login" || atlasInviteToken(from: currentWebURL) != nil
     }
 
     @ViewBuilder
@@ -150,8 +127,7 @@ struct AtlasRootView: View {
                     Button("Try again") {
                         let retryURL = atlasRetryURL(
                             currentURL: currentWebURL,
-                            initialURL: url,
-                            nativeFallbackURL: nativeAuthFallbackURL
+                            initialURL: url
                         )
                         destination = retryURL
                         currentWebURL = retryURL
@@ -166,38 +142,6 @@ struct AtlasRootView: View {
                 .background(Color(uiColor: .systemBackground))
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if shouldOfferNativeAppleSignIn {
-                nativeAppleSignInBar
-            }
-        }
-    }
-
-    private var nativeAppleSignInBar: some View {
-        VStack(spacing: 8) {
-            Text(pendingInviteToken == nil ? "Sign in securely without leaving Atlas" : "Use Apple to accept this clinic invitation")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            SignInWithAppleButton(.continue) { request in
-                prepareAppleRequest(request)
-            } onCompletion: { result in
-                completeAppleSignIn(result)
-            }
-            .signInWithAppleButtonStyle(.black)
-            .frame(height: 50)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding(.horizontal, 18)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
-        .background(.regularMaterial)
     }
 
     private var welcome: some View {
@@ -208,135 +152,46 @@ struct AtlasRootView: View {
                 .accessibilityHidden(true)
             Text("Atlas")
                 .font(.largeTitle.bold())
-            Text(pendingInviteToken == nil ? "Clinic appointments. One clear flow." : "Your secure clinic invitation is ready.")
+            Text(pendingInviteToken == nil
+                 ? "Your clinic starts with your phone number."
+                 : "Your secure clinic invitation is ready.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            SignInWithAppleButton(.continue) { request in
-                prepareAppleRequest(request)
-            } onCompletion: { result in
-                completeAppleSignIn(result)
-            }
-            .signInWithAppleButtonStyle(.black)
-            .frame(height: 52)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-
-            Button(pendingInviteToken == nil ? "Open Atlas" : "Use another sign-in method") {
+            Button(pendingInviteToken == nil ? "Continue with phone" : "Verify phone and join") {
                 hasOpened = true
-                nativeAuthFallbackURL = nil
+                webErrorMessage = nil
                 if let pendingInviteToken {
                     destination = atlasInviteURL(for: pendingInviteToken)
                 } else {
                     destination = atlasBaseURL.appending(path: "login")
                 }
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.borderedProminent)
 
             if pendingInviteToken == nil {
                 Button("Try with sample data") {
-                    nativeAuthFallbackURL = nil
                     destination = atlasBaseURL.appending(path: "demo")
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-            }
-
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
             }
             Spacer()
         }
         .padding(28)
     }
 
-    private func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
-        if let currentWebURL, let inviteToken = atlasInviteToken(from: currentWebURL) {
-            pendingInviteToken = inviteToken
-        }
-        let nonce = UUID().uuidString
-        appleNonce = nonce
-        errorMessage = nil
-        request.requestedScopes = [.email, .fullName]
-        request.nonce = sha256(nonce)
-    }
-
     private func handleIncomingURL(_ url: URL) {
         guard let token = atlasInviteToken(from: url) else { return }
         pendingInviteToken = token
-        nativeAuthFallbackURL = nil
-        errorMessage = nil
         webErrorMessage = nil
 
-        // Returning users keep their existing Atlas web session. The server-side
-        // invitation route will redeem immediately when that session is valid,
-        // or present the normal authentication choices if it has expired.
+        // A valid invitation never grants membership by itself. It only opens the
+        // invitation page; the server redeems it after the user verifies identity.
         if hasOpened {
             destination = atlasInviteURL(for: token)
         }
     }
-
-    private func completeAppleSignIn(_ result: Result<ASAuthorization, Error>) {
-        do {
-            let authorization = try result.get()
-            guard let nonce = appleNonce,
-                  let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                  let tokenData = credential.identityToken,
-                  let identityToken = String(data: tokenData, encoding: .utf8) else {
-                throw AtlasNativeError.missingIdentityToken
-            }
-            guard let codeData = credential.authorizationCode,
-                  let authorizationCode = String(data: codeData, encoding: .utf8),
-                  !authorizationCode.isEmpty else {
-                throw AtlasNativeError.missingAuthorizationCode
-            }
-
-            var parts: [String] = []
-            if let given = credential.fullName?.givenName { parts.append(given) }
-            if let family = credential.fullName?.familyName { parts.append(family) }
-            let fullName = parts.joined(separator: " ")
-            let next = pendingInviteToken.map(atlasInviteFinishPath) ?? "/dashboard"
-            nativeAuthFallbackURL = pendingInviteToken.map {
-                atlasInviteURL(for: $0).appending(path: "finish")
-            } ?? atlasBaseURL.appending(path: "dashboard")
-
-            var fragment = URLComponents()
-            fragment.queryItems = [
-                URLQueryItem(name: "provider", value: "apple"),
-                URLQueryItem(name: "id_token", value: identityToken),
-                URLQueryItem(name: "authorization_code", value: authorizationCode),
-                URLQueryItem(name: "nonce", value: nonce),
-                URLQueryItem(name: "full_name", value: fullName.isEmpty ? nil : fullName),
-                URLQueryItem(name: "next", value: next),
-            ]
-
-            var authURL = atlasBaseURL.appending(path: "auth/native")
-            if var components = URLComponents(url: authURL, resolvingAgainstBaseURL: false) {
-                components.fragment = fragment.percentEncodedQuery
-                if let url = components.url { authURL = url }
-            }
-
-            appleNonce = nil
-            pendingInviteToken = nil
-            hasOpened = true
-            destination = authURL
-            errorMessage = nil
-        } catch {
-            appleNonce = nil
-            errorMessage = "Apple sign-in did not complete. You can try again or open Atlas with another sign-in method."
-        }
-    }
-
-    private func sha256(_ input: String) -> String {
-        SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
-    }
-}
-
-enum AtlasNativeError: Error {
-    case missingIdentityToken
-    case missingAuthorizationCode
 }
 
 struct AtlasWebView: UIViewRepresentable {

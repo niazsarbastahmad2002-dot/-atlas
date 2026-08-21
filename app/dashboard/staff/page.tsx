@@ -7,7 +7,7 @@ import { readPendingStaffInvitations } from "@/lib/staff-invitations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { cancelPendingInvitation, removeStaffMember, transferClinicAdministrator, updateStaffRole } from "./actions";
-import { StaffProvisionForm } from "./provision-form";
+import { InviteLinkForm } from "./invite-link-form";
 
 export const dynamic = "force-dynamic";
 
@@ -15,115 +15,139 @@ type StaffPageProps = {
   searchParams: Promise<{ clinic?: string; error?: string; notice?: string }>;
 };
 
-const copy: Record<UiLocale, Record<string, string>> = {
+type StaffCopy = {
+  title: string;
+  subtitle: string;
+  ownerOnly: string;
+  receptionist: string;
+  manager: string;
+  owner: string;
+  role: string;
+  doctor: string;
+  chooseDoctor: string;
+  access: string;
+  pending: string;
+  legacyPending: string;
+  phonePending: string;
+  protected: string;
+  saveRole: string;
+  remove: string;
+  backSettings: string;
+  ownerRequired: string;
+  ownerRequiredHelp: string;
+  unavailable: string;
+  transfer: string;
+  transferHelp: string;
+  transferConfirm: string;
+  transferButton: string;
+  transferEmpty: string;
+};
+
+const copy: Record<UiLocale, StaffCopy> = {
   en: {
     title: "Clinic access",
-    subtitle: "Keep each receptionist focused on one doctor. Clinic Admin keeps the complete clinic view.",
+    subtitle: "Authentication proves who a person is. Clinic access is granted separately through an explicit invitation.",
     ownerOnly: "Administration",
-    add: "Add receptionist",
     receptionist: "Receptionist",
     manager: "Manager",
     owner: "Clinic administrator",
     role: "Access",
     doctor: "Doctor",
     chooseDoctor: "Choose one doctor",
-    signedInFirst: "Type the receptionist's email, choose their doctor, and tap Add. Atlas emails them automatically. They stay Pending until they open it.",
     access: "People with access",
     pending: "Pending",
-    pendingHelp: "Invitation email sent. Access turns on only after this person opens the Atlas email.",
+    legacyPending: "Legacy invitation pending. It remains valid for migration, but new invitations use secure join links and phone verification.",
+    phonePending: "Phone verification pending",
     protected: "The clinic administrator can see every doctor and cannot be removed here.",
     saveRole: "Save access",
     remove: "Remove",
     backSettings: "Back to settings",
     ownerRequired: "Administration access required.",
-    ownerRequiredHelp: "Receptionists use their assigned doctor's schedule. Clinic access is managed here only when needed.",
+    ownerRequiredHelp: "Receptionists use their assigned doctor's schedule. Only clinic administration can change membership.",
     unavailable: "Clinic access could not load.",
     transfer: "Transfer clinic administrator",
-    transferHelp: "If the first Atlas account was only helping with setup, add the real administrator first, then transfer control here. The current administrator becomes a receptionist assigned to the clinic's first active doctor.",
+    transferHelp: "Add the real administrator through an explicit invitation first, then transfer control here. Your Atlas sign-in account stays separate from clinic ownership.",
     transferConfirm: "I understand this person will become the clinic administrator.",
     transferButton: "Transfer administration",
     transferEmpty: "Add another person to the clinic before transferring administration.",
   },
   ku: {
     title: "دەسەڵاتی کلینیک",
-    subtitle: "هەر ستافی ڕیسێپشن تەنها لەسەر یەک پزیشک کار بکات. بەڕێوەبەری کلینیک هەموو کلینیکەکە دەبینێت.",
+    subtitle: "چوونەژوورەوە تەنها ناسنامەی کەسەکە پشتڕاست دەکاتەوە. دەسەڵاتی کلینیک بە بانگهێشتی ڕوون و جیاواز دەدرێت.",
     ownerOnly: "بەڕێوەبردن",
-    add: "زیادکردنی ستافی ڕیسێپشن",
     receptionist: "ستافی ڕیسێپشن",
     manager: "بەڕێوەبەر",
     owner: "بەڕێوەبەری کلینیک",
     role: "دەسەڵات",
-    doctor: "پزیشک",
-    chooseDoctor: "یەک پزیشک هەڵبژێرە",
-    signedInFirst: "ئیمەیڵی ستافی ڕیسێپشن بنووسە، پزیشکەکەی هەڵبژێرە و زیادکردن دابگرە. Atlas خۆکارانە ئیمەیڵی بۆ دەنێرێت و تا کردنەوەی ئیمەیڵەکە چاوەڕوان دەمێنێتەوە.",
+    doctor: "دکتۆر",
+    chooseDoctor: "یەک دکتۆر هەڵبژێرە",
     access: "کەسانی دەسەڵاتدار",
     pending: "چاوەڕوان",
-    pendingHelp: "ئیمەیڵی بانگهێشتنامە نێردراوە. دەسەڵات تەنها دوای کردنەوەی ئیمەیڵی Atlas چالاک دەبێت.",
-    protected: "بەڕێوەبەری کلینیک هەموو پزیشکەکان دەبینێت و لێرە ناتوانرێت لاببرێت.",
+    legacyPending: "بانگهێشتی کۆن هێشتا چاوەڕوانە و بۆ گواستنەوە دروستە. بانگهێشتی نوێ بە بەستەری پارێزراو و پشتڕاستکردنەوەی مۆبایلە.",
+    phonePending: "پشتڕاستکردنەوەی مۆبایل چاوەڕوانە",
+    protected: "بەڕێوەبەری کلینیک هەموو دکتۆرەکان دەبینێت و لێرە ناتوانرێت لاببرێت.",
     saveRole: "دەسەڵات پاشەکەوت بکە",
     remove: "لابردن",
     backSettings: "گەڕانەوە بۆ ڕێکخستنەکان",
     ownerRequired: "دەسەڵاتی بەڕێوەبردن پێویستە.",
-    ownerRequiredHelp: "ستافی ڕیسێپشن تەنها خشتەی پزیشکی دیاریکراوی خۆی بەکاردەهێنێت. دەسەڵاتی کلینیک لێرە بەڕێوەدەبرێت.",
+    ownerRequiredHelp: "ستافی ڕیسێپشن خشتەی دکتۆری دیاریکراوی خۆی بەکاردەهێنێت. تەنها بەڕێوەبەری کلینیک ئەندامێتی دەگۆڕێت.",
     unavailable: "دەسەڵاتی کلینیک بار نەبوو.",
     transfer: "گواستنەوەی بەڕێوەبەری کلینیک",
-    transferHelp: "ئەگەر یەکەم هەژماری Atlas تەنها بۆ ڕێکخستن یارمەتیدەر بوو، سەرەتا بەڕێوەبەری ڕاستەقینە زیاد بکە، پاشان دەسەڵات بگوازەوە. بەڕێوەبەری ئێستا دەبێتە ستافی ڕیسێپشن بۆ یەکەم پزیشکی چالاک.",
+    transferHelp: "سەرەتا بەڕێوەبەری ڕاستەقینە بە بانگهێشتێکی ڕوون زیاد بکە، پاشان دەسەڵات بگوازەوە. هەژماری چوونەژوورەوەی Atlas لە خاوەندارێتی کلینیک جیاواز دەمێنێتەوە.",
     transferConfirm: "تێدەگەم کە ئەم کەسە دەبێتە بەڕێوەبەری کلینیک.",
     transferButton: "گواستنەوەی بەڕێوەبردن",
     transferEmpty: "پێش گواستنەوەی بەڕێوەبردن کەسێکی تر زیاد بکە.",
   },
   bd: {
     title: "دەستهەلاتا کلینیکێ",
-    subtitle: "هەر ستافەکێ ڕیسێپشنێ ل سەر ئێک دکتۆری کار بکەت. بەڕێڤەبەرێ کلینیکێ هەمی کلینیکێ دبینیت.",
+    subtitle: "چوونەژوور تەنێ ناسناما کەسی پشتڕاست دکەت. دەستهەلاتا کلینیکێ ب بانگهێشتەکا ڕوون و جودا دهێتە دان.",
     ownerOnly: "بەڕێڤەبرن",
-    add: "ستافێ ڕیسێپشنێ زێدە بکە",
     receptionist: "ستافێ ڕیسێپشنێ",
     manager: "بەڕێڤەبەر",
     owner: "بەڕێڤەبەرێ کلینیکێ",
     role: "دەستهەلات",
     doctor: "دکتۆر",
     chooseDoctor: "ئێک دکتۆر هەلبژێرە",
-    signedInFirst: "ئیمەیلا ستافێ ڕیسێپشنێ بنڤیسە، دکتۆرێ وی هەلبژێرە و زێدەکرنێ بکە. Atlas خودکار ئیمەیلێ دهنێریت و تا ڤەکرنا ئیمەیلێ چاڤەڕێ دمینیت.",
     access: "کەسێن دەستهەلات هەی",
     pending: "چاڤەڕێ",
-    pendingHelp: "ئیمەیلا بانگهێشتێ هاتە هنارتن. دەستهەلات پشتی ڤەکرنا ئیمەیلا Atlas چالاک دبیت.",
+    legacyPending: "بانگهێشتا کەڤن هێشتا چاڤەڕێیە و بۆ گوهەستنێ دروستە. بانگهێشتێن نوو ب لینکا پاراستی و پشتڕاستکرنا موبایلێ نە.",
+    phonePending: "پشتڕاستکرنا موبایلێ چاڤەڕێیە",
     protected: "بەڕێڤەبەرێ کلینیکێ هەمی دکتۆران دبینیت و ل ڤێرێ ناهێتە لابرن.",
     saveRole: "دەستهەلاتێ بپارێزە",
     remove: "لابرن",
     backSettings: "ڤەگەرە بۆ ڕێکخستن",
     ownerRequired: "دەستهەلاتا بەڕێڤەبرنێ پێدڤییە.",
-    ownerRequiredHelp: "ستافێ ڕیسێپشنێ تەنێ خشتەیا دکتۆرێ خۆ بکار دئینیت. دەستهەلاتا کلینیکێ ل ڤێرێ دهێتە بەڕێڤەبرن.",
+    ownerRequiredHelp: "ستافێ ڕیسێپشنێ خشتەیا دکتۆرێ خۆ بکار دئینیت. تەنێ بەڕێڤەبەرێ کلینیکێ ئەندامەتیێ دگوهەریت.",
     unavailable: "دەستهەلاتا کلینیکێ بار نەبوو.",
     transfer: "گوهەستنا بەڕێڤەبەرێ کلینیکێ",
-    transferHelp: "ئەگەر هەژمارێ ئێکێ یێ Atlas تەنێ بۆ ڕێکخستنێ هاریکار بوو، سەرەتا بەڕێڤەبەرێ ڕاستەقینە زێدە بکە و پاشی دەستهەلاتێ بگوهێزە. بەڕێڤەبەرێ نوکە دبیتە ستافێ ڕیسێپشنێ بۆ دکتۆرێ ئێکێ یێ چالاک.",
+    transferHelp: "سەرەتا بەڕێڤەبەرێ ڕاستەقینە ب بانگهێشتەکا ڕوون زێدە بکە، پاشی دەستهەلاتێ بگوهێزە. هەژمارا چوونەژوورا Atlas ژ خاوەنداریا کلینیکێ جودا دمینیت.",
     transferConfirm: "دزانم ئەڤ کەسە دێ بیتە بەڕێڤەبەرێ کلینیکێ.",
     transferButton: "بەڕێڤەبرنێ بگوهێزە",
     transferEmpty: "بەری گوهەستنا بەڕێڤەبرنێ کەسەکێ دی زێدە بکە.",
   },
   ar: {
     title: "صلاحيات العيادة",
-    subtitle: "خلّي كل موظف استقبال يركز على طبيب واحد، ومسؤول العيادة يشوف العيادة كلها.",
+    subtitle: "تسجيل الدخول يثبت هوية الشخص فقط. صلاحية العيادة تنعطى بشكل منفصل من خلال دعوة واضحة.",
     ownerOnly: "الإدارة",
-    add: "إضافة موظف استقبال",
     receptionist: "موظف استقبال",
     manager: "مدير",
     owner: "مسؤول العيادة",
     role: "الصلاحية",
     doctor: "الطبيب",
     chooseDoctor: "اختر طبيباً واحداً",
-    signedInFirst: "اكتب بريد موظف الاستقبال، اختر طبيبه واضغط إضافة. Atlas يرسل له البريد تلقائياً ويبقى قيد الانتظار إلى أن يفتحه.",
     access: "الأشخاص الذين لديهم صلاحية",
     pending: "قيد الانتظار",
-    pendingHelp: "تم إرسال بريد الدعوة. تتفعل الصلاحية فقط بعد فتح رسالة Atlas.",
+    legacyPending: "دعوة قديمة ما زالت معلقة وتبقى صالحة للترحيل. الدعوات الجديدة تستخدم رابط انضمام آمن وتحقق برقم الهاتف.",
+    phonePending: "توثيق الهاتف قيد الانتظار",
     protected: "مسؤول العيادة يشوف كل الأطباء وما ينشال من هنا.",
     saveRole: "حفظ الصلاحية",
     remove: "إزالة",
     backSettings: "العودة إلى الإعدادات",
     ownerRequired: "صلاحية الإدارة مطلوبة.",
-    ownerRequiredHelp: "موظف الاستقبال يستخدم جدول طبيبه المحدد فقط. صلاحيات العيادة تندار من هنا عند الحاجة.",
+    ownerRequiredHelp: "موظف الاستقبال يستخدم جدول طبيبه المحدد فقط. إدارة العيادة وحدها تغيّر العضوية.",
     unavailable: "تعذر تحميل صلاحيات العيادة.",
     transfer: "نقل مسؤول العيادة",
-    transferHelp: "إذا أول حساب في Atlas كان فقط للمساعدة بالإعداد، أضف المسؤول الحقيقي وبعدين انقل الإدارة له. المسؤول الحالي يصير موظف استقبال لأول طبيب نشط بالعيادة.",
+    transferHelp: "أضف المسؤول الحقيقي أولاً عن طريق دعوة واضحة، وبعدها انقل الإدارة له. حساب تسجيل دخول Atlas يبقى منفصلاً عن ملكية العيادة.",
     transferConfirm: "أفهم أن هذا الشخص سيصبح مسؤول العيادة.",
     transferButton: "نقل الإدارة",
     transferEmpty: "أضف شخصاً آخر للعيادة قبل نقل الإدارة.",
@@ -138,7 +162,7 @@ const errorMessages: Record<string, string> = {
   user_not_found: "That Atlas account could not be found.",
   owner_protected: "The clinic administrator cannot be removed or demoted.",
   already_member: "That person already has access to this clinic.",
-  invite_failed: "Atlas could not send that receptionist invitation. Try again.",
+  invite_failed: "Atlas could not create that receptionist invitation. Try again.",
   save_failed: "The access change could not be saved.",
   transfer_invalid: "Choose another person and confirm the transfer.",
   transfer_failed: "Administration could not be transferred. Try again.",
@@ -146,7 +170,7 @@ const errorMessages: Record<string, string> = {
 
 const noticeMessages: Record<string, string> = {
   added: "Receptionist access added.",
-  invited: "Receptionist invitation sent.",
+  invited: "Receptionist invitation created.",
   invitation_removed: "Pending invitation removed.",
   updated: "Access updated.",
   removed: "Access removed.",
@@ -204,16 +228,16 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   if (membersError || doctorsError) return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
   const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
 
-  let memberRows: Array<{ user_id: string; role: string; assigned_doctor_id: string | null; email: string }> = [];
-  let pendingRows: Array<{ user_id: string; assigned_doctor_id: string; email: string; invited_at: string }> = [];
+  let memberRows: Array<{ user_id: string; role: string; assigned_doctor_id: string | null; identity: string }> = [];
+  let pendingRows: Array<{ user_id: string; assigned_doctor_id: string }> = [];
   try {
     const admin = createAdminClient();
     const { data: directory, error: directoryError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     if (directoryError) throw directoryError;
-    const emailById = new Map(directory.users.map((user) => [user.id, user.email ?? "Email unavailable"]));
+    const identityById = new Map(directory.users.map((user) => [user.id, user.phone ?? text.phonePending]));
     memberRows = (members ?? []).map((member) => ({
       ...member,
-      email: emailById.get(member.user_id) ?? "Email unavailable",
+      identity: identityById.get(member.user_id) ?? text.phonePending,
     }));
 
     const activeMemberIds = new Set((members ?? []).map((member) => member.user_id));
@@ -224,8 +248,6 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         .map((invitation) => ({
           user_id: user.id,
           assigned_doctor_id: invitation.assigned_doctor_id,
-          email: user.email ?? "Email unavailable",
-          invited_at: invitation.invited_at,
         }));
     });
   } catch {
@@ -261,13 +283,11 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       {noticeMessage ? <p className="notice notice-success settings-notice" role="status">{noticeMessage}</p> : null}
 
       <div className="settings-grid staff-settings-grid">
-        <section className="settings-card">
-          <div className="settings-card-heading">
-            <span className="settings-card-icon" aria-hidden="true">+</span>
-            <div><div className="eyebrow">{text.ownerOnly}</div><h2>{text.add}</h2><p>{text.signedInFirst}</p></div>
-          </div>
-          <StaffProvisionForm clinicId={clinic.id} locale={locale} doctors={activeDoctors.map((doctor) => ({ id: doctor.id, name: doctor.name }))} />
-        </section>
+        <InviteLinkForm
+          clinicId={clinic.id}
+          locale={locale}
+          doctors={activeDoctors.map((doctor) => ({ id: doctor.id, name: doctor.name }))}
+        />
 
         <section className="settings-card">
           <div className="settings-card-heading">
@@ -280,9 +300,9 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
               return (
                 <article className="doctor-settings-row" key={`pending-${pending.user_id}`}>
                   <div className="patient-cell">
-                    <strong dir="ltr">{pending.email}</strong>
-                    <span>{text.pending}{assignedDoctor ? ` · ${assignedDoctor.name}` : ""}</span>
-                    <span className="field-help">{text.pendingHelp}</span>
+                    <strong>{text.pending}</strong>
+                    <span>{assignedDoctor?.name ?? text.doctor}</span>
+                    <span className="field-help">{text.legacyPending}</span>
                   </div>
                   <form action={cancelPendingInvitation.bind(null, clinic.id, pending.user_id)}>
                     <button className="danger-link" type="submit">{text.remove}</button>
@@ -298,7 +318,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
               return (
                 <article className="doctor-settings-row" key={member.user_id}>
                   <div className="patient-cell">
-                    <strong dir="ltr">{member.email}</strong>
+                    <strong dir="ltr">{member.identity}</strong>
                     <span>{roleLabel}{assignedDoctor ? ` · ${assignedDoctor.name}` : ""}</span>
                   </div>
                   {protectedOwner ? (
@@ -307,12 +327,12 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                     <div className="staff-role-actions">
                       <form action={updateStaffRole.bind(null, clinic.id, member.user_id)}>
                         <label className="sr-only" htmlFor={`role-${member.user_id}`}>{text.role}</label>
-                        <select id={`role-${member.user_id}`} name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.email}`}>
+                        <select id={`role-${member.user_id}`} name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.identity}`}>
                           <option value="receptionist">{text.receptionist}</option>
                           <option value="manager">{text.manager}</option>
                         </select>
                         <label className="sr-only" htmlFor={`doctor-${member.user_id}`}>{text.doctor}</label>
-                        <select id={`doctor-${member.user_id}`} name="assigned_doctor_id" defaultValue={member.assigned_doctor_id ?? ""} aria-label={`${text.doctor}: ${member.email}`}>
+                        <select id={`doctor-${member.user_id}`} name="assigned_doctor_id" defaultValue={member.assigned_doctor_id ?? ""} aria-label={`${text.doctor}: ${member.identity}`}>
                           <option value="">{text.chooseDoctor}</option>
                           {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
                         </select>
@@ -337,7 +357,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                 <select name="new_administrator_id" required aria-label={text.transfer} defaultValue="">
                   <option value="" disabled>{text.transfer}</option>
                   {transferCandidates.map((member) => (
-                    <option key={member.user_id} value={member.user_id}>{member.email}</option>
+                    <option key={member.user_id} value={member.user_id}>{member.identity}</option>
                   ))}
                 </select>
                 <label className="checkbox-field administrator-transfer-confirm">

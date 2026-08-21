@@ -43,5 +43,24 @@ export async function deleteClinic(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
-  redirect("/dashboard");
+
+  // Clinic deletion and account deletion are intentionally separate. RLS limits this
+  // query to clinics the same auth user still owns or explicitly belongs to.
+  const { data: remainingClinics, error: remainingError } = await supabase
+    .from("clinics")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (!remainingError && remainingClinics?.length) {
+    redirect(`/dashboard?clinic=${remainingClinics[0].id}`);
+  }
+
+  // When the deleted clinic was the user's last workspace, keep the auth account but
+  // end this device session so the next screen is the fresh Atlas phone sign-in flow.
+  const { error: signOutError } = await supabase.auth.signOut();
+  if (signOutError) {
+    console.error("Atlas post-clinic-delete sign out failed", { message: signOutError.message });
+  }
+  redirect("/login?notice=clinic_deleted");
 }

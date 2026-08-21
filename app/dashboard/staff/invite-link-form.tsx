@@ -9,8 +9,8 @@ type DoctorOption = { id: string; name: string };
 
 const copy = {
   en: {
-    title: "Fastest: share a secure join link",
-    help: "Choose the doctor, create the link, then send it by WhatsApp, Messages, AirDrop, or any app. The receptionist opens it and authenticates with Apple, Google, Face ID/passkey, or email. No clinic email is required.",
+    title: "Share a secure join link",
+    help: "Choose the receptionist's doctor, create a one-use link, then share it through WhatsApp, Messages, AirDrop, or any app. The receptionist verifies their phone before Atlas grants this clinic membership.",
     doctor: "Receptionist's doctor",
     choose: "Choose one doctor",
     create: "Create secure join link",
@@ -20,9 +20,9 @@ const copy = {
     share: "Share",
   },
   ku: {
-    title: "خێراترین ڕێگا: بەستەری پارێزراوی چوونەژوورەوە بنێرە",
-    help: "دکتۆر هەڵبژێرە، بەستەرەکە دروست بکە و بە WhatsApp، Messages، AirDrop یان هەر ئەپێک بنێرە. سکرتێر بە Apple، Google، Face ID/passkey یان ئیمەیڵ ناسنامەی خۆی پشتڕاست دەکات. ئیمەیڵی کلینیک پێویست نییە.",
-    doctor: "دکتۆری سکرتێر",
+    title: "بەستەری پارێزراوی چوونەژوورەوە بنێرە",
+    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە، بەستەرێکی یەکجارە دروست بکە و بە WhatsApp، Messages، AirDrop یان هەر ئەپێک بنێرە. ستافەکە ژمارەی مۆبایلەکەی پشتڕاست دەکاتەوە پێش ئەوەی Atlas ئەندامێتی ئەم کلینیکە بدات.",
+    doctor: "دکتۆری ستافی ڕیسێپشن",
     choose: "یەک دکتۆر هەڵبژێرە",
     create: "بەستەری پارێزراو دروست بکە",
     creating: "دروست دەکرێت…",
@@ -31,9 +31,9 @@ const copy = {
     share: "بنێرە",
   },
   bd: {
-    title: "ڕێکا هەرە خێرا: لینکا پاراستی یا چوونەژوورێ بهنێرە",
-    help: "دکتۆر هەلبژێرە، لینکێ دروست بکە و ب WhatsApp، Messages، AirDrop یان هەر ئەپەکێ بهنێرە. سکرتێر ب Apple، Google، Face ID/passkey یان ئیمەیلێ ناسناما خۆ پشتڕاست دکەت. ئیمەیلا کلینیکێ پێدڤی نینە.",
-    doctor: "دکتۆرێ سکرتێرێ",
+    title: "لینکا پاراستی یا چوونەژوورێ بهنێرە",
+    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە، لینکەکا ئێکجارە دروست بکە و ب WhatsApp، Messages، AirDrop یان هەر ئەپەکێ بهنێرە. ستاف ژمارا موبایلا خۆ پشتڕاست دکەت بەری کو Atlas ئەندامەتیا ڤێ کلینیکێ بدەت.",
+    doctor: "دکتۆرێ ستافێ ڕیسێپشنێ",
     choose: "ئێک دکتۆر هەلبژێرە",
     create: "لینکا پاراستی دروست بکە",
     creating: "دهێتە دروستکرن…",
@@ -42,8 +42,8 @@ const copy = {
     share: "بهنێرە",
   },
   ar: {
-    title: "الأسرع: شارك رابط انضمام آمن",
-    help: "اختر الطبيب، أنشئ الرابط وارسله عبر WhatsApp أو Messages أو AirDrop أو أي تطبيق. موظف الاستقبال يفتحه ويدخل بـ Apple أو Google أو Face ID/مفتاح المرور أو البريد. ما يحتاج بريد خاص بالعيادة.",
+    title: "شارك رابط انضمام آمن",
+    help: "اختر طبيب موظف الاستقبال، أنشئ رابطاً يُستخدم مرة واحدة، وشاركه عبر WhatsApp أو Messages أو AirDrop أو أي تطبيق. الموظف يوثق رقم موبايله قبل ما Atlas يمنحه عضوية هذه العيادة.",
     doctor: "طبيب موظف الاستقبال",
     choose: "اختر طبيباً واحداً",
     create: "إنشاء رابط انضمام آمن",

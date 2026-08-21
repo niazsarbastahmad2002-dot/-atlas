@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
-import { CreateClinicAccount } from "./create-clinic-account";
+import { LegacyLoginForm } from "./legacy/legacy-login-form";
 import { LoginForm } from "./login-form";
 import { LoginLanguagePicker } from "./language-picker";
 
@@ -14,6 +15,7 @@ type LoginPageCopy = {
   subtitle: string;
   invalid: string;
   signedOut: string;
+  clinicDeleted: string;
   accountDeleted: string;
   appleRevokeNeeded: string;
   stageSignal: string;
@@ -24,50 +26,54 @@ type LoginPageCopy = {
 const pageCopy: Record<UiLocale, LoginPageCopy> = {
   en: {
     eyebrow: "Front desk",
-    title: "Open Atlas. Start the clinic day.",
-    subtitle: "Appointments ready. Reception in control.",
-    invalid: "That email link expired or was already used. Request a fresh Atlas email below.",
+    title: "Your clinic starts with your number.",
+    subtitle: "Verify your phone, then open your clinic or create a new one.",
+    invalid: "That sign-in session is no longer valid. Request a fresh verification code below.",
     signedOut: "You signed out safely.",
+    clinicDeleted: "Your clinic was deleted. Your Atlas account is still safe — verify your phone whenever you want to create a clinic again.",
     accountDeleted: "Your Atlas account was permanently deleted.",
     appleRevokeNeeded: "Your Atlas account was deleted. Apple access could not be revoked automatically. On iPhone, open Settings → your name → Sign in with Apple → Atlas, then tap Delete / Stop Using.",
-    stageSignal: "Clinic day. One clear flow.",
-    stagePulse: "Secure reception workspace",
+    stageSignal: "One number. Your clinic workspace.",
+    stagePulse: "Secure phone verification",
     language: "Choose your language",
   },
   ku: {
     eyebrow: "سکرتێر",
-    title: "Atlas بکەرەوە. ڕۆژی کلینیک دەستپێبکە.",
-    subtitle: "کاتەکان ئامادەن. کاری سکرتێر ڕوون و خێرایە.",
-    invalid: "ئەم بەستەرە بەسەرچووە یان پێشتر بەکارهاتووە. ئیمەیڵێکی نوێی Atlas داوا بکە.",
+    title: "کلینیکەکەت بە ژمارەی مۆبایلەکەت دەست پێ دەکات.",
+    subtitle: "ژمارەکەت پشتڕاست بکەرەوە، پاشان کلینیکەکەت بکەرەوە یان کلینیکێکی نوێ دروست بکە.",
+    invalid: "دانیشتنی چوونەژوورەوەکە چیتر دروست نییە. کۆدێکی نوێ داوا بکە.",
     signedOut: "بە سەلامەتی چوویتە دەرەوە.",
+    clinicDeleted: "کلینیکەکەت سڕایەوە، بەڵام هەژماری Atlas ـەکەت پارێزراوە. هەر کات دەتەوێت ژمارەکەت پشتڕاست بکەرەوە و کلینیکێکی نوێ دروست بکە.",
     accountDeleted: "هەژماری Atlas ـەکەت بە هەمیشەیی سڕایەوە.",
     appleRevokeNeeded: "هەژماری Atlas ـەکەت سڕایەوە، بەڵام دەسەڵاتی Apple خۆکارانە هەڵنەوەشایەوە. لە iPhone: Settings → ناوت → Sign in with Apple → Atlas، پاشان Delete / Stop Using دابگرە.",
-    stageSignal: "ڕۆژی کلینیک، بە یەک ڕەوت.",
-    stagePulse: "شوێنی کاری پارێزراوی سکرتێر",
+    stageSignal: "یەک ژمارە، شوێنی کاری کلینیکەکەت.",
+    stagePulse: "پشتڕاستکردنەوەی پارێزراوی مۆبایل",
     language: "زمانەکەت هەڵبژێرە",
   },
   bd: {
     eyebrow: "سکرتێر",
-    title: "Atlas ڤەکە. ڕۆژا کلینیکێ دەست پێ بکە.",
-    subtitle: "وادە ئامادەن. کارێ سکرتێرێ ڕوون و خێرایە.",
-    invalid: "ئەم لینکە بەسەرچووە یان پێشتر هاتییە بکارئینان. ئیمەیلا نوو یا Atlas بخوازە.",
+    title: "کلینیکا تە ب ژمارا موبایلا تە دەست پێ دکەت.",
+    subtitle: "ژمارا خۆ پشتڕاست بکە، پاشی کلینیکا خۆ ڤەکە یان کلینیکەکا نوو دروست بکە.",
+    invalid: "دانیشتنا چوونەژوورێ دیگر دروست نینە. کۆدەکێ نوو بخوازە.",
     signedOut: "ب سەلامەتی چوویە دەرڤە.",
+    clinicDeleted: "کلینیکا تە هاتە ژێبرن، لێ هەژمارا Atlas یا تە پاراستییە. هەر دەم بخوازیت ژمارا خۆ پشتڕاست بکە و کلینیکەکا نوو دروست بکە.",
     accountDeleted: "هەژمارا Atlas یا تە بۆ هەردەم هاتە ژێبرن.",
     appleRevokeNeeded: "هەژمارا Atlas یا تە هاتە ژێبرن، لێ دەستهەلاتا Apple خودکار نەهاتە هەلوەشاندن. ل iPhone: Settings → ناڤێ تە → Sign in with Apple → Atlas، پاشی Delete / Stop Using بکە.",
-    stageSignal: "ڕۆژا کلینیکێ، ب ڕێکەکا ڕوون.",
-    stagePulse: "شوێنێ کاری پاراستی یێ سکرتێرێ",
+    stageSignal: "ئێک ژمارە، شوێنێ کارێ کلینیکا تە.",
+    stagePulse: "پشتڕاستکرنا پاراستی یا موبایلێ",
     language: "زمانێ خۆ هەلبژێرە",
   },
   ar: {
     eyebrow: "الاستقبال",
-    title: "افتح Atlas وابدأ يوم العيادة.",
-    subtitle: "المواعيد جاهزة. الاستقبال مسيطر على اليوم.",
-    invalid: "رابط الدخول انتهت صلاحيته أو انستخدم قبل. اطلب إيميل Atlas جديد من جوه.",
+    title: "عيادتك تبدأ من رقمك.",
+    subtitle: "تحقق من رقم الهاتف، وبعدها افتح عيادتك أو أنشئ عيادة جديدة.",
+    invalid: "جلسة تسجيل الدخول لم تعد صالحة. اطلب رمز تحقق جديد بالأسفل.",
     signedOut: "تم تسجيل الخروج بأمان.",
+    clinicDeleted: "تم حذف العيادة، لكن حساب Atlas ما زال محفوظاً. تحقق من رقمك عندما تريد إنشاء عيادة جديدة.",
     accountDeleted: "تم حذف حسابك في Atlas نهائياً.",
     appleRevokeNeeded: "تم حذف حساب Atlas، لكن تعذر إلغاء صلاحية Apple تلقائياً. على iPhone افتح Settings → اسمك → Sign in with Apple → Atlas، وبعدها اضغط Delete / Stop Using.",
-    stageSignal: "يوم العيادة. بمسار واحد.",
-    stagePulse: "مساحة استقبال آمنة",
+    stageSignal: "رقم واحد، مساحة عيادتك.",
+    stagePulse: "تحقق آمن برقم الهاتف",
     language: "اختار لغتك",
   },
 };
@@ -83,19 +89,25 @@ function AtlasLoginLogo() {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error, notice } = await searchParams;
-  if (process.env.ATLAS_E2E_NO_AUTH !== "true") {
+  const e2eMode = process.env.ATLAS_E2E_NO_AUTH === "true";
+  if (!e2eMode) {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     if (data.user) redirect("/dashboard");
   }
 
+  const readiness = e2eMode ? null : await getAtlasAuthReadiness();
+  const phoneFlowEnabled = e2eMode || readiness?.supabasePhoneEnabled === true;
+  const legacyFallbackEnabled = !phoneFlowEnabled && readiness?.supabaseEmailEnabled === true;
+
   const locale = await getUiLocale();
   const copy = pageCopy[locale];
-  const errorMessage = error === "invalid_link" ? copy.invalid : null;
+  const errorMessage = error === "invalid_link" || error === "invalid_otp" ? copy.invalid : null;
   const noticeMessage = notice === "signed_out" ? copy.signedOut
-    : notice === "account_deleted" ? copy.accountDeleted
-      : notice === "account_deleted_apple_revoke_needed" ? copy.appleRevokeNeeded
-        : null;
+    : notice === "clinic_deleted" ? copy.clinicDeleted
+      : notice === "account_deleted" ? copy.accountDeleted
+        : notice === "account_deleted_apple_revoke_needed" ? copy.appleRevokeNeeded
+          : null;
 
   return (
     <main className="login-page">
@@ -121,8 +133,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
         {errorMessage ? <p className="notice notice-error login-notice" role="alert">{errorMessage}</p> : null}
         {noticeMessage ? <p className="notice notice-success login-notice" role="status">{noticeMessage}</p> : null}
-        <CreateClinicAccount locale={locale} />
-        <LoginForm locale={locale} />
+        {phoneFlowEnabled ? (
+          <LoginForm locale={locale} />
+        ) : legacyFallbackEnabled ? (
+          <>
+            <p className="notice login-notice" role="status">
+              Phone sign-in is deployed, but SMS verification is not active yet. Existing Atlas accounts can use this temporary sign-in until the SMS provider is enabled.
+            </p>
+            <LegacyLoginForm />
+          </>
+        ) : (
+          <p className="notice notice-error login-notice" role="alert">
+            Atlas authentication is temporarily unavailable because the phone verification provider is not active.
+          </p>
+        )}
       </section>
     </main>
   );
