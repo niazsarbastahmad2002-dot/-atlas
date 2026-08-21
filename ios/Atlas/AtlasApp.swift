@@ -153,12 +153,12 @@ struct AtlasRootView: View {
             Text("Atlas")
                 .font(.largeTitle.bold())
             Text(pendingInviteToken == nil
-                 ? "Your clinic starts with your phone number."
+                 ? "Your clinic starts with your WhatsApp number."
                  : "Your secure clinic invitation is ready.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            Button(pendingInviteToken == nil ? "Continue with phone" : "Verify phone and join") {
+            Button(pendingInviteToken == nil ? "Continue with WhatsApp" : "Verify WhatsApp and join") {
                 hasOpened = true
                 webErrorMessage = nil
                 if let pendingInviteToken {
