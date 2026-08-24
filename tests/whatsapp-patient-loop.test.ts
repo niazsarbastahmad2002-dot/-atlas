@@ -138,7 +138,7 @@ test("receptionist live flow is one honest shared timing surface", () => {
   assert.match(component, /on the way/);
   assert.match(component, /running late/);
   assert.match(component, /30_000/);
-  assert.doesNotMatch(component, /AI|predict|exact wait/i);
+  assert.doesNotMatch(component, /\bAI\b|predict|exact wait/i);
   assert.match(navigation, /LiveClinicFlow/);
 });
 
