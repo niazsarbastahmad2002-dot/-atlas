@@ -32,6 +32,33 @@ test("analytics accepts only the explicit event and property allowlist", () => {
   });
 });
 
+test("analytics vocabulary follows WhatsApp-first auth and all supported locales", () => {
+  const whatsapp = sanitizeAtlasAnalyticsPayload({
+    event: "atlas_login_code_requested",
+    session_id: "12345678-1234-1234-1234-123456789012",
+    properties: { screen: "login", surface: "public", method: "whatsapp", locale: "bd", outcome: "success" },
+  });
+  assert.deepEqual(whatsapp?.properties, {
+    screen: "login",
+    surface: "public",
+    method: "whatsapp",
+    locale: "bd",
+    outcome: "success",
+  });
+
+  assert.equal(sanitizeAtlasAnalyticsPayload({
+    event: "atlas_login_email_requested",
+    session_id: "12345678-1234-1234-1234-123456789012",
+  }), null);
+
+  const staleMethod = sanitizeAtlasAnalyticsPayload({
+    event: "atlas_login_verified",
+    session_id: "12345678-1234-1234-1234-123456789012",
+    properties: { method: "email" },
+  });
+  assert.equal(staleMethod?.properties.method, undefined);
+});
+
 test("analytics rejects unknown events and invalid session identifiers", () => {
   assert.equal(sanitizeAtlasAnalyticsPayload({ event: "patient_name", session_id: "1234567890123456" }), null);
   assert.equal(sanitizeAtlasAnalyticsPayload({ event: "atlas_screen_viewed", session_id: "short" }), null);
