@@ -1,4 +1,8 @@
 import type { MetaTemplateStatus } from "@/lib/reminders/meta-readiness";
+import {
+  ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES,
+  ATLAS_PATIENT_LOOP_VARIANTS,
+} from "@/lib/reminders/patient-loop";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -29,26 +33,14 @@ function providerError(body: JsonRecord | null, status: number, accessToken: str
   };
 }
 
+// Keep the legacy database setting name as a compatibility marker. Meta readiness
+// and new delivery now use the two Patient Loop templates below.
 export const ATLAS_APPOINTMENT_REMINDER_TEMPLATE = "atlas_appointment_reminder";
-export const ATLAS_WHATSAPP_REQUIRED_LANGUAGES = ["ar", "en_US"] as const;
-
-// Meta currently rejects Atlas's Sorani/Badini template locales. Keep the patient's
-// Atlas language unchanged, but use the approved Iraqi-Arabic provider template as
-// the WhatsApp fallback for Kurdish recipients until Meta supports those locales.
-export const ATLAS_APPOINTMENT_REMINDER_VARIANTS = [
-  {
-    language: "ar",
-    text: "تذكير من {{1}}: موعدك بوقت {{2}}. إذا ما تگدر تجي، رجاءً تواصل ويّا العيادة.",
-    examples: ["عيادة أطلس", "20/8/2026، 10:30 ص"],
-  },
-  {
-    language: "en_US",
-    text: "Appointment reminder from {{1}}. Your appointment is scheduled for {{2}}. Please contact the clinic if you cannot attend.",
-    examples: ["Atlas Clinic", "20 Aug 2026, 10:30 AM"],
-  },
-] as const;
+export const ATLAS_WHATSAPP_REQUIRED_LANGUAGES = ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES;
 
 export type MetaTemplateBootstrapResult = {
+  templateName: string;
+  kind: "confirm" | "day_of";
   language: string;
   created: boolean;
   templateId: string | null;
@@ -73,7 +65,9 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
   fetchImplementation?: typeof fetch;
 }): Promise<MetaTemplateBootstrapResult[]> {
   if (!accessToken || !/^v\d+\.\d+$/.test(graphApiVersion) || !/^\d+$/.test(wabaId)) {
-    return ATLAS_APPOINTMENT_REMINDER_VARIANTS.map((variant) => ({
+    return ATLAS_PATIENT_LOOP_VARIANTS.map((variant) => ({
+      templateName: variant.templateName,
+      kind: variant.kind,
       language: variant.language,
       created: false,
       templateId: null,
@@ -85,25 +79,22 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
     }));
   }
 
-  const existingLanguages = new Set(
-    existingTemplates
-      .filter((template) => template.name === ATLAS_APPOINTMENT_REMINDER_TEMPLATE)
-      .map((template) => template.language),
-  );
   const results: MetaTemplateBootstrapResult[] = [];
 
-  for (const variant of ATLAS_APPOINTMENT_REMINDER_VARIANTS) {
-    if (existingLanguages.has(variant.language)) {
-      const existing = existingTemplates.find((template) => (
-        template.name === ATLAS_APPOINTMENT_REMINDER_TEMPLATE
-        && template.language === variant.language
-      ));
+  for (const variant of ATLAS_PATIENT_LOOP_VARIANTS) {
+    const existing = existingTemplates.find((template) => (
+      template.name === variant.templateName
+      && template.language === variant.language
+    ));
+    if (existing) {
       results.push({
+        templateName: variant.templateName,
+        kind: variant.kind,
         language: variant.language,
         created: false,
         templateId: null,
-        status: existing?.status ?? null,
-        category: existing?.category ?? null,
+        status: existing.status ?? null,
+        category: existing.category ?? null,
         errorCode: null,
         errorSubcode: null,
         errorDetail: null,
@@ -124,14 +115,20 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
             Accept: "application/json",
           },
           body: JSON.stringify({
-            name: ATLAS_APPOINTMENT_REMINDER_TEMPLATE,
+            name: variant.templateName,
             language: variant.language,
             category: "UTILITY",
-            components: [{
-              type: "BODY",
-              text: variant.text,
-              example: { body_text: [[...variant.examples]] },
-            }],
+            components: [
+              {
+                type: "BODY",
+                text: variant.text,
+                example: { body_text: [[...variant.examples]] },
+              },
+              {
+                type: "BUTTONS",
+                buttons: variant.buttons.map((text) => ({ type: "QUICK_REPLY", text })),
+              },
+            ],
           }),
           signal: controller.signal,
           cache: "no-store",
@@ -146,6 +143,8 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
       const category = stringValue(body?.category)?.toUpperCase() ?? null;
       const failure = response.ok ? null : providerError(body, response.status, accessToken);
       results.push({
+        templateName: variant.templateName,
+        kind: variant.kind,
         language: variant.language,
         created: response.ok,
         templateId,
@@ -157,6 +156,8 @@ export async function bootstrapAtlasAppointmentReminderTemplates({
       });
     } catch {
       results.push({
+        templateName: variant.templateName,
+        kind: variant.kind,
         language: variant.language,
         created: false,
         templateId: null,
