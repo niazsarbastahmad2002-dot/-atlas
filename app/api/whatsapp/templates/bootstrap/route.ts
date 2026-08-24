@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withExplicitMetaWabaCandidate } from "@/lib/reminders/meta-explicit-waba";
 import { auditMetaWhatsAppReadiness } from "@/lib/reminders/meta-readiness";
+import { bootstrapAtlasAppointmentReminderTemplates } from "@/lib/reminders/meta-template-bootstrap";
 import {
-  ATLAS_APPOINTMENT_REMINDER_TEMPLATE,
-  bootstrapAtlasAppointmentReminderTemplates,
-} from "@/lib/reminders/meta-template-bootstrap";
+  ATLAS_PATIENT_CONFIRM_TEMPLATE,
+  ATLAS_PATIENT_DAY_TEMPLATE,
+  ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES,
+} from "@/lib/reminders/patient-loop";
 import { readWhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -21,8 +23,6 @@ type SchedulerTokenRpcClient = {
     args: { p_token_hash: string },
   ) => Promise<{ data: boolean | null; error: { code?: string } | null }>;
 };
-
-type ReminderSetting = { template_name: string };
 
 async function authorized(request: Request, admin: AdminClient) {
   const header = request.headers.get("authorization");
@@ -73,59 +73,50 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
-  const db = admin as any;
-  const { data, error } = await db.from("clinic_reminder_settings")
-    .select("template_name")
-    .order("template_name", { ascending: true });
-  if (error || !Array.isArray(data)) {
-    return NextResponse.json({ error: "settings_unavailable" }, { status: 500 });
-  }
-
-  const templateNames = [...new Set(
-    (data as ReminderSetting[]).map((row) => row.template_name).filter(Boolean),
-  )];
-  if (!templateNames.length) {
-    return NextResponse.json({ error: "settings_unavailable" }, { status: 404 });
-  }
-
   const metaFetch = withExplicitMetaWabaCandidate(wabaId);
-  const providers = [];
-  for (const templateName of templateNames) {
-    if (templateName !== ATLAS_APPOINTMENT_REMINDER_TEMPLATE) {
-      providers.push({ templateName, wabaId, error: "unsupported_template", variants: [] });
-      continue;
-    }
-
-    const audit = await auditMetaWhatsAppReadiness({
+  const audits = await Promise.all([
+    auditMetaWhatsAppReadiness({
       accessToken: config.accessToken,
       phoneNumberId: config.phoneNumberId,
       graphApiVersion: config.graphApiVersion,
-      expectedTemplateName: templateName,
+      expectedTemplateName: ATLAS_PATIENT_CONFIRM_TEMPLATE,
+      expectedLanguages: [...ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES],
       fetchImplementation: metaFetch,
-    });
-
-    if (!audit.wabaIds.includes(wabaId)) {
-      providers.push({
-        templateName,
-        wabaId,
-        error: "waba_phone_mismatch",
-        variants: [],
-      });
-      continue;
-    }
-
-    const variants = await bootstrapAtlasAppointmentReminderTemplates({
+    }),
+    auditMetaWhatsAppReadiness({
       accessToken: config.accessToken,
+      phoneNumberId: config.phoneNumberId,
       graphApiVersion: config.graphApiVersion,
-      wabaId,
-      existingTemplates: audit.templates,
-    });
-    providers.push({ templateName, wabaId, error: null, variants });
+      expectedTemplateName: ATLAS_PATIENT_DAY_TEMPLATE,
+      expectedLanguages: [...ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES],
+      fetchImplementation: metaFetch,
+    }),
+  ]);
+
+  if (audits.some((audit) => !audit.wabaIds.includes(wabaId))) {
+    return NextResponse.json({
+      ok: false,
+      providers: [{ templateName: "atlas_patient_loop", wabaId, error: "waba_phone_mismatch", variants: [] }],
+    }, { headers: { "Cache-Control": "no-store" } });
   }
 
+  const existingTemplates = audits.flatMap((audit) => audit.templates);
+  const variants = await bootstrapAtlasAppointmentReminderTemplates({
+    accessToken: config.accessToken,
+    graphApiVersion: config.graphApiVersion,
+    wabaId,
+    existingTemplates,
+    fetchImplementation: metaFetch,
+  });
+  const provider = {
+    templateName: "atlas_patient_loop",
+    wabaId,
+    error: null,
+    variants,
+  };
+
   return NextResponse.json({
-    ok: providers.every((provider) => provider.error === null
-      && provider.variants.every((variant) => variant.errorCode === null)),
-    providers,
+    ok: variants.every((variant) => variant.errorCode === null),
+    providers: [provider],
   }, { headers: { "Cache-Control": "no-store" } });
 }
