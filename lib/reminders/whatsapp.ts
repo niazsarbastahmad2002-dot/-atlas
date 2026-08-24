@@ -1,4 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import {
+  patientLoopButtonComponents,
+  patientLoopProviderLanguage,
+  patientLoopTemplateName,
+  patientLoopTimingText,
+  type PatientLoopMessageKind,
+} from "./patient-loop.ts";
 
 export type WhatsAppConfig = {
   accessToken: string;
@@ -15,6 +22,10 @@ export type WhatsAppTemplateInput = {
   appointmentAt: string;
   templateName: string;
   templateLanguage: string;
+  reminderId?: string;
+  doctorName?: string;
+  messageKind?: PatientLoopMessageKind;
+  delayMinutes?: number;
 };
 
 export type WhatsAppSendResult =
@@ -83,7 +94,45 @@ export async function readBodyWithLimit(
   return result;
 }
 
-export function buildTemplatePayload(input: WhatsAppTemplateInput) {
+function patientLoopReady(input: WhatsAppTemplateInput): input is WhatsAppTemplateInput & {
+  reminderId: string;
+  doctorName: string;
+  messageKind: PatientLoopMessageKind;
+} {
+  return Boolean(input.reminderId && input.doctorName && (input.messageKind === "confirm" || input.messageKind === "day_of"));
+}
+
+export function buildTemplatePayload(input: WhatsAppTemplateInput, appSecret?: string) {
+  if (patientLoopReady(input) && appSecret) {
+    const providerLanguage = patientLoopProviderLanguage(input.templateLanguage);
+    const bodyParameters = [
+      { type: "text", text: input.clinicName },
+      { type: "text", text: input.doctorName },
+      { type: "text", text: input.appointmentAt },
+    ];
+    if (input.messageKind === "day_of") {
+      bodyParameters.push({
+        type: "text",
+        text: patientLoopTimingText(providerLanguage, input.delayMinutes ?? 0),
+      });
+    }
+
+    return {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: input.recipientPhone,
+      type: "template",
+      template: {
+        name: patientLoopTemplateName(input.messageKind),
+        language: { code: providerLanguage },
+        components: [
+          { type: "body", parameters: bodyParameters },
+          ...patientLoopButtonComponents(input.reminderId, input.messageKind, appSecret),
+        ],
+      },
+    };
+  }
+
   return {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -114,6 +163,18 @@ function providerErrorCode(body: unknown, status: number) {
   return `http_${status}`;
 }
 
+function acceptedMessageId(body: unknown) {
+  if (!body || typeof body !== "object" || !("messages" in body)) return null;
+  const messages = (body as { messages?: unknown }).messages;
+  return Array.isArray(messages)
+    && messages[0]
+    && typeof messages[0] === "object"
+    && "id" in messages[0]
+    && typeof (messages[0] as { id?: unknown }).id === "string"
+    ? (messages[0] as { id: string }).id
+    : null;
+}
+
 export async function sendApprovedWhatsAppTemplate(
   input: WhatsAppTemplateInput,
   config: WhatsAppConfig,
@@ -131,25 +192,15 @@ export async function sendApprovedWhatsAppTemplate(
           Authorization: `Bearer ${config.accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(buildTemplatePayload(input)),
+        body: JSON.stringify(buildTemplatePayload(input, config.appSecret)),
         signal: controller.signal,
       },
     );
 
     let body: unknown = null;
     try { body = await response.json(); } catch {}
-
-    if (response.ok && body && typeof body === "object" && "messages" in body) {
-      const messages = (body as { messages?: unknown }).messages;
-      const providerMessageId = Array.isArray(messages)
-        && messages[0]
-        && typeof messages[0] === "object"
-        && "id" in messages[0]
-        && typeof (messages[0] as { id?: unknown }).id === "string"
-        ? (messages[0] as { id: string }).id
-        : null;
-      if (providerMessageId) return { accepted: true, providerMessageId };
-    }
+    const providerMessageId = response.ok ? acceptedMessageId(body) : null;
+    if (providerMessageId) return { accepted: true, providerMessageId };
 
     return {
       accepted: false,
@@ -158,6 +209,52 @@ export async function sendApprovedWhatsAppTemplate(
     };
   } catch {
     // A transport failure can leave delivery uncertain; automatic retry could duplicate a message.
+    return { accepted: false, errorCode: "delivery_unknown", retryable: false };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function sendWhatsAppTextMessage(
+  recipientPhone: string,
+  text: string,
+  config: WhatsAppConfig,
+  fetchImplementation: typeof fetch = fetch,
+): Promise<WhatsAppSendResult> {
+  if (!/^\+9647\d{9}$/.test(recipientPhone) || !text.trim() || text.length > 1000) {
+    return { accepted: false, errorCode: "invalid_text_message", retryable: false };
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const response = await fetchImplementation(
+      `https://graph.facebook.com/${config.graphApiVersion}/${config.phoneNumberId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: recipientPhone,
+          type: "text",
+          text: { preview_url: false, body: text },
+        }),
+        signal: controller.signal,
+      },
+    );
+    let body: unknown = null;
+    try { body = await response.json(); } catch {}
+    const providerMessageId = response.ok ? acceptedMessageId(body) : null;
+    if (providerMessageId) return { accepted: true, providerMessageId };
+    return {
+      accepted: false,
+      errorCode: providerErrorCode(body, response.status),
+      retryable: response.status === 429 || response.status >= 500,
+    };
+  } catch {
     return { accepted: false, errorCode: "delivery_unknown", retryable: false };
   } finally {
     clearTimeout(timeout);
