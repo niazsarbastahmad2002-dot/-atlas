@@ -23,8 +23,8 @@ test("clinic activity history extends the existing audit store without copying p
   assert.match(migration, /staff_removed/);
   assert.match(migration, /permission_changed/);
 
-  assert.doesNotMatch(migration, /jsonb_build_object\([^)]*patient_phone\s*,\s*new\.patient_phone/s);
-  assert.doesNotMatch(migration, /jsonb_build_object\([^)]*patient_name\s*,\s*new\.patient_name/s);
+  assert.equal(migration.includes("'patient_phone', new.patient_phone"), false);
+  assert.equal(migration.includes("'patient_name', new.patient_name"), false);
   assert.match(migration, /Record which fields changed, never the patient name or phone values themselves/);
 
   assert.match(migration, /private\.can_view_clinic_activity/);
