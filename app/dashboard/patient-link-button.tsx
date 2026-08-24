@@ -127,7 +127,7 @@ export function PatientLinkButton({
     if (!initialLink || !state.patientPhone) return null;
     const digits = state.patientPhone.replace(/\D/g, "");
     if (!digits) return null;
-    const lines = [t.title];
+    const lines: string[] = [t.title];
     if (state.doctorName) lines.push(`${t.doctor}: ${state.doctorName}`);
     const when = appointmentText(state.appointmentAt, locale);
     if (when) lines.push(`${t.time}: ${when}`);
