@@ -151,6 +151,7 @@ struct AtlasNativeTodayView: View {
 
 struct AtlasNativeDemoView: View {
     let close: () -> Void
+    let openInteractiveDemo: () -> Void
     let continueWithPhone: () -> Void
 
     @State private var showWaitingOnly = false
@@ -208,12 +209,16 @@ struct AtlasNativeDemoView: View {
                 }
 
                 Section {
+                    Button("Open interactive sample workspace") {
+                        openInteractiveDemo()
+                    }
+                    .fontWeight(.semibold)
+
                     Button("Use Atlas with my clinic") {
                         continueWithPhone()
                     }
-                    .fontWeight(.semibold)
                 } footer: {
-                    Text("This native sample demonstrates the clinic-day experience without writing anything to Atlas.")
+                    Text("This native sample uses invented data. The interactive sample workspace also stays synthetic and does not write patient data to Atlas.")
                 }
             }
             .listStyle(.insetGrouped)
