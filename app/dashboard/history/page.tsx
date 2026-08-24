@@ -10,11 +10,11 @@ export const dynamic = "force-dynamic";
 
 type HistoryPageProps = { searchParams: Promise<{ clinic?: string }> };
 
-const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; back: string; privacy: string }> = {
-  en: { eyebrow: "Clinic records", title: "Appointment history", help: "Search old appointments and review removed records. Permanent deletion is limited to removed appointments and clinic administration.", back: "Back to settings", privacy: "Deleting forever removes the appointment record and its patient access link. Atlas keeps audit events that are designed to remain as a minimal security record." },
-  ku: { eyebrow: "تۆمارەکانی کلینیک", title: "مێژووی وادەکان", help: "لە وادە کۆنەکان بگەڕێ و تۆمارە لابراوەکان ببینە. سڕینەوەی هەمیشەیی تەنها بۆ وادە لابراوەکان و بەڕێوەبردنی کلینیکە.", back: "گەڕانەوە بۆ ڕێکخستنەکان", privacy: "سڕینەوەی هەمیشەیی تۆماری وادە و بەستەری نەخۆش دەسڕێتەوە. Atlas تۆماری کەمینەی ئاسایشی هەندێک ڕووداو دەپارێزێت." },
-  bd: { eyebrow: "تۆمارێن کلینیکێ", title: "مێژوویا وادەیان", help: "ل وادەیێن کەڤن بگەڕێ و تۆمارێن لابری بپشکنە. ژێبرنا هەمیشەیی تەنێ بۆ وادەیێن لابری و بەڕێڤەبرنا کلینیکێیە.", back: "ڤەگەرە بۆ ڕێکخستن", privacy: "ژێبرنا هەمیشەیی تۆمارێ وادەیێ و لینکێ نەخۆشی ژێدبەت. Atlas تۆمارەکا کێم یا ئاسایشی دپارێزیت." },
-  ar: { eyebrow: "سجلات العيادة", title: "سجل المواعيد", help: "ابحث في المواعيد القديمة وراجع السجلات التي تمت إزالتها. الحذف النهائي متاح فقط للمواعيد المحذوفة وإدارة العيادة.", back: "العودة إلى الإعدادات", privacy: "الحذف النهائي يزيل سجل الموعد ورابط المريض. يحتفظ Atlas بأحداث تدقيق أمنية محدودة مصممة للبقاء كسجل أمني أدنى." },
+const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; back: string; activity: string; privacy: string }> = {
+  en: { eyebrow: "Clinic records", title: "Appointment history", help: "Search old appointments and review removed records. Permanent deletion is limited to removed appointments and clinic administration.", back: "Back to settings", activity: "Activity history", privacy: "Deleting forever removes the appointment record and its patient access link. Atlas keeps audit events that are designed to remain as a minimal security record." },
+  ku: { eyebrow: "تۆمارەکانی کلینیک", title: "مێژووی وادەکان", help: "لە وادە کۆنەکان بگەڕێ و تۆمارە لابراوەکان ببینە. سڕینەوەی هەمیشەیی تەنها بۆ وادە لابراوەکان و بەڕێوەبردنی کلینیکە.", back: "گەڕانەوە بۆ ڕێکخستنەکان", activity: "مێژووی چالاکی", privacy: "سڕینەوەی هەمیشەیی تۆماری وادە و بەستەری نەخۆش دەسڕێتەوە. Atlas تۆماری کەمینەی ئاسایشی هەندێک ڕووداو دەپارێزێت." },
+  bd: { eyebrow: "تۆمارێن کلینیکێ", title: "مێژوویا وادەیان", help: "ل وادەیێن کەڤن بگەڕێ و تۆمارێن لابری بپشکنە. ژێبرنا هەمیشەیی تەنێ بۆ وادەیێن لابری و بەڕێڤەبرنا کلینیکێیە.", back: "ڤەگەرە بۆ ڕێکخستن", activity: "مێژوویا چالاکیێ", privacy: "ژێبرنا هەمیشەیی تۆمارێ وادەیێ و لینکێ نەخۆشی ژێدبەت. Atlas تۆمارەکا کێم یا ئاسایشی دپارێزیت." },
+  ar: { eyebrow: "سجلات العيادة", title: "سجل المواعيد", help: "ابحث في المواعيد القديمة وراجع السجلات التي تمت إزالتها. الحذف النهائي متاح فقط للمواعيد المحذوفة وإدارة العيادة.", back: "العودة إلى الإعدادات", activity: "سجل النشاط", privacy: "الحذف النهائي يزيل سجل الموعد ورابط المريض. يحتفظ Atlas بأحداث تدقيق أمنية محدودة مصممة للبقاء كسجل أمني أدنى." },
 };
 
 export default async function HistoryPage({ searchParams }: HistoryPageProps) {
@@ -55,7 +55,13 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
 
   return (
     <main className="history-page shell">
-      <header className="page-heading history-heading"><div><div className="eyebrow">{t.eyebrow}</div><h1>{t.title}</h1><p>{t.help}</p></div><Link className="button button-ghost button-small" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{t.back}</Link></header>
+      <header className="page-heading history-heading">
+        <div><div className="eyebrow">{t.eyebrow}</div><h1>{t.title}</h1><p>{t.help}</p></div>
+        <div className="compact-actions">
+          <Link className="button button-ghost button-small" href={`/dashboard/activity?clinic=${clinic.id}`} prefetch>{t.activity}</Link>
+          <Link className="button button-ghost button-small" href={`/dashboard/settings?clinic=${clinic.id}`} prefetch>{t.back}</Link>
+        </div>
+      </header>
       {clinics.length > 1 ? <form className="clinic-switcher history-clinic-switcher" method="get"><label htmlFor="clinic-history">Clinic</label><select id="clinic-history" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="button button-ghost button-small" type="submit">Open</button></form> : null}
       <HistoryClient clinicId={clinic.id} rows={rows} locale={locale} canDelete />
       <p className="history-privacy">{t.privacy}</p>
