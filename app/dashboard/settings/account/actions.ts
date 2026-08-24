@@ -32,25 +32,15 @@ export async function deleteAtlasAccount(formData: FormData) {
     console.error("Atlas Apple revocation credential read failed", { error: error instanceof Error ? error.name : "unknown" });
   }
 
-  // Deleting an Atlas account means deleting every clinic workspace owned by that
-  // identity. Clinic foreign keys already enforce the same protected cleanup used
-  // by the dedicated clinic-deletion screen.
-  const { error: clinicsDeleteError } = await supabase
-    .from("clinics")
-    .delete()
-    .eq("owner_id", userId);
-  if (clinicsDeleteError) {
-    console.error("Atlas account-owned clinic deletion failed", { code: clinicsDeleteError.code });
-    redirect(accountUrl("failed"));
-  }
-
   try {
     const admin = createAdminClient();
+    // clinics.owner_id now uses ON DELETE CASCADE. Deleting the auth identity is
+    // therefore the one atomic database operation: if this delete fails, owned
+    // clinics remain; if it succeeds, every owned clinic and its existing
+    // clinic-scoped cascade tree are removed in the same database transaction.
     const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
     if (deleteError) throw deleteError;
   } catch (error) {
-    // Owned clinics are already gone. The remaining identity is deliberately left
-    // retryable rather than risking an inconsistent partial auth deletion.
     console.error("Atlas account deletion failed", { error: error instanceof Error ? error.name : "unknown" });
     redirect(accountUrl("failed"));
   }
@@ -70,8 +60,10 @@ export async function deleteAtlasAccount(formData: FormData) {
     }
   }
 
+  if (manualAppleRevokeNeeded) {
+    console.warn("Atlas account deleted; historical Apple authorization may still require provider-side revocation");
+  }
+
   await supabase.auth.signOut().catch(() => undefined);
-  redirect(manualAppleRevokeNeeded
-    ? "/login?notice=account_deleted"
-    : "/login?notice=account_deleted");
+  redirect("/login?notice=account_deleted");
 }
