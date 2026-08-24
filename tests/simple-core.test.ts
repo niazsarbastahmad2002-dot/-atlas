@@ -77,7 +77,7 @@ test("simple schedule removes repeated status and appointment metadata without r
   assert.match(css, /nth-child\(5\)/);
   assert.match(css, /nth-child\(6\)/);
   assert.match(css, /polished-details > div:nth-child\(n \+ 2\)/);
-  assert.doesNotMatch(css, /\.day-navigation\s*\{[^}]*display:\s*none/s);
+  assert.doesNotMatch(css, /\.day-navigation\s*\{[\s\S]*?display:\s*none/);
   assert.match(dashboard, /schedule-date-shortcuts/);
   assert.match(dashboard, /day-navigation/);
 });
