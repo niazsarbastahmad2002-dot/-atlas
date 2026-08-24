@@ -9,50 +9,87 @@ const initialPatientLinkState = {
   error: null as string | null,
   patientPhone: null as string | null,
   patientName: null as string | null,
+  doctorName: null as string | null,
+  appointmentAt: null as string | null,
 };
 
 const copy = {
   en: {
-    shareAppointment: "Share appointment",
+    shareAppointment: "Share details",
     creating: "Preparing…",
-    help: "Manual backup until automatic WhatsApp is active.",
-    copy: "Copy link",
+    help: "Manual backup. The WhatsApp message includes the appointment itself; the private link is only for full details or changes.",
+    copy: "Copy details link",
     copied: "Copied ✓",
     whatsapp: "Send on WhatsApp",
     back: "Back",
-    message: "Your Atlas appointment:",
+    title: "Your appointment",
+    doctor: "Doctor",
+    time: "Time",
+    details: "Full details or changes",
   },
   ku: {
-    shareAppointment: "ناردنی کات",
+    shareAppointment: "زانیاری مەوعید بنێرە",
     creating: "ئامادە دەکرێت…",
-    help: "ڕێگای جێگرەوە تا واتسئەپە خۆکارەکە چالاک دەبێت.",
-    copy: "بەستەر کۆپی بکە",
+    help: "ڕێگای دەستییە. خودی مەوعیدەکە لە پەیامی WhatsApp ـدا دەردەکەوێت؛ بەستەرە تایبەتەکە تەنها بۆ زانیاری تەواو یان گۆڕانکارییە.",
+    copy: "بەستەری زانیاری کۆپی بکە",
     copied: "کۆپی کرا ✓",
-    whatsapp: "لە واتسئەپ بینێرە",
+    whatsapp: "لە WhatsApp بینێرە",
     back: "گەڕانەوە",
-    message: "کاتی پزیشکی تۆ لە Atlas:",
+    title: "مەوعیدەکەت",
+    doctor: "دکتۆر",
+    time: "کات",
+    details: "زانیاری تەواو یان گۆڕانکاری",
   },
   bd: {
-    shareAppointment: "وادەیێ پارڤە بکە",
+    shareAppointment: "زانیاریێن مەوعیدی بهنێرە",
     creating: "دهێتە ئامادەکرن…",
-    help: "تا واتسئاپ خودکار چالاک دبیت، ئەڤە ڕێکا دەستییە.",
-    copy: "لینکێ کۆپی بکە",
+    help: "ڕێکا دەستییە. خودێ مەوعیدی د پەیاما WhatsApp دا دیار دبیت؛ لینکێ تایبەت تەنێ بۆ زانیاریێن تەمام یان گوهۆڕینێیە.",
+    copy: "لینکێ زانیارییان کۆپی بکە",
     copied: "کۆپی بوو ✓",
-    whatsapp: "ل واتسئاپێ بهنێرە",
+    whatsapp: "ل WhatsApp بهنێرە",
     back: "ڤەگەرە",
-    message: "وادەیا تە ل Atlas:",
+    title: "مەوعیدا تە",
+    doctor: "دکتۆر",
+    time: "دەم",
+    details: "زانیاریێن تەمام یان گوهۆڕین",
   },
   ar: {
-    shareAppointment: "مشاركة الموعد",
+    shareAppointment: "إرسال تفاصيل الموعد",
     creating: "جارٍ التجهيز…",
-    help: "خيار احتياطي إلى أن يعمل واتساب تلقائياً.",
-    copy: "نسخ الرابط",
+    help: "خيار يدوي احتياطي. تفاصيل الموعد تظهر داخل رسالة واتساب نفسها؛ الرابط الخاص فقط للتفاصيل الكاملة أو التغيير.",
+    copy: "نسخ رابط التفاصيل",
     copied: "تم النسخ ✓",
     whatsapp: "إرسال عبر واتساب",
     back: "رجوع",
-    message: "موعدك في Atlas:",
+    title: "موعدك",
+    doctor: "الدكتور",
+    time: "الوقت",
+    details: "التفاصيل الكاملة أو التغيير",
   },
 } as const;
+
+const dateLocale: Record<UiLocale, string> = {
+  en: "en-IQ",
+  ku: "ckb-IQ",
+  bd: "ckb-IQ",
+  ar: "ar-IQ",
+};
+
+function appointmentText(value: string | null, locale: UiLocale) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(dateLocale[locale], {
+    timeZone: "Asia/Baghdad",
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
 
 export function PatientLinkButton({
   clinicId,
@@ -90,9 +127,13 @@ export function PatientLinkButton({
     if (!initialLink || !state.patientPhone) return null;
     const digits = state.patientPhone.replace(/\D/g, "");
     if (!digits) return null;
-    const message = `${t.message}\n${initialLink}`;
-    return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
-  }, [initialLink, state.patientPhone, t.message]);
+    const lines: string[] = [t.title];
+    if (state.doctorName) lines.push(`${t.doctor}: ${state.doctorName}`);
+    const when = appointmentText(state.appointmentAt, locale);
+    if (when) lines.push(`${t.time}: ${when}`);
+    lines.push("", `${t.details}:`, initialLink);
+    return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join("\n"))}`;
+  }, [initialLink, locale, state.appointmentAt, state.doctorName, state.patientPhone, t]);
 
   async function copyLink() {
     if (!initialLink) return;

@@ -16,7 +16,7 @@ const instantActions = source("../app/dashboard/instant-actions.ts");
 const settingsActions = source("../app/dashboard/settings/actions.ts");
 const workflowRoute = source("../app/api/settings/doctor-workflow/route.ts");
 const patient = source("../app/patient/[token]/page.tsx");
-const templateBootstrap = source("../lib/reminders/meta-template-bootstrap.ts");
+const patientLoop = source("../lib/reminders/patient-loop.ts");
 
 test("schedule navigation never leaves the interface faded", () => {
   assert.doesNotMatch(navigation, /classList\.add\(["']is-navigating["']\)/);
@@ -43,9 +43,10 @@ test("new appointments use the selected doctor's reminder language default", () 
   assert.match(dashboard, /defaultReminderLanguage = \(doctorWorkflowRows/);
 });
 
-test("Iraqi Arabic patient and reminder copy uses simple Iraqi wording", () => {
+test("Iraqi Arabic patient and WhatsApp copy uses simple Iraqi wording", () => {
   assert.match(patient, /راح تجي/);
   assert.match(patient, /ما أگدر أجي/);
-  assert.match(templateBootstrap, /إذا ما تگدر تجي/);
-  assert.match(templateBootstrap, /ويّا العيادة/);
+  assert.match(patientLoop, /ما أگدر أجي/);
+  assert.match(patientLoop, /ويّا د\./);
+  assert.match(patientLoop, /راح أجي/);
 });
