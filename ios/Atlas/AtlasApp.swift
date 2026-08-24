@@ -11,6 +11,11 @@ private let atlasInviteTokenCharacters = CharacterSet(charactersIn: "ABCDEFGHIJK
 private let atlasNonReplayableAuthPaths: Set<String> = ["/auth/callback", "/auth/invite", "/auth/native"]
 private let atlasContinuityHandlerName = "atlasContinuity"
 
+private enum AtlasShellTab: Hashable {
+    case today
+    case workspace
+}
+
 private func atlasInviteToken(from url: URL) -> String? {
     guard url.scheme?.lowercased() == "https",
           let host = url.host?.lowercased(),
@@ -85,11 +90,23 @@ struct AtlasRootView: View {
     @State private var continuitySnapshot = AtlasContinuityStore.shared.load()
     @State private var sawOffline = false
     @State private var recoveringFromOffline = false
+    @State private var selectedTab: AtlasShellTab = .today
+    @State private var showingNativeDemo = false
 
     var body: some View {
         Group {
-            if let activeWebDestination {
-                webExperience(activeWebDestination)
+            if showingNativeDemo {
+                AtlasNativeDemoView(
+                    close: { showingNativeDemo = false },
+                    continueWithPhone: {
+                        showingNativeDemo = false
+                        hasOpened = true
+                        selectedTab = .workspace
+                        destination = atlasBaseURL.appending(path: "login")
+                    }
+                )
+            } else if hasOpened, let activeWebDestination {
+                appShell(activeWebDestination)
             } else {
                 welcome
             }
@@ -121,6 +138,31 @@ struct AtlasRootView: View {
         return hasOpened ? atlasBaseURL.appending(path: "dashboard") : nil
     }
 
+    private func appShell(_ url: URL) -> some View {
+        TabView(selection: $selectedTab) {
+            AtlasNativeTodayView(
+                snapshot: continuitySnapshot,
+                isOffline: networkMonitor.isOffline,
+                openAtlas: {
+                    selectedTab = .workspace
+                    if destination == nil {
+                        destination = atlasBaseURL.appending(path: "dashboard")
+                    }
+                }
+            )
+            .tabItem {
+                Label("Today", systemImage: "calendar")
+            }
+            .tag(AtlasShellTab.today)
+
+            webExperience(url)
+                .tabItem {
+                    Label("Workspace", systemImage: "rectangle.stack")
+                }
+                .tag(AtlasShellTab.workspace)
+        }
+    }
+
     @ViewBuilder
     private func webExperience(_ url: URL) -> some View {
         ZStack {
@@ -134,7 +176,6 @@ struct AtlasRootView: View {
                 onContinuityClear: clearContinuitySnapshot
             )
             .id("\(url.absoluteString)-\(webReloadID.uuidString)")
-            .ignoresSafeArea(.container, edges: .bottom)
 
             if networkMonitor.isOffline {
                 AtlasContinuityOfflineView(snapshot: continuitySnapshot)
@@ -206,6 +247,7 @@ struct AtlasRootView: View {
 
             Button(pendingInviteToken == nil ? "Continue with phone" : "Verify phone and join") {
                 hasOpened = true
+                selectedTab = .workspace
                 webErrorMessage = nil
                 if let pendingInviteToken {
                     destination = atlasInviteURL(for: pendingInviteToken)
@@ -216,8 +258,8 @@ struct AtlasRootView: View {
             .buttonStyle(.borderedProminent)
 
             if pendingInviteToken == nil {
-                Button("Try with sample data") {
-                    destination = atlasBaseURL.appending(path: "demo")
+                Button("Try native sample clinic") {
+                    showingNativeDemo = true
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -235,6 +277,7 @@ struct AtlasRootView: View {
         // A valid invitation never grants membership by itself. It only opens the
         // invitation page; the server redeems it after the user verifies identity.
         if hasOpened {
+            selectedTab = .workspace
             destination = atlasInviteURL(for: token)
         }
     }
