@@ -6,6 +6,7 @@ import { type MouseEvent, useEffect, useState } from "react";
 import { trackAtlasEvent } from "@/lib/analytics/client";
 import { classifyAtlasScreen } from "@/lib/analytics/schema";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import { LiveClinicFlow } from "./live-clinic-flow";
 import { flushSettingWrites, hasPendingSettingWrite, needsFreshSettingNavigation } from "./setting-write-barrier";
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
@@ -202,6 +203,15 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           </nav>
         </div>
       </header>
+
+      {onSchedule ? (
+        <LiveClinicFlow
+          locale={locale}
+          clinicId={searchParams.get("clinic")}
+          doctorId={searchParams.get("doctor")}
+          day={searchParams.get("day")}
+        />
+      ) : null}
 
       <nav className="app-bottom-nav" aria-label="Atlas mobile navigation">
         <Link className={onSchedule ? "is-active" : ""} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "bottom_nav")}>
