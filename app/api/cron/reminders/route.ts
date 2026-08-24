@@ -14,6 +14,7 @@ import {
   readClinicMetaWhatsAppConfig,
   readMetaRuntimeBase,
 } from "@/lib/reminders/meta-clinic-config";
+import type { PatientLoopMessageKind } from "@/lib/reminders/patient-loop";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -23,12 +24,17 @@ export const maxDuration = 60;
 
 type ClaimedReminder = {
   reminder_id: string;
+  appointment_id: string;
   clinic_id: string;
   patient_phone: string;
   clinic_name: string;
+  doctor_name: string;
   appointment_at: string;
+  scheduled_for: string;
   template_name: string;
   template_language: string;
+  message_kind: PatientLoopMessageKind;
+  delay_minutes: number;
 };
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -130,13 +136,20 @@ async function processReminder(
   configured: ConfiguredProvider,
 ) {
   if (
-    !reminder.reminder_id
+    !/^[0-9a-f-]{36}$/i.test(reminder.reminder_id)
+    || !/^[0-9a-f-]{36}$/i.test(reminder.appointment_id)
     || !/^[0-9a-f-]{36}$/i.test(reminder.clinic_id)
     || !/^\+9647\d{9}$/.test(reminder.patient_phone)
     || !reminder.clinic_name
+    || !reminder.doctor_name
     || Number.isNaN(new Date(reminder.appointment_at).getTime())
+    || Number.isNaN(new Date(reminder.scheduled_for).getTime())
     || !/^[a-z0-9_]{1,512}$/.test(reminder.template_name)
     || !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(reminder.template_language)
+    || !["confirm", "day_of"].includes(reminder.message_kind)
+    || !Number.isInteger(reminder.delay_minutes)
+    || reminder.delay_minutes < -15
+    || reminder.delay_minutes > 120
   ) {
     await failReminder(admin, workerId, reminder.reminder_id, "invalid_job");
     return "failed" as const;
@@ -160,7 +173,11 @@ async function processReminder(
   const result = await routeReminder({
     recipientPhone: reminder.patient_phone,
     clinicName: reminder.clinic_name,
+    doctorName: reminder.doctor_name,
     appointmentAt: baghdadDateTime.format(new Date(reminder.appointment_at)),
+    reminderId: reminder.reminder_id,
+    messageKind: reminder.message_kind,
+    delayMinutes: reminder.delay_minutes,
     templateName: reminder.template_name,
     templateLanguage: reminder.template_language,
   }, ["whatsapp"], [transport]);
@@ -210,7 +227,7 @@ export async function GET(request: Request) {
 
   const workerId = randomUUID();
   const rpcClient = admin as any;
-  const { data, error } = await rpcClient.rpc("claim_due_whatsapp_reminders_v2", {
+  const { data, error } = await rpcClient.rpc("claim_due_whatsapp_reminders_v3", {
     p_worker_id: workerId,
     p_limit: 25,
     p_global_daily_limit: configured.globalDailyLimit,
