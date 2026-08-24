@@ -43,7 +43,7 @@ export async function getAppointmentContactRelationshipInline(
 ): Promise<AppointmentContactRelationship | null> {
   if (!isUuid(id)) return null;
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("appointments")
     .select("contact_relationship")
     .eq("id", id)
@@ -93,7 +93,7 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     return { ok: false, reason: "invalid" };
   }
 
-  const { error } = await supabase.from("appointments").insert({
+  const { error } = await (supabase as any).from("appointments").insert({
     clinic_id: clinicId,
     patient_name: patientName,
     patient_phone: patientPhone,
@@ -193,7 +193,7 @@ export async function updateAppointmentDetailsInline(
     .maybeSingle();
   if (doctorError || !doctor) return { ok: false, reason: "invalid" };
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("appointments")
     .update({
       patient_name: patientName,
