@@ -37,3 +37,18 @@ test("appointments distinguish the patient from the phone contact without creati
   assert.equal(migration.includes("contact_name"), false);
   assert.equal(migration.includes("contact_phone"), false);
 });
+
+test("generated appointment types include the contact relationship without client type bypasses", async () => {
+  const [databaseTypes, actions] = await Promise.all([
+    read("lib/database.types.ts"),
+    read("app/dashboard/instant-actions.ts"),
+  ]);
+  const appointmentsStart = databaseTypes.indexOf("      appointments: {");
+  const appointmentsEnd = databaseTypes.indexOf("      clinic_members:", appointmentsStart);
+  const appointmentTypes = databaseTypes.slice(appointmentsStart, appointmentsEnd);
+
+  assert.match(appointmentTypes, /Row: \{[^\n]*contact_relationship: string/);
+  assert.match(appointmentTypes, /Insert: \{[^\n]*contact_relationship\?: string/);
+  assert.match(appointmentTypes, /Update: \{[^\n]*contact_relationship\?: string/);
+  assert.doesNotMatch(actions, /\(supabase as any\)/);
+});
