@@ -1,210 +1,170 @@
-# Atlas product contract and progress ledger
+# Atlas product contract
 
-Status: 2026-08-19
-Purpose: durable source of truth for future Atlas changes. This is not a marketing document. It exists so new work preserves every product decision that has already been earned through testing, user feedback, security hardening, and production incidents.
+Status: 2026-08-24
+
+This is the current product contract, not a history log. Past implementation details belong in Git history or the progress ledger.
 
 ## Product mission
 
-Atlas is a focused clinic appointment workspace for private clinics in Hawler/Erbil. The first problem is operational: missed appointments, receptionist workload, unclear scheduling, and patient communication. Atlas is not a clinical decision-support system and must not drift into diagnosis or treatment advice.
+Atlas is a focused appointment and patient-communication workspace for private clinics. It reduces receptionist workload, missed appointments and schedule confusion. Atlas is not a diagnostic, prescribing or clinical decision-support system.
 
-Product standard: simple enough for a receptionist to use under pressure, safe enough to hold clinic appointment data, readable enough for patients, and localized as a first-class Kurdish/Arabic/English product rather than an English app with translated labels.
+Product standard: **simple enough to use under reception pressure, safe enough for clinic appointment data, excellent on iPhone/iPad, and genuinely local in English, Sorani Kurdish, Badini Kurdish and Iraqi Arabic.**
 
-## Canonical stack and live systems
+## Simplicity contract
+
+The daily product hierarchy is:
+
+1. **Schedule** — the main workspace.
+2. **Add** — the fastest path to a new appointment.
+3. **Settings** — doctor workflow, clinic setup and lower-frequency administration.
+
+History, team access, deletion and provider configuration are necessary but are not daily navigation. Keep them behind Settings.
+
+Before adding a new control, page, card or setting, ask:
+- Does it solve a distinct user job?
+- Is that job common enough to deserve its own surface?
+- Can it live inside an existing workflow instead?
+- Does it repeat information already visible nearby?
+
+Necessary repetition may remain when two controls do different jobs. Decorative or implementation-driven repetition should be removed.
+
+Habit-forming Atlas means **fast, predictable usefulness**: remember context, make the next action obvious, save quickly, show clear success/failure, and keep the clinic day easy to resume. Do not use streaks, guilt, artificial urgency or dark patterns.
+
+## Canonical stack and release path
 
 - Next.js + React on Vercel.
-- Supabase Auth + PostgreSQL with RLS and server-side service-role use only where explicitly justified.
-- Production: `https://atlasdemofixed.vercel.app`.
-- Supabase project: `moazrwbalqiyoafrydkj` in `ap-southeast-1`.
-- Clinic time zone: `Asia/Baghdad`.
-- Production deploys come from `main`; feature branches must not exhaust the Vercel Hobby deployment budget.
-- CI must typecheck, run unit/security tests, build production, audit production dependencies, and run browser smoke tests before changes are trusted.
+- Supabase Auth + PostgreSQL.
+- Row Level Security is the tenant boundary.
+- Clinic scheduling timezone is `Asia/Baghdad`.
+- `main` is the canonical production branch.
+- A release is complete only after CI passes and the production domain is verified.
 
-## Authentication and access contract
+## Authentication and clinic access contract
 
-- Email magic-link sign-in is the baseline. Any valid email provider is acceptable; Atlas must not imply that Gmail is required. iCloud/Apple email addresses are valid work emails.
-- Passkey/quick sign-in may be offered as a convenience, not as a replacement for secure account ownership.
-- Clinic invitations are pending until the invited email account actually completes the sign-in/acceptance flow. Typing an address must never instantly create active receptionist access.
-- Receptionists are assigned to a doctor. They may work with that doctor's operational settings and schedule, but may not promote themselves or gain clinic-administration privileges.
-- Receptionists must not have appointment-history administration or clinic-access administration.
-- Owners/managers control clinic identity, doctor management, staff access, and history administration.
-- Literal email addresses must remain LTR and unchanged in every UI locale.
+- Atlas's product identity is moving to a verified phone number. Normal product design must not imply that Gmail is required.
+- Temporary legacy authentication may remain only as a rollout bridge while the production phone/WhatsApp provider path is not ready.
+- Do not activate unfinished WhatsApp authentication merely because the UI exists. Real provider delivery and approved templates are release gates.
+- Passkeys may be an optional trusted-device shortcut; they must not become another required concept.
+- Authentication proves identity. **Clinic membership is separate authorization.** Signing in never grants a person access to an existing clinic automatically.
+- Receptionist access is granted through an explicit invitation and is bound to the intended identity.
+- Receptionists are assigned to a doctor and cannot self-promote or administer clinic access/history.
+- Owners/managers control clinic identity, doctors, staff access and administrative history.
 
 ## Scheduling contract
 
-- Appointments are always interpreted/displayed in Baghdad/Erbil time.
-- New and edited appointments may not be created in the past.
-- The Atlas date picker is the product date control for both appointment creation and appointment editing. Do not regress to a large browser-native calendar as the primary date experience.
-- Time is handled separately from date.
-- Supported doctor-specific default appointment intervals: 5, 10, 15, 20, 30 minutes.
-- Five-minute scheduling includes `00, 05, 10, 15, ... 55`; no five-minute slot may disappear.
-- After an appointment is created, the next suggested time for that doctor should advance by that doctor's configured interval.
-- A doctor cannot have two appointments at the exact same minute. One minute apart is valid. The database remains the final concurrency guard; UI validation alone is not sufficient.
-- Appointment editing uses a simple custom date/time workflow and must not force reception through a giant slot grid.
-- Doctor switching and date navigation must preserve the receptionist's working context and must not show stale prefetched settings.
-- Settings writes that happen immediately on selection must be race-safe and flushed before leaving settings.
+- Appointments are interpreted and displayed in Baghdad/Erbil time.
+- New or edited appointments cannot be created in the past.
+- The Atlas date/time controls are the product controls; do not regress to a confusing browser-native scheduling experience.
+- Doctor-specific appointment intervals are 5, 10, 15, 20 or 30 minutes.
+- Every valid interval choice remains available, including all five-minute choices.
+- The next suggested time advances from the doctor's schedule rather than making reception calculate it.
+- A doctor cannot have two active appointments at the same exact minute. PostgreSQL remains the concurrency authority.
+- Date and doctor navigation must preserve working context and must not show stale settings.
+- The schedule should emphasize work still needing attention, not turn every status into a competing dashboard metric.
 
-## Appointment status and queue contract
+## Appointment and queue contract
 
-Core statuses are pending, confirmed, cancelled, completed, no-show, and voided/removed according to the database lifecycle.
+Supported lifecycle states include pending, confirmed, cancelled, completed, no-show and removed/voided according to database rules.
 
-- Patient confirmation changes pending -> confirmed.
-- Patient cancellation changes pending/confirmed -> cancelled according to allowed transitions.
-- Reception must see patient status changes without relying on a manual full-page refresh.
-- Queue order is calculated per doctor, per Baghdad calendar day, using appointment time and stable tie-breakers. If an earlier active appointment is cancelled/removed, later queue positions must move forward.
-- The patient's private page shows the live queue position only while the appointment is active.
-- Exact queue/order behavior belongs in the database function, not duplicated client-side.
+- Patient confirmation/cancellation must reach reception without requiring a manual full reload.
+- Queue order is doctor-specific and Baghdad-day-specific with stable database ordering.
+- When an earlier active appointment leaves the queue, later positions update.
+- Database functions remain the authority for queue/order logic.
 
 ## Patient-facing appointment contract
 
-The patient page is deliberately simpler than the receptionist dashboard.
+The patient experience is deliberately simpler than the staff experience.
 
-- Private tokenized appointment link; it never exposes the clinic schedule.
-- Localized from the appointment reminder language: Sorani Kurdish, Arabic, or English.
-- Date, time, clinic, and doctor must be large and readable with generous spacing.
-- Kurdish day periods use understandable patient-facing words (`پێش نیوەڕۆ` / `دوای نیوەڕۆ`) rather than unexplained abbreviations.
-- Show doctor name prominently.
-- Show doctor specialty/subspecialty when configured.
-- Show the receptionist/contact phone for that doctor when configured, as a tappable phone number.
-- Initial patient interaction is a clear primary Confirm Appointment action with cancellation visually secondary.
-- Reminder view asks whether the patient will come and offers Yes / Cancel.
-- After action, the page states the resulting status clearly.
-- Queue number must refer to the correct doctor's queue and update when the queue changes.
-- Do not display staff-oriented jargon when ordinary patient wording is available.
+- A private tokenized link exposes one appointment, never the clinic schedule.
+- Show clinic, doctor, date and time prominently.
+- Show configured specialty and reception/contact phone when useful.
+- Confirm is primary; cancellation is secondary.
+- Reminder mode asks a simple attendance question.
+- Queue information appears only when relevant and must reflect the correct doctor's live queue.
+- Use patient language, not receptionist/database terminology.
+- No clinical diagnosis, treatment advice or medical notes belong on this surface.
 
-## Doctor-specific workflow settings
+## Doctor workflow contract
 
-Doctor operational settings are first-class data, not clinic-wide approximations.
-
-For each doctor Atlas stores:
-
+Each doctor owns one coherent operational configuration:
 - appointment interval;
+- patient-facing specialty/subspecialty;
+- reception phone;
 - reminders enabled/desired;
-- first reminder lead time;
-- optional second reminder lead time;
-- default reminder language;
-- specialty/subspecialty;
-- receptionist/contact phone.
+- first reminder timing;
+- optional second reminder timing;
+- default reminder language.
 
-Receptionists may update the assigned doctor's appointment interval, reminder timing/language, reminder preference, and reception contact phone. Clinic administration manages doctor specialty and doctor records. When an administrator has multiple doctors, the selected doctor's settings must remain visibly attributable to that doctor.
+These settings should be presented in **one doctor workflow surface**, not scattered across duplicate cards or injected selectors. Advanced provider connection belongs behind progressive disclosure.
 
-## Doctor lifecycle contract
+Receptionists may change the workflow fields allowed for their assigned doctor. Administration controls doctor identity/specialty and clinic-level access.
 
-- Removing a doctor from new appointments is a soft operational removal when historical references exist.
-- Existing appointment/history integrity must be preserved.
-- Old test doctors with no appointments and no staff assignment should not pollute the production UI.
-- A restore path may exist for genuinely archived doctors, but it must not render a misleading empty `Removed doctors` control.
+## Localization and mobile contract
 
-## Localization and visual language
+Supported interface locales: English, Sorani Kurdish, Badini Kurdish and Iraqi Arabic.
 
-Supported interface locales: English, Sorani Kurdish, Arabic.
-
-- Sorani uses Central Kurdish Arabic script and RTL layout.
-- Arabic uses RTL layout.
-- English uses LTR layout.
-- Atlas language is direct and action-led. Buttons say what they do.
-- Sorani vocabulary follows the Atlas Sorani language standard and later user-approved corrections.
-- The live clock must remain visually stable in RTL: conventional hour:minute order, centered colon, seconds stable, no blinking/pulsing colon.
-- Sorani PM abbreviation, where an abbreviation is used, is `پ.ن`, never `ب.ن`.
-- Tappable elements must look tappable, selected elements must look selected, and taps must produce clear feedback.
-- All essential controls need visible keyboard focus and touch targets appropriate for iPhone/iPad reception use.
-- Settings and schedule layouts should avoid large dead rectangles; cards rebalance responsively instead of leaving obvious unused space.
+- Sorani, Badini and Arabic use RTL layout; English uses LTR.
+- Wording is direct and action-led.
+- Phone numbers and other inherently LTR identifiers remain stable.
+- Time text must remain readable and culturally understandable.
+- Essential touch targets and focus states must work well on iPhone/iPad.
 - Respect reduced-motion preferences.
+- A stalled/stale render must recover rather than strand reception behind permanent loading UI.
 
-## Receptionist device/browser contract
+## History, deletion and administration contract
 
-- iPhone/iPad Safari is a primary target, not an edge case.
-- Atlas must recover from a stalled/stale schedule render instead of leaving permanent skeleton cards.
-- Chrome may be opened by an email provider or OS association; Atlas itself must not depend on a specific browser.
-- Authentication links must return users to a usable Atlas session even when the link opens in a different installed browser.
+- Appointment history is administrative, not primary daily navigation.
+- Clinic access is administrative, not primary daily navigation.
+- Deleting a clinic must be contextual to the clinic selected from Settings and require explicit confirmation.
+- Clinic deletion and Atlas-account deletion are separate concepts unless a future migration deliberately changes that contract transactionally.
+- Account deletion must remain available in-app and must never silently orphan security-sensitive identity state.
+- Privacy, support, terms and deletion information are production surfaces, not placeholders.
 
-## History and deletion contract
+## WhatsApp contract
 
-- Appointment history is an administrative function, not receptionist navigation.
-- Removal/voiding must preserve auditability where required by the appointment lifecycle.
-- Privacy policy, terms, and data-deletion instructions are part of production, not placeholders.
+Atlas may use WhatsApp for patient reminders, invitations and—when fully approved—authentication.
 
-## WhatsApp reminder contract
-
-The software-side reminder pipeline exists and must remain defensive:
-
-- explicit patient consent;
-- doctor-specific reminder settings;
-- approved-template sending only;
-- per-clinic and global quotas;
-- private reminder queue;
-- claim leases and stale-claim validation;
-- bounded retries;
+The software must keep:
+- explicit patient reminder consent;
+- approved-template sending;
+- quotas and bounded retries;
+- private queues/leases;
 - signed webhook verification;
-- streamed-body size bound;
-- idempotent/monotonic delivery-event reconciliation;
-- no service-role or WhatsApp access token in browser code.
+- idempotent delivery reconciliation;
+- provider secrets server-only;
+- independent kill switches for unfinished capabilities.
 
-Provider activation is a separate external state. Atlas must not present WhatsApp as actively sending when Meta has not approved the sending setup.
+**Meta approval is an external release gate.** Atlas may prepare configuration and templates ahead of time, but must not claim live WhatsApp authentication/reminders until a real production sender successfully delivers the intended message flow.
 
-Current Meta state at this contract revision:
-
-- Atlas can reach Meta's Graph API from production and has proven the real scheduler-to-Meta path with a controlled send.
-- The configured phone `+1 555-376-1113` reports verified name `Atlas Clinic Platform`, quality `GREEN`, and display-name status `AVAILABLE_WITHOUT_REVIEW`; display-name approval is therefore not the current blocker.
-- The permanent system-user token currently exposes `public_profile`, `whatsapp_business_management`, and `whatsapp_business_messaging`, but not `business_management`.
-- Atlas exhausted safe API-only WABA discovery paths available to that token, including granular-scope targets, direct phone relation probing, system-user/business edges, Business-owned/shared WABA edges, and app-ownership probing; no Business portfolio or WABA ID was exposed.
-- Because the WABA cannot be identified through the current token, Atlas cannot inspect or create the required Sorani (`ku`), Arabic (`ar`), and English (`en_US`) `atlas_appointment_reminder` template variants yet.
-- Automatic sending is intentionally gated off. Doctor-specific reminder preferences remain stored while provider readiness is blocked.
-- Atlas now has a protected machine-readiness endpoint plus a private Supabase invocation path. When the missing Meta asset access is supplied, Atlas can re-audit phone/WABA/templates and only activate sending when every required check is green.
-
-## Appointment sharing / patient communication contract
-
-Manual Share Appointment / Copy Link is a fallback, not the intended final workflow.
-
-The intended production sequence is:
-
-1. receptionist creates appointment;
-2. when WhatsApp provider/template approval allows it, Atlas sends the patient an immediate appointment message automatically;
-3. patient opens the private appointment experience and confirms/cancels;
-4. later doctor-specific reminder(s) ask whether the patient will attend;
-5. reception receives live status/queue changes.
-
-WhatsApp cannot continuously mutate an old chat message into a live queue widget. The private Atlas appointment page is the source of live queue state. A WhatsApp Flow may later provide a richer in-WhatsApp interaction once Meta assets are approved.
+Manual patient-link sharing remains a valid fallback while automated WhatsApp delivery is gated.
 
 ## Security and privacy invariants
 
-- RLS remains enabled on clinic/product/reminder tables.
-- Tenant isolation is enforced in the database and tested against outsider access and cross-clinic attacks.
+- RLS remains enabled on clinic/product/reminder data.
+- Tenant isolation is enforced in PostgreSQL and tested against outsider/cross-clinic access.
 - Receptionists cannot self-promote.
-- Service-role credentials remain server-only.
-- Patient links are random/tokenized, rate-limited, revocable/expiring, and expose one appointment only.
-- Webhook signatures are verified with the Meta app secret.
-- Provider tokens, Vercel tokens, Supabase service keys, and secrets must never be committed, printed in CI diagnostics, or requested in chat.
-- Real clinical use should not imply regulatory/privacy certification that Atlas has not obtained.
-
-## Deployment lessons that are now product requirements
-
-- Do not create Vercel builds for every feature-branch commit. It exhausted the Hobby build quota and delayed production releases.
-- `main` is the canonical production release path.
-- Diagnostic/deployment workflows must redact secrets and should not create repeated doomed deployment attempts.
-- Project-scoped Vercel tokens are not a drop-in replacement for account tokens for every Vercel CLI command (notably the failed `vercel pull` path encountered on 2026-08-19).
-- A production release is not considered complete until the canonical domain resolves to the intended commit and core routes are verified.
+- Service-role/provider credentials stay server-only.
+- Patient and invitation links remain random, scoped and limited to their intended resource.
+- Webhook signatures are verified.
+- Secrets must never be committed, printed in diagnostics or exposed in browser payloads.
+- Privacy-safe analytics must not collect patient names, patient phone numbers, OTPs, private links, clinical free text or provider secrets.
+- Do not imply regulatory/privacy certification Atlas has not obtained.
 
 ## Quality bar for every future Atlas change
 
-A change is not complete merely because the UI looks right once. It must preserve all applicable contracts above and pass:
+A change is complete only when applicable checks pass:
 
 1. TypeScript typecheck.
-2. Unit/security tests.
+2. Unit/security regression tests.
 3. Production Next.js build.
-4. Dependency audit.
-5. Browser smoke tests.
-6. Database/RLS checks for schema/security-sensitive changes.
-7. Production verification after release.
+4. Production dependency audit.
+5. Browser smoke tests including phone-size viewport.
+6. iOS compile when native shell behavior is affected.
+7. Database/RLS checks for schema or authorization changes.
+8. Production verification after deployment.
 
-When a new user-approved behavior is introduced, update this contract and add a regression guard where practical. The goal is cumulative quality: Atlas should get harder to regress as it gets better.
+Prefer deleting obsolete paths over leaving hidden compatibility machinery indefinitely. When a new behavior becomes a product decision, update this contract and add a regression guard where practical.
 
-## Known unfinished edges
+## Current unfinished external edge
 
-These are not forgotten work; they are explicit remaining edges:
-
-- Meta asset discovery currently needs either a Business portfolio/WABA identifier or a replacement system-user token that includes the business-level access needed to discover the portfolio automatically.
-- Confirm or create approved `atlas_appointment_reminder` variants for Sorani (`ku`), Arabic (`ar`), and English (`en_US`) after WABA access is available.
-- Complete the automatic immediate appointment WhatsApp message/Flow after the provider assets are approved; manual sharing remains the fallback until then.
-- Populate real doctor specialty and reception-contact data instead of inventing it.
-- Keep improving production email deliverability before broad clinic rollout.
-- Real-clinic pilot evidence is still limited; product claims about reduced no-shows or saved receptionist time require measured baseline/outcome data.
+Meta sender/template approval remains the main external WhatsApp activation dependency. Atlas should continue improving independently of that gate; when Meta becomes ready, the approved WhatsApp capability should attach to this simpler core rather than forcing another product redesign.
