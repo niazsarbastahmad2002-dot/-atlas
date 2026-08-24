@@ -1,9 +1,9 @@
-import { createHmac, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHmac, randomInt, randomUUID } from "node:crypto";
 import { normalizeAuthPhone } from "@/lib/phone-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendWhatsAppAuthenticationCode } from "@/lib/whatsapp-cloud";
 
 const OTP_TTL_MS = 10 * 60 * 1000;
-const OTP_MAX_ATTEMPTS = 5;
 
 export type WhatsAppVerificationError =
   | "invalid_phone"
@@ -14,6 +14,9 @@ export type WhatsAppVerificationError =
   | "expired_code"
   | "incorrect_code"
   | "too_many_attempts";
+
+type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
+type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
 
 function secret() {
   const value = process.env.ATLAS_AUTH_SECRET?.trim()
@@ -36,54 +39,14 @@ function hashOtp(challengeId: string, phone: string, code: string) {
 }
 
 function hashRequestIp(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+  const ip = request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")?.trim();
   return ip ? digest(`atlas-ip-v1:${ip}`) : null;
 }
 
-function metaSender() {
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
-  const graphApiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim();
-  if (!accessToken || !/^\d{5,32}$/.test(phoneNumberId ?? "") || !/^v\d+\.\d+$/.test(graphApiVersion ?? "")) return null;
-  return {
-    accessToken,
-    phoneNumberId: phoneNumberId!,
-    graphApiVersion: graphApiVersion!,
-    templateName: process.env.ATLAS_WHATSAPP_AUTH_TEMPLATE_NAME?.trim() || "atlas_login_code",
-    language: process.env.ATLAS_WHATSAPP_AUTH_TEMPLATE_LANGUAGE?.trim() || "en_US",
-  };
-}
-
-async function sendCode(phone: string, code: string) {
-  const config = metaSender();
-  if (!config) return { ok: false as const, error: "whatsapp_not_configured" as WhatsAppVerificationError };
-  const response = await fetch(`https://graph.facebook.com/${config.graphApiVersion}/${config.phoneNumberId}/messages`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${config.accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phone.replace(/^\+/, ""),
-      type: "template",
-      template: {
-        name: config.templateName,
-        language: { code: config.language },
-        components: [
-          { type: "body", parameters: [{ type: "text", text: code }] },
-          { type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: code }] },
-        ],
-      },
-    }),
-    signal: AbortSignal.timeout(12_000),
-  }).catch(() => null);
-  if (!response) return { ok: false as const, error: "delivery_failed" as WhatsAppVerificationError };
-  let body: any = null;
-  try { body = await response.json(); } catch {}
-  const id = Array.isArray(body?.messages) && typeof body.messages[0]?.id === "string" ? body.messages[0].id : null;
-  if (response.ok && id) return { ok: true as const, messageId: id };
-  console.error("Atlas WhatsApp verification delivery rejected", { status: response.status, code: body?.error?.code ?? "unknown" });
-  return { ok: false as const, error: "delivery_failed" as WhatsAppVerificationError };
+function validChallengeId(value: unknown): value is string {
+  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 export function normalizeWhatsAppPhone(value: unknown) {
@@ -93,62 +56,91 @@ export function normalizeWhatsAppPhone(value: unknown) {
 export async function beginWhatsAppVerification(request: Request, rawPhone: unknown) {
   const phone = normalizeWhatsAppPhone(rawPhone);
   if (!phone) return { ok: false as const, error: "invalid_phone" as WhatsAppVerificationError };
-  const admin = createAdminClient() as any;
-  const privateDb = admin.schema("private");
-  const phoneHash = hashVerifiedPhone(phone);
-  const ipHash = hashRequestIp(request);
-  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const phoneCount = await privateDb.from("whatsapp_auth_challenges").select("id", { count: "exact", head: true }).eq("phone_hash", phoneHash).gte("created_at", since);
-  const ipCount = ipHash
-    ? await privateDb.from("whatsapp_auth_challenges").select("id", { count: "exact", head: true }).eq("ip_hash", ipHash).gte("created_at", since)
-    : { count: 0, error: null };
-  if (phoneCount.error || ipCount.error) throw new Error("WhatsApp auth rate limit store unavailable.");
-  if ((phoneCount.count ?? 0) >= 6 || (ipCount.count ?? 0) >= 20) return { ok: false as const, error: "rate_limited" as WhatsAppVerificationError };
 
+  const admin = createAdminClient() as any;
+  const rpc = admin.rpc as unknown as Rpc;
   const challengeId = randomUUID();
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const phoneHash = hashVerifiedPhone(phone);
   const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
-  const stored = await privateDb.from("whatsapp_auth_challenges").insert({
-    id: challengeId,
-    phone_hash: phoneHash,
-    otp_hash: hashOtp(challengeId, phone, code),
-    ip_hash: ipHash,
-    expires_at: expiresAt,
-  });
-  if (stored.error) throw new Error("WhatsApp auth challenge store failed.");
 
-  const sent = await sendCode(phone, code);
-  if (!sent.ok) {
-    await privateDb.from("whatsapp_auth_challenges").delete().eq("id", challengeId);
-    return sent;
+  const reserved = await rpc("reserve_whatsapp_auth_challenge_service", {
+    p_id: challengeId,
+    p_phone_hash: phoneHash,
+    p_otp_hash: hashOtp(challengeId, phone, code),
+    p_ip_hash: hashRequestIp(request),
+    p_expires_at: expiresAt,
+  });
+  if (reserved.error) throw new Error("WhatsApp auth challenge reservation failed.");
+  if (reserved.data === "rate_limited") {
+    return { ok: false as const, error: "rate_limited" as WhatsAppVerificationError };
   }
-  await privateDb.from("whatsapp_auth_challenges").update({ provider_message_id: sent.messageId }).eq("id", challengeId);
-  return { ok: true as const, challengeId, phone, expiresAt, resendAfterSeconds: 60 };
+  if (reserved.data !== "ok") throw new Error("WhatsApp auth challenge reservation rejected.");
+
+  const sent = await sendWhatsAppAuthenticationCode(phone, code);
+  if (!sent.ok) {
+    await admin.schema("private").from("whatsapp_auth_challenges").delete().eq("id", challengeId);
+    const error: WhatsAppVerificationError = sent.error === "provider_rate_limited"
+      ? "rate_limited"
+      : sent.error === "whatsapp_not_configured" || sent.error === "whatsapp_disabled" || sent.error === "template_not_ready"
+        ? "whatsapp_not_configured"
+        : "delivery_failed";
+    return { ok: false as const, error };
+  }
+
+  await admin.schema("private")
+    .from("whatsapp_auth_challenges")
+    .update({ provider_message_id: sent.messageId })
+    .eq("id", challengeId);
+
+  return {
+    ok: true as const,
+    challengeId,
+    phone,
+    expiresAt,
+    resendAfterSeconds: 60,
+  };
 }
 
 export async function consumeWhatsAppVerification(rawPhone: unknown, rawChallengeId: unknown, rawCode: unknown) {
   const phone = normalizeWhatsAppPhone(rawPhone);
-  const challengeId = typeof rawChallengeId === "string" && /^[0-9a-f-]{36}$/i.test(rawChallengeId) ? rawChallengeId : null;
+  const challengeId = validChallengeId(rawChallengeId) ? rawChallengeId : null;
   const code = typeof rawCode === "string" ? rawCode.replace(/\D/g, "").slice(0, 6) : "";
-  if (!phone || !challengeId || !/^\d{6}$/.test(code)) return { ok: false as const, error: "invalid_challenge" as WhatsAppVerificationError };
-  const admin = createAdminClient() as any;
-  const privateDb = admin.schema("private");
-  const result = await privateDb.from("whatsapp_auth_challenges")
-    .select("id, phone_hash, otp_hash, expires_at, attempts, consumed_at")
-    .eq("id", challengeId).maybeSingle();
-  const row = result.data;
-  if (result.error || !row || row.consumed_at || row.phone_hash !== hashVerifiedPhone(phone)) return { ok: false as const, error: "invalid_challenge" as WhatsAppVerificationError };
-  if (new Date(row.expires_at).getTime() <= Date.now()) return { ok: false as const, error: "expired_code" as WhatsAppVerificationError };
-  if (row.attempts >= OTP_MAX_ATTEMPTS) return { ok: false as const, error: "too_many_attempts" as WhatsAppVerificationError };
-  const expected = Buffer.from(row.otp_hash, "hex");
-  const actual = Buffer.from(hashOtp(challengeId, phone, code), "hex");
-  if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
-    await privateDb.from("whatsapp_auth_challenges").update({ attempts: row.attempts + 1 }).eq("id", challengeId);
-    return { ok: false as const, error: "incorrect_code" as WhatsAppVerificationError };
+  if (!phone || !challengeId || !/^\d{6}$/.test(code)) {
+    return { ok: false as const, error: "invalid_challenge" as WhatsAppVerificationError };
   }
-  const consumed = await privateDb.from("whatsapp_auth_challenges")
-    .update({ consumed_at: new Date().toISOString(), attempts: row.attempts + 1 })
-    .eq("id", challengeId).is("consumed_at", null).select("id").maybeSingle();
-  if (consumed.error || !consumed.data) return { ok: false as const, error: "invalid_challenge" as WhatsAppVerificationError };
-  return { ok: true as const, phone };
+
+  const admin = createAdminClient();
+  const rpc = admin.rpc as unknown as Rpc;
+  const checked = await rpc("verify_whatsapp_auth_challenge_service", {
+    p_id: challengeId,
+    p_phone_hash: hashVerifiedPhone(phone),
+    p_candidate_otp_hash: hashOtp(challengeId, phone, code),
+  });
+  if (checked.error) throw new Error("WhatsApp auth challenge verification failed.");
+
+  const status = typeof checked.data === "string" ? checked.data : "invalid_challenge";
+  if (status !== "ok") {
+    const error: WhatsAppVerificationError = status === "expired_code"
+      ? "expired_code"
+      : status === "incorrect_code"
+        ? "incorrect_code"
+        : status === "too_many_attempts"
+          ? "too_many_attempts"
+          : "invalid_challenge";
+    return { ok: false as const, error };
+  }
+
+  return { ok: true as const, phone, challengeId };
+}
+
+export async function finalizeWhatsAppVerification(phone: string, challengeId: string) {
+  const admin = createAdminClient();
+  const rpc = admin.rpc as unknown as Rpc;
+  const finalized = await rpc("finalize_whatsapp_auth_challenge_service", {
+    p_id: challengeId,
+    p_phone_hash: hashVerifiedPhone(phone),
+  });
+  if (finalized.error) throw new Error("WhatsApp auth challenge finalization failed.");
+  return finalized.data === true;
 }
