@@ -6,7 +6,7 @@ test("reminder worker claims clinic IDs and resolves Meta transport per clinic",
   const source = readFileSync("app/api/cron/reminders/route.ts", "utf8");
 
   assert.match(source, /clinic_id: string/);
-  assert.match(source, /claim_due_whatsapp_reminders_v2/);
+  assert.match(source, /claim_due_whatsapp_reminders_v3/);
   assert.match(source, /readClinicMetaWhatsAppConfig\(admin, reminder\.clinic_id\)/);
   assert.match(source, /createWhatsAppReminderTransport\(clinicConfig\.config\)/);
   assert.match(source, /whatsapp_connection_missing/);
@@ -19,8 +19,10 @@ test("Meta readiness prefers clinic Coexistence connection and keeps legacy send
   assert.match(source, /readClinicMetaWhatsAppConfig\(admin, row\.clinic_id\)/);
   assert.match(source, /withExplicitMetaWabaCandidate\(connection\.wabaId\)/);
   assert.match(source, /connectionSource: "coexistence"/);
+  assert.match(source, /connectionSource: "coexistence" \| "legacy_env" \| "missing"/);
   assert.match(source, /connectionSource === "coexistence" && audit\.ready/);
-  assert.match(source, /legacy environment sender remains diagnostic only/i);
+  assert.match(source, /ATLAS_PATIENT_CONFIRM_TEMPLATE/);
+  assert.match(source, /ATLAS_PATIENT_DAY_TEMPLATE/);
 
   const responseSource = source.slice(source.lastIndexOf("return NextResponse.json({"));
   assert.ok(responseSource.length > 0);
