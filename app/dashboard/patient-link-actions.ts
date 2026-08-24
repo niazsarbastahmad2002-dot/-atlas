@@ -14,6 +14,8 @@ type PatientLinkState = {
   error: string | null;
   patientPhone: string | null;
   patientName: string | null;
+  doctorName: string | null;
+  appointmentAt: string | null;
 };
 
 const emptyState = (error: string): PatientLinkState => ({
@@ -21,6 +23,8 @@ const emptyState = (error: string): PatientLinkState => ({
   error,
   patientPhone: null,
   patientName: null,
+  doctorName: null,
+  appointmentAt: null,
 });
 
 export async function createPatientAccessLink(
@@ -42,7 +46,7 @@ export async function createPatientAccessLink(
 
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
-    .select("id, patient_name, patient_phone")
+    .select("id, patient_name, patient_phone, doctor_name, appointment_at")
     .eq("clinic_id", clinicId)
     .eq("id", appointmentId)
     .is("voided_at", null)
@@ -75,6 +79,8 @@ export async function createPatientAccessLink(
       error: null,
       patientPhone: appointment.patient_phone,
       patientName: appointment.patient_name,
+      doctorName: appointment.doctor_name,
+      appointmentAt: appointment.appointment_at,
     };
   } catch {
     return emptyState("Patient links are not configured on this deployment.");
