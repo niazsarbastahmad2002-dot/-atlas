@@ -11,8 +11,8 @@ const readinessRoute = readFileSync(
   join(process.cwd(), "app/api/whatsapp/readiness/route.ts"),
   "utf8",
 );
-const bootstrap = readFileSync(
-  join(process.cwd(), "lib/reminders/meta-template-bootstrap.ts"),
+const patientLoop = readFileSync(
+  join(process.cwd(), "lib/reminders/patient-loop.ts"),
   "utf8",
 );
 
@@ -25,12 +25,16 @@ test("Kurdish patient languages use Iraqi Arabic only at the WhatsApp provider b
 });
 
 test("WhatsApp activation requires only provider-supported Atlas variants", () => {
-  assert.match(bootstrap, /ATLAS_WHATSAPP_REQUIRED_LANGUAGES = \["ar", "en_US"\]/);
-  assert.doesNotMatch(bootstrap, /language: "ckb"/);
-  assert.match(readinessRoute, /expectedLanguages: \[\.\.\.ATLAS_WHATSAPP_REQUIRED_LANGUAGES\]/);
+  assert.match(patientLoop, /ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES = \["ar", "en_US"\]/);
+  assert.doesNotMatch(patientLoop, /language: "ckb"/);
+  assert.match(readinessRoute, /expectedLanguages: \[\.\.\.ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES\]/);
+  assert.match(readinessRoute, /ATLAS_PATIENT_CONFIRM_TEMPLATE/);
+  assert.match(readinessRoute, /ATLAS_PATIENT_DAY_TEMPLATE/);
 });
 
-test("Iraqi Arabic provider template stays Iraqi in wording", () => {
-  assert.match(bootstrap, /إذا ما تگدر تجي/);
-  assert.match(bootstrap, /تواصل ويّا العيادة/);
+test("Iraqi Arabic provider templates stay Iraqi in wording", () => {
+  assert.match(patientLoop, /ويّا د\./);
+  assert.match(patientLoop, /راح أجي/);
+  assert.match(patientLoop, /ما أگدر أجي/);
+  assert.match(patientLoop, /بطريقي/);
 });
