@@ -61,7 +61,8 @@ test("database keeps double-booking and doctor-specific reminder protections", (
 
 test("feature branches do not consume the production Vercel deployment budget", () => {
   const vercel = JSON.parse(source("vercel.json")) as { git?: { deploymentEnabled?: Record<string, boolean> } };
-  assert.equal(vercel.git?.deploymentEnabled?.["atlas-*"], false);
+  assert.equal(vercel.git?.deploymentEnabled?.main, true);
+  assert.equal(vercel.git?.deploymentEnabled?.["*"], false);
 });
 
 test("the durable Atlas product contract is part of the repository", () => {
