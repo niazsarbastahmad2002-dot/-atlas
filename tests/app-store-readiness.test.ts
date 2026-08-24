@@ -107,9 +107,10 @@ test("OAuth callback never guesses which provider owns a generic refresh token",
   assert.doesNotMatch(callback, /storeWebAppleProviderRefreshToken/);
 });
 
-test("native shell adds real app states and every user-facing auth entry is phone-first", async () => {
-  const [nativeApp, ownerAuth, inviteAuth] = await Promise.all([
+test("native shell adds real app states, a native clinic-day surface, and phone-first auth", async () => {
+  const [nativeApp, nativeToday, ownerAuth, inviteAuth] = await Promise.all([
     read("ios/Atlas/AtlasApp.swift"),
+    read("ios/Atlas/NativeToday.swift"),
     read("app/login/login-form.tsx"),
     read("app/join/[token]/join-auth.tsx"),
   ]);
@@ -117,12 +118,25 @@ test("native shell adds real app states and every user-facing auth entry is phon
   assert.match(nativeApp, /UIRefreshControl/);
   assert.match(nativeApp, /Atlas could not open/);
   assert.match(nativeApp, /Try again/);
-  assert.match(nativeApp, /Try with sample data/);
+  assert.match(nativeApp, /Try native sample clinic/);
+  assert.match(nativeApp, /TabView\(selection: \$selectedTab\)/);
+  assert.match(nativeApp, /Label\("Today", systemImage: "calendar"\)/);
+  assert.match(nativeApp, /Label\("Workspace", systemImage: "rectangle\.stack"\)/);
+  assert.match(nativeApp, /AtlasNativeTodayView/);
   assert.match(nativeApp, /atlasInviteToken\(from: url\)/);
   assert.match(nativeApp, /atlasRetryURL\(currentURL: URL\?, initialURL: URL\)/);
   assert.match(nativeApp, /components\.fragment = nil/);
   assert.match(nativeApp, /destination = retryURL/);
   assert.doesNotMatch(nativeApp, /shouldOfferNativeAppleSignIn/);
+
+  assert.match(nativeToday, /struct AtlasNativeTodayView/);
+  assert.match(nativeToday, /Open full Atlas/);
+  assert.match(nativeToday, /native read-only overview/);
+  assert.match(nativeToday, /struct AtlasNativeDemoView/);
+  assert.match(nativeToday, /Native sample — no account or patient data is used/);
+  assert.match(nativeToday, /Picker\("View"/);
+  assert.match(nativeToday, /Text\("Queue"\)/);
+
   assert.match(ownerAuth, /signInWithOtp/);
   assert.match(ownerAuth, /phone/);
   assert.doesNotMatch(ownerAuth, /signInWithOAuth/);
