@@ -1,5 +1,5 @@
-import { DemoWorkspace } from "./demo-workspace";
+import { ModernDemoWorkspace } from "./demo-modern";
 
 export default function DemoPage() {
-  return <DemoWorkspace />;
+  return <ModernDemoWorkspace />;
 }
