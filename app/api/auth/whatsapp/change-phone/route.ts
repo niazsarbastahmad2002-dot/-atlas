@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { internalWhatsAppEmail } from "@/lib/whatsapp-session";
-import { consumeWhatsAppVerification } from "@/lib/whatsapp-verification";
+import { consumeWhatsAppVerification, finalizeWhatsAppVerification, hashVerifiedPhone } from "@/lib/whatsapp-verification";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
+type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -31,26 +34,20 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
-    const newEmail = internalWhatsAppEmail(verified.phone);
-    let page = 1;
-    while (page <= 5) {
-      const listed = await admin.auth.admin.listUsers({ page, perPage: 200 });
-      if (listed.error) throw listed.error;
-      const conflict = listed.data.users.find((candidate) =>
-        candidate.id !== current.data.user!.id
-        && (
-          candidate.phone === verified.phone
-          || candidate.user_metadata?.atlas_phone === verified.phone
-          || candidate.email === newEmail
-        )
-      );
-      if (conflict) {
-        return NextResponse.json({ error: "phone_in_use" }, { status: 409, headers: { "Cache-Control": "no-store" } });
-      }
-      if (listed.data.users.length < 200) break;
-      page += 1;
+    const rpc = admin.rpc as unknown as Rpc;
+    const phoneHash = hashVerifiedPhone(verified.phone);
+    const resolved = await rpc("resolve_whatsapp_identity_service", {
+      p_phone: verified.phone,
+      p_phone_hash: phoneHash,
+    });
+    if (resolved.error) throw new Error("Atlas phone identity lookup failed.");
+
+    if (typeof resolved.data === "string" && resolved.data !== current.data.user.id) {
+      await finalizeWhatsAppVerification(verified.phone, verified.challengeId);
+      return NextResponse.json({ error: "phone_in_use" }, { status: 409, headers: { "Cache-Control": "no-store" } });
     }
 
+    const newEmail = internalWhatsAppEmail(verified.phone);
     const updated = await admin.auth.admin.updateUserById(current.data.user.id, {
       phone: verified.phone,
       phone_confirm: true,
@@ -65,6 +62,13 @@ export async function POST(request: Request) {
     });
     if (updated.error || !updated.data.user) throw updated.error ?? new Error("Atlas phone update failed.");
 
+    const bound = await rpc("bind_whatsapp_identity_service", {
+      p_phone_hash: phoneHash,
+      p_user_id: current.data.user.id,
+    });
+    if (bound.error || bound.data !== true) throw new Error("Atlas phone identity binding failed.");
+
+    await finalizeWhatsAppVerification(verified.phone, verified.challengeId);
     return NextResponse.json({ ok: true, phone: verified.phone }, {
       headers: { "Cache-Control": "no-store" },
     });
