@@ -2,8 +2,9 @@ import Foundation
 import XCTest
 @testable import Atlas
 
+@MainActor
 final class ContinuityTests: XCTestCase {
-    private let now = Date(timeIntervalSince1970: 1_787_546_320) // 2026-08-24 in Baghdad.
+    private let now = Date(timeIntervalSince1970: 1_787_546_320) // 2026-08-24 07:38:40 Baghdad.
 
     private func snapshot(
         userId: String = "11111111-1111-4111-8111-111111111111",
