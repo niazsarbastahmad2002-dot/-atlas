@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { AppNavigation } from "./app-navigation";
+import { AppointmentContactRelationshipEnhancer } from "./appointment-contact-relationship";
 import { AtlasContinuityMode } from "./continuity-mode";
 import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
@@ -12,6 +13,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <div className="app-shell">
+      <AppointmentContactRelationshipEnhancer locale={locale} />
       <DashboardClientPolish locale={locale} />
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>

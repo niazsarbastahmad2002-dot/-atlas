@@ -16,6 +16,9 @@ import { queueAtlasServerEvent } from "@/lib/analytics/server";
 import { createClient } from "@/lib/supabase/server";
 
 const reminderLanguages = new Set(["ku", "bd", "ar", "en"]);
+const contactRelationships = new Set<AppointmentContactRelationship>(["patient", "parent_guardian", "relative_caregiver"]);
+
+export type AppointmentContactRelationship = "patient" | "parent_guardian" | "relative_caregiver";
 
 export type InlineAppointmentResult =
   | { ok: true; status?: AppointmentStatus; archived?: boolean; updated?: boolean; created?: boolean }
@@ -30,12 +33,34 @@ function statusAction(status: AppointmentStatus) {
   return null;
 }
 
+function contactRelationship(value: FormDataEntryValue | null): AppointmentContactRelationship | null {
+  const relationship = String(value ?? "patient") as AppointmentContactRelationship;
+  return contactRelationships.has(relationship) ? relationship : null;
+}
+
+export async function getAppointmentContactRelationshipInline(
+  id: string,
+): Promise<AppointmentContactRelationship | null> {
+  if (!isUuid(id)) return null;
+  const supabase = await createClient();
+  const { data, error } = await (supabase as any)
+    .from("appointments")
+    .select("contact_relationship")
+    .eq("id", id)
+    .is("voided_at", null)
+    .maybeSingle();
+  if (error || !data) return null;
+  const relationship = data.contact_relationship as AppointmentContactRelationship;
+  return contactRelationships.has(relationship) ? relationship : null;
+}
+
 export async function createAppointmentInline(formData: FormData): Promise<InlineAppointmentResult> {
   const clinicId = String(formData.get("clinic_id") ?? "");
   const idempotencyKey = String(formData.get("idempotency_key") ?? "");
   const rawPatientName = String(formData.get("patient_name") ?? "");
   const patientName = cleanDisplayName(rawPatientName);
   const patientPhone = normalizeIraqiMobile(String(formData.get("patient_phone") ?? ""));
+  const relationship = contactRelationship(formData.get("contact_relationship"));
   const doctorId = String(formData.get("doctor_id") ?? "");
   const appointmentAt = parseBaghdadDateTime(String(formData.get("appointment_at") ?? ""));
   const reminderConsent = formData.get("reminder_consent") === "on";
@@ -47,6 +72,7 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     || !isUuid(idempotencyKey)
     || !isValidDisplayName(rawPatientName)
     || !patientPhone
+    || !relationship
     || !appointmentAt
     || !reminderLanguages.has(reminderLanguage)
   ) {
@@ -54,9 +80,6 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     return { ok: false, reason: "invalid" };
   }
 
-  // Keep the hot path short. The user's session is already carried by the
-  // Supabase client and RLS remains the authority for clinic access. We only
-  // resolve the selected active doctor and then insert the appointment.
   const supabase = await createClient();
   const { data: doctor, error: doctorError } = await supabase
     .from("doctors")
@@ -70,10 +93,11 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     return { ok: false, reason: "invalid" };
   }
 
-  const { error } = await supabase.from("appointments").insert({
+  const { error } = await (supabase as any).from("appointments").insert({
     clinic_id: clinicId,
     patient_name: patientName,
     patient_phone: patientPhone,
+    contact_relationship: relationship,
     doctor_name: doctor.name,
     doctor_id: doctor.id,
     appointment_at: appointmentAt.toISOString(),
@@ -95,8 +119,6 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
   }
 
   queueAtlasServerEvent("atlas_appointment_created", { outcome: "success", interaction: "form", screen: "schedule", surface: "clinic" });
-  // The dashboard is dynamic. The client paints an optimistic row immediately
-  // and refreshes after this returns, so avoid an extra redirect/reload here.
   return { ok: true, created: true };
 }
 
@@ -144,6 +166,7 @@ export async function updateAppointmentDetailsInline(
   const rawPatientName = String(formData.get("patient_name") ?? "");
   const patientName = cleanDisplayName(rawPatientName);
   const patientPhone = normalizeIraqiMobile(String(formData.get("patient_phone") ?? ""));
+  const relationship = contactRelationship(formData.get("contact_relationship"));
   const doctorId = String(formData.get("doctor_id") ?? "");
   const appointmentAt = parseBaghdadDateTime(String(formData.get("appointment_at") ?? ""));
   const reminderLanguage = String(formData.get("reminder_language") ?? "ku");
@@ -155,6 +178,7 @@ export async function updateAppointmentDetailsInline(
     || !isUuid(doctorId)
     || !isValidDisplayName(rawPatientName)
     || !patientPhone
+    || !relationship
     || !appointmentAt
     || !reminderLanguages.has(reminderLanguage)
   ) return { ok: false, reason: "invalid" };
@@ -169,13 +193,12 @@ export async function updateAppointmentDetailsInline(
     .maybeSingle();
   if (doctorError || !doctor) return { ok: false, reason: "invalid" };
 
-  // Closed outcomes must be reopened before details can change. The database
-  // also enforces this invariant so concurrent requests cannot bypass it.
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("appointments")
     .update({
       patient_name: patientName,
       patient_phone: patientPhone,
+      contact_relationship: relationship,
       doctor_id: doctor.id,
       doctor_name: doctor.name,
       appointment_at: appointmentAt.toISOString(),
