@@ -19,11 +19,22 @@ type RpcResult = { data: unknown; error: { message?: string; code?: string } | n
 type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
 
 function secret() {
-  const value = process.env.ATLAS_AUTH_SECRET?.trim()
+  const dedicated = process.env.ATLAS_AUTH_SECRET?.trim();
+  if (process.env.ATLAS_WHATSAPP_AUTH_ENABLED === "true") {
+    if (!dedicated || dedicated.length < 32) {
+      throw new Error("ATLAS_AUTH_SECRET must be a stable 32+ character server secret before WhatsApp auth is enabled.");
+    }
+    return dedicated;
+  }
+
+  // Development/setup fallback only. Production WhatsApp authentication refuses
+  // to start without the dedicated key so unrelated Supabase key rotation cannot
+  // change Atlas phone identity hashes.
+  const fallback = dedicated
     || process.env.SUPABASE_SECRET_KEY?.trim()
     || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (!value || value.length < 24) throw new Error("Atlas auth server secret is not configured.");
-  return value;
+  if (!fallback || fallback.length < 24) throw new Error("Atlas auth server secret is not configured.");
+  return fallback;
 }
 
 function digest(value: string) {
