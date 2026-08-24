@@ -1,0 +1,69 @@
+/* Atlas simplicity contract
+   Daily work stays obvious; secondary detail appears only when it is useful. */
+
+/* Date navigation has two distinct jobs: arrows walk day-by-day, while the
+   horizontal rail jumps to Today/Tomorrow and future days that already have
+   bookings. Keep both, but visually treat the jump rail as the lighter control. */
+.workspace-page .schedule-date-shortcuts {
+  margin-bottom: 10px;
+}
+
+.workspace-page .day-navigation {
+  margin-top: 0;
+}
+
+/* The appointment panel already shows the total count. Keep the three counters
+   that help reception understand work-in-progress: pending, confirmed, done. */
+.workspace-stats .stat:first-child,
+.workspace-stats .stat:nth-child(5),
+.workspace-stats .stat:nth-child(6) {
+  display: none;
+}
+
+.workspace-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* The doctor is already selected above the schedule and reminder language is
+   an edit-time detail. Don't repeat either on every patient row. */
+.polished-appointment .polished-details > div:nth-child(n + 2) {
+  display: none;
+}
+
+.polished-appointment .polished-details {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Reminder configuration belongs in Settings. Keep the booking form focused on
+   patient + time; the explicit consent/language controls remain available when
+   rendered, but the summary sentence no longer repeats the configuration. */
+.appointment-composer .reminder-note {
+  display: none;
+}
+
+/* Settings: owner/admin destinations should feel like secondary destinations,
+   not another dashboard competing with the schedule. */
+.settings-link-list .settings-link,
+.settings-card > .settings-link {
+  min-height: 46px;
+}
+
+.settings-disclosure > summary {
+  user-select: none;
+}
+
+/* Keep the main touch loop compact and comfortable on phone-sized reception
+   devices without shrinking touch targets. */
+@media (max-width: 680px) {
+  .workspace-stats {
+    gap: 8px;
+  }
+
+  .workspace-stats .stat {
+    min-width: 0;
+  }
+
+  .settings-grid {
+    gap: 12px;
+  }
+}
