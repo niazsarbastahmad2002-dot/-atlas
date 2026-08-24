@@ -1,14 +1,15 @@
 /* Atlas simplicity contract
    Daily work stays obvious; secondary detail appears only when it is useful. */
 
-/* One date-navigation system is enough. The horizontal schedule rail already
-   keeps Yesterday / Today / Tomorrow and upcoming booked days within reach. */
-.workspace-page .day-navigation {
-  display: none;
+/* Date navigation has two distinct jobs: arrows walk day-by-day, while the
+   horizontal rail jumps to Today/Tomorrow and future days that already have
+   bookings. Keep both, but visually treat the jump rail as the lighter control. */
+.workspace-page .schedule-date-shortcuts {
+  margin-bottom: 10px;
 }
 
-.workspace-page .schedule-date-shortcuts {
-  margin-bottom: 16px;
+.workspace-page .day-navigation {
+  margin-top: 0;
 }
 
 /* The appointment panel already shows the total count. Keep the three counters
