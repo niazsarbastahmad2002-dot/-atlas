@@ -5,8 +5,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
-import { DoctorPatientDetailsCard } from "../doctor-patient-details-card";
-import { SettingsReminderCard } from "../settings-reminder-card";
+import { DoctorWorkflowCard } from "../doctor-workflow-card";
 import { PasskeyManager } from "./passkey-manager";
 import { PhoneNumberManager } from "./phone-number-manager";
 import {
@@ -15,7 +14,6 @@ import {
   setDoctorActive,
   setInterfaceLanguage,
   signOut,
-  updateClinicInterval,
   updateClinicName,
   updateDoctor,
 } from "./actions";
@@ -30,21 +28,16 @@ const errorCopy: Record<string, string> = {
   manager_required: "Clinic administration is required to change this setting.",
   language_invalid: "Choose a supported interface language.",
   clinic_invalid: "Check the clinic name and try again.",
-  interval_invalid: "Choose a valid appointment interval.",
   doctor_invalid: "Check the doctor details and try again.",
-  reminders_invalid: "Check the reminder settings and try again.",
-  approval_required: "WhatsApp cannot be enabled until clinic messaging is connected.",
   save_failed: "That setting could not be saved. Refresh and try again.",
 };
 
 const noticeCopy: Record<string, string> = {
   language_saved: "Interface language updated.",
   clinic_saved: "Clinic details updated.",
-  interval_saved: "Appointment interval updated.",
   doctor_saved: "Doctor settings updated.",
   doctor_archived: "Doctor removed from new appointments. Existing appointment history is preserved.",
   doctor_restored: "Doctor restored.",
-  reminders_saved: "Reminder settings updated.",
 };
 
 const settingsCopy: Record<UiLocale, {
@@ -52,65 +45,100 @@ const settingsCopy: Record<UiLocale, {
   clinicBasicsHelp: string;
   doctors: string;
   doctorsHelp: string;
-  access: string;
-  accessHelp: string;
-  manageAccess: string;
+  removedDoctors: string;
+  administration: string;
+  administrationHelp: string;
+  teamAccess: string;
+  history: string;
+  deleteClinic: string;
   accountHelp: string;
+  accountDeletion: string;
+  quickSignIn: string;
+  quickSignInHelp: string;
   signOutHelp: string;
   readOnlyClinic: string;
   phonePending: string;
+  support: string;
 }> = {
   en: {
-    clinicBasics: "Clinic & scheduling",
-    clinicBasicsHelp: "The few defaults reception uses every day.",
+    clinicBasics: "Clinic",
+    clinicBasicsHelp: "Keep the clinic identity simple. Doctor workflow settings live with each doctor below.",
     doctors: "Doctors",
-    doctorsHelp: "Add doctors, rename them, or remove them from new appointments.",
-    access: "Clinic access",
-    accessHelp: "Add or remove reception staff without changing the daily schedule experience.",
-    manageAccess: "Manage clinic access",
-    accountHelp: "Your verified phone is the primary Atlas sign-in identity. Passkeys can remain as an optional trusted-device shortcut.",
+    doctorsHelp: "Add, rename, reorder, or remove doctors from new appointments.",
+    removedDoctors: "Removed doctors",
+    administration: "Clinic administration",
+    administrationHelp: "Less-used owner tools stay here instead of competing with the daily schedule.",
+    teamAccess: "Team access",
+    history: "Appointment history",
+    deleteClinic: "Delete this clinic",
+    accountHelp: "Your verified phone is your Atlas identity.",
+    accountDeletion: "Account & deletion",
+    quickSignIn: "Faster sign-in on this device",
+    quickSignInHelp: "Optional. Add a passkey only if you want a quicker trusted-device shortcut.",
     signOutHelp: "Sign out only when you want this device to require sign-in again.",
     readOnlyClinic: "Clinic administration manages the clinic name.",
     phonePending: "Phone not verified yet",
+    support: "Help & legal",
   },
   ku: {
-    clinicBasics: "کلینیک و خشتەی کات",
-    clinicBasicsHelp: "ئەو ڕێکخستنە سادانەی ستافی ڕیسێپشن ڕۆژانە بەکاریان دەهێنێت.",
+    clinicBasics: "کلینیک",
+    clinicBasicsHelp: "ناسنامەی کلینیک سادە بێت. ڕێکخستنەکانی کاری پزیشک لەگەڵ هەر پزیشکێک لە خوارەوەن.",
     doctors: "پزیشکەکان",
-    doctorsHelp: "پزیشک زیاد بکە، ناوی بگۆڕە، یان لە وادە نوێکان لایببە.",
-    access: "دەسەڵاتی کلینیک",
-    accessHelp: "ستافی ڕیسێپشن زیاد یان لاببە، بەبێ ئاڵۆزکردنی خشتەی ڕۆژانە.",
-    manageAccess: "بەڕێوەبردنی دەسەڵاتی کلینیک",
-    accountHelp: "ژمارەی پشتڕاستکراوی مۆبایل ناسنامەی سەرەکی چوونەژوورەوەی Atlas ـە. Passkey دەتوانێت تەنها وەک ڕێگای خێرای ئامێری متمانەپێکراو بمێنێتەوە.",
-    signOutHelp: "تەنها کاتێک بچۆ دەرەوە کە دەتەوێت ئەم ئامێرە دووبارە داوای چوونەژوورەوە بکات.",
+    doctorsHelp: "پزیشک زیاد بکە، ناوی بگۆڕە، ڕیزی بگۆڕە، یان لە وادە نوێکان لایببە.",
+    removedDoctors: "پزیشکە لابراوەکان",
+    administration: "بەڕێوەبردنی کلینیک",
+    administrationHelp: "ئامرازە کەم‌بەکارهاتووەکانی خاوەن کلینیک لێرە دەمێنن تا خشتەی ڕۆژانە سادە بێت.",
+    teamAccess: "دەسەڵاتی ستاف",
+    history: "مێژووی وادەکان",
+    deleteClinic: "سڕینەوەی ئەم کلینیکە",
+    accountHelp: "ژمارەی پشتڕاستکراوی مۆبایل ناسنامەی Atlas ـەکەتە.",
+    accountDeletion: "هەژمار و سڕینەوە",
+    quickSignIn: "چوونەژوورەوەی خێراتر لەم ئامێرە",
+    quickSignInHelp: "ئارەزوومەندانەیە. تەنها ئەگەر ڕێگایەکی خێراتر لە ئامێری متمانەپێکراو دەوێت Passkey زیاد بکە.",
+    signOutHelp: "تەنها کاتێک بچۆ دەرەوە کە دەتەوێت ئەم ئامێرە دووبارە چوونەژوورەوە بخوازێت.",
     readOnlyClinic: "بەڕێوەبەری کلینیک ناوی کلینیک بەڕێوە دەبات.",
     phonePending: "ژمارەی مۆبایل هێشتا پشتڕاست نەکراوەتەوە",
+    support: "یارمەتی و یاسایی",
   },
   bd: {
-    clinicBasics: "کلینیک و وادە",
-    clinicBasicsHelp: "ئەو ڕێکخستنێن سادە یێن ستافێ ڕیسێپشنێ هەر ڕۆژ بکار دئینیت.",
+    clinicBasics: "کلینیک",
+    clinicBasicsHelp: "ناسناما کلینیکێ سادە بیت. ڕێکخستنێن کارێ دکتۆری لگەل هەر دکتۆرەکی ل خوارێ نە.",
     doctors: "دکتۆر",
-    doctorsHelp: "دکتۆر زێدە بکە، ناڤێ وان بگۆڕە، یان ژ وادەیێن نوو لاببە.",
-    access: "دەستهەلاتا کلینیکێ",
-    accessHelp: "ستافێ ڕیسێپشنێ زێدە یان کێم بکە بێ ئاڵۆزکرنا خشتەیا ڕۆژانە.",
-    manageAccess: "دەستهەلاتا کلینیکێ بەڕێڤە ببە",
-    accountHelp: "ژمارا پشتڕاستکری یا موبایلێ ناسناما سەرەکی یا چوونەژوورا Atlas ـە. Passkey دشێت تەنێ وەک ڕێکا خێرا یا ئامێرێ متمانەپێکری بمینیت.",
+    doctorsHelp: "دکتۆر زێدە بکە، ناڤێ وان بگۆڕە، ڕێزێ بگۆڕە، یان ژ وادەیێن نوو لاببە.",
+    removedDoctors: "دکتۆرێن لابری",
+    administration: "بەڕێڤەبرنا کلینیکێ",
+    administrationHelp: "ئامرازێن کێم‌بکارهاتی یێن خودانێ کلینیکێ ل ڤێرێ دمینن دا خشتەیا ڕۆژانە سادە بیت.",
+    teamAccess: "دەستهەلاتا ستافی",
+    history: "مێژوویا وادەیان",
+    deleteClinic: "ژێبرنا ڤێ کلینیکێ",
+    accountHelp: "ژمارا پشتڕاستکری یا موبایلێ ناسناما Atlas یا تەیە.",
+    accountDeletion: "هەژمار و ژێبرن",
+    quickSignIn: "چوونەژوورا خێراتر ل ڤی ئامێری",
+    quickSignInHelp: "ئارەزوومەندانەیە. تەنێ ئەگەر ڕێکا خێراتر ل ئامێرێ متمانەپێکری دخوازیت Passkey زێدە بکە.",
     signOutHelp: "تەنێ دەمێ تو دخوازیت ئەڤ ئامێرە دووبارە چوونەژوور بخوازیت بچۆ دەرڤە.",
     readOnlyClinic: "بەڕێڤەبرنا کلینیکێ ناڤێ کلینیکێ بەڕێڤە دبەت.",
     phonePending: "ژمارا موبایلێ هێشتا نەهاتییە پشتڕاستکرن",
+    support: "هاریکاری و یاسایی",
   },
   ar: {
-    clinicBasics: "العيادة والجدولة",
-    clinicBasicsHelp: "الإعدادات القليلة التي يستخدمها الاستقبال كل يوم.",
+    clinicBasics: "العيادة",
+    clinicBasicsHelp: "خلي هوية العيادة بسيطة. إعدادات عمل كل طبيب موجودة معه بالأسفل.",
     doctors: "الأطباء",
-    doctorsHelp: "أضف الأطباء أو غيّر أسماءهم أو أوقف ظهورهم في المواعيد الجديدة.",
-    access: "صلاحيات العيادة",
-    accessHelp: "أضف أو أزل موظفي الاستقبال دون تعقيد الجدول اليومي.",
-    manageAccess: "إدارة صلاحيات العيادة",
-    accountHelp: "رقم الهاتف الموثق هو هوية تسجيل الدخول الأساسية في Atlas. ويمكن أن يبقى Passkey كاختصار اختياري على جهاز موثوق.",
+    doctorsHelp: "أضف الأطباء أو غيّر أسماءهم أو ترتيبهم أو أوقف ظهورهم في المواعيد الجديدة.",
+    removedDoctors: "الأطباء المُزالون",
+    administration: "إدارة العيادة",
+    administrationHelp: "أدوات المالك الأقل استخداماً تبقى هنا حتى يظل الجدول اليومي بسيطاً.",
+    teamAccess: "صلاحيات الفريق",
+    history: "سجل المواعيد",
+    deleteClinic: "حذف هذه العيادة",
+    accountHelp: "رقم الهاتف الموثق هو هويتك في Atlas.",
+    accountDeletion: "الحساب والحذف",
+    quickSignIn: "دخول أسرع على هذا الجهاز",
+    quickSignInHelp: "اختياري. أضف Passkey فقط إذا تريد اختصاراً أسرع على جهاز موثوق.",
     signOutHelp: "سجّل الخروج فقط عندما تريد أن يطلب هذا الجهاز تسجيل الدخول من جديد.",
     readOnlyClinic: "تدير إدارة العيادة اسم العيادة.",
     phonePending: "رقم الهاتف غير موثق بعد",
+    support: "المساعدة والقانوني",
   },
 };
 
@@ -125,7 +153,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   const { data: clinics, error: clinicsError } = await supabase
     .from("clinics")
-    .select("id, name, owner_id, appointment_interval_minutes")
+    .select("id, name, owner_id")
     .order("created_at", { ascending: true });
   if (clinicsError || !clinics?.length) redirect("/dashboard");
 
@@ -135,7 +163,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const [
     { data: membership },
     { data: doctors, error: doctorsError },
-    { data: reminderSettings, error: reminderError },
   ] = await Promise.all([
     supabase
       .from("clinic_members")
@@ -149,21 +176,16 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       .eq("clinic_id", clinic.id)
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
-    supabase
-      .from("clinic_reminder_settings")
-      .select("enabled, lead_minutes, second_lead_minutes, default_reminder_language, messaging_approved_at")
-      .eq("clinic_id", clinic.id)
-      .maybeSingle(),
   ]);
 
-  if (doctorsError || reminderError || !reminderSettings) {
-    return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} />;
-  }
+  if (doctorsError) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} />;
 
   const canManage = clinic.owner_id === userData.user.id
     || membership?.role === "owner"
     || membership?.role === "manager";
   const isOwner = clinic.owner_id === userData.user.id || membership?.role === "owner";
+  const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
+  const archivedDoctors = (doctors ?? []).filter((doctor) => !doctor.active);
   const errorMessage = params.error ? errorCopy[params.error] : null;
   const noticeMessage = params.notice ? noticeCopy[params.notice] : null;
 
@@ -207,9 +229,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             <input type="hidden" name="clinic_id" value={clinic.id} />
             <label className="sr-only" htmlFor="locale">{t.interfaceLanguage}</label>
             <select id="locale" name="locale" defaultValue={locale}>
-              {Object.entries(uiLocaleMeta).map(([value, meta]) => (
-                <option value={value} key={value}>{meta.nativeLabel}</option>
-              ))}
+              {Object.entries(uiLocaleMeta).map(([value, meta]) => <option value={value} key={value}>{meta.nativeLabel}</option>)}
             </select>
             <SubmitButton pendingLabel={t.saving}>{t.saveLanguage}</SubmitButton>
           </form>
@@ -224,7 +244,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <p>{copy.clinicBasicsHelp}</p>
             </div>
           </div>
-
           {canManage ? (
             <form action={updateClinicName} className="settings-form">
               <input type="hidden" name="clinic_id" value={clinic.id} />
@@ -235,45 +254,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               </div>
             </form>
           ) : (
-            <div className="settings-readonly-clinic">
-              <span>{t.clinicName}</span><strong>{clinic.name}</strong><small>{copy.readOnlyClinic}</small>
-            </div>
+            <div className="settings-readonly-clinic"><span>{t.clinicName}</span><strong>{clinic.name}</strong><small>{copy.readOnlyClinic}</small></div>
           )}
-
-          <form action={updateClinicInterval} className="settings-form">
-            <input type="hidden" name="clinic_id" value={clinic.id} />
-            <label htmlFor="appointment_interval_minutes">{t.defaultInterval}</label>
-            <div className="settings-control-row">
-              <select
-                id="appointment_interval_minutes"
-                name="appointment_interval_minutes"
-                defaultValue={String(clinic.appointment_interval_minutes)}
-                disabled={!canManage}
-              >
-                {[5, 10, 15, 20, 30].map((minutes) => (
-                  <option value={minutes} key={minutes}>{minutes} min</option>
-                ))}
-              </select>
-              {canManage ? <SubmitButton pendingLabel={t.saving}>{t.saveInterval}</SubmitButton> : null}
-            </div>
-            <p className="field-help">{t.intervalHelp}</p>
-          </form>
         </section>
 
-        <DoctorPatientDetailsCard clinicId={clinic.id} locale={locale} />
-
-        <SettingsReminderCard
-          clinicId={clinic.id}
-          locale={locale}
-          canManage={Boolean(canManage)}
-          initialSettings={{
-            enabled: reminderSettings.enabled,
-            leadMinutes: reminderSettings.lead_minutes,
-            secondLeadMinutes: reminderSettings.second_lead_minutes,
-            defaultLanguage: reminderSettings.default_reminder_language,
-            approved: Boolean(reminderSettings.messaging_approved_at),
-          }}
-        />
+        <DoctorWorkflowCard clinicId={clinic.id} locale={locale} canManage={Boolean(canManage)} />
 
         {canManage ? (
           <section className="settings-card settings-card-wide">
@@ -294,8 +279,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             </form>
 
             <div className="doctor-settings-list">
-              {(doctors ?? []).map((doctor, index) => (
-                <article className={`doctor-settings-row ${doctor.active ? "" : "is-archived"}`} key={doctor.id}>
+              {activeDoctors.map((doctor, index) => (
+                <article className="doctor-settings-row" key={doctor.id}>
                   <form action={updateDoctor} className="doctor-name-form">
                     <input type="hidden" name="clinic_id" value={clinic.id} />
                     <input type="hidden" name="doctor_id" value={doctor.id} />
@@ -304,34 +289,48 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
                   </form>
                   <div className="doctor-row-meta">
-                    <span>{doctor.active ? t.doctorAvailable : t.doctorArchived}</span>
+                    <span>{t.doctorAvailable}</span>
                     <div className="compact-actions">
-                      <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><button type="submit" disabled={index === 0}>{t.moveUp}</button></form>
-                      <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><button type="submit" disabled={index === (doctors?.length ?? 0) - 1}>{t.moveDown}</button></form>
-                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, !doctor.active)}>
-                        <button className={doctor.active ? "danger-link" : ""} type="submit">{doctor.active ? t.archive : t.restore}</button>
-                      </form>
+                      {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><button type="submit">{t.moveUp}</button></form> : null}
+                      {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><button type="submit">{t.moveDown}</button></form> : null}
+                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}><button className="danger-link" type="submit">{t.archive}</button></form>
                     </div>
                   </div>
                 </article>
               ))}
             </div>
+
+            {archivedDoctors.length ? (
+              <details className="settings-disclosure">
+                <summary>{copy.removedDoctors} ({archivedDoctors.length})</summary>
+                <div className="doctor-settings-list">
+                  {archivedDoctors.map((doctor) => (
+                    <article className="doctor-settings-row is-archived" key={doctor.id}>
+                      <strong>{doctor.name}</strong>
+                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, true)}><button className="button button-ghost button-small" type="submit">{t.restore}</button></form>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </section>
         ) : null}
 
         {isOwner ? (
           <section className="settings-card settings-link-card">
             <div className="settings-card-heading">
-              <span className="settings-card-icon" aria-hidden="true">👥</span>
+              <span className="settings-card-icon" aria-hidden="true">•••</span>
               <div>
                 <div className="eyebrow">{t.team}</div>
-                <h2>{copy.access}</h2>
-                <p>{copy.accessHelp}</p>
+                <h2>{copy.administration}</h2>
+                <p>{copy.administrationHelp}</p>
               </div>
             </div>
-            <Link className="settings-link" href={`/dashboard/staff?clinic=${clinic.id}`} prefetch>
-              <span>{copy.manageAccess}</span><span aria-hidden="true">→</span>
-            </Link>
+            <div className="settings-link-list">
+              <Link className="settings-link" href={`/dashboard/staff?clinic=${clinic.id}`} prefetch><span>{copy.teamAccess}</span><span aria-hidden="true">→</span></Link>
+              <Link className="settings-link" href={`/dashboard/history?clinic=${clinic.id}`} prefetch><span>{copy.history}</span><span aria-hidden="true">→</span></Link>
+              <Link className="settings-link danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}><span>{copy.deleteClinic}</span><span aria-hidden="true">→</span></Link>
+            </div>
           </section>
         ) : null}
 
@@ -344,10 +343,14 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <p className="account-email" dir="ltr">{userData.user.phone ?? copy.phonePending}</p>
             </div>
           </div>
-
           <p className="field-help">{copy.accountHelp}</p>
           <PhoneNumberManager locale={locale} currentPhone={userData.user.phone ?? null} />
-          <PasskeyManager locale={locale} />
+          <Link className="settings-link" href="/dashboard/settings/account"><span>{copy.accountDeletion}</span><span aria-hidden="true">→</span></Link>
+          <details className="settings-disclosure">
+            <summary>{copy.quickSignIn}</summary>
+            <p className="field-help">{copy.quickSignInHelp}</p>
+            <PasskeyManager locale={locale} />
+          </details>
           <div className="settings-account-signout">
             <p className="field-help">{copy.signOutHelp}</p>
             <form action={signOut}><SubmitButton className="button button-ghost settings-signout" pendingLabel={t.saving}>{t.signOut}</SubmitButton></form>
@@ -355,8 +358,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </section>
       </div>
 
+      <footer className="settings-utility-footer" aria-label={copy.support}>
+        <Link href="/support">Support</Link><span>·</span><Link href="/privacy">Privacy</Link><span>·</span><Link href="/terms">Terms</Link>
+      </footer>
+
       <style>{`
-        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}
+        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}.settings-link-list{display:grid;gap:8px}.settings-disclosure{border-top:1px solid var(--line);padding-top:10px}.settings-disclosure>summary{min-height:42px;display:flex;align-items:center;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}.settings-utility-footer{display:flex;justify-content:center;gap:9px;padding:24px 0 110px;color:var(--muted);font-size:11px}.settings-utility-footer a{color:inherit}.doctor-settings-row.is-archived{display:flex;align-items:center;justify-content:space-between;gap:12px}
       `}</style>
     </main>
   );
