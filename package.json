@@ -12,7 +12,10 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/ensure-tests.mjs && node --test tests/*.test.ts",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "whatsapp:readiness": "node scripts/whatsapp-meta-readiness.mjs",
+    "whatsapp:prepare-templates": "node scripts/whatsapp-meta-readiness.mjs --apply",
+    "whatsapp:release-gate": "node scripts/whatsapp-meta-readiness.mjs --require-live"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
