@@ -21,7 +21,7 @@ concurrency:
 jobs:
   build-ios:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -45,3 +45,31 @@ jobs:
           CODE_SIGNING_ALLOWED=NO
           CODE_SIGNING_REQUIRED=NO
           build
+
+      - name: Run Atlas iOS unit tests
+        working-directory: ios
+        shell: bash
+        run: |
+          set -euo pipefail
+          DESTINATION="$(python3 - <<'PY'
+          import json
+          import subprocess
+
+          payload = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"]))
+          for runtime in sorted(payload.get("devices", {}), reverse=True):
+              if "iOS" not in runtime:
+                  continue
+              for device in payload["devices"][runtime]:
+                  if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
+                      print(f"platform=iOS Simulator,id={device['udid']}")
+                      raise SystemExit(0)
+          raise SystemExit("No available iPhone simulator")
+          PY
+          )"
+          xcodebuild \
+            -project Atlas.xcodeproj \
+            -scheme Atlas \
+            -destination "$DESTINATION" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            test

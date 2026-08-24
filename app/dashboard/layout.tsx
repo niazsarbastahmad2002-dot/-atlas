@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { AppNavigation } from "./app-navigation";
+import { AtlasContinuityMode } from "./continuity-mode";
 import { DashboardClientPolish } from "./dashboard-client-polish";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
@@ -15,6 +16,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AtlasContinuityMode />
       </Suspense>
       <Suspense fallback={null}>
         <AppNavigation locale={locale} />
