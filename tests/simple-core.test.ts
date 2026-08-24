@@ -19,7 +19,8 @@ test("primary daily navigation stays Schedule, Add, Settings", () => {
   const navigation = source("app/dashboard/app-navigation.tsx");
   assert.match(navigation, /Schedule/);
   assert.match(navigation, /Settings/);
-  assert.match(navigation, /mobile-nav-add/);
+  assert.match(navigation, /app-bottom-add/);
+  assert.match(navigation, /\{t\.add\}/);
   assert.doesNotMatch(navigation, />History</);
   assert.doesNotMatch(navigation, />Clinic access</);
   assert.doesNotMatch(navigation, />Reminders</);
@@ -77,7 +78,9 @@ test("simple schedule removes repeated status and appointment metadata without r
   assert.match(css, /nth-child\(5\)/);
   assert.match(css, /nth-child\(6\)/);
   assert.match(css, /polished-details > div:nth-child\(n \+ 2\)/);
-  assert.doesNotMatch(css, /\.day-navigation\s*\{[\s\S]*?display:\s*none/);
+  const dayNavigationBlock = css.match(/\.workspace-page \.day-navigation\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.ok(dayNavigationBlock.length > 0);
+  assert.doesNotMatch(dayNavigationBlock, /display:\s*none/);
   assert.match(dashboard, /schedule-date-shortcuts/);
   assert.match(dashboard, /day-navigation/);
 });
