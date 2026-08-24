@@ -71,6 +71,12 @@ function replaceConsentCopy(form: HTMLFormElement, locale: UiLocale) {
   if (text) text.textContent = copy[locale].consent;
 }
 
+function appointmentIdFromEditor(form: HTMLFormElement) {
+  const input = form.querySelector<HTMLInputElement>('input[name="patient_name"]');
+  const prefix = "edit-patient-";
+  return input?.id.startsWith(prefix) ? input.id.slice(prefix.length) : null;
+}
+
 export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiLocale }) {
   useEffect(() => {
     let disposed = false;
@@ -93,14 +99,11 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
     const decorateEditor = async (form: HTMLFormElement) => {
       if (decorated.has(form)) return;
       decorated.add(form);
-      const appointmentId = form.closest<HTMLElement>(".appointment-row")?.querySelector<HTMLElement>("[data-appointment-id]")?.dataset.appointmentId
-        ?? form.closest<HTMLElement>(".appointment-row")?.getAttribute("data-appointment-id")
-        ?? null;
-      const clinicId = new URLSearchParams(window.location.search).get("clinic");
+      const appointmentId = appointmentIdFromEditor(form);
       let initial: Relationship = "patient";
-      if (clinicId && appointmentId) {
+      if (appointmentId) {
         try {
-          const value = await getAppointmentContactRelationshipInline(clinicId, appointmentId);
+          const value = await getAppointmentContactRelationshipInline(appointmentId);
           if (value) initial = value;
         } catch {}
       }
