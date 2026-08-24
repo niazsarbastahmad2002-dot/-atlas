@@ -5,8 +5,9 @@ import test from "node:test";
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("clinic activity history extends the existing audit store without copying patient values", async () => {
-  const [migration, activityPage, historyPage] = await Promise.all([
+  const [migration, attribution, activityPage, historyPage] = await Promise.all([
     read("supabase/migrations/20260824131000_clinic_activity_history_foundation.sql"),
+    read("supabase/migrations/20260824131500_activity_actor_attribution.sql"),
     read("app/dashboard/activity/page.tsx"),
     read("app/dashboard/history/page.tsx"),
   ]);
@@ -31,6 +32,11 @@ test("clinic activity history extends the existing audit store without copying p
   assert.match(migration, /cm\.role in \('owner', 'manager'\)/);
   assert.match(migration, /revoke insert, update, delete, truncate on public\.appointment_audit_events from anon, authenticated/);
   assert.match(migration, /revoke update, delete, truncate on public\.appointment_audit_events from service_role/);
+
+  assert.match(attribution, /current_setting\('atlas\.actor_id', true\)/);
+  assert.match(attribution, /set_config\('atlas\.actor_id', p_actor_id::text, true\)/);
+  assert.match(attribution, /v_actor_id := v_user_id/);
+  assert.match(attribution, /only the current clinic administrator can transfer administration/);
 
   assert.match(activityPage, /Activity history/);
   assert.match(activityPage, /membership\?\.role === "owner" \|\| membership\?\.role === "manager"/);
