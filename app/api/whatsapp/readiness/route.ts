@@ -6,7 +6,11 @@ import {
   auditMetaWhatsAppReadiness,
   type MetaWhatsAppReadiness,
 } from "@/lib/reminders/meta-readiness";
-import { ATLAS_WHATSAPP_REQUIRED_LANGUAGES } from "@/lib/reminders/meta-template-bootstrap";
+import {
+  ATLAS_PATIENT_CONFIRM_TEMPLATE,
+  ATLAS_PATIENT_DAY_TEMPLATE,
+  ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES,
+} from "@/lib/reminders/patient-loop";
 import { readWhatsAppConfig, type WhatsAppConfig } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -58,13 +62,10 @@ function safeBlocker(value: string | undefined, fallback: string | null) {
   return /^[a-z0-9_]{1,96}$/i.test(candidate) ? candidate : "provider_not_ready";
 }
 
-function unavailableAudit(
-  clinicId: string,
-  templateName: string,
-): ClinicAudit {
+function unavailableAudit(clinicId: string): ClinicAudit {
   return {
     clinicId,
-    templateName,
+    templateName: "atlas_patient_loop",
     connectionSource: "missing",
     ready: false,
     nameStatus: null,
@@ -81,6 +82,60 @@ function unavailableAudit(
   };
 }
 
+function templateAwareBlockers(prefix: "confirm" | "day", audit: MetaWhatsAppReadiness) {
+  return audit.blockers.map((blocker) => (
+    blocker.startsWith("template_") ? `${prefix}_${blocker}` : blocker
+  ));
+}
+
+function combineAudits(
+  clinicId: string,
+  connectionSource: ClinicAudit["connectionSource"],
+  confirm: MetaWhatsAppReadiness,
+  day: MetaWhatsAppReadiness,
+): ClinicAudit {
+  return {
+    ...confirm,
+    clinicId,
+    templateName: "atlas_patient_loop",
+    connectionSource,
+    ready: confirm.ready && day.ready,
+    templates: [...confirm.templates, ...day.templates]
+      .filter((template, index, all) => all.findIndex((item) => item.name === template.name && item.language === template.language) === index)
+      .sort((left, right) => `${left.name}:${left.language}`.localeCompare(`${right.name}:${right.language}`)),
+    blockers: [...new Set([
+      ...templateAwareBlockers("confirm", confirm),
+      ...templateAwareBlockers("day", day),
+    ])],
+  };
+}
+
+async function auditPatientLoop(
+  accessToken: string,
+  phoneNumberId: string,
+  graphApiVersion: string,
+  fetchImplementation: typeof fetch,
+) {
+  return Promise.all([
+    auditMetaWhatsAppReadiness({
+      accessToken,
+      phoneNumberId,
+      graphApiVersion,
+      expectedTemplateName: ATLAS_PATIENT_CONFIRM_TEMPLATE,
+      expectedLanguages: [...ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES],
+      fetchImplementation,
+    }),
+    auditMetaWhatsAppReadiness({
+      accessToken,
+      phoneNumberId,
+      graphApiVersion,
+      expectedTemplateName: ATLAS_PATIENT_DAY_TEMPLATE,
+      expectedLanguages: [...ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES],
+      fetchImplementation,
+    }),
+  ]);
+}
+
 function readLegacyDiagnosticConfig(): WhatsAppConfig | null {
   try { return readWhatsAppConfig(); } catch { return null; }
 }
@@ -93,37 +148,23 @@ async function auditClinic(
 ): Promise<ClinicAudit> {
   const connection = await readClinicMetaWhatsAppConfig(admin, row.clinic_id);
   if (connection) {
-    const result = await auditMetaWhatsAppReadiness({
-      accessToken: connection.config.accessToken,
-      phoneNumberId: connection.config.phoneNumberId,
-      graphApiVersion: connection.config.graphApiVersion,
-      expectedTemplateName: row.template_name,
-      expectedLanguages: [...ATLAS_WHATSAPP_REQUIRED_LANGUAGES],
-      fetchImplementation: withExplicitMetaWabaCandidate(connection.wabaId),
-    });
-    return {
-      clinicId: row.clinic_id,
-      templateName: row.template_name,
-      connectionSource: "coexistence",
-      ...result,
-    };
+    const [confirm, day] = await auditPatientLoop(
+      connection.config.accessToken,
+      connection.config.phoneNumberId,
+      connection.config.graphApiVersion,
+      withExplicitMetaWabaCandidate(connection.wabaId),
+    );
+    return combineAudits(row.clinic_id, "coexistence", confirm, day);
   }
 
-  if (!legacyConfig) return unavailableAudit(row.clinic_id, row.template_name);
-  const result = await auditMetaWhatsAppReadiness({
-    accessToken: legacyConfig.accessToken,
-    phoneNumberId: legacyConfig.phoneNumberId,
-    graphApiVersion: legacyConfig.graphApiVersion,
-    expectedTemplateName: row.template_name,
-    expectedLanguages: [...ATLAS_WHATSAPP_REQUIRED_LANGUAGES],
-    fetchImplementation: withExplicitMetaWabaCandidate(requestedWabaId),
-  });
-  return {
-    clinicId: row.clinic_id,
-    templateName: row.template_name,
-    connectionSource: "legacy_env",
-    ...result,
-  };
+  if (!legacyConfig) return unavailableAudit(row.clinic_id);
+  const [confirm, day] = await auditPatientLoop(
+    legacyConfig.accessToken,
+    legacyConfig.phoneNumberId,
+    legacyConfig.graphApiVersion,
+    withExplicitMetaWabaCandidate(requestedWabaId),
+  );
+  return combineAudits(row.clinic_id, "legacy_env", confirm, day);
 }
 
 export async function POST(request: Request) {
@@ -178,8 +219,8 @@ export async function POST(request: Request) {
     for (const row of settings) {
       const audit = audits.find((item) => item.clinicId === row.clinic_id);
       if (!audit) continue;
-      // A legacy environment sender remains diagnostic only. Production activation
-      // requires a clinic-scoped Coexistence connection persisted from Embedded Signup.
+      // Production activation requires the clinic-scoped Coexistence sender and
+      // both Patient Loop templates in every required provider language.
       const canActivate = audit.connectionSource === "coexistence" && audit.ready;
       const patch = canActivate
         ? {
