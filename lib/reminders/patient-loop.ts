@@ -165,8 +165,9 @@ export function extractPatientActionReplies(payload: unknown): PatientActionRepl
       if (!value || !Array.isArray(value.messages)) continue;
       for (const rawMessage of value.messages) {
         const message = record(rawMessage);
-        const providerMessageId = typeof message?.id === "string" ? message.id : "";
-        const fromPhone = typeof message?.from === "string" ? message.from.replace(/\D/g, "") : "";
+        if (!message) continue;
+        const providerMessageId = typeof message.id === "string" ? message.id : "";
+        const fromPhone = typeof message.from === "string" ? message.from.replace(/\D/g, "") : "";
         if (providerMessageId.length < 8 || providerMessageId.length > 512 || !/^9647\d{9}$/.test(fromPhone)) continue;
 
         let actionPayload: string | null = null;
