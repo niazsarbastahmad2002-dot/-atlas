@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { establishWhatsAppAtlasSession } from "@/lib/whatsapp-session";
-import { consumeWhatsAppVerification } from "@/lib/whatsapp-verification";
+import { consumeWhatsAppVerification, finalizeWhatsAppVerification } from "@/lib/whatsapp-verification";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,11 +24,18 @@ export async function POST(request: Request) {
     }
 
     const user = await establishWhatsAppAtlasSession(verification.phone);
+    const finalized = await finalizeWhatsAppVerification(verification.phone, verification.challengeId);
+    if (!finalized) {
+      console.error("Atlas WhatsApp verification session established but challenge finalization failed");
+    }
+
     return NextResponse.json({ ok: true, userId: user.id, phone: verification.phone }, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
     console.error("Atlas WhatsApp verification session failed", { error: error instanceof Error ? error.name : "unknown" });
+    // A correct code remains retryable until expiry if session establishment
+    // itself fails, so a transient Supabase error does not force a new message.
     return NextResponse.json({ error: "session_failed" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 }
