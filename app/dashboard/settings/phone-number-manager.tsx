@@ -9,7 +9,7 @@ type Copy = {
   title: string; help: string; current: string; add: string; change: string; phone: string;
   send: string; sending: string; code: string; codeHelp: string; verify: string; verifying: string;
   cancel: string; invalidPhone: string; invalidCode: string; failed: string; verified: string;
-  rate: string; inUse: string;
+  rate: string; inUse: string; accountManagement: string; accountManagementHelp: string;
 };
 
 const copyByLocale: Record<UiLocale, Copy> = {
@@ -33,6 +33,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verified: "WhatsApp sign-in number changed successfully.",
     rate: "Too many verification requests. Wait a little and try again.",
     inUse: "That WhatsApp number already belongs to another Atlas account.",
+    accountManagement: "Account & deletion",
+    accountManagementHelp: "Review your Atlas account or permanently delete the account and every clinic you own.",
   },
   ku: {
     title: "ژمارەی WhatsApp ـی چوونەژوورەوە",
@@ -54,6 +56,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verified: "ژمارەی WhatsApp ـی چوونەژوورەوە بە سەرکەوتوویی گۆڕدرا.",
     rate: "داواکاری پشتڕاستکردنەوە زۆر بووە. کەمێک چاوەڕێ بکە.",
     inUse: "ئەم ژمارەی WhatsApp ـە پێشتر بە هەژمارێکی تری Atlas بەستراوەتەوە.",
+    accountManagement: "هەژمار و سڕینەوە",
+    accountManagementHelp: "هەژماری Atlas ببینە یان هەژمارەکە و هەموو کلینیکەکانی خاوەندارێتیت بە هەمیشەیی بسڕەوە.",
   },
   bd: {
     title: "ژمارا WhatsApp یا چوونەژوورێ",
@@ -75,6 +79,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verified: "ژمارا WhatsApp یا چوونەژوورێ ب سەرکەفتن هاتە گوهارتن.",
     rate: "داخوازێن پشتڕاستکرنێ زۆر بوون. کەمەک چاوەرێ بکە.",
     inUse: "ئەڤ ژمارا WhatsApp پێشتر ب هەژمارەکا دی یا Atlas گرێدایە.",
+    accountManagement: "هەژمار و ژێبرن",
+    accountManagementHelp: "هەژمارا Atlas ببینە یان هەژمار و هەمی کلینیکێن خاوەنداریا تە بۆ هەردەم ژێ ببە.",
   },
   ar: {
     title: "رقم واتساب لتسجيل الدخول",
@@ -96,6 +102,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verified: "تم تغيير رقم واتساب لتسجيل الدخول بنجاح.",
     rate: "تم طلب أكواد كثيرة. انتظر شوي وحاول مرة ثانية.",
     inUse: "رقم واتساب هذا مرتبط بحساب Atlas آخر.",
+    accountManagement: "الحساب والحذف",
+    accountManagementHelp: "راجع حساب Atlas أو احذف الحساب نهائياً مع كل عيادة تملكها.",
   },
 };
 
@@ -241,6 +249,13 @@ export function PhoneNumberManager({ locale, currentPhone }: { locale: UiLocale;
 
       {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       {notice ? <p className="notice notice-success" role="status">{notice}</p> : null}
+
+      <div className="settings-form">
+        <p className="field-help">{copy.accountManagementHelp}</p>
+        <a className="settings-link" href="/dashboard/settings/account">
+          <span>{copy.accountManagement}</span><span aria-hidden="true">→</span>
+        </a>
+      </div>
     </div>
   );
 }
