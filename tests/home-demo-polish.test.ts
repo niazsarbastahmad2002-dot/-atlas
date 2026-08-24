@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-// Keep these checks focused on the two visible product regressions this upgrade fixes.
+// Keep these checks focused on the two visible product regressions reported in production.
 test("marketing Atlas wordmark keeps readable contrast and sample clinic is a real secondary action", async () => {
   const home = await read("app/page.tsx");
   assert.match(home, /atlas-marketing-brand/);
