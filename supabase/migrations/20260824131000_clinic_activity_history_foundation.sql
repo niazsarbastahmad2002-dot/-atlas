@@ -319,7 +319,7 @@ begin
       'assigned_doctor_id', new.assigned_doctor_id
     );
   else
-    return coalesce(new, old);
+    return new;
   end if;
 
   insert into public.appointment_audit_events (
@@ -342,7 +342,10 @@ begin
     v_after
   );
 
-  return coalesce(new, old);
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
 $$;
 
