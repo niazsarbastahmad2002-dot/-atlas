@@ -6,6 +6,7 @@ import {
   sendInfobipWhatsAppTemplate,
   type InfobipWhatsAppConfig,
 } from "./infobip.ts";
+import type { PatientLoopMessageKind } from "./patient-loop.ts";
 import {
   sendApprovedWhatsAppTemplate,
   type WhatsAppConfig,
@@ -19,6 +20,10 @@ export type ReminderDeliveryInput = {
   appointmentAt: string;
   templateName: string;
   templateLanguage: string;
+  reminderId?: string;
+  doctorName?: string;
+  messageKind?: PatientLoopMessageKind;
+  delayMinutes?: number;
 };
 
 export type ReminderTransportResult =
