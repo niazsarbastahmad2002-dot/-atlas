@@ -13,9 +13,9 @@ export type Database = {
   public: {
     Tables: {
       appointment_audit_events: {
-        Row: { action: string; actor_id: string | null; actor_type: string; appointment_id: string | null; clinic_id: string; from_status: string | null; id: number; occurred_at: string; reason: string | null; to_status: string | null }
-        Insert: { action: string; actor_id?: string | null; actor_type: string; appointment_id?: string | null; clinic_id: string; from_status?: string | null; id?: never; occurred_at?: string; reason?: string | null; to_status?: string | null }
-        Update: { action?: string; actor_id?: string | null; actor_type?: string; appointment_id?: string | null; clinic_id?: string; from_status?: string | null; id?: never; occurred_at?: string; reason?: string | null; to_status?: string | null }
+        Row: { action: string; actor_id: string | null; actor_type: string; after_state: Json | null; appointment_id: string | null; before_state: Json | null; clinic_id: string; entity_id: string | null; entity_type: string; from_status: string | null; id: number; occurred_at: string; reason: string | null; to_status: string | null }
+        Insert: { action: string; actor_id?: string | null; actor_type: string; after_state?: Json | null; appointment_id?: string | null; before_state?: Json | null; clinic_id: string; entity_id?: string | null; entity_type?: string; from_status?: string | null; id?: never; occurred_at?: string; reason?: string | null; to_status?: string | null }
+        Update: { action?: string; actor_id?: string | null; actor_type?: string; after_state?: Json | null; appointment_id?: string | null; before_state?: Json | null; clinic_id?: string; entity_id?: string | null; entity_type?: string; from_status?: string | null; id?: never; occurred_at?: string; reason?: string | null; to_status?: string | null }
         Relationships: [
           { foreignKeyName: "appointment_audit_events_appointment_id_fkey"; columns: ["appointment_id"]; isOneToOne: false; referencedRelation: "appointments"; referencedColumns: ["id"] },
           { foreignKeyName: "appointment_audit_events_clinic_id_fkey"; columns: ["clinic_id"]; isOneToOne: false; referencedRelation: "clinics"; referencedColumns: ["id"] },
@@ -148,8 +148,8 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  CompositeTypeName extends DefaultSchemaCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
