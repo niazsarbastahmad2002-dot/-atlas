@@ -18,6 +18,7 @@ import "./atlas-interactions.css";
 import "./atlas-readability.css";
 import "./patient-clarity.css";
 import "./atlas-quality-design.css";
+import "./atlas-simple-core.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
