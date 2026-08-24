@@ -25,8 +25,6 @@ struct AtlasContinuitySnapshot: Codable, Equatable {
 
 enum AtlasContinuityValidation {
     static let currentVersion = 1
-    private static let uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/
-    private static let dayPattern = /^\d{4}-\d{2}-\d{2}$/
     private static let allowedStatuses: Set<String> = ["pending", "confirmed", "cancelled", "completed", "no_show"]
 
     static func baghdadDay(for date: Date) -> String {
@@ -45,11 +43,32 @@ enum AtlasContinuityValidation {
         return formatter.date(from: value)
     }
 
+    private static func isUUID(_ value: String) -> Bool {
+        UUID(uuidString: value) != nil
+    }
+
+    private static func isDay(_ value: String) -> Bool {
+        let parts = value.split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 3,
+              parts[0].count == 4,
+              parts[1].count == 2,
+              parts[2].count == 2,
+              let year = Int(parts[0]),
+              let month = Int(parts[1]),
+              let day = Int(parts[2]),
+              (2000...2200).contains(year),
+              (1...12).contains(month),
+              (1...31).contains(day) else {
+            return false
+        }
+        return true
+    }
+
     static func isValid(_ snapshot: AtlasContinuitySnapshot, now: Date = Date()) -> Bool {
         guard snapshot.version == currentVersion,
-              snapshot.userId.wholeMatch(of: uuidPattern) != nil,
-              snapshot.clinicId.wholeMatch(of: uuidPattern) != nil,
-              snapshot.day.wholeMatch(of: dayPattern) != nil,
+              isUUID(snapshot.userId),
+              isUUID(snapshot.clinicId),
+              isDay(snapshot.day),
               snapshot.day == baghdadDay(for: now),
               (2...120).contains(snapshot.clinicName.count),
               snapshot.appointments.count <= 500,
@@ -59,11 +78,11 @@ enum AtlasContinuityValidation {
             return false
         }
 
-        if let doctorId = snapshot.doctorId, doctorId.wholeMatch(of: uuidPattern) == nil { return false }
+        if let doctorId = snapshot.doctorId, !isUUID(doctorId) { return false }
         if let doctorName = snapshot.doctorName, !(2...120).contains(doctorName.count) { return false }
 
         for appointment in snapshot.appointments {
-            guard appointment.id.wholeMatch(of: uuidPattern) != nil,
+            guard isUUID(appointment.id),
                   (2...120).contains(appointment.patientName.count),
                   (2...120).contains(appointment.doctorName.count),
                   allowedStatuses.contains(appointment.status),
@@ -77,6 +96,7 @@ enum AtlasContinuityValidation {
     }
 }
 
+@MainActor
 final class AtlasContinuityStore {
     static let shared = AtlasContinuityStore()
 
