@@ -38,16 +38,19 @@ function normalizeD360BaseUrl(value: string | undefined) {
   try {
     const url = new URL(candidate);
     const isD360Host = url.hostname === "360dialog.io" || url.hostname.endsWith(".360dialog.io");
+    const path = url.pathname.replace(/\/+$/, "");
     if (
       url.protocol !== "https:"
       || !isD360Host
       || url.username
       || url.password
-      || url.pathname !== "/"
       || url.search
       || url.hash
     ) return null;
-    return url.origin;
+    if (url.hostname === "waba-sandbox.360dialog.io") {
+      return path === "" || path === "/v1" ? `${url.origin}/v1` : null;
+    }
+    return path === "" ? url.origin : null;
   } catch {
     return null;
   }

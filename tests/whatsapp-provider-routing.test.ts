@@ -58,7 +58,7 @@ test("Meta and 360dialog use one identical authentication template payload", asy
   assert.deepEqual(meta, { ok: true, messageId: "meta-message" });
   assert.deepEqual(d360, { ok: true, messageId: "d360-message" });
   assert.equal(metaCalls[0]?.url, "https://graph.facebook.com/v26.0/1234567890/messages");
-  assert.equal(d360Calls[0]?.url, "https://waba-sandbox.360dialog.io/messages");
+  assert.equal(d360Calls[0]?.url, "https://waba-sandbox.360dialog.io/v1/messages");
   assert.equal((metaCalls[0]?.init.headers as Record<string, string>).Authorization, "Bearer test-meta-access-token");
   assert.equal((metaCalls[0]?.init.headers as Record<string, string>)["D360-API-KEY"], undefined);
   assert.equal((d360Calls[0]?.init.headers as Record<string, string>)["D360-API-KEY"], "test-d360-api-key-not-secret");
