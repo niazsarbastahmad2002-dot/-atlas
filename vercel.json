@@ -6,7 +6,8 @@
   "regions": ["sin1"],
   "git": {
     "deploymentEnabled": {
-      "atlas-*": false
+      "main": true,
+      "*": false
     }
   }
 }
