@@ -38,7 +38,7 @@ struct AtlasNativeTodayView: View {
                          ? "Offline · showing Atlas as of \(timeLabel(snapshot.syncedAt))"
                          : "Synced at \(timeLabel(snapshot.syncedAt))")
                         .font(.caption)
-                        .foregroundStyle(isOffline ? .orange : .secondary)
+                        .foregroundStyle(isOffline ? Color.orange : Color.secondary)
                     if isOffline {
                         Text("Changes from other staff may not appear until connection returns.")
                             .font(.caption)
