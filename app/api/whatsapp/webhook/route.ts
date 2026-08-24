@@ -1,12 +1,19 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { readClinicMetaWhatsAppConfig } from "@/lib/reminders/meta-clinic-config";
 import {
   hasMetaCoexistenceWebhook,
   summarizeMetaCoexistenceWebhook,
 } from "@/lib/reminders/meta-coexistence";
 import {
+  extractPatientActionReplies,
+  patientActionAcknowledgement,
+  verifyPatientActionPayload,
+} from "@/lib/reminders/patient-loop";
+import {
   extractDeliveryStatuses,
   readBodyWithLimit,
+  sendWhatsAppTextMessage,
   verifyWebhookSignature,
 } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
@@ -68,12 +75,13 @@ export async function POST(request: Request) {
   const coexistence = summarizeMetaCoexistenceWebhook(payload);
   if (hasMetaCoexistenceWebhook(coexistence)) {
     // Deliberately keep observability content-free. Atlas does not persist synced
-    // WhatsApp history, contacts, or app-originated messages at this stage.
+    // WhatsApp history, contacts, or app-originated message bodies.
     console.info("Atlas WhatsApp coexistence webhook accepted", coexistence);
   }
 
-  const events = extractDeliveryStatuses(payload);
-  if (!events.length) {
+  const deliveryEvents = extractDeliveryStatuses(payload);
+  const patientReplies = extractPatientActionReplies(payload);
+  if (!deliveryEvents.length && !patientReplies.length) {
     return NextResponse.json({ accepted: true }, {
       status: 200,
       headers: { "Cache-Control": "no-store" },
@@ -85,7 +93,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
-  for (const event of events) {
+  for (const event of deliveryEvents) {
     const eventKey = createHash("sha256")
       .update(`${event.providerMessageId}\0${event.status}\0${event.occurredAt}\0${event.errorCode ?? ""}`)
       .digest("hex");
@@ -99,6 +107,47 @@ export async function POST(request: Request) {
     if (error || data !== true) {
       console.error("Atlas reminder delivery write failed", { code: error?.code ?? "rejected_event" });
       return NextResponse.json({ error: "delivery_write_failed" }, { status: 500 });
+    }
+  }
+
+  for (const reply of patientReplies) {
+    const verified = verifyPatientActionPayload(reply.payload, appSecret);
+    if (!verified) {
+      console.warn("Atlas ignored an invalid WhatsApp patient action payload");
+      continue;
+    }
+
+    const { data, error } = await (admin as any).rpc("apply_whatsapp_patient_action_service", {
+      p_reminder_id: verified.reminderId,
+      p_action: verified.action,
+      p_patient_phone: reply.fromPhone,
+      p_provider_message_id: reply.providerMessageId,
+      p_context_provider_message_id: reply.contextProviderMessageId,
+    });
+    if (error) {
+      console.error("Atlas WhatsApp patient action write failed", { code: error.code ?? "unknown" });
+      return NextResponse.json({ error: "patient_action_write_failed" }, { status: 500 });
+    }
+
+    const row = Array.isArray(data) ? data[0] as {
+      result?: unknown;
+      clinic_id?: unknown;
+      reminder_language?: unknown;
+    } | undefined : undefined;
+    if (row?.result !== verified.action || typeof row.clinic_id !== "string") continue;
+
+    // A patient reply opens the customer-service conversation. A short best-effort
+    // acknowledgement closes the loop without making the database mutation depend
+    // on a second outbound network request.
+    const connection = await readClinicMetaWhatsAppConfig(admin, row.clinic_id);
+    if (!connection) continue;
+    const acknowledgement = patientActionAcknowledgement(
+      typeof row.reminder_language === "string" ? row.reminder_language : "en",
+      verified.action,
+    );
+    const sent = await sendWhatsAppTextMessage(`+${reply.fromPhone}`, acknowledgement, connection.config);
+    if (!sent.accepted) {
+      console.warn("Atlas patient action acknowledgement was not accepted", { code: sent.errorCode });
     }
   }
 
