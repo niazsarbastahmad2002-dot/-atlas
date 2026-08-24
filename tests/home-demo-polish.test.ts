@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-// Keep these checks focused on the two visible product regressions reported in production and guarded for release.
+// Keep these checks focused on the visible product regressions reported in production and guarded for release.
 test("marketing Atlas wordmark keeps readable contrast and sample clinic is a real secondary action", async () => {
   const home = await read("app/page.tsx");
   assert.match(home, /atlas-marketing-brand/);
@@ -27,4 +27,11 @@ test("sample clinic uses the current Atlas-style interactive workspace", async (
   assert.match(demo, /polished-appointment-list/);
   assert.match(demo, /Sample clinic/);
   assert.match(demo, /nothing is saved/i);
+});
+
+test("sample clinic time field stays inside the composer and left-aligns on WebKit", async () => {
+  const demo = await read("app/demo/demo-modern.tsx");
+  assert.match(demo, /className="demo-modern-time-input"/);
+  assert.match(demo, /\.demo-modern-time-input\{width:100%;max-width:100%;min-width:0;text-align:left;direction:ltr\}/);
+  assert.match(demo, /::-webkit-date-and-time-value\{text-align:left\}/);
 });
