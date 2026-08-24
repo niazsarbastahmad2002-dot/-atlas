@@ -39,15 +39,13 @@ function contactRelationship(value: FormDataEntryValue | null): AppointmentConta
 }
 
 export async function getAppointmentContactRelationshipInline(
-  clinicId: string,
   id: string,
 ): Promise<AppointmentContactRelationship | null> {
-  if (!isUuid(clinicId) || !isUuid(id)) return null;
+  if (!isUuid(id)) return null;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("appointments")
     .select("contact_relationship")
-    .eq("clinic_id", clinicId)
     .eq("id", id)
     .is("voided_at", null)
     .maybeSingle();
