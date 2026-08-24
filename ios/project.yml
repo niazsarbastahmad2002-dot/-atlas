@@ -33,3 +33,25 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
+  AtlasTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: AtlasTests
+    dependencies:
+      - target: Atlas
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.atlasappointments.tests
+        SWIFT_VERSION: 6.0
+        CODE_SIGNING_ALLOWED: NO
+schemes:
+  Atlas:
+    build:
+      targets:
+        Atlas: all
+        AtlasTests: [test]
+    test:
+      targets:
+        - AtlasTests
