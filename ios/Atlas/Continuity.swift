@@ -1,4 +1,6 @@
+import Combine
 import Foundation
+@preconcurrency import Network
 
 struct AtlasContinuityAppointment: Codable, Equatable {
     let id: String
@@ -136,5 +138,29 @@ final class AtlasContinuityStore {
 
     func clear() {
         try? fileManager.removeItem(at: fileURL)
+    }
+}
+
+@MainActor
+final class AtlasNetworkMonitor: ObservableObject {
+    @Published private(set) var isOffline = false
+
+    private let monitor = NWPathMonitor()
+    private let queue = DispatchQueue(label: "com.atlasappointments.network-monitor", qos: .utility)
+
+    init(startImmediately: Bool = true) {
+        monitor.pathUpdateHandler = { [weak self] path in
+            let offline = path.status != .satisfied
+            Task { @MainActor [weak self] in
+                self?.isOffline = offline
+            }
+        }
+        if startImmediately {
+            monitor.start(queue: queue)
+        }
+    }
+
+    deinit {
+        monitor.cancel()
     }
 }
