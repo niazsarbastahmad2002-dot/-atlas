@@ -38,7 +38,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     membership: "Clinic appointment records are controlled by the clinic. Historical audit entries may remain without your account identity where record integrity requires it.",
     ownerBlock: "You still own a clinic. Transfer administration or permanently delete every clinic you own before deleting your Atlas account.",
     ownerTransfer: "Transfer administration",
-    ownerDelete: "Delete an owned clinic",
+    ownerDelete: "Delete this clinic",
     confirm: "Type DELETE to confirm",
     acknowledge: "I understand that my Atlas account will be permanently deleted.",
     button: "Permanently delete my account",
@@ -56,7 +56,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     membership: "تۆمارەکانی مەوعیدی کلینیک لەلایەن کلینیکەوە بەڕێوەدەبرێن. بۆ پاراستنی دروستی تۆمار، هەندێک تۆماری مێژوویی لەوانەیە بەبێ ناسنامەی هەژمارەکەت بمێننەوە.",
     ownerBlock: "هێشتا خاوەنی کلینیکێکیت. پێش سڕینەوەی هەژماری Atlas، بەڕێوەبردن بگوازەوە یان هەموو کلینیکە خاوەندارەکانت بە هەمیشەیی بسڕەوە.",
     ownerTransfer: "گواستنەوەی بەڕێوەبردن",
-    ownerDelete: "سڕینەوەی کلینیکی خاوەندار",
+    ownerDelete: "سڕینەوەی ئەم کلینیکە",
     confirm: "DELETE بنووسە بۆ پشتڕاستکردنەوە",
     acknowledge: "تێدەگەم کە هەژماری Atlas ـەکەم بە هەمیشەیی دەسڕێتەوە.",
     button: "هەژمارەکەم بە هەمیشەیی بسڕەوە",
@@ -74,7 +74,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     membership: "تۆمارێن مەوعیدێ کلینیکێ ژ لایێ کلینیکێ ڤە دهێنە بەڕێڤەبرن. بۆ پاراستنا دروستیا تۆماران، هەندەک تۆمارێن مێژوویی دکارن بێ ناسناما هەژمارا تە بمینن.",
     ownerBlock: "هێشتا تو خاوەنێ کلینیکەکێی. بەری ژێبرنا هەژمارا Atlas، بەڕێڤەبرنێ بگوهێزە یان هەمی کلینیکێن خۆ بۆ هەردەم ژێ ببە.",
     ownerTransfer: "گوهەستنا بەڕێڤەبرنێ",
-    ownerDelete: "ژێبرنا کلینیکا خاوەندار",
+    ownerDelete: "ژێبرنا ڤێ کلینیکێ",
     confirm: "DELETE بنڤیسە بۆ پشتڕاستکرنێ",
     acknowledge: "دزانم هەژمارا Atlas یا من بۆ هەردەم دهێتە ژێبرن.",
     button: "هەژمارا من بۆ هەردەم ژێ ببە",
@@ -92,7 +92,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     membership: "سجلات مواعيد العيادة تديرها العيادة. بعض سجلات التدقيق التاريخية قد تبقى بدون هوية حسابك إذا كان هذا مطلوباً للحفاظ على سلامة السجل.",
     ownerBlock: "أنت ما زلت مالك عيادة. انقل الإدارة أو احذف كل عيادة تملكها نهائياً قبل حذف حساب Atlas.",
     ownerTransfer: "نقل إدارة العيادة",
-    ownerDelete: "حذف عيادة تملكها",
+    ownerDelete: "حذف هذه العيادة",
     confirm: "اكتب DELETE للتأكيد",
     acknowledge: "أفهم أن حسابي في Atlas سيتم حذفه نهائياً.",
     button: "حذف حسابي نهائياً",
@@ -153,28 +153,20 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
             <strong>{copy.ownerBlock}</strong>
             <div className="settings-form">
               {ownedClinics.map((clinic) => (
-                <div key={clinic.id}>
-                  <div className="field-help">{clinic.name}</div>
-                  <Link className="button button-ghost button-small" href={`/dashboard/staff?clinic=${clinic.id}`}>
-                    {copy.ownerTransfer}
-                  </Link>
+                <div className="account-owned-clinic" key={clinic.id}>
+                  <strong>{clinic.name}</strong>
+                  <div className="compact-actions">
+                    <Link className="button button-ghost button-small" href={`/dashboard/staff?clinic=${clinic.id}`}>{copy.ownerTransfer}</Link>
+                    <Link className="button button-ghost button-small danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}>{copy.ownerDelete}</Link>
+                  </div>
                 </div>
               ))}
-              <Link className="button button-ghost button-small" href="/dashboard/settings/delete">{copy.ownerDelete}</Link>
             </div>
           </div>
         ) : (
           <form action={deleteAtlasAccount} className="settings-form">
             <label htmlFor="delete-account-confirmation">{copy.confirm}</label>
-            <input
-              id="delete-account-confirmation"
-              name="confirmation"
-              placeholder="DELETE"
-              autoComplete="off"
-              spellCheck={false}
-              required
-              dir="ltr"
-            />
+            <input id="delete-account-confirmation" name="confirmation" placeholder="DELETE" autoComplete="off" spellCheck={false} required dir="ltr" />
             <label className="checkbox-field">
               <input type="checkbox" name="acknowledge" value="yes" required />
               <span>{copy.acknowledge}</span>
@@ -183,6 +175,8 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
           </form>
         )}
       </section>
+
+      <style>{`.account-owned-clinic{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}.account-owned-clinic:first-child{border-top:0;padding-top:0}`}</style>
     </main>
   );
 }
