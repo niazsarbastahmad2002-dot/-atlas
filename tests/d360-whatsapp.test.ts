@@ -26,6 +26,21 @@ test("360dialog provider config is opt-in and validates API key", () => {
 
   assert.equal(config?.baseUrl, "https://waba-v2.360dialog.io");
   assert.equal(config?.globalDailyLimit, 500);
+
+  const sandbox = readD360WhatsAppConfig({
+    WHATSAPP_PROVIDER: "360dialog",
+    D360_API_KEY: "d360-api-key-long-enough",
+    D360_BASE_URL: "https://waba-sandbox.360dialog.io",
+    WHATSAPP_GLOBAL_DAILY_LIMIT: "5",
+  });
+  assert.equal(sandbox?.baseUrl, "https://waba-sandbox.360dialog.io/v1");
+
+  assert.throws(() => readD360WhatsAppConfig({
+    WHATSAPP_PROVIDER: "360dialog",
+    D360_API_KEY: "d360-api-key-long-enough",
+    D360_BASE_URL: "https://example.com",
+    WHATSAPP_GLOBAL_DAILY_LIMIT: "5",
+  }));
 });
 
 test("360dialog template payload preserves Atlas two-variable reminder contract", () => {

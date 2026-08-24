@@ -19,6 +19,8 @@ export async function GET() {
 
   return NextResponse.json({
     ...readiness,
+    whatsappProvider: whatsapp.provider,
+    whatsappProviderConfigured: whatsapp.providerConfigured,
     // Direct WhatsApp-first auth does not depend on Supabase Phone Auth. A
     // dedicated stable HMAC key is mandatory once the production kill switch is on.
     whatsappSenderConfigured: whatsapp.senderConfigured,
@@ -32,6 +34,8 @@ export async function GET() {
     whatsappAccessTokenConfigured: whatsapp.accessTokenConfigured,
     whatsappPhoneNumberIdConfigured: whatsapp.phoneNumberIdConfigured,
     whatsappGraphApiVersionConfigured: whatsapp.graphApiVersionConfigured,
+    whatsappD360ApiKeyConfigured: whatsapp.d360ApiKeyConfigured,
+    whatsappD360BaseUrlConfigured: whatsapp.d360BaseUrlConfigured,
     whatsappAuthTemplateNameConfigured: whatsapp.authTemplateConfigured,
     whatsappStaffInviteTemplateNameConfigured: whatsapp.staffInviteTemplateConfigured,
     authHashSecretConfigured,

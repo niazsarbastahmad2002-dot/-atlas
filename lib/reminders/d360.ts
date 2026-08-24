@@ -17,8 +17,26 @@ export type D360SendResult =
   | { accepted: false; errorCode: string; retryable: boolean; deliveryUnknown: boolean };
 
 function normalizeBaseUrl(value: string | undefined) {
-  const trimmed = (value?.trim() || "https://waba-v2.360dialog.io").replace(/\/+$/, "");
-  return /^https:\/\/[a-z0-9.-]+$/i.test(trimmed) ? trimmed : null;
+  const candidate = (value?.trim() || "https://waba-v2.360dialog.io").replace(/\/+$/, "");
+  try {
+    const url = new URL(candidate);
+    const isD360Host = url.hostname === "360dialog.io" || url.hostname.endsWith(".360dialog.io");
+    const path = url.pathname.replace(/\/+$/, "");
+    if (
+      url.protocol !== "https:"
+      || !isD360Host
+      || url.username
+      || url.password
+      || url.search
+      || url.hash
+    ) return null;
+    if (url.hostname === "waba-sandbox.360dialog.io") {
+      return path === "" || path === "/v1" ? `${url.origin}/v1` : null;
+    }
+    return path === "" ? url.origin : null;
+  } catch {
+    return null;
+  }
 }
 
 export function readD360WhatsAppConfig(

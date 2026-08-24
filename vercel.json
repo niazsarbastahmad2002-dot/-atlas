@@ -1,12 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run check",
   "outputDirectory": ".next",
   "regions": ["sin1"],
   "git": {
     "deploymentEnabled": {
-      "atlas-*": false
+      "main": true,
+      "*": false,
+      "**": false
     }
   }
 }

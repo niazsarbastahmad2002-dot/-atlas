@@ -1,7 +1,16 @@
-type WhatsAppCloudConfig = {
-  accessToken: string;
-  phoneNumberId: string;
-  graphApiVersion: string;
+type WhatsAppProvider = "meta" | "360dialog";
+
+type WhatsAppProviderConfig = {
+  provider: WhatsAppProvider;
+  endpoint: string;
+  headers: Record<string, string>;
+};
+
+type WhatsAppEnvironment = Record<string, string | undefined>;
+
+type WhatsAppSendOptions = {
+  env?: WhatsAppEnvironment;
+  fetchImplementation?: typeof fetch;
 };
 
 export type WhatsAppCloudError =
@@ -15,36 +24,98 @@ export type WhatsAppCloudResult =
   | { ok: true; messageId: string }
   | { ok: false; error: WhatsAppCloudError };
 
-function configuredValue(name: string) {
-  return process.env[name]?.trim() || "";
+function configuredValue(name: string, env: WhatsAppEnvironment) {
+  return env[name]?.trim() || "";
 }
 
-export function getWhatsAppCloudReadiness() {
-  const accessTokenConfigured = configuredValue("WHATSAPP_ACCESS_TOKEN").length > 0;
-  const phoneNumberIdConfigured = /^\d{5,32}$/.test(configuredValue("WHATSAPP_PHONE_NUMBER_ID"));
-  const graphApiVersionConfigured = /^v\d+\.\d+$/.test(configuredValue("WHATSAPP_GRAPH_API_VERSION"));
-  const authEnabled = configuredValue("ATLAS_WHATSAPP_AUTH_ENABLED") === "true";
-  const authTemplateConfigured = configuredValue("ATLAS_WHATSAPP_AUTH_TEMPLATE_NAME").length > 0;
-  const staffInviteTemplateConfigured = configuredValue("ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_NAME").length > 0;
+function selectedProvider(env: WhatsAppEnvironment): WhatsAppProvider | null {
+  const value = configuredValue("WHATSAPP_PROVIDER", env).toLowerCase() || "meta";
+  return value === "meta" || value === "360dialog" ? value : null;
+}
+
+function normalizeD360BaseUrl(value: string | undefined) {
+  const candidate = (value?.trim() || "https://waba-v2.360dialog.io").replace(/\/+$/, "");
+  try {
+    const url = new URL(candidate);
+    const isD360Host = url.hostname === "360dialog.io" || url.hostname.endsWith(".360dialog.io");
+    const path = url.pathname.replace(/\/+$/, "");
+    if (
+      url.protocol !== "https:"
+      || !isD360Host
+      || url.username
+      || url.password
+      || url.search
+      || url.hash
+    ) return null;
+    if (url.hostname === "waba-sandbox.360dialog.io") {
+      return path === "" || path === "/v1" ? `${url.origin}/v1` : null;
+    }
+    return path === "" ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getWhatsAppCloudReadiness(
+  env: WhatsAppEnvironment = process.env,
+) {
+  const provider = selectedProvider(env);
+  const accessTokenConfigured = configuredValue("WHATSAPP_ACCESS_TOKEN", env).length > 0;
+  const phoneNumberIdConfigured = /^\d{5,32}$/.test(configuredValue("WHATSAPP_PHONE_NUMBER_ID", env));
+  const graphApiVersionConfigured = /^v\d+\.\d+$/.test(configuredValue("WHATSAPP_GRAPH_API_VERSION", env));
+  const d360ApiKeyConfigured = configuredValue("D360_API_KEY", env).length >= 16;
+  const d360BaseUrlConfigured = normalizeD360BaseUrl(env.D360_BASE_URL) !== null;
+  const authEnabled = configuredValue("ATLAS_WHATSAPP_AUTH_ENABLED", env) === "true";
+  const authTemplateConfigured = configuredValue("ATLAS_WHATSAPP_AUTH_TEMPLATE_NAME", env).length > 0;
+  const staffInviteTemplateConfigured = configuredValue("ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_NAME", env).length > 0;
+  const senderConfigured = provider === "meta"
+    ? accessTokenConfigured && phoneNumberIdConfigured && graphApiVersionConfigured
+    : provider === "360dialog"
+      ? d360ApiKeyConfigured && d360BaseUrlConfigured
+      : false;
 
   return {
+    provider: provider ?? "unsupported",
+    providerConfigured: provider !== null,
     accessTokenConfigured,
     phoneNumberIdConfigured,
     graphApiVersionConfigured,
+    d360ApiKeyConfigured,
+    d360BaseUrlConfigured,
     authEnabled,
     authTemplateConfigured,
     staffInviteTemplateConfigured,
-    senderConfigured: accessTokenConfigured && phoneNumberIdConfigured && graphApiVersionConfigured,
+    senderConfigured,
   };
 }
 
-function config(): WhatsAppCloudConfig | null {
-  const readiness = getWhatsAppCloudReadiness();
+function providerConfig(env: WhatsAppEnvironment): WhatsAppProviderConfig | null {
+  const readiness = getWhatsAppCloudReadiness(env);
   if (!readiness.senderConfigured) return null;
+
+  if (readiness.provider === "360dialog") {
+    const baseUrl = normalizeD360BaseUrl(env.D360_BASE_URL);
+    if (!baseUrl) return null;
+    return {
+      provider: "360dialog",
+      endpoint: `${baseUrl}/messages`,
+      headers: {
+        "D360-API-KEY": configuredValue("D360_API_KEY", env),
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    };
+  }
+
+  if (readiness.provider !== "meta") return null;
   return {
-    accessToken: configuredValue("WHATSAPP_ACCESS_TOKEN"),
-    phoneNumberId: configuredValue("WHATSAPP_PHONE_NUMBER_ID"),
-    graphApiVersion: configuredValue("WHATSAPP_GRAPH_API_VERSION"),
+    provider: "meta",
+    endpoint: `https://graph.facebook.com/${configuredValue("WHATSAPP_GRAPH_API_VERSION", env)}/${configuredValue("WHATSAPP_PHONE_NUMBER_ID", env)}/messages`,
+    headers: {
+      Authorization: `Bearer ${configuredValue("WHATSAPP_ACCESS_TOKEN", env)}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
   };
 }
 
@@ -60,19 +131,18 @@ async function sendTemplate(input: {
   templateName: string;
   language: string;
   components: Array<Record<string, unknown>>;
-}): Promise<WhatsAppCloudResult> {
-  const sender = config();
+}, options: WhatsAppSendOptions = {}): Promise<WhatsAppCloudResult> {
+  const env = options.env ?? process.env;
+  const sender = providerConfig(env);
   if (!sender) return { ok: false, error: "whatsapp_not_configured" };
-  if (configuredValue("ATLAS_WHATSAPP_AUTH_ENABLED") !== "true") {
+  if (configuredValue("ATLAS_WHATSAPP_AUTH_ENABLED", env) !== "true") {
     return { ok: false, error: "whatsapp_disabled" };
   }
 
-  const response = await fetch(`https://graph.facebook.com/${sender.graphApiVersion}/${sender.phoneNumberId}/messages`, {
+  const fetchImplementation = options.fetchImplementation ?? fetch;
+  const response = await fetchImplementation(sender.endpoint, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${sender.accessToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: sender.headers,
     body: JSON.stringify({
       messaging_product: "whatsapp",
       recipient_type: "individual",
@@ -102,7 +172,8 @@ async function sendTemplate(input: {
   if (response.ok && messageId) return { ok: true, messageId };
 
   const error = classifyProviderFailure(response.status, body);
-  console.error("Atlas WhatsApp Cloud delivery rejected", {
+  console.error("Atlas WhatsApp template delivery rejected", {
+    provider: sender.provider,
     status: response.status,
     providerCode: body?.error?.code ?? "unknown",
     providerSubcode: body?.error?.error_subcode ?? "unknown",
@@ -111,11 +182,16 @@ async function sendTemplate(input: {
   return { ok: false, error };
 }
 
-export async function sendWhatsAppAuthenticationCode(phone: string, code: string): Promise<WhatsAppCloudResult> {
+export async function sendWhatsAppAuthenticationCode(
+  phone: string,
+  code: string,
+  options: WhatsAppSendOptions = {},
+): Promise<WhatsAppCloudResult> {
+  const env = options.env ?? process.env;
   return sendTemplate({
     to: phone,
-    templateName: configuredValue("ATLAS_WHATSAPP_AUTH_TEMPLATE_NAME") || "atlas_login_code",
-    language: configuredValue("ATLAS_WHATSAPP_AUTH_TEMPLATE_LANGUAGE") || "en_US",
+    templateName: configuredValue("ATLAS_WHATSAPP_AUTH_TEMPLATE_NAME", env) || "atlas_login_code",
+    language: configuredValue("ATLAS_WHATSAPP_AUTH_TEMPLATE_LANGUAGE", env) || "en_US",
     components: [
       {
         type: "body",
@@ -128,18 +204,19 @@ export async function sendWhatsAppAuthenticationCode(phone: string, code: string
         parameters: [{ type: "text", text: code }],
       },
     ],
-  });
+  }, options);
 }
 
 export async function sendWhatsAppStaffInvite(input: {
   phone: string;
   clinicName: string;
   inviteToken: string;
-}): Promise<WhatsAppCloudResult> {
+}, options: WhatsAppSendOptions = {}): Promise<WhatsAppCloudResult> {
+  const env = options.env ?? process.env;
   return sendTemplate({
     to: input.phone,
-    templateName: configuredValue("ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_NAME") || "atlas_staff_invite",
-    language: configuredValue("ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_LANGUAGE") || "en_US",
+    templateName: configuredValue("ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_NAME", env) || "atlas_staff_invite",
+    language: configuredValue("ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE_LANGUAGE", env) || "en_US",
     components: [
       {
         type: "body",
@@ -152,5 +229,5 @@ export async function sendWhatsAppStaffInvite(input: {
         parameters: [{ type: "text", text: input.inviteToken }],
       },
     ],
-  });
+  }, options);
 }
