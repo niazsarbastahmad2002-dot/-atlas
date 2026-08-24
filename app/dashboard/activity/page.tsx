@@ -20,6 +20,7 @@ type Copy = {
   staff: string;
   system: string;
   patient: string;
+  contact: string;
   formerStaff: string;
   you: string;
   empty: string;
@@ -37,6 +38,7 @@ const copy: Record<UiLocale, Copy> = {
     staff: "Staff access",
     system: "Atlas",
     patient: "Patient action",
+    contact: "Patient contact",
     formerStaff: "Former staff",
     you: "You",
     empty: "No activity has been recorded yet.",
@@ -52,6 +54,7 @@ const copy: Record<UiLocale, Copy> = {
     staff: "دەسەڵاتی ستاف",
     system: "Atlas",
     patient: "کرداری نەخۆش",
+    contact: "پەیوەندی نەخۆش",
     formerStaff: "ستافی پێشوو",
     you: "تۆ",
     empty: "هێشتا هیچ چالاکییەک تۆمار نەکراوە.",
@@ -67,6 +70,7 @@ const copy: Record<UiLocale, Copy> = {
     staff: "دەستهەلاتا ستافی",
     system: "Atlas",
     patient: "کارێ نەخۆشی",
+    contact: "پەیوەندیا نەخۆشی",
     formerStaff: "ستافێ بەرێ",
     you: "تو",
     empty: "هێشتا چ چالاکی نەهاتییە تۆمارکرن.",
@@ -82,6 +86,7 @@ const copy: Record<UiLocale, Copy> = {
     staff: "صلاحية الموظفين",
     system: "Atlas",
     patient: "إجراء المريض",
+    contact: "جهة اتصال المريض",
     formerStaff: "موظف سابق",
     you: "أنت",
     empty: "ماكو نشاط مسجل لحد الآن.",
@@ -252,11 +257,13 @@ export default async function ActivityPage({ searchParams }: Props) {
               ? t.system
               : event.actor_type === "patient"
                 ? t.patient
-                : actorRole
-                  ? `${roleLabel[locale][actorRole] ?? actorRole} ${shortId(event.actor_id)}`
-                  : event.actor_id
-                    ? `${t.formerStaff} ${shortId(event.actor_id)}`
-                    : t.formerStaff;
+                : event.actor_type === "contact"
+                  ? t.contact
+                  : actorRole
+                    ? `${roleLabel[locale][actorRole] ?? actorRole} ${shortId(event.actor_id)}`
+                    : event.actor_id
+                      ? `${t.formerStaff} ${shortId(event.actor_id)}`
+                      : t.formerStaff;
           const entity = event.entity_type === "smart_fill_slot" ? t.smartFill
             : event.entity_type === "staff_invite" || event.entity_type === "staff_membership" ? t.staff
               : t.appointment;
