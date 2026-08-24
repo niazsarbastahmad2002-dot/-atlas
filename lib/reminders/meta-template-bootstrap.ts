@@ -1,8 +1,8 @@
-import type { MetaTemplateStatus } from "@/lib/reminders/meta-readiness";
+import type { MetaTemplateStatus } from "./meta-readiness.ts";
 import {
   ATLAS_PATIENT_LOOP_REQUIRED_LANGUAGES,
   ATLAS_PATIENT_LOOP_VARIANTS,
-} from "@/lib/reminders/patient-loop";
+} from "./patient-loop.ts";
 
 type JsonRecord = Record<string, unknown>;
 
