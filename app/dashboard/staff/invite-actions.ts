@@ -73,18 +73,40 @@ export async function createReceptionistInviteLink(
   });
   if (!sent.ok) {
     const privateDb = (admin as any).schema("private");
-    await privateDb.from("staff_invite_links").delete().eq("token_hash", tokenHash).is("used_at", null);
+    await privateDb.from("staff_invite_links").delete().eq("token_hash", tokenHash).is("sent_at", null);
     return {
       status: "error",
       message: sent.error === "whatsapp_not_configured"
-        ? "Atlas has the secure receptionist invite ready, but its WhatsApp Business sender is not connected yet. No email invitation was created."
+        ? "Atlas has the secure receptionist invite ready, but its WhatsApp Business sender or approved template is not connected yet. No email invitation was created."
         : "Atlas could not deliver the invitation on WhatsApp. Check the phone number and try again.",
+    };
+  }
+
+  let activated = await rpc("activate_phone_staff_invite_link_service", {
+    p_token_hash: tokenHash,
+    p_provider_message_id: sent.messageId,
+    p_created_by: userData.user.id,
+  });
+  if (activated.error || activated.data !== true) {
+    // A short retry protects against a transient DB connection loss after Meta
+    // already accepted the message. The invite is not redeemable until activation.
+    activated = await rpc("activate_phone_staff_invite_link_service", {
+      p_token_hash: tokenHash,
+      p_provider_message_id: sent.messageId,
+      p_created_by: userData.user.id,
+    });
+  }
+  if (activated.error || activated.data !== true) {
+    console.error("Atlas receptionist invite delivery accepted but activation failed", { code: activated.error?.code ?? "activate_failed" });
+    return {
+      status: "error",
+      message: "WhatsApp accepted the invitation, but Atlas could not activate the secure link. Send a new invitation; any older working link remains valid.",
     };
   }
 
   return {
     status: "success",
-    message: `Invitation sent to ${maskPhone(phone)} on WhatsApp. The secure link works once and expires in 24 hours.`,
+    message: `Invitation sent to ${maskPhone(phone)} on WhatsApp. The newest secure link works once and expires in 24 hours.`,
     phone,
   };
 }
