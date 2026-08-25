@@ -2,17 +2,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { uiLocaleMeta, uiText, type UiLocale } from "@/lib/i18n/ui";
+import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
 import { DoctorWorkflowCard } from "../doctor-workflow-card";
 import { PasskeyManager } from "./passkey-manager";
 import { PhoneNumberManager } from "./phone-number-manager";
+import { InterfaceLanguageControl } from "./interface-language-control";
 import {
   createDoctor,
   moveDoctor,
   setDoctorActive,
-  setInterfaceLanguage,
   signOut,
   updateClinicName,
   updateDoctor,
@@ -225,14 +225,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <p>{t.interfaceLanguageHelp}</p>
             </div>
           </div>
-          <form action={setInterfaceLanguage} className="settings-form settings-form-inline">
-            <input type="hidden" name="clinic_id" value={clinic.id} />
-            <label className="sr-only" htmlFor="locale">{t.interfaceLanguage}</label>
-            <select id="locale" name="locale" defaultValue={locale}>
-              {Object.entries(uiLocaleMeta).map(([value, meta]) => <option value={value} key={value}>{meta.nativeLabel}</option>)}
-            </select>
-            <SubmitButton pendingLabel={t.saving}>{t.saveLanguage}</SubmitButton>
-          </form>
+          <InterfaceLanguageControl
+            locale={locale}
+            label={t.interfaceLanguage}
+            savingLabel={t.saving}
+            applyLabel={t.saveLanguage}
+          />
         </section>
 
         <section className="settings-card">
