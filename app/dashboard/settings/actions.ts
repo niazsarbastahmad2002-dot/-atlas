@@ -1,11 +1,8 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cleanDisplayName, isUuid, isValidDisplayName } from "@/lib/appointments";
-import { isUiLocale } from "@/lib/i18n/ui";
-import { uiLocaleCookie } from "@/lib/i18n/ui-server";
 import { createClient } from "@/lib/supabase/server";
 
 const appointmentIntervals = new Set([5, 10, 15, 20, 30]);
@@ -45,25 +42,6 @@ async function managementContext(clinicId: string) {
 function refreshSettings() {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
-}
-
-export async function setInterfaceLanguage(formData: FormData) {
-  const clinicId = String(formData.get("clinic_id") ?? "");
-  const locale = String(formData.get("locale") ?? "");
-  if (!isUiLocale(locale)) redirect(settingsUrl(clinicId, "error", "language_invalid"));
-
-  const { user } = await authenticatedContext();
-  const cookieStore = await cookies();
-  cookieStore.set(uiLocaleCookie, locale, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-  });
-
-  console.info("Atlas interface language updated", { userId: user.id, locale });
-  revalidatePath("/", "layout");
 }
 
 export async function updateClinicName(formData: FormData) {
