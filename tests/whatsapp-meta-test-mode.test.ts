@@ -145,6 +145,7 @@ test("test-only HTTP routes are production-blocked and direct Meta OTP preserves
   const login = source("app/login/login-form.tsx");
   const join = source("app/join/[token]/join-auth.tsx");
   const invite = source("app/dashboard/staff/invite-link-form.tsx");
+  const inviteAction = source("app/dashboard/staff/invite-actions.ts");
   const hook = source("app/api/auth/send-sms-hook/route.ts");
 
   assert.match(sendRoute, /VERCEL_ENV === "production"/);
@@ -155,7 +156,12 @@ test("test-only HTTP routes are production-blocked and direct Meta OTP preserves
   assert.match(join, /!DIRECT_META_OTP_ENABLED/);
   assert.match(login, /type: "sms"/);
   assert.match(join, /type: "sms"/);
+  assert.match(login, /DIRECT_META_OTP_ENABLED \? "whatsapp" : "sms"/);
+  assert.match(join, /DIRECT_META_OTP_ENABLED \? "whatsapp" : "sms"/);
   assert.match(invite, /NEXT_PUBLIC_ATLAS_WHATSAPP_DIRECT_INVITES_ENABLED/);
+  assert.match(inviteAction, /readClinicMetaWhatsAppConfig/);
+  assert.match(inviteAction, /ATLAS_WHATSAPP_META_TEST_MODE/);
   assert.match(hook, /SUPABASE_SEND_SMS_HOOK_SECRET/);
   assert.match(hook, /atlasWhatsAppRecipientAllowed/);
+  assert.match(hook, /readBodyWithLimit/);
 });
