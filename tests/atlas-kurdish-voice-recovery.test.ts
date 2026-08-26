@@ -25,8 +25,8 @@ test("Kurdish recovery tolerates low-resource Whisper confidence without exposin
 });
 
 test("Kurdish voice still fails closed when evidence is genuinely unreliable", () => {
+  assert.match(route, /error[\s\S]*unclear_speech/);
   assert.match(route, /parsed\.confidence === "low"/);
   assert.match(route, /isPlausibleAtlasVoiceTranscript\(parsed\.text, locale\)/);
-  assert.match(route, /error.*unclear_speech/s);
-  assert.match(route, /Cache-Control.*no-store, private/s);
+  assert.match(route, /Cache-Control[\s\S]*no-store, private/);
 });
