@@ -3,12 +3,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isUuid } from "@/lib/appointments";
 import {
   buildClinicArchive,
+  clinicAppointmentsCsvFilename,
   clinicArchiveFilename,
+  clinicReadableReportFilename,
   CLINIC_EXPORT_MAX_ACTIVITY_EVENTS,
   CLINIC_EXPORT_MAX_APPOINTMENTS,
   CLINIC_EXPORT_MAX_BYTES,
   CLINIC_EXPORT_MAX_WAITLIST_ROWS,
+  serializeClinicAppointmentsCsv,
   serializeClinicArchive,
+  serializeClinicReadableHtml,
+  type ClinicExportFormat,
 } from "@/lib/clinic-export";
 import { createClient } from "@/lib/supabase/server";
 
@@ -131,19 +136,45 @@ function sameOriginRequest(request: Request) {
   return true;
 }
 
+function parseFormat(value: string): ClinicExportFormat | null {
+  if (value === "json" || value === "csv" || value === "html") return value;
+  return null;
+}
+
+function exportResponseMeta(format: ClinicExportFormat, clinicName: string, generatedAt: string) {
+  if (format === "csv") {
+    return {
+      contentType: "text/csv; charset=utf-8",
+      disposition: `attachment; filename="${clinicAppointmentsCsvFilename(clinicName, generatedAt)}"`,
+    };
+  }
+  if (format === "html") {
+    return {
+      contentType: "text/html; charset=utf-8",
+      disposition: `inline; filename="${clinicReadableReportFilename(clinicName, generatedAt)}"`,
+    };
+  }
+  return {
+    contentType: "application/json; charset=utf-8",
+    disposition: `attachment; filename="${clinicArchiveFilename(clinicName, generatedAt)}"`,
+  };
+}
+
 export async function POST(request: Request) {
   if (!sameOriginRequest(request)) {
     return NextResponse.json({ error: "cross_origin_request_blocked" }, { status: 403 });
   }
 
   let clinicId = "";
+  let format: ClinicExportFormat | null = null;
   try {
     const form = await request.formData();
     clinicId = String(form.get("clinic_id") ?? "");
+    format = parseFormat(String(form.get("format") ?? "json"));
   } catch {
     return NextResponse.json({ error: "invalid_export_request" }, { status: 400 });
   }
-  if (!isUuid(clinicId)) {
+  if (!isUuid(clinicId) || !format) {
     return NextResponse.json({ error: "invalid_export_request" }, { status: 400 });
   }
 
@@ -173,6 +204,7 @@ export async function POST(request: Request) {
 
   const { data: auditId, error: reserveError } = await db.rpc("reserve_clinic_export", {
     p_clinic_id: clinic.id,
+    p_format: format,
   });
   if (reserveError || typeof auditId !== "number") {
     const rateLimited = reserveError?.message?.includes("export_rate_limited") === true;
@@ -341,7 +373,11 @@ export async function POST(request: Request) {
       })),
     });
 
-    const serialized = serializeClinicArchive(archive);
+    const serialized = format === "csv"
+      ? serializeClinicAppointmentsCsv(archive)
+      : format === "html"
+        ? serializeClinicReadableHtml(archive)
+        : serializeClinicArchive(archive);
     if (serialized.byteCount > CLINIC_EXPORT_MAX_BYTES) {
       throw new ClinicExportError("export_too_large", 413);
     }
@@ -355,16 +391,21 @@ export async function POST(request: Request) {
       throw new ClinicExportError("export_audit_failed", 503);
     }
 
-    return new Response(serialized.text, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${clinicArchiveFilename(clinic.name, archive.generatedAt)}"`,
-        "Cache-Control": "no-store, private",
-        "Pragma": "no-cache",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
+    const meta = exportResponseMeta(format, clinic.name, archive.generatedAt);
+    const headers: Record<string, string> = {
+      "Content-Type": meta.contentType,
+      "Content-Disposition": meta.disposition,
+      "Cache-Control": "no-store, private",
+      "Pragma": "no-cache",
+      "X-Content-Type-Options": "nosniff",
+      "X-Robots-Tag": "noindex, nofollow, noarchive",
+      "Referrer-Policy": "no-referrer",
+    };
+    if (format === "html") {
+      headers["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+    }
+
+    return new Response(serialized.text, { status: 200, headers });
   } catch (error) {
     const exportError = error instanceof ClinicExportError
       ? error
