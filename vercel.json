@@ -7,6 +7,7 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
+      "fix/atlas-kurdish-voice-recovery": true,
       "*": false,
       "**": false
     }
