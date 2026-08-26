@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { completeMetaCoexistence } from "@/lib/reminders/meta-coexistence-completion";
 import { readMetaEmbeddedSignupReadiness } from "@/lib/reminders/meta-embedded-signup";
+import { bootstrapAtlasMetaTemplateSuite } from "@/lib/reminders/meta-template-suite";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -123,6 +124,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "connection_store_failed" }, { status: 500 });
   }
 
+  // Connection success must never be rolled back because Meta has not yet made
+  // a template eligible. Submit the full Atlas template suite immediately, but
+  // treat provider review/eligibility as a separate readiness gate.
+  let templateBootstrap: Awaited<ReturnType<typeof bootstrapAtlasMetaTemplateSuite>> | null = null;
+  try {
+    templateBootstrap = await bootstrapAtlasMetaTemplateSuite({
+      accessToken: completion.accessToken,
+      graphApiVersion: readiness.graphApiVersion,
+      wabaId: completion.wabaId,
+    });
+  } catch {
+    templateBootstrap = {
+      ok: false,
+      error: "template_bootstrap_failed",
+      patientLoop: [],
+      support: [],
+    };
+  }
+
   return NextResponse.json({
     connected: true,
     provider: "meta",
@@ -131,5 +151,6 @@ export async function POST(request: Request) {
     phoneNumberId: completion.phoneNumberId,
     displayPhoneNumber: completion.displayPhoneNumber,
     verifiedName: completion.verifiedName,
+    templateBootstrap,
   }, { headers: { "Cache-Control": "no-store" } });
 }
