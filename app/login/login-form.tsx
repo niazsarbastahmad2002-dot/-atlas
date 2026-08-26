@@ -8,6 +8,7 @@ import type { UiLocale } from "@/lib/i18n/ui";
 const COOLDOWN_KEY = "atlas-phone-otp-cooldown";
 const PHONE_SIGNUP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED === "true";
 const WHATSAPP_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true";
+const DIRECT_META_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_DIRECT_META_OTP_ENABLED === "true";
 const POST_AUTH_DESTINATION = "/dashboard/select-clinic";
 
 type Delivery = "sms" | "whatsapp";
@@ -256,7 +257,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         phone,
         options: {
           shouldCreateUser: PHONE_SIGNUP_ENABLED,
-          ...(delivery === "whatsapp" ? { channel: "whatsapp" as const } : {}),
+          ...(delivery === "whatsapp" && !DIRECT_META_OTP_ENABLED ? { channel: "whatsapp" as const } : {}),
         },
       });
       if (sendError) {
