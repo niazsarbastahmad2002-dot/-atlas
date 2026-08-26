@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { MetaTemplateStatus } from "@/lib/reminders/meta-readiness";
-import { bootstrapMetaSupportTemplates } from "@/lib/reminders/meta-test-templates";
+import { bootstrapMetaSupportTemplates } from "@/lib/reminders/meta-support-templates";
 import { bootstrapAtlasAppointmentReminderTemplates } from "@/lib/reminders/meta-template-bootstrap";
 import {
   ATLAS_WHATSAPP_META_TEST_MODE,
