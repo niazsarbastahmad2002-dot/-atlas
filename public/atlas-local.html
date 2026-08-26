@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#071f19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Atlas Local" />
+  <link rel="manifest" href="/atlas-local.webmanifest" />
+  <link rel="icon" href="/atlas-icon.svg" />
+  <title>Atlas Local</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#102821;background:#eef5f2;--line:#d6e5df;--muted:#6d7f78;--accent:#0b8b68;--soft:#e8f6f1;--danger:#9b3535}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(#f9fbfa,#edf5f2)}button,input,select{font:inherit}button{cursor:pointer}header{position:sticky;top:0;z-index:10;min-height:66px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px clamp(14px,4vw,44px);background:#08291f;color:white}.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.16em}.mark{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#0ea57d;letter-spacing:0}.status{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:7px 10px;font-size:10px;font-weight:800}.shell{width:min(980px,calc(100% - 26px));margin:22px auto 70px}.card{border:1px solid var(--line);border-radius:19px;background:rgba(255,255,255,.97);box-shadow:0 14px 36px rgba(6,51,38,.055)}.auth{width:min(520px,100%);margin:clamp(26px,7vh,76px) auto;padding:22px}.eyebrow{color:#148262;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}h1{margin:7px 0 8px;font-size:clamp(28px,5vw,40px);line-height:1.08}.muted{color:var(--muted);font-size:12.5px;line-height:1.55}.notice{margin:13px 0;padding:11px 13px;border-radius:13px;background:#fff6df;color:#674d0d;font-size:11.5px;line-height:1.5}.notice.safe{background:#eaf7f2;color:#145c49}.notice.error{background:#fff0f0;color:#8d3030}.hidden{display:none!important}.stack{display:grid;gap:11px}.field{display:grid;gap:6px}.field label{font-size:12px;font-weight:800}.field input,.field select,.day-input{width:100%;min-height:46px;border:1px solid #cfdfd8;border-radius:12px;background:#fff;padding:9px 11px;color:#102821;outline:none}.field input:focus,.field select:focus,.day-input:focus{border-color:#6bb69f;box-shadow:0 0 0 3px rgba(11,139,104,.09)}.button{min-height:46px;border:0;border-radius:12px;padding:0 15px;background:var(--accent);color:white;font-weight:850}.button.secondary{border:1px solid #cfdfd8;background:#fff;color:#176f56}.button.danger{border:1px solid #eccccc;background:#fff;color:var(--danger)}.langs{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0 16px}.langs button{min-height:36px;border:1px solid #d4e3dd;border-radius:999px;background:#fff;padding:0 11px;color:#315c4f;font-weight:800}.langs button.active{background:var(--soft);border-color:#83c5b0;color:#106d54}.workspace{display:none}.workspace.show{display:block}.workspace-top{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-bottom:13px}.clinic-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.doctor{color:var(--muted);font-size:12px}.separation{max-width:390px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:#f8fbfa;color:#5e756d;font-size:11px;line-height:1.45}.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:13px}.toolbar button{min-height:44px;border:1px solid #cfdfd8;border-radius:11px;background:#fff;color:#176f56;font-weight:800;padding:0 12px}.day-input{min-width:160px;flex:1}.composer{padding:16px;margin-bottom:13px}.composer-grid{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(150px,1fr) 130px auto;gap:9px;align-items:end}.list{display:grid;gap:9px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:17px 2px 9px}.section-head h2{font-size:16px;margin:0}.count{color:var(--muted);font-size:11px}.appointment{display:grid;grid-template-columns:95px minmax(0,1fr) 155px;gap:12px;align-items:center;padding:13px 15px}.time{font-size:18px;font-weight:900}.patient{font-size:15px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{margin-top:4px;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status-select{width:100%;min-height:41px;border:1px solid #d0e1da;border-radius:11px;background:var(--soft);padding:7px 9px;color:#176f56;font-size:12px;font-weight:800}.empty{padding:28px;text-align:center}.footer{text-align:center;padding-top:18px;color:var(--muted);font-size:10.5px}.header-actions{display:flex;align-items:center;gap:7px}.header-button{min-height:38px;border:1px solid rgba(255,255,255,.23);border-radius:11px;background:rgba(255,255,255,.06);color:#fff;padding:0 10px;font-size:11px;font-weight:800}.settings{margin-top:14px;padding:17px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.settings-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.settings-actions>*{flex:1 1 150px}.settings-actions a{display:grid;place-items:center;text-decoration:none}.divider{height:1px;background:#e2ece8;margin:16px 0}.tiny{color:var(--muted);font-size:10.5px;line-height:1.5}@media(max-width:720px){.workspace-top{grid-template-columns:1fr}.separation{max-width:none}.toolbar{display:grid;grid-template-columns:1fr 1fr}.day-input{grid-column:1/-1;grid-row:1;min-width:0}.composer-grid{grid-template-columns:1fr 1fr}.composer-grid .patient-field,.composer-grid .button{grid-column:1/-1}.appointment{grid-template-columns:75px minmax(0,1fr)}.status-select{grid-column:1/-1}.settings-grid{grid-template-columns:1fr}}@media(max-width:430px){.brand{font-size:12px}.status{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.composer-grid{grid-template-columns:1fr}.composer-grid .patient-field,.composer-grid .button{grid-column:auto}}
+  </style>
+  <script src="/atlas-local.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="mark">A</span><span>ATLAS LOCAL</span></div>
+    <div class="header-actions">
+      <span class="status" id="connection-status">THIS DEVICE</span>
+      <button class="header-button hidden" id="lock-button" type="button">Lock</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="card auth" id="setup-screen">
+      <div class="eyebrow" data-t="offlineClinic">Offline clinic</div>
+      <h1 data-t="setupTitle">Create Atlas Local on this device.</h1>
+      <p class="muted" data-t="setupHelp">This clinic stays separate from Atlas Online. It works without internet and never syncs automatically.</p>
+      <div class="langs" data-language-buttons></div>
+      <div class="notice safe" data-t="privacyHelp">Appointments are encrypted on this device. Atlas Local stores scheduling details only — no clinical notes.</div>
+      <form class="stack" id="setup-form">
+        <div class="field"><label data-t="clinicName" for="setup-clinic">Clinic name</label><input id="setup-clinic" maxlength="120" required /></div>
+        <div class="field"><label data-t="doctorOptional" for="setup-doctor">Doctor name (optional)</label><input id="setup-doctor" maxlength="120" /></div>
+        <div class="field"><label data-t="createPin" for="setup-pin">Create a 6–12 digit clinic PIN</label><input id="setup-pin" type="password" inputmode="numeric" minlength="6" maxlength="12" pattern="[0-9]{6,12}" required /></div>
+        <div class="field"><label data-t="confirmPin" for="setup-pin-confirm">Confirm PIN</label><input id="setup-pin-confirm" type="password" inputmode="numeric" minlength="6" maxlength="12" pattern="[0-9]{6,12}" required /></div>
+        <p class="notice error hidden" id="setup-error" role="alert"></p>
+        <button class="button" type="submit" data-t="createLocal">Create local clinic</button>
+      </form>
+    </section>
+
+    <section class="card auth hidden" id="unlock-screen">
+      <div class="eyebrow">Atlas Local</div>
+      <h1 data-t="unlockTitle">Open this clinic.</h1>
+      <p class="muted" data-t="unlockHelp">Enter the clinic PIN. Nothing is sent to Atlas servers.</p>
+      <div class="langs" data-language-buttons></div>
+      <form class="stack" id="unlock-form">
+        <div class="field"><label data-t="clinicPin" for="unlock-pin">Clinic PIN</label><input id="unlock-pin" type="password" inputmode="numeric" minlength="6" maxlength="12" pattern="[0-9]{6,12}" required /></div>
+        <p class="notice error hidden" id="unlock-error" role="alert"></p>
+        <button class="button" type="submit" data-t="openClinic">Open clinic</button>
+      </form>
+      <p class="tiny" data-t="installTip">On iPhone or iPad, open this page once while online and use Share → Add to Home Screen. After that, Atlas Local can open without internet.</p>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="workspace-top">
+        <div>
+          <div class="eyebrow">Atlas Local</div>
+          <h1 class="clinic-name" id="clinic-title">Clinic</h1>
+          <div class="doctor" id="doctor-line"></div>
+        </div>
+        <div class="separation" data-t="separation">Local mode is separate: these appointments stay on this device and are never merged into Atlas Online automatically.</div>
+      </div>
+
+      <div class="toolbar">
+        <button id="previous-day" type="button" data-t="previous">Previous</button>
+        <input class="day-input" id="selected-day" type="date" />
+        <button id="today-day" type="button" data-t="today">Today</button>
+        <button id="next-day" type="button" data-t="next">Next</button>
+      </div>
+
+      <section class="card composer">
+        <form class="composer-grid" id="appointment-form">
+          <div class="field patient-field"><label data-t="patientName" for="patient-name">Patient name</label><input id="patient-name" maxlength="120" required /></div>
+          <div class="field"><label data-t="phoneOptional" for="patient-phone">Phone (optional)</label><input id="patient-phone" maxlength="30" inputmode="tel" /></div>
+          <div class="field"><label data-t="time" for="appointment-time">Time</label><input id="appointment-time" type="time" required /></div>
+          <button class="button" type="submit" data-t="addAppointment">Add appointment</button>
+        </form>
+        <p class="notice error hidden" id="appointment-error" role="alert"></p>
+      </section>
+
+      <div class="section-head"><h2 data-t="appointments">Appointments</h2><span class="count" id="appointment-count"></span></div>
+      <section class="list" id="appointment-list"></section>
+      <section class="card empty hidden" id="empty-state"><strong data-t="noAppointments">No appointments on this day.</strong><div class="muted" data-t="noAppointmentsHelp">Add the first patient above.</div></section>
+
+      <section class="card settings">
+        <div class="eyebrow" data-t="localSettings">Local settings</div>
+        <div class="settings-grid">
+          <div class="field"><label data-t="clinicName" for="settings-clinic">Clinic name</label><input id="settings-clinic" maxlength="120" /></div>
+          <div class="field"><label data-t="doctorOptional" for="settings-doctor">Doctor name (optional)</label><input id="settings-doctor" maxlength="120" /></div>
+        </div>
+        <div class="settings-actions">
+          <button class="button secondary" id="save-settings" type="button" data-t="saveSettings">Save settings</button>
+          <button class="button secondary" id="backup-button" type="button" data-t="backup">Encrypted backup</button>
+          <button class="button secondary" id="restore-button" type="button" data-t="restore">Restore backup</button>
+        </div>
+        <input class="hidden" id="restore-file" type="file" accept="application/json,.json" />
+        <p class="tiny" data-t="backupHelp">Because this clinic is not stored in the cloud, keep an encrypted backup somewhere safe. The backup can only be opened with the same clinic PIN.</p>
+        <p class="notice error hidden" id="settings-error" role="alert"></p>
+        <div class="divider"></div>
+        <div class="settings-actions">
+          <a class="button secondary" href="/login" target="_blank" rel="noopener" data-t="openOnline">Open Atlas Online</a>
+          <button class="button danger" id="delete-local" type="button" data-t="deleteLocal">Delete local clinic from this device</button>
+        </div>
+        <p class="tiny" data-t="deleteHelp">Deleting Atlas Local removes local appointments from this device. It does not affect Atlas Online.</p>
+      </section>
+
+      <div class="footer" data-t="footer">Atlas Local is scheduling-only. Keep clinical notes in the clinic's approved medical record system.</div>
+    </section>
+  </main>
+</body>
+</html>

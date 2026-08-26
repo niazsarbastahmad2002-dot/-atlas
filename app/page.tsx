@@ -36,6 +36,11 @@ export default async function HomePage() {
           <Link className="button" href="/dashboard">Open Atlas</Link>
           <Link className="button button-ghost atlas-demo-link" href="/demo">Try a sample clinic</Link>
         </div>
+        <div className="atlas-local-entry">
+          <span>No reliable internet at the clinic?</span>
+          <a href="/atlas-local.html">Use Atlas Local</a>
+          <span>— a separate, device-only clinic workspace.</span>
+        </div>
         <p className="quiet atlas-scope-note">Scheduling and patient communication only — keep medical notes in the clinic&apos;s approved record system.</p>
       </section>
 
@@ -53,7 +58,7 @@ export default async function HomePage() {
       </footer>
 
       <style>{`
-        .atlas-simple-home{min-height:100dvh}.atlas-marketing-brand .app-brand-word{color:var(--ink);opacity:1}.atlas-simple-hero{max-width:850px;padding-top:clamp(72px,12vh,132px);padding-bottom:42px}.atlas-simple-hero h1{max-width:720px}.atlas-simple-hero .hero-copy{max-width:650px}.atlas-home-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.atlas-demo-link{display:inline-flex;min-height:46px;align-items:center;justify-content:center;color:var(--accent);font-weight:800;text-decoration:none;background:rgba(255,255,255,.72);border-color:rgba(8,119,90,.18)}.atlas-demo-link:hover{background:#fff;border-color:rgba(8,119,90,.3)}.atlas-scope-note{max-width:620px;margin-top:18px}.atlas-simple-essentials{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-simple-essentials>div{display:grid;gap:6px;padding:18px;background:#fff}.atlas-simple-essentials strong{font-size:13px}.atlas-simple-essentials span{color:var(--muted);font-size:12px;line-height:1.55}.atlas-simple-footer{display:flex;gap:16px;flex-wrap:wrap;padding-top:26px;padding-bottom:48px;color:var(--muted);font-size:12px}.atlas-simple-footer a{color:inherit}@media(max-width:680px){.atlas-simple-essentials{grid-template-columns:1fr}.atlas-simple-hero{padding-top:54px}.atlas-home-actions .button{flex:1 1 145px}}
+        .atlas-simple-home{min-height:100dvh}.atlas-marketing-brand .app-brand-word{color:var(--ink);opacity:1}.atlas-simple-hero{max-width:850px;padding-top:clamp(72px,12vh,132px);padding-bottom:42px}.atlas-simple-hero h1{max-width:720px}.atlas-simple-hero .hero-copy{max-width:650px}.atlas-home-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.atlas-demo-link{display:inline-flex;min-height:46px;align-items:center;justify-content:center;color:var(--accent);font-weight:800;text-decoration:none;background:rgba(255,255,255,.72);border-color:rgba(8,119,90,.18)}.atlas-demo-link:hover{background:#fff;border-color:rgba(8,119,90,.3)}.atlas-local-entry{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:15px;color:var(--muted);font-size:12px;line-height:1.5}.atlas-local-entry a{color:var(--accent);font-weight:850;text-decoration:none}.atlas-local-entry a:hover{text-decoration:underline}.atlas-scope-note{max-width:620px;margin-top:18px}.atlas-simple-essentials{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-simple-essentials>div{display:grid;gap:6px;padding:18px;background:#fff}.atlas-simple-essentials strong{font-size:13px}.atlas-simple-essentials span{color:var(--muted);font-size:12px;line-height:1.55}.atlas-simple-footer{display:flex;gap:16px;flex-wrap:wrap;padding-top:26px;padding-bottom:48px;color:var(--muted);font-size:12px}.atlas-simple-footer a{color:inherit}@media(max-width:680px){.atlas-simple-essentials{grid-template-columns:1fr}.atlas-simple-hero{padding-top:54px}.atlas-home-actions .button{flex:1 1 145px}}
       `}</style>
     </main>
   );
