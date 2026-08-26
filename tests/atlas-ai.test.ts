@@ -4,13 +4,14 @@ import test from "node:test";
 import {
   atlasAiSystemPrompt,
   buildAtlasAiClinicContext,
+  buildAtlasCoreAnswer,
   shiftAtlasDay,
   type AtlasAiAppointment,
 } from "../lib/atlas-ai.ts";
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("builds useful clinic-operation summaries without patient identifiers", () => {
+function fixtureContext() {
   const rows = [
     {
       appointment_at: "2026-08-26T06:00:00.000Z",
@@ -58,10 +59,14 @@ test("builds useful clinic-operation summaries without patient identifiers", () 
     },
   ] as Array<AtlasAiAppointment & { patient_name?: string; patient_phone?: string }>;
 
-  const context = buildAtlasAiClinicContext(rows, {
+  return buildAtlasAiClinicContext(rows, {
     now: new Date("2026-08-26T07:00:00.000Z"),
     clinicName: "Atlas Test Clinic",
   });
+}
+
+test("builds useful clinic-operation summaries without patient identifiers", () => {
+  const context = fixtureContext();
 
   assert.equal(context.today.total, 2);
   assert.equal(context.today.active, 2);
@@ -92,6 +97,23 @@ test("keeps Atlas AI useful but read-only and outside patient-specific clinical 
   assert.match(atlasAiSystemPrompt, /conversation history/i);
 });
 
+test("Atlas Core answers useful clinic questions even without a paid model", () => {
+  const context = fixtureContext();
+
+  assert.match(buildAtlasCoreAnswer("How busy are we today?", context), /2 appointments/i);
+  assert.match(buildAtlasCoreAnswer("How many no-shows in the last 7 days?", context), /1 no-shows/i);
+  assert.match(buildAtlasCoreAnswer("Which day is busiest next week?", context), /2026-08-27/);
+  assert.match(buildAtlasCoreAnswer("What should reception focus on today?", context), /pending appointments/i);
+  assert.match(buildAtlasCoreAnswer("What is our clinic name?", context), /Atlas Test Clinic/);
+  assert.match(buildAtlasCoreAnswer("چەند تەمەنیت؟", context), /Atlas AI/);
+});
+
+test("Atlas Core is honest when a general model is unavailable", () => {
+  const context = fixtureContext();
+  const answer = buildAtlasCoreAnswer("Explain quantum gravity in detail", context);
+  assert.match(answer, /Full general-purpose chat needs an external AI model provider/i);
+});
+
 test("Atlas AI has an honest conversation privacy boundary", () => {
   const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
   assert.match(client, /Atlas sends this conversation plus aggregated appointment statistics/);
@@ -108,6 +130,15 @@ test("Atlas AI sends multi-turn history without allowing system-role injection",
   assert.match(route, /\.\.\.conversation/);
 });
 
+test("Atlas AI falls back cleanly when the external model provider is blocked", () => {
+  const route = read("app/api/atlas-ai/route.ts");
+  assert.match(route, /buildAtlasCoreAnswer/);
+  assert.match(route, /mode: "atlas_core"/);
+  assert.match(route, /MODEL_RETRY_DELAY_MS/);
+  assert.match(route, /modelUnavailableUntil/);
+  assert.match(route, /status === 401 \|\| gatewayResponse\.status === 402 \|\| gatewayResponse\.status === 403/);
+});
+
 test("Atlas AI Gateway OIDC includes the protocol auth headers Vercel requires", () => {
   const gateway = read("lib/atlas-ai-gateway.ts");
   const route = read("app/api/atlas-ai/route.ts");
@@ -121,21 +152,15 @@ test("Atlas AI Gateway OIDC includes the protocol auth headers Vercel requires",
   assert.doesNotMatch(route, /console\.(?:log|error)\([^\n]*token/);
 });
 
-test("Atlas AI voice uses authenticated transcription and speech endpoints", () => {
+test("Atlas AI voice is free browser speech, not a paid server audio route", () => {
   const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
-  const transcription = read("app/api/atlas-ai/transcribe/route.ts");
-  const speech = read("app/api/atlas-ai/speech/route.ts");
 
-  assert.match(client, /navigator\.mediaDevices\.getUserMedia/);
-  assert.match(client, /new MediaRecorder/);
-  assert.match(client, /\/api\/atlas-ai\/transcribe/);
-  assert.match(client, /\/api\/atlas-ai\/speech/);
+  assert.match(client, /SpeechRecognition/);
+  assert.match(client, /webkitSpeechRecognition/);
+  assert.match(client, /speechSynthesis/);
+  assert.match(client, /SpeechSynthesisUtterance/);
   assert.match(client, /voiceMode/);
   assert.match(client, /Listening/);
-  assert.match(transcription, /openai\/whisper-1/);
-  assert.match(transcription, /atlasGatewayHeaders/);
-  assert.match(speech, /openai\/tts-1/);
-  assert.match(speech, /atlasGatewayHeaders/);
-  assert.doesNotMatch(transcription, /service_role/i);
-  assert.doesNotMatch(speech, /service_role/i);
+  assert.doesNotMatch(client, /\/api\/atlas-ai\/transcribe/);
+  assert.doesNotMatch(client, /\/api\/atlas-ai\/speech/);
 });
