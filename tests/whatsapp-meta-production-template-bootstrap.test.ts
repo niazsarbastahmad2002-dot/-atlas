@@ -71,10 +71,21 @@ test("clinic template bootstrap is authenticated, clinic-scoped, and never activ
   assert.match(route, /membership\?\.role === "owner"/);
   assert.match(route, /membership\?\.role === "manager"/);
   assert.match(route, /readClinicMetaWhatsAppConfig\(admin, body\.clinicId\)/);
-  assert.match(route, /bootstrapAtlasAppointmentReminderTemplates/);
-  assert.match(route, /bootstrapMetaSupportTemplates/);
+  assert.match(route, /bootstrapAtlasMetaTemplateSuite/);
   assert.match(route, /Cache-Control/);
   assert.doesNotMatch(route, /WHATSAPP_ACCESS_TOKEN|WHATSAPP_TEST_ACCESS_TOKEN/);
   assert.doesNotMatch(route, /clinic_reminder_settings[\s\S]*update\(/);
   assert.doesNotMatch(route, /enabled:\s*true/);
+});
+
+test("real Coexistence onboarding submits templates without making template review a connection failure", () => {
+  const route = source("app/api/whatsapp/onboarding/complete/route.ts");
+
+  assert.match(route, /store_meta_whatsapp_connection/);
+  assert.match(route, /bootstrapAtlasMetaTemplateSuite/);
+  assert.match(route, /accessToken: completion\.accessToken/);
+  assert.match(route, /wabaId: completion\.wabaId/);
+  assert.match(route, /templateBootstrap/);
+  assert.match(route, /connected: true/);
+  assert.doesNotMatch(route, /if \(!templateBootstrap\?\.ok\)/);
 });
