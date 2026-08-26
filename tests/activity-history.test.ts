@@ -44,3 +44,24 @@ test("clinic activity history extends the existing audit store without copying p
   assert.match(activityPage, /does not copy patient names, phone numbers, messages, or appointment notes/);
   assert.match(historyPage, /\/dashboard\/activity\?clinic=/);
 });
+
+test("clinic cascade deletion skips orphan activity while manual staff removal stays audited", async () => {
+  const migration = await read(
+    "supabase/migrations/20260826070024_skip_member_audit_during_clinic_cascade.sql",
+  );
+
+  assert.match(
+    migration,
+    /elsif tg_op = 'DELETE' then[\s\S]*v_action := 'staff_removed';[\s\S]*v_clinic_id := old\.clinic_id;/,
+  );
+  assert.match(
+    migration,
+    /if tg_op = 'DELETE'\s+and not exists \(\s+select 1\s+from public\.clinics c\s+where c\.id = v_clinic_id\s+\) then\s+return old;/,
+  );
+  assert.match(migration, /insert into public\.appointment_audit_events/);
+  assert.match(migration, /security definer/);
+  assert.match(migration, /set search_path = ''/);
+
+  assert.equal(/create policy|drop policy|alter policy/i.test(migration), false);
+  assert.equal(/delete_atlas_account|clinic_members_delete|clinics_delete/.test(migration), false);
+});
