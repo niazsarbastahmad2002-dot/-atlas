@@ -1,8 +1,4 @@
 import { NextResponse } from "next/server";
-import {
-  ATLAS_WHATSAPP_META_TEST_MODE,
-  readAtlasWhatsAppRuntime,
-} from "@/lib/reminders/whatsapp-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,25 +19,35 @@ export async function GET() {
     return NextResponse.json({ error: "test_mode_forbidden" }, { status: 403 });
   }
 
-  let runtimeConfig;
-  try {
-    runtimeConfig = readAtlasWhatsAppRuntime();
-  } catch {
-    return NextResponse.json({ ok: false, error: "test_mode_not_configured", config: configPresence() }, { status: 503 });
-  }
+  const presence = configPresence();
+  const accessToken = process.env.WHATSAPP_TEST_ACCESS_TOKEN?.trim() ?? "";
+  const phoneNumberId = process.env.WHATSAPP_TEST_PHONE_NUMBER_ID?.trim() ?? "";
+  const wabaId = process.env.WHATSAPP_TEST_WABA_ID?.trim() ?? "";
+  const graphApiVersion = (
+    process.env.WHATSAPP_TEST_GRAPH_API_VERSION
+    ?? process.env.WHATSAPP_GRAPH_API_VERSION
+    ?? "v25.0"
+  ).trim();
 
-  if (!runtimeConfig || runtimeConfig.mode !== ATLAS_WHATSAPP_META_TEST_MODE || !runtimeConfig.wabaId) {
-    return NextResponse.json({ ok: false, error: "test_mode_not_configured", config: configPresence() }, { status: 503 });
+  if (
+    !presence.mode
+    || !presence.enabled
+    || !accessToken
+    || !/^\d{5,32}$/.test(phoneNumberId)
+    || !/^\d{5,32}$/.test(wabaId)
+    || !/^v\d+\.\d+$/.test(graphApiVersion)
+  ) {
+    return NextResponse.json({ ok: false, error: "test_transport_not_configured", config: presence }, { status: 503 });
   }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
   try {
     const response = await fetch(
-      `https://graph.facebook.com/${runtimeConfig.config.graphApiVersion}/${runtimeConfig.config.phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`,
+      `https://graph.facebook.com/${graphApiVersion}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`,
       {
         headers: {
-          Authorization: `Bearer ${runtimeConfig.config.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           Accept: "application/json",
         },
         signal: controller.signal,
@@ -50,22 +56,22 @@ export async function GET() {
     );
 
     if (!response.ok) {
-      return NextResponse.json({ ok: false, error: "meta_credentials_rejected", status: response.status }, { status: 502 });
+      return NextResponse.json({ ok: false, error: "meta_credentials_rejected", status: response.status, config: presence }, { status: 502 });
     }
 
     const body = await response.json() as Record<string, unknown>;
     return NextResponse.json({
       ok: true,
-      mode: runtimeConfig.mode,
-      phoneNumberIdMatches: body.id === runtimeConfig.config.phoneNumberId,
+      mode: "meta_test",
+      phoneNumberIdMatches: body.id === phoneNumberId,
       displayPhoneNumber: typeof body.display_phone_number === "string" ? body.display_phone_number : null,
       verifiedName: typeof body.verified_name === "string" ? body.verified_name : null,
       qualityRating: typeof body.quality_rating === "string" ? body.quality_rating : null,
-      allowedRecipientCount: runtimeConfig.allowedRecipients?.length ?? 0,
-      wabaConfigured: Boolean(runtimeConfig.wabaId),
+      recipientAllowlistConfigured: presence.allowedRecipients,
+      wabaConfigured: true,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch {
-    return NextResponse.json({ ok: false, error: "meta_health_check_failed" }, { status: 502 });
+    return NextResponse.json({ ok: false, error: "meta_health_check_failed", config: presence }, { status: 502 });
   } finally {
     clearTimeout(timeout);
   }
