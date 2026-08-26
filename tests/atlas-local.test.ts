@@ -108,15 +108,26 @@ test("Atlas Local supports all four Atlas interface languages", () => {
   assert.match(logic, /document\.documentElement\.dir=locale==="en"\?"ltr":"rtl"/);
 });
 
-test("Atlas service worker precaches the complete Local app without weakening dashboard continuity", () => {
+test("Atlas Local updates its cached app assets when internet is available", () => {
   const worker = source("public/atlas-sw.js");
+  assert.match(worker, /atlas-offline-shell-v4/);
   assert.match(worker, /ATLAS_LOCAL_PAGE = "\/atlas-local\.html"/);
   assert.match(worker, /ATLAS_LOCAL_SCRIPT = "\/atlas-local\.js"/);
   assert.match(worker, /ATLAS_LOCAL_MANIFEST = "\/atlas-local\.webmanifest"/);
-  assert.match(worker, /cache\.addAll/);
-  assert.match(worker, /url\.pathname === ATLAS_LOCAL_PAGE/);
+  assert.match(worker, /networkFirstLocalAsset/);
+  assert.match(worker, /cache: "no-store"/);
+  assert.match(worker, /cache\.put\(request, response\.clone\(\)\)/);
+  assert.match(worker, /cache\.match\(request, \{ ignoreSearch: true \}\)/);
   assert.match(worker, /url\.pathname\.startsWith\("\/dashboard"\)/);
   assert.match(worker, /ATLAS_OFFLINE_PAGE/);
+});
+
+test("Atlas Online and Atlas Local are peer choices on the public Atlas entry", () => {
+  const home = source("app/page.tsx");
+  assert.match(home, />Atlas Online</);
+  assert.match(home, />Atlas Local</);
+  assert.match(home, /href="\/atlas-local\.html"/);
+  assert.match(home, /Choose Atlas mode/);
 });
 
 test("Atlas Local installs as its own PWA entry instead of opening the online dashboard", () => {
