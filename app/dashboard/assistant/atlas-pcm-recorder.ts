@@ -48,9 +48,7 @@ function resampleLinear(input: Float32Array, sourceRate: number, targetRate: num
 }
 
 function writeAscii(view: DataView, offset: number, value: string) {
-  for (let index = 0; index < value.length; index += 1) {
-    view.setUint8(offset + index, value.charCodeAt(index));
-  }
+  for (let index = 0; index < value.length; index += 1) view.setUint8(offset + index, value.charCodeAt(index));
 }
 
 function encodeWav(samples: Float32Array, sampleRate: number) {
@@ -58,7 +56,6 @@ function encodeWav(samples: Float32Array, sampleRate: number) {
   const dataLength = samples.length * bytesPerSample;
   const buffer = new ArrayBuffer(44 + dataLength);
   const view = new DataView(buffer);
-
   writeAscii(view, 0, "RIFF");
   view.setUint32(4, 36 + dataLength, true);
   writeAscii(view, 8, "WAVE");
@@ -79,7 +76,6 @@ function encodeWav(samples: Float32Array, sampleRate: number) {
     view.setInt16(offset, clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff, true);
     offset += 2;
   }
-
   return new Blob([buffer], { type: "audio/wav" });
 }
 
@@ -92,7 +88,7 @@ export async function startAtlasPcmCapture(
 
   const context = new Context();
   if (context.state === "suspended") await context.resume();
-
+  const sourceSampleRate = context.sampleRate;
   const source = context.createMediaStreamSource(stream);
   const processor = context.createScriptProcessor(4096, 1, 1);
   const silentGain = context.createGain();
@@ -105,20 +101,16 @@ export async function startAtlasPcmCapture(
     if (closed) return;
     const channel = event.inputBuffer.getChannelData(0);
     chunks.push(new Float32Array(channel));
-
-    if (onLevel) {
-      const now = performance.now();
-      if (now - lastLevelAt >= 80) {
-        let sum = 0;
-        for (let index = 0; index < channel.length; index += 1) {
-          const value = channel[index] ?? 0;
-          sum += value * value;
-        }
-        const rms = Math.sqrt(sum / Math.max(1, channel.length));
-        onLevel(Math.min(1, rms * 9));
-        lastLevelAt = now;
-      }
+    if (!onLevel) return;
+    const now = performance.now();
+    if (now - lastLevelAt < 80) return;
+    let sum = 0;
+    for (let index = 0; index < channel.length; index += 1) {
+      const value = channel[index] ?? 0;
+      sum += value * value;
     }
+    onLevel(Math.min(1, Math.sqrt(sum / Math.max(1, channel.length)) * 9));
+    lastLevelAt = now;
   };
 
   source.connect(processor);
@@ -126,19 +118,17 @@ export async function startAtlasPcmCapture(
   silentGain.connect(context.destination);
 
   async function close(discard: boolean) {
-    if (closed) return discard ? null : encodeWav(new Float32Array(), TARGET_SAMPLE_RATE);
+    if (closed) return null;
     closed = true;
     processor.onaudioprocess = null;
     try { source.disconnect(); } catch {}
     try { processor.disconnect(); } catch {}
     try { silentGain.disconnect(); } catch {}
+    const flattened = flatten(chunks);
+    const resampled = discard ? null : resampleLinear(flattened, sourceSampleRate, TARGET_SAMPLE_RATE);
     if (context.state !== "closed") await context.close();
     onLevel?.(0);
-    if (discard) return null;
-
-    const flattened = flatten(chunks);
-    const resampled = resampleLinear(flattened, context.sampleRate, TARGET_SAMPLE_RATE);
-    return encodeWav(resampled, TARGET_SAMPLE_RATE);
+    return resampled ? encodeWav(resampled, TARGET_SAMPLE_RATE) : null;
   }
 
   return {
