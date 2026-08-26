@@ -75,6 +75,7 @@ export async function GET() {
         : []
     ));
     const sampleOrder = rows.find((row) => row.name === "jaspers_market_order_confirmation_v1");
+    const samplePlain = rows.find((row) => row.name === "jaspers_market_plain_text_v1");
 
     return NextResponse.json({
       ok: true,
@@ -88,6 +89,7 @@ export async function GET() {
       templateListAccessible: templateResponse.ok,
       templates,
       sampleOrderComponents: Array.isArray(sampleOrder?.components) ? sampleOrder.components : null,
+      samplePlainComponents: Array.isArray(samplePlain?.components) ? samplePlain.components : null,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ ok: false, error: "meta_health_check_failed", config: presence }, { status: 502 });
