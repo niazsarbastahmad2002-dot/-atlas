@@ -33,13 +33,13 @@ function metaTestEnv(overrides: Record<string, string | undefined> = {}) {
   };
 }
 
-test("Meta test runtime is isolated from Vercel production and requires an allowlist", () => {
+test("Meta test runtime is isolated from production and optionally narrows Meta-registered recipients", () => {
   assert.throws(
     () => readAtlasWhatsAppRuntime(metaTestEnv({ VERCEL_ENV: "production" })),
     /forbidden in production/i,
   );
   assert.throws(
-    () => readAtlasWhatsAppRuntime(metaTestEnv({ WHATSAPP_TEST_ALLOWED_RECIPIENTS: "" })),
+    () => readAtlasWhatsAppRuntime(metaTestEnv({ WHATSAPP_TEST_ALLOWED_RECIPIENTS: "not-a-phone" })),
     /recipient allowlist/i,
   );
 
@@ -50,6 +50,15 @@ test("Meta test runtime is isolated from Vercel production and requires an allow
   assert.equal(runtime.wabaId, "987654321012345");
   assert.equal(atlasWhatsAppRecipientAllowed(runtime, "+9647501234567"), true);
   assert.equal(atlasWhatsAppRecipientAllowed(runtime, "+9647509999999"), false);
+
+  const metaOnlyRuntime = readAtlasWhatsAppRuntime(metaTestEnv({
+    VERCEL_ENV: "preview",
+    WHATSAPP_TEST_ALLOWED_RECIPIENTS: "",
+  }));
+  assert.ok(metaOnlyRuntime);
+  assert.equal(metaOnlyRuntime.allowedRecipients, null);
+  assert.equal(atlasWhatsAppRecipientAllowed(metaOnlyRuntime, "+9647509999999"), true);
+  assert.equal(atlasWhatsAppRecipientAllowed(metaOnlyRuntime, "07509999999"), false);
 });
 
 test("production runtime continues to use only existing production credentials", () => {
