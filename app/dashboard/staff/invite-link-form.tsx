@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createReceptionistInviteLink, type InviteLinkState } from "./invite-actions";
 
 const initialState: InviteLinkState = { status: "idle", message: "" };
-const DIRECT_WHATSAPP_INVITES = process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_DIRECT_INVITES_ENABLED === "true";
+const STATIC_DIRECT_WHATSAPP_INVITES = process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_DIRECT_INVITES_ENABLED === "true";
 type DoctorOption = { id: string; name: string };
 
 const copy = {
@@ -15,7 +15,7 @@ const copy = {
     doctor: "Receptionist's doctor",
     choose: "Choose one doctor",
     phone: "Recipient mobile number",
-    phoneHelp: "Optional. In Meta test mode, only recipient numbers registered in the test allowlist can receive this invitation.",
+    phoneHelp: "Optional. In Meta test mode, Meta only delivers to recipient numbers registered for the test account.",
     phonePlaceholder: "0750 123 4567",
     create: "Create secure join link",
     send: "Create and send on WhatsApp",
@@ -30,7 +30,7 @@ const copy = {
     doctor: "دکتۆری ستافی ڕیسێپشن",
     choose: "یەک دکتۆر هەڵبژێرە",
     phone: "ژمارەی مۆبایلی وەرگر",
-    phoneHelp: "ئارەزوومەندانە. لە دۆخی تاقیکردنەوەی Meta تەنها ژمارە ڕێگەپێدراوەکان دەتوانن بانگهێشتەکە وەربگرن.",
+    phoneHelp: "ئارەزوومەندانە. لە دۆخی تاقیکردنەوەی Meta تەنها ژمارە تۆمارکراوەکانی تاقیکردنەوە پەیام وەردەگرن.",
     phonePlaceholder: "0750 123 4567",
     create: "بەستەری پارێزراو دروست بکە",
     send: "دروست بکە و بە WhatsApp بنێرە",
@@ -45,7 +45,7 @@ const copy = {
     doctor: "دکتۆرێ ستافێ ڕیسێپشنێ",
     choose: "ئێک دکتۆر هەلبژێرە",
     phone: "ژمارا موبایلا وەرگری",
-    phoneHelp: "ئارەزوومەندانە. د مودا تاقیکرنێ یا Meta دا تنێ ژمارێن د لیستا ڕێپێدانێ دا دکارن بانگهێشتێ وەربگرن.",
+    phoneHelp: "ئارەزوومەندانە. د مودا تاقیکرنێ یا Meta دا تنێ ژمارێن تۆمارکری یێن تاقیکرنێ پەیام وەردگرن.",
     phonePlaceholder: "0750 123 4567",
     create: "لینکا پاراستی دروست بکە",
     send: "دروست بکە و ب WhatsApp بهنێرە",
@@ -60,7 +60,7 @@ const copy = {
     doctor: "طبيب موظف الاستقبال",
     choose: "اختر طبيباً واحداً",
     phone: "رقم موبايل المستلم",
-    phoneHelp: "اختياري. في وضع اختبار Meta فقط الأرقام الموجودة في قائمة الاختبار المسموحة تقدر تستلم الدعوة.",
+    phoneHelp: "اختياري. بوضع اختبار Meta الرسائل توصل فقط للأرقام المسجلة كمستلمين للاختبار.",
     phonePlaceholder: "0750 123 4567",
     create: "إنشاء رابط انضمام آمن",
     send: "إنشاء وإرسال عبر WhatsApp",
@@ -80,6 +80,19 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
   const [state, action, pending] = useActionState(createReceptionistInviteLink, initialState);
   const [copied, setCopied] = useState(false);
   const [recipientPhone, setRecipientPhone] = useState("");
+  const [directWhatsAppInvites, setDirectWhatsAppInvites] = useState(STATIC_DIRECT_WHATSAPP_INVITES);
+
+  useEffect(() => {
+    if (STATIC_DIRECT_WHATSAPP_INVITES) return;
+    let active = true;
+    void fetch("/api/whatsapp/test/health", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() as Promise<{ ok?: unknown }> : null)
+      .then((body) => {
+        if (active && body?.ok === true) setDirectWhatsAppInvites(true);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   async function copyLink() {
     if (!state.url) return;
@@ -114,7 +127,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
           <option value="" disabled>{t.choose}</option>
           {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
         </select>
-        {DIRECT_WHATSAPP_INVITES ? (
+        {directWhatsAppInvites ? (
           <>
             <label htmlFor="invite_recipient_phone">{t.phone}</label>
             <input
@@ -131,7 +144,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
           </>
         ) : null}
         <button className="button" type="submit" disabled={pending || doctors.length === 0}>
-          {pending ? t.creating : DIRECT_WHATSAPP_INVITES && recipientPhone.trim() ? t.send : t.create}
+          {pending ? t.creating : directWhatsAppInvites && recipientPhone.trim() ? t.send : t.create}
         </button>
       </form>
 
