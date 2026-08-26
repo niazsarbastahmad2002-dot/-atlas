@@ -75,6 +75,13 @@ async function resolveInviteWhatsAppDelivery(
   };
 }
 
+async function inviteIsActive(rpc: Rpc, tokenHash: string) {
+  const { data, error } = await rpc("preview_staff_invite_link_service", {
+    p_token_hash: tokenHash,
+  });
+  return !error && Array.isArray(data) && data.length > 0;
+}
+
 export async function createReceptionistInviteLink(
   _previous: InviteLinkState,
   formData: FormData,
@@ -82,12 +89,15 @@ export async function createReceptionistInviteLink(
   const clinicId = String(formData.get("clinic_id") ?? "");
   const doctorId = String(formData.get("assigned_doctor_id") ?? "");
   const rawRecipientPhone = String(formData.get("recipient_phone") ?? "").trim();
-  const directInviteRequested = Boolean(rawRecipientPhone) && directInvitesEnabled();
   const recipientPhone = rawRecipientPhone ? normalizeAuthPhone(rawRecipientPhone) : null;
+
   if (!isUuid(clinicId) || !isUuid(doctorId)) {
     return { status: "error", message: "Choose the receptionist's doctor first." };
   }
-  if (directInviteRequested && !recipientPhone) {
+  if (!directInvitesEnabled()) {
+    return { status: "error", message: "Secure WhatsApp staff invitations are not enabled yet for this environment." };
+  }
+  if (!recipientPhone) {
     return { status: "error", message: "Enter a valid mobile number for the WhatsApp invitation." };
   }
 
@@ -109,15 +119,30 @@ export async function createReceptionistInviteLink(
     return { status: "error", message: "Choose an active doctor for this receptionist." };
   }
 
-  const token = randomBytes(32).toString("base64url");
-  const hash = createHash("sha256").update(token).digest("hex");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const admin = createAdminClient();
+  let delivery: InviteWhatsAppDelivery | null;
+  try {
+    delivery = await resolveInviteWhatsAppDelivery(admin, clinicId, recipientPhone);
+  } catch {
+    delivery = null;
+  }
+  if (!delivery) {
+    return {
+      status: "error",
+      message: "WhatsApp is not available for this clinic or recipient in this environment.",
+    };
+  }
+
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const invitedPhoneHash = createHash("sha256").update(recipientPhone).digest("hex");
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const rpc = admin.rpc as unknown as Rpc;
-  const { data, error } = await rpc("create_staff_invite_link_service", {
+  const { data, error } = await rpc("create_phone_staff_invite_link_service", {
     p_clinic_id: clinicId,
     p_assigned_doctor_id: doctorId,
-    p_token_hash: hash,
+    p_token_hash: tokenHash,
+    p_invited_phone_hash: invitedPhoneHash,
     p_created_by: userData.user.id,
     p_expires_at: expiresAt.toISOString(),
   });
@@ -128,51 +153,58 @@ export async function createReceptionistInviteLink(
   }
 
   const url = `${atlasSiteUrl()}/join/${token}`;
-  if (directInviteRequested && recipientPhone) {
-    let delivery: InviteWhatsAppDelivery | null;
-    try {
-      delivery = await resolveInviteWhatsAppDelivery(admin, clinicId, recipientPhone);
-    } catch {
-      delivery = null;
-    }
-    if (!delivery) {
-      return {
-        status: "error",
-        message: "The invitation link was created, but WhatsApp is not available for this clinic or recipient in this environment.",
-        url,
-      };
-    }
-    let sent = await sendWhatsAppStaffInviteTemplate(
+  let sent = await sendWhatsAppStaffInviteTemplate(
+    recipientPhone,
+    clinic.name,
+    url,
+    delivery.templateName,
+    delivery.config,
+  );
+  // Official Meta test WABAs can lack eligibility for custom templates. A
+  // plain-text fallback is permitted only in non-production test mode and
+  // only succeeds when the registered test recipient has an open 24-hour
+  // conversation window. Production always remains template-only.
+  if (!sent.accepted && delivery.testMode) {
+    sent = await sendWhatsAppTextMessage(
       recipientPhone,
-      clinic.name,
-      url,
-      delivery.templateName,
+      `Atlas test invitation for ${clinic.name}: ${url}`,
       delivery.config,
     );
-    // Official Meta test WABAs can lack eligibility for custom templates. A
-    // plain-text fallback is permitted only in non-production test mode and
-    // only succeeds when the registered test recipient has an open 24-hour
-    // conversation window. Production always remains template-only.
-    if (!sent.accepted && delivery.testMode) {
-      sent = await sendWhatsAppTextMessage(
-        recipientPhone,
-        `Atlas test invitation for ${clinic.name}: ${url}`,
-        delivery.config,
-      );
+  }
+  if (!sent.accepted) {
+    return { status: "error", message: `The invitation was not activated because WhatsApp delivery failed (${sent.errorCode}).` };
+  }
+
+  // An invite is intentionally unusable until Meta accepts the message. This
+  // records delivery evidence, marks sent_at, and revokes any older active
+  // invite for the same clinic + phone without exposing the private table.
+  const activation = await rpc("activate_phone_staff_invite_link_service", {
+    p_token_hash: tokenHash,
+    p_provider_message_id: sent.providerMessageId,
+    p_created_by: userData.user.id,
+  });
+
+  let active = !activation.error && activation.data === true;
+  if (!active) {
+    // If the activation request lost its response after committing, the
+    // preview RPC is an idempotent way to confirm that the link is active.
+    try {
+      active = await inviteIsActive(rpc, tokenHash);
+    } catch {
+      active = false;
     }
-    if (!sent.accepted) {
-      return { status: "error", message: `The invitation link was created, but WhatsApp delivery failed (${sent.errorCode}).`, url };
-    }
+  }
+  if (!active) {
+    console.error("Atlas receptionist invite activation failed", { code: activation.error?.code ?? "activate_failed" });
     return {
-      status: "success",
-      message: "Secure one-use invitation sent on WhatsApp. It expires in 24 hours.",
-      url,
+      status: "error",
+      message: "WhatsApp accepted the message, but Atlas could not activate the invitation. Create a new invitation.",
     };
   }
 
   return {
     status: "success",
-    message: "Secure one-use invitation ready. It expires in 24 hours.",
+    message: "Secure one-use invitation sent on WhatsApp. It expires in 24 hours.",
     url,
   };
 }
