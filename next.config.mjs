@@ -3,6 +3,11 @@ try {
   supabaseOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").origin;
 } catch {}
 
+const metaTestPreview = (
+  process.env.ATLAS_WHATSAPP_MODE === "meta_test"
+  && process.env.VERCEL_ENV !== "production"
+);
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -32,6 +37,16 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // The Meta test branch should be usable without asking for extra public
+  // Vercel flags. These values are compiled into the client only when the
+  // server-side runtime is explicitly meta_test and Vercel is not production.
+  // Production keeps its normal explicit feature gates.
+  ...(metaTestPreview ? {
+    env: {
+      NEXT_PUBLIC_ATLAS_DIRECT_META_OTP_ENABLED: "true",
+      NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED: "true",
+    },
+  } : {}),
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
