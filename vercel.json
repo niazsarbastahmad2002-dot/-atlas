@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "npm run check",
+  "buildCommand": "node scripts/bootstrap-meta-staff-invite-once.mjs && npm run check",
   "outputDirectory": ".next",
   "regions": ["sin1"],
   "git": {
