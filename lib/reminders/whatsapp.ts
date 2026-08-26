@@ -152,6 +152,78 @@ export function buildTemplatePayload(input: WhatsAppTemplateInput, appSecret?: s
   };
 }
 
+export function buildAuthenticationTemplatePayload({
+  recipientPhone,
+  otp,
+  templateName,
+  templateLanguage = "en_US",
+}: {
+  recipientPhone: string;
+  otp: string;
+  templateName: string;
+  templateLanguage?: string;
+}) {
+  if (!/^\+[1-9]\d{7,14}$/.test(recipientPhone) || !/^\d{6}$/.test(otp)) return null;
+  if (!/^[a-z0-9_]{1,512}$/.test(templateName) || !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(templateLanguage)) return null;
+  return {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: recipientPhone,
+    type: "template",
+    template: {
+      name: templateName,
+      language: { code: templateLanguage },
+      components: [
+        {
+          type: "body",
+          parameters: [{ type: "text", text: otp }],
+        },
+        {
+          type: "button",
+          sub_type: "url",
+          index: "0",
+          parameters: [{ type: "text", text: otp }],
+        },
+      ],
+    },
+  };
+}
+
+export function buildStaffInviteTemplatePayload({
+  recipientPhone,
+  clinicName,
+  inviteUrl,
+  templateName,
+  templateLanguage = "en_US",
+}: {
+  recipientPhone: string;
+  clinicName: string;
+  inviteUrl: string;
+  templateName: string;
+  templateLanguage?: string;
+}) {
+  if (!/^\+[1-9]\d{7,14}$/.test(recipientPhone) || !clinicName.trim() || clinicName.length > 160) return null;
+  if (!/^https:\/\/[^\s]{1,1000}$/.test(inviteUrl)) return null;
+  if (!/^[a-z0-9_]{1,512}$/.test(templateName) || !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(templateLanguage)) return null;
+  return {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: recipientPhone,
+    type: "template",
+    template: {
+      name: templateName,
+      language: { code: templateLanguage },
+      components: [{
+        type: "body",
+        parameters: [
+          { type: "text", text: clinicName.trim() },
+          { type: "text", text: inviteUrl },
+        ],
+      }],
+    },
+  };
+}
+
 function providerErrorCode(body: unknown, status: number) {
   if (body && typeof body === "object" && "error" in body) {
     const error = (body as { error?: unknown }).error;
@@ -175,14 +247,13 @@ function acceptedMessageId(body: unknown) {
     : null;
 }
 
-export async function sendApprovedWhatsAppTemplate(
-  input: WhatsAppTemplateInput,
+async function sendWhatsAppPayload(
+  payload: unknown,
   config: WhatsAppConfig,
-  fetchImplementation: typeof fetch = fetch,
+  fetchImplementation: typeof fetch,
 ): Promise<WhatsAppSendResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
-
   try {
     const response = await fetchImplementation(
       `https://graph.facebook.com/${config.graphApiVersion}/${config.phoneNumberId}/messages`,
@@ -192,16 +263,14 @@ export async function sendApprovedWhatsAppTemplate(
           Authorization: `Bearer ${config.accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(buildTemplatePayload(input, config.appSecret)),
+        body: JSON.stringify(payload),
         signal: controller.signal,
       },
     );
-
     let body: unknown = null;
     try { body = await response.json(); } catch {}
     const providerMessageId = response.ok ? acceptedMessageId(body) : null;
     if (providerMessageId) return { accepted: true, providerMessageId };
-
     return {
       accepted: false,
       errorCode: providerErrorCode(body, response.status),
@@ -215,6 +284,39 @@ export async function sendApprovedWhatsAppTemplate(
   }
 }
 
+export async function sendApprovedWhatsAppTemplate(
+  input: WhatsAppTemplateInput,
+  config: WhatsAppConfig,
+  fetchImplementation: typeof fetch = fetch,
+): Promise<WhatsAppSendResult> {
+  return sendWhatsAppPayload(buildTemplatePayload(input, config.appSecret), config, fetchImplementation);
+}
+
+export async function sendWhatsAppAuthenticationTemplate(
+  recipientPhone: string,
+  otp: string,
+  templateName: string,
+  config: WhatsAppConfig,
+  fetchImplementation: typeof fetch = fetch,
+): Promise<WhatsAppSendResult> {
+  const payload = buildAuthenticationTemplatePayload({ recipientPhone, otp, templateName });
+  if (!payload) return { accepted: false, errorCode: "invalid_auth_message", retryable: false };
+  return sendWhatsAppPayload(payload, config, fetchImplementation);
+}
+
+export async function sendWhatsAppStaffInviteTemplate(
+  recipientPhone: string,
+  clinicName: string,
+  inviteUrl: string,
+  templateName: string,
+  config: WhatsAppConfig,
+  fetchImplementation: typeof fetch = fetch,
+): Promise<WhatsAppSendResult> {
+  const payload = buildStaffInviteTemplatePayload({ recipientPhone, clinicName, inviteUrl, templateName });
+  if (!payload) return { accepted: false, errorCode: "invalid_staff_invite", retryable: false };
+  return sendWhatsAppPayload(payload, config, fetchImplementation);
+}
+
 export async function sendWhatsAppTextMessage(
   recipientPhone: string,
   text: string,
@@ -224,41 +326,13 @@ export async function sendWhatsAppTextMessage(
   if (!/^\+9647\d{9}$/.test(recipientPhone) || !text.trim() || text.length > 1000) {
     return { accepted: false, errorCode: "invalid_text_message", retryable: false };
   }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12_000);
-  try {
-    const response = await fetchImplementation(
-      `https://graph.facebook.com/${config.graphApiVersion}/${config.phoneNumberId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${config.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: recipientPhone,
-          type: "text",
-          text: { preview_url: false, body: text },
-        }),
-        signal: controller.signal,
-      },
-    );
-    let body: unknown = null;
-    try { body = await response.json(); } catch {}
-    const providerMessageId = response.ok ? acceptedMessageId(body) : null;
-    if (providerMessageId) return { accepted: true, providerMessageId };
-    return {
-      accepted: false,
-      errorCode: providerErrorCode(body, response.status),
-      retryable: response.status === 429 || response.status >= 500,
-    };
-  } catch {
-    return { accepted: false, errorCode: "delivery_unknown", retryable: false };
-  } finally {
-    clearTimeout(timeout);
-  }
+  return sendWhatsAppPayload({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: recipientPhone,
+    type: "text",
+    text: { preview_url: false, body: text },
+  }, config, fetchImplementation);
 }
 
 export function verifyWebhookSignature(rawBody: Uint8Array, signatureHeader: string | null, appSecret: string) {
