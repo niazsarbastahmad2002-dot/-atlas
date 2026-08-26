@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feature/atlas-ai-voice-studio": true,
       "*": false,
       "**": false
     }
