@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feature/atlas-local-offline-clinic": true,
       "*": false,
       "**": false
     }
