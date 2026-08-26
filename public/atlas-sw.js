@@ -1,6 +1,7 @@
-const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v2";
+const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v3";
 const ATLAS_OFFLINE_PAGE = "/atlas-offline.html";
 const ATLAS_LOCAL_PAGE = "/atlas-local.html";
+const ATLAS_LOCAL_SCRIPT = "/atlas-local.js";
 const ATLAS_LOCAL_MANIFEST = "/atlas-local.webmanifest";
 const ATLAS_LOCAL_ICON = "/atlas-icon.svg";
 
@@ -10,6 +11,7 @@ self.addEventListener("install", (event) => {
       .then((cache) => cache.addAll([
         new Request(ATLAS_OFFLINE_PAGE, { cache: "reload" }),
         new Request(ATLAS_LOCAL_PAGE, { cache: "reload" }),
+        new Request(ATLAS_LOCAL_SCRIPT, { cache: "reload" }),
         new Request(ATLAS_LOCAL_MANIFEST, { cache: "reload" }),
         new Request(ATLAS_LOCAL_ICON, { cache: "reload" }),
       ]))
@@ -36,7 +38,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (url.pathname === ATLAS_LOCAL_MANIFEST || url.pathname === ATLAS_LOCAL_ICON) {
+  if (
+    url.pathname === ATLAS_LOCAL_SCRIPT
+    || url.pathname === ATLAS_LOCAL_MANIFEST
+    || url.pathname === ATLAS_LOCAL_ICON
+  ) {
     event.respondWith((async () => {
       const cached = await caches.match(request);
       if (cached) return cached;
