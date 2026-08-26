@@ -47,17 +47,17 @@ function readMetaTestRuntime(env: Record<string, string | undefined>): AtlasWhat
   const accessToken = env.WHATSAPP_TEST_ACCESS_TOKEN?.trim() ?? "";
   const phoneNumberId = env.WHATSAPP_TEST_PHONE_NUMBER_ID?.trim() ?? "";
   const wabaId = env.WHATSAPP_TEST_WABA_ID?.trim() ?? "";
+  // Outbound-only test mode does not require webhook secrets. They can be
+  // supplied later when inbound webhook verification is exercised.
   const appSecret = env.WHATSAPP_TEST_APP_SECRET?.trim() ?? "";
   const verifyToken = env.WHATSAPP_TEST_VERIFY_TOKEN?.trim() ?? "";
-  const graphApiVersion = (env.WHATSAPP_TEST_GRAPH_API_VERSION ?? env.WHATSAPP_GRAPH_API_VERSION)?.trim() ?? "";
+  const graphApiVersion = (env.WHATSAPP_TEST_GRAPH_API_VERSION ?? env.WHATSAPP_GRAPH_API_VERSION ?? "v25.0").trim();
   const globalDailyLimit = Number(env.WHATSAPP_TEST_GLOBAL_DAILY_LIMIT ?? "100");
 
   if (
     !accessToken
     || !idPattern.test(phoneNumberId)
     || !idPattern.test(wabaId)
-    || appSecret.length < 16
-    || verifyToken.length < 16
     || !/^v\d+\.\d+$/.test(graphApiVersion)
     || !Number.isInteger(globalDailyLimit)
     || globalDailyLimit < 1
