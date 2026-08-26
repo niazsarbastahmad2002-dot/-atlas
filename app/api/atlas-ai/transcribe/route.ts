@@ -22,6 +22,7 @@ const buckets = new Map<string, { count: number; resetAt: number }>();
 const allowedLocales = new Set<AtlasVoiceLocale>(["en", "ku", "bd", "ar"]);
 
 type CloudflareConfig = NonNullable<ReturnType<typeof atlasCloudflareAiConfig>>;
+type SpeechTask = "transcribe" | "translate";
 
 function allowedRequest(userId: string) {
   const now = Date.now();
@@ -45,12 +46,18 @@ function sameOriginRequest(request: Request) {
   }
 }
 
-function initialPrompt(locale: AtlasVoiceLocale) {
+function initialPrompt(locale: AtlasVoiceLocale, task: SpeechTask) {
   if (locale === "ku") {
-    return "The speaker is speaking Sorani Kurdish, not Arabic or Persian. Write the spoken words in Sorani Kurdish Arabic script. Atlas clinic words may include: Atlas AI، کلینیک، مەوعید، دکتۆر، ڕیسێپشن، نەخۆش، بیرخستنەوە، قەرەباڵغی، no-show.";
+    if (task === "translate") {
+      return "The speaker is speaking Sorani Kurdish from Iraqi Kurdistan. Recover the spoken meaning faithfully in English. Do not answer the speaker. Atlas clinic terms may include Atlas AI, clinic, appointment, doctor, reception, reminder, no-show.";
+    }
+    return "The speaker is speaking Sorani Kurdish from Iraqi Kurdistan, not Arabic or Persian. Write only the spoken words in Sorani Kurdish Arabic script. Examples of natural Sorani wording: سڵاو، ئەمڕۆ چەند مەوعید هەیە؟ دەمەوێت بزانم ڕیسێپشن سەرنجی لە چی بێت. Atlas clinic words may include: Atlas AI، کلینیک، مەوعید، دکتۆر، ڕیسێپشن، نەخۆش، بیرخستنەوە، قەرەباڵغی، no-show.";
   }
   if (locale === "bd") {
-    return "The speaker is speaking Badini Kurdish, not Arabic, Persian, or Turkish. Write the spoken words in the Arabic-based Badini script used by Atlas. Common Atlas words include: Atlas AI، کلینیک، مەوعید، دکتۆر، ڕیسێپشن، نەخۆش، بیرخستنەوە، no-show.";
+    if (task === "translate") {
+      return "The speaker is speaking Badini Kurdish from Iraqi Kurdistan. Recover the spoken meaning faithfully in English. Do not answer the speaker. Atlas clinic terms may include Atlas AI, clinic, appointment, doctor, reception, reminder, no-show.";
+    }
+    return "The speaker is speaking Badini Kurdish from Iraqi Kurdistan, not Arabic, Persian, or Turkish. Write only the spoken words in the Arabic-based Badini script used by Atlas. Examples of natural Badini wording: سلاڤ، ئەڤرۆ چەند مەوعید هەنە؟ دڤێت بزانم ڕیسێپشن بالێ خۆ بدەتە چی. Common Atlas words include: Atlas AI، کلینیک، مەوعید، دکتۆر، ڕیسێپشن، نەخۆش، بیرخستنەوە، no-show.";
   }
   if (locale === "ar") {
     return "Iraqi Arabic clinic conversation. Common words: Atlas AI، العيادة، الموعد، الدكتور، الاستقبال، التذكير، عدم الحضور.";
@@ -72,17 +79,23 @@ function extractTranscript(payload: unknown) {
   return "";
 }
 
-async function transcribePass(
+async function speechPass(
   audioBase64: string,
   locale: AtlasVoiceLocale,
   config: CloudflareConfig,
+  task: SpeechTask,
   language?: string,
 ) {
   const requestBody: Record<string, unknown> = {
     audio: audioBase64,
-    task: "transcribe",
+    task,
     vad_filter: true,
-    initial_prompt: initialPrompt(locale),
+    initial_prompt: initialPrompt(locale, task),
+    condition_on_previous_text: false,
+    no_speech_threshold: 0.78,
+    log_prob_threshold: -1.5,
+    compression_ratio_threshold: 2.4,
+    beam_size: 5,
   };
   if (language) requestBody.language = language;
 
@@ -104,17 +117,23 @@ async function transcribePass(
   }
 }
 
+function kurdishTranslationLanguages(locale: "ku" | "bd") {
+  return locale === "ku" ? [undefined, "fa"] : [undefined, "tr"];
+}
+
 async function reconcileKurdishTranscript(
-  candidates: string[],
+  transcriptCandidates: string[],
+  meaningCandidates: string[],
   locale: "ku" | "bd",
   config: CloudflareConfig,
 ) {
-  const unique = Array.from(new Set(candidates.map(cleanAtlasVoiceTranscript).filter(Boolean))).slice(0, 3);
-  if (!unique.length) return null;
+  const transcripts = Array.from(new Set(transcriptCandidates.map(cleanAtlasVoiceTranscript).filter(Boolean))).slice(0, 4);
+  const meanings = Array.from(new Set(meaningCandidates.map(cleanAtlasVoiceTranscript).filter(Boolean))).slice(0, 3);
+  if (!transcripts.length && !meanings.length) return null;
 
   const target = locale === "ku"
-    ? "Sorani Kurdish in Arabic-based Kurdish script"
-    : "Badini Kurdish in the Arabic-based script used by Atlas";
+    ? "natural Sorani Kurdish in Arabic-based Kurdish script as used in Iraqi Kurdistan"
+    : "natural Badini Kurdish in the Arabic-based script used by Atlas in Iraqi Kurdistan";
 
   try {
     const response = await fetch(config.endpoint, {
@@ -126,15 +145,21 @@ async function reconcileKurdishTranscript(
       body: JSON.stringify({
         model: config.model,
         temperature: 0,
-        max_tokens: 300,
+        max_tokens: 320,
         messages: [
           {
             role: "system",
-            content: `You are the final speech-transcription reconciler for Atlas Voice. The speaker used ${target}. You will receive several noisy ASR guesses from the SAME audio. Reconstruct only what the speaker most likely said. Do not answer the speaker, translate the meaning, add clinic facts, or invent missing words. Preserve Atlas/product terms and numbers. If the guesses do not provide enough evidence for a reliable transcript, return low confidence and an empty text. Return JSON only in exactly this shape: {"text":"...","confidence":"high|medium|low"}.`,
+            content: `You are the final speech-transcription reconciler for Atlas Voice. The speaker used ${target}. You receive evidence from ONE audio recording in two forms: noisy phonetic ASR guesses and English speech-translation guesses. The English guesses are semantic evidence from the same audio and may rescue meaning when Whisper cannot spell Kurdish correctly. Reconstruct only what the speaker most likely said in ${target}. Prefer the phonetic guesses for exact wording and use English meaning guesses only to disambiguate or recover clearly supported meaning. Do not answer the speaker, add facts, embellish, or invent unsupported details. Preserve Atlas/product terms, names, and numbers when supported. For short everyday Kurdish phrases, natural spelling is more important than copying Persian/Arabic-looking ASR mistakes. Return medium confidence when the evidence supports the meaning but exact Kurdish spelling had to be normalized. Return low confidence only when the evidence is genuinely contradictory or empty. Return JSON only in exactly this shape: {"text":"...","confidence":"high|medium|low"}.`,
           },
           {
             role: "user",
-            content: unique.map((candidate, index) => `Candidate ${index + 1}: ${candidate}`).join("\n"),
+            content: [
+              "PHONETIC ASR GUESSES:",
+              ...(transcripts.length ? transcripts.map((candidate, index) => `${index + 1}. ${candidate}`) : ["(none)"]),
+              "",
+              "ENGLISH MEANING GUESSES FROM THE SAME AUDIO:",
+              ...(meanings.length ? meanings.map((candidate, index) => `${index + 1}. ${candidate}`) : ["(none)"]),
+            ].join("\n"),
           },
         ],
       }),
@@ -156,15 +181,21 @@ async function reconcileKurdishTranscript(
 
 async function transcribeAudio(audioBase64: string, locale: AtlasVoiceLocale, config: CloudflareConfig) {
   if (locale === "ku" || locale === "bd") {
-    const passes = atlasKurdishAsrPasses(locale);
-    const candidates = await Promise.all(
-      passes.map((pass) => transcribePass(audioBase64, locale, config, pass.language)),
-    );
-    return reconcileKurdishTranscript(candidates, locale, config);
+    const transcriptPasses = atlasKurdishAsrPasses(locale);
+    const translationLanguages = kurdishTranslationLanguages(locale);
+    const [transcriptCandidates, meaningCandidates] = await Promise.all([
+      Promise.all(
+        transcriptPasses.map((pass) => speechPass(audioBase64, locale, config, "transcribe", pass.language)),
+      ),
+      Promise.all(
+        translationLanguages.map((language) => speechPass(audioBase64, locale, config, "translate", language)),
+      ),
+    ]);
+    return reconcileKurdishTranscript(transcriptCandidates, meaningCandidates, locale, config);
   }
 
   const language = locale === "en" ? "en" : "ar";
-  const text = await transcribePass(audioBase64, locale, config, language);
+  const text = await speechPass(audioBase64, locale, config, "transcribe", language);
   if (!text || !isPlausibleAtlasVoiceTranscript(text, locale)) return null;
   return { text, confidence: "high" as const };
 }
