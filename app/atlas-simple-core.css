@@ -52,6 +52,12 @@
   user-select: none;
 }
 
+/* Emergency export/backup plumbing remains available server-side, but it does
+   not belong in the receptionist-facing Settings surface. */
+.settings-export-form {
+  display: none;
+}
+
 /* Keep the main touch loop compact and comfortable on phone-sized reception
    devices without shrinking touch targets. */
 @media (max-width: 680px) {

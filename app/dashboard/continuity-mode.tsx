@@ -24,6 +24,19 @@ type ContinuitySnapshot = {
   appointments: ContinuityAppointment[];
 };
 
+type StoredContinuityKey = {
+  id: "key";
+  key: CryptoKey;
+};
+
+type StoredContinuitySnapshot = {
+  id: "snapshot";
+  scope: string;
+  storedAt: number;
+  iv: number[];
+  ciphertext: number[];
+};
+
 type AtlasNativeWindow = Window & {
   webkit?: {
     messageHandlers?: {
@@ -32,9 +45,107 @@ type AtlasNativeWindow = Window & {
   };
 };
 
+const CONTINUITY_DB = "atlas-continuity-v2";
+const CONTINUITY_STORE = "state";
+const CONTINUITY_DB_VERSION = 1;
+const CONTINUITY_ACTIVE_MARKER = "atlas-continuity-active";
+
 function nativePost(value: unknown) {
   const nativeWindow = window as AtlasNativeWindow;
   nativeWindow.webkit?.messageHandlers?.atlasContinuity?.postMessage(value);
+}
+
+function openContinuityDb() {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const request = window.indexedDB.open(CONTINUITY_DB, CONTINUITY_DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(CONTINUITY_STORE)) {
+        db.createObjectStore(CONTINUITY_STORE, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error("continuity_db_unavailable"));
+  });
+}
+
+function readContinuityRecord<T>(db: IDBDatabase, id: string) {
+  return new Promise<T | undefined>((resolve, reject) => {
+    const transaction = db.transaction(CONTINUITY_STORE, "readonly");
+    const request = transaction.objectStore(CONTINUITY_STORE).get(id);
+    request.onsuccess = () => resolve(request.result as T | undefined);
+    request.onerror = () => reject(request.error ?? new Error("continuity_read_failed"));
+  });
+}
+
+function writeContinuityRecord(db: IDBDatabase, value: StoredContinuityKey | StoredContinuitySnapshot) {
+  return new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(CONTINUITY_STORE, "readwrite");
+    transaction.objectStore(CONTINUITY_STORE).put(value);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error ?? new Error("continuity_write_failed"));
+    transaction.onabort = () => reject(transaction.error ?? new Error("continuity_write_aborted"));
+  });
+}
+
+async function getOrCreateContinuityKey(db: IDBDatabase) {
+  const existing = await readContinuityRecord<StoredContinuityKey>(db, "key");
+  if (existing?.key) return existing.key;
+
+  const key = await window.crypto.subtle.generateKey(
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+  await writeContinuityRecord(db, { id: "key", key });
+  return key;
+}
+
+async function persistBrowserSnapshot(snapshot: ContinuitySnapshot) {
+  if (!("indexedDB" in window) || !window.crypto?.subtle) return;
+
+  const db = await openContinuityDb();
+  try {
+    const key = await getOrCreateContinuityKey(db);
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const envelope = {
+      snapshot,
+      locale: document.documentElement.lang || "en",
+      direction: document.documentElement.dir === "rtl" ? "rtl" : "ltr",
+    };
+    const plaintext = new TextEncoder().encode(JSON.stringify(envelope));
+    const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+
+    await writeContinuityRecord(db, {
+      id: "snapshot",
+      scope: `${snapshot.userId}:${snapshot.clinicId}:${snapshot.day}`,
+      storedAt: Date.now(),
+      iv: Array.from(iv),
+      ciphertext: Array.from(new Uint8Array(encrypted)),
+    });
+    window.localStorage.setItem(CONTINUITY_ACTIVE_MARKER, "1");
+  } finally {
+    db.close();
+  }
+}
+
+export async function clearBrowserContinuityCache() {
+  try {
+    window.localStorage.setItem(CONTINUITY_ACTIVE_MARKER, "0");
+    if (!("indexedDB" in window)) return;
+    const db = await openContinuityDb();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(CONTINUITY_STORE, "readwrite");
+      transaction.objectStore(CONTINUITY_STORE).clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error ?? new Error("continuity_clear_failed"));
+      transaction.onabort = () => reject(transaction.error ?? new Error("continuity_clear_aborted"));
+    });
+    db.close();
+  } catch {
+    // Clearing continuity data is best-effort in browsers that do not support
+    // IndexedDB/CryptoKey persistence. No online Atlas behavior depends on it.
+  }
 }
 
 function syncTimeLabel(value: string | null) {
@@ -78,18 +189,24 @@ export function AtlasContinuityMode() {
 
       if (body?.clear === true) {
         nativePost({ type: "clear" });
+        void clearBrowserContinuityCache();
         setLastSyncedAt(null);
         return;
       }
       if (!response.ok || !body?.snapshot || body.snapshot.version !== 1) return;
 
       nativePost({ type: "snapshot", snapshot: body.snapshot });
+      void persistBrowserSnapshot(body.snapshot).catch(() => undefined);
       setLastSyncedAt(body.snapshot.syncedAt);
     } catch {
-      // The network guard owns offline UX. A failed refresh never mutates or
-      // replaces the last protected snapshot.
+      // A failed refresh never mutates or replaces the last protected snapshot.
     }
   }, [pathname, searchKey]);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    void navigator.serviceWorker.register("/atlas-sw.js", { scope: "/" }).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     void refreshSnapshot();
@@ -120,8 +237,8 @@ export function AtlasContinuityMode() {
       delete document.documentElement.dataset.atlasOffline;
       if (wasOffline.current) {
         wasOffline.current = false;
-        // A full live reload is intentional after reconnect. No cached state is
-        // ever replayed into Supabase or allowed to overwrite newer server data.
+        // Reconnect always reloads authoritative server state. Offline continuity
+        // is visibility-only and never replays stale mutations into Supabase.
         window.location.reload();
       }
     };
@@ -143,7 +260,7 @@ export function AtlasContinuityMode() {
       <div className="atlas-continuity-banner" role="status" aria-live="polite">
         <strong>OFFLINE</strong>
         <span>
-          Showing the last loaded Atlas screen as of {syncTimeLabel(lastSyncedAt)}. Changes from other staff may not appear until connection returns.
+          Atlas is read-only while disconnected. This screen remains available, and a protected copy of today&apos;s schedule can reopen offline. Last synced {syncTimeLabel(lastSyncedAt)}.
         </span>
       </div>
       <style>{`

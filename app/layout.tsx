@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AtlasAnalytics } from "@/app/components/atlas-analytics";
 import { AtlasTimePickerPolish } from "@/app/components/atlas-time-picker-polish";
+import { ContinuityCacheGuard } from "@/app/components/continuity-cache-guard";
 import { KurdishSecretaryTerminology } from "@/app/components/kurdish-secretary-terminology";
 import { LivePageRefresh } from "@/app/components/live-page-refresh";
 import { getUiLocale } from "@/lib/i18n/ui-server";
@@ -52,6 +53,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={meta.language} dir={meta.direction}>
       <body>
         {children}
+        <ContinuityCacheGuard />
         <LivePageRefresh />
         <AtlasAnalytics />
         <AtlasTimePickerPolish locale={locale} />

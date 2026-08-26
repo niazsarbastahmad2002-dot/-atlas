@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#071f19" />
+  <title>Atlas — Offline</title>
+  <style>
+    :root{color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f8f6;color:#102821}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(180deg,#f8fbfa 0,#edf6f2 100%)}header{min-height:74px;display:flex;align-items:center;justify-content:space-between;padding:16px clamp(18px,4vw,54px);background:#08291f;color:#fff}.brand{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.18em}.offline-pill{border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;letter-spacing:.08em}.shell{width:min(1120px,calc(100% - 28px));margin:28px auto 80px}.hero,.empty,.appointment{border:1px solid #d6e6df;background:rgba(255,255,255,.94);box-shadow:0 12px 36px rgba(6,51,38,.06)}.hero{border-radius:22px;padding:22px}.eyebrow{color:#158565;font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.hero h1{margin:7px 0 6px;font-size:clamp(28px,5vw,46px);line-height:1.05}.muted{color:#6c7e78;font-size:13px;line-height:1.5}.summary{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.chip{border-radius:999px;background:#ecf7f3;padding:8px 11px;font-size:12px;font-weight:750}.notice{margin:16px 0 18px;border-radius:14px;padding:12px 14px;background:#fff6df;color:#674d0d;font-size:12px;font-weight:700}.list{display:grid;gap:10px}.appointment{display:grid;grid-template-columns:minmax(94px,130px) 1fr auto;align-items:center;gap:16px;border-radius:16px;padding:15px 17px}.time{font-size:20px;font-weight:850}.patient{font-size:16px;font-weight:820}.meta{margin-top:4px;color:#72827d;font-size:11px}.status{border-radius:999px;background:#ecf7f3;padding:7px 10px;color:#12694f;font-size:11px;font-weight:800;white-space:nowrap}.empty{border-radius:18px;padding:28px;text-align:center}.actions{display:flex;justify-content:center;margin-top:22px}button{min-height:46px;border:0;border-radius:14px;padding:0 18px;background:#0b8b68;color:#fff;font:inherit;font-weight:850;cursor:pointer}.footer{text-align:center;margin-top:16px;color:#6c7e78;font-size:11px;line-height:1.5}@media(max-width:680px){header{min-height:64px;padding:14px 18px}.shell{margin-top:18px}.appointment{grid-template-columns:1fr auto;gap:8px 12px}.time{grid-column:1/-1;font-size:18px}.patient{font-size:15px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">ATLAS</div>
+    <div class="offline-pill" id="offline-label">OFFLINE · READ ONLY</div>
+  </header>
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow" id="eyebrow">Reception continuity</div>
+      <h1 id="clinic-name">Atlas</h1>
+      <div class="muted" id="sync-copy">Loading the last protected schedule…</div>
+      <div class="summary" id="summary" hidden></div>
+    </section>
+    <div class="notice" id="notice">No changes are sent while offline. Atlas will reload live data when the connection returns.</div>
+    <section class="list" id="appointments"></section>
+    <section class="empty" id="empty" hidden>
+      <strong id="empty-title">No offline schedule is available.</strong>
+      <div class="muted" id="empty-copy">Connect to the internet and open Atlas once to prepare this device for offline viewing.</div>
+    </section>
+    <div class="actions"><button type="button" id="retry">Try reconnecting</button></div>
+    <div class="footer" id="footer">Protected offline data is limited to today’s clinic schedule and expires automatically.</div>
+  </main>
+  <script>
+    (() => {
+      "use strict";
+      const DB = "atlas-continuity-v2";
+      const STORE = "state";
+      const ACTIVE = "atlas-continuity-active";
+      const MAX_AGE_MS = 18 * 60 * 60 * 1000;
+
+      const copy = {
+        en: {
+          offline: "OFFLINE · READ ONLY",
+          eyebrow: "Reception continuity",
+          loading: "Loading the last protected schedule…",
+          synced: "Last synced",
+          doctor: "Doctor",
+          appointments: "appointments",
+          notice: "No changes are sent while offline. Atlas will reload live data when the connection returns.",
+          emptyTitle: "No offline schedule is available.",
+          emptyCopy: "Connect to the internet and open Atlas once to prepare this device for offline viewing.",
+          retry: "Try reconnecting",
+          footer: "Protected offline data is limited to today’s clinic schedule and expires automatically.",
+          queue: "Queue",
+        },
+        ku: {
+          offline: "ئۆفلاین · تەنها خوێندنەوە",
+          eyebrow: "بەردەوامی کار لە ڕیسێپشن",
+          loading: "کۆتا خشتەی پارێزراو دەکرێتەوە…",
+          synced: "کۆتا هاوکاتکردن",
+          doctor: "دکتۆر",
+          appointments: "مەوعید",
+          notice: "لە کاتی ئۆفلاین هیچ گۆڕانکارییەک نەنێردرێت. کاتێک ئینتەرنێت دەگەڕێتەوە Atlas داتای نوێ بار دەکاتەوە.",
+          emptyTitle: "هیچ خشتەی ئۆفلاینێک بەردەست نییە.",
+          emptyCopy: "بە ئینتەرنێت پەیوەست بە و Atlas یەکجار بکەرەوە بۆ ئامادەکردنی ئەم ئامێرە.",
+          retry: "دووبارە پەیوەندی بکە",
+          footer: "داتای ئۆفلاین تەنها بۆ خشتەی ئەمڕۆی کلینیکە و خۆکارانە بەسەر دەچێت.",
+          queue: "ڕیز",
+        },
+        ar: {
+          offline: "بدون إنترنت · للعرض فقط",
+          eyebrow: "استمرارية الاستقبال",
+          loading: "جارٍ فتح آخر جدول محفوظ بشكل آمن…",
+          synced: "آخر مزامنة",
+          doctor: "الطبيب",
+          appointments: "مواعيد",
+          notice: "لا يتم إرسال أي تغييرات أثناء انقطاع الإنترنت. سيعيد Atlas تحميل البيانات المباشرة عند عودة الاتصال.",
+          emptyTitle: "لا يوجد جدول متاح بدون إنترنت.",
+          emptyCopy: "اتصل بالإنترنت وافتح Atlas مرة واحدة لتجهيز هذا الجهاز للعرض دون إنترنت.",
+          retry: "إعادة المحاولة",
+          footer: "البيانات المحفوظة تقتصر على جدول اليوم وتنتهي صلاحيتها تلقائياً.",
+          queue: "الدور",
+        },
+      };
+
+      const el = (id) => document.getElementById(id);
+      const setText = (id, value) => { const node = el(id); if (node) node.textContent = value; };
+
+      function baghdadDay(date = new Date()) {
+        const parts = new Intl.DateTimeFormat("en", {
+          timeZone: "Asia/Baghdad",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).formatToParts(date);
+        const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+        return `${values.year}-${values.month}-${values.day}`;
+      }
+
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB, 1);
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error("db_unavailable"));
+        });
+      }
+
+      function read(db, id) {
+        return new Promise((resolve, reject) => {
+          const request = db.transaction(STORE, "readonly").objectStore(STORE).get(id);
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error("read_failed"));
+        });
+      }
+
+      function localeFor(envelope) {
+        const language = String(envelope && envelope.locale || "").toLowerCase();
+        if (language.startsWith("ar")) return "ar";
+        if (envelope && envelope.direction === "rtl") return "ku";
+        return "en";
+      }
+
+      function statusLabel(status, locale) {
+        const labels = {
+          en: { pending: "Pending", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled", no_show: "No show" },
+          ku: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراو", completed: "تەواو", cancelled: "هەڵوەشاوە", no_show: "نەهات" },
+          ar: { pending: "قيد الانتظار", confirmed: "مؤكد", completed: "مكتمل", cancelled: "ملغي", no_show: "لم يحضر" },
+        };
+        return labels[locale][status] || status;
+      }
+
+      function timeLabel(value, locale) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+        return new Intl.DateTimeFormat(locale === "ar" ? "ar-IQ" : locale === "ku" ? "ckb-IQ" : "en", {
+          timeZone: "Asia/Baghdad",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(date);
+      }
+
+      function applyCopy(locale) {
+        const t = copy[locale];
+        document.documentElement.lang = locale === "ku" ? "ckb" : locale;
+        document.documentElement.dir = locale === "en" ? "ltr" : "rtl";
+        setText("offline-label", t.offline);
+        setText("eyebrow", t.eyebrow);
+        setText("sync-copy", t.loading);
+        setText("notice", t.notice);
+        setText("empty-title", t.emptyTitle);
+        setText("empty-copy", t.emptyCopy);
+        setText("retry", t.retry);
+        setText("footer", t.footer);
+      }
+
+      function showEmpty(locale) {
+        applyCopy(locale);
+        el("appointments").replaceChildren();
+        el("empty").hidden = false;
+        el("summary").hidden = true;
+        setText("clinic-name", "Atlas");
+      }
+
+      function render(envelope) {
+        const snapshot = envelope && envelope.snapshot;
+        const locale = localeFor(envelope);
+        applyCopy(locale);
+        const t = copy[locale];
+
+        if (!snapshot || snapshot.version !== 1 || !Array.isArray(snapshot.appointments)) return showEmpty(locale);
+        const syncedAt = new Date(snapshot.syncedAt);
+        if (
+          snapshot.day !== baghdadDay()
+          || Number.isNaN(syncedAt.getTime())
+          || Date.now() - syncedAt.getTime() > MAX_AGE_MS
+          || snapshot.appointments.length > 500
+        ) return showEmpty(locale);
+
+        setText("clinic-name", String(snapshot.clinicName || "Atlas").slice(0, 120));
+        setText("sync-copy", `${t.synced}: ${timeLabel(snapshot.syncedAt, locale)}`);
+        const summary = el("summary");
+        summary.replaceChildren();
+        const count = document.createElement("span");
+        count.className = "chip";
+        count.textContent = `${snapshot.appointments.length} ${t.appointments}`;
+        summary.append(count);
+        if (snapshot.doctorName) {
+          const doctor = document.createElement("span");
+          doctor.className = "chip";
+          doctor.textContent = `${t.doctor}: ${String(snapshot.doctorName).slice(0, 120)}`;
+          summary.append(doctor);
+        }
+        summary.hidden = false;
+
+        const list = el("appointments");
+        list.replaceChildren();
+        for (const item of snapshot.appointments) {
+          if (!item || typeof item.patientName !== "string" || typeof item.appointmentAt !== "string") continue;
+          const card = document.createElement("article");
+          card.className = "appointment";
+
+          const time = document.createElement("div");
+          time.className = "time";
+          time.textContent = timeLabel(item.appointmentAt, locale);
+
+          const main = document.createElement("div");
+          const patient = document.createElement("div");
+          patient.className = "patient";
+          patient.textContent = item.patientName.slice(0, 160);
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          const doctorName = typeof item.doctorName === "string" ? item.doctorName.slice(0, 120) : "";
+          const queue = Number.isInteger(item.queueOrder) && item.queueOrder > 0 ? ` · ${t.queue} ${item.queueOrder}` : "";
+          meta.textContent = `${doctorName}${queue}`;
+          main.append(patient, meta);
+
+          const status = document.createElement("div");
+          status.className = "status";
+          status.textContent = statusLabel(item.status, locale);
+          card.append(time, main, status);
+          list.append(card);
+        }
+
+        el("empty").hidden = list.childElementCount !== 0;
+      }
+
+      async function load() {
+        let active = false;
+        try { active = localStorage.getItem(ACTIVE) === "1"; } catch {}
+        if (!active || !("indexedDB" in window) || !crypto.subtle) return showEmpty("en");
+
+        try {
+          const db = await openDb();
+          const [keyRecord, snapshotRecord] = await Promise.all([read(db, "key"), read(db, "snapshot")]);
+          db.close();
+          if (!keyRecord || !keyRecord.key || !snapshotRecord || !Array.isArray(snapshotRecord.iv) || !Array.isArray(snapshotRecord.ciphertext)) {
+            return showEmpty("en");
+          }
+          const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(snapshotRecord.iv) },
+            keyRecord.key,
+            new Uint8Array(snapshotRecord.ciphertext),
+          );
+          render(JSON.parse(new TextDecoder().decode(decrypted)));
+        } catch {
+          showEmpty("en");
+        }
+      }
+
+      el("retry").addEventListener("click", () => { location.href = "/dashboard"; });
+      window.addEventListener("online", () => { location.href = "/dashboard"; });
+      load();
+    })();
+  </script>
+</body>
+</html>
