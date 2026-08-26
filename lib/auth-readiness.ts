@@ -9,6 +9,8 @@ export type AtlasAuthReadiness = {
   supabaseEmailEnabled: boolean;
   openPhoneSignupEnabled: boolean;
   whatsappOtpEnabled: boolean;
+  directMetaOtpEnabled: boolean;
+  metaTestMode: boolean;
 };
 
 export async function getAtlasAuthReadiness(): Promise<AtlasAuthReadiness> {
@@ -20,6 +22,9 @@ export async function getAtlasAuthReadiness(): Promise<AtlasAuthReadiness> {
     supabaseEmailEnabled: false,
     openPhoneSignupEnabled: process.env.NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED === "true",
     whatsappOtpEnabled: process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true",
+    directMetaOtpEnabled: process.env.NEXT_PUBLIC_ATLAS_DIRECT_META_OTP_ENABLED === "true"
+      && process.env.WHATSAPP_DIRECT_OTP_ENABLED === "true",
+    metaTestMode: process.env.ATLAS_WHATSAPP_MODE === "meta_test" && process.env.VERCEL_ENV !== "production",
   };
 
   if (!url || !key) return base;
