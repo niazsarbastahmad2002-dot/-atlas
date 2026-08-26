@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feature/readable-clinic-export": true,
       "*": false,
       "**": false
     }
