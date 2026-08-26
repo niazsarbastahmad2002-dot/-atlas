@@ -1,9 +1,10 @@
 {
   "name": "Atlas Local",
   "short_name": "Atlas Local",
+  "id": "/atlas-local.html",
   "description": "A device-only clinic appointment workspace that works without internet.",
   "start_url": "/atlas-local.html",
-  "scope": "/",
+  "scope": "/atlas-local.html",
   "display": "standalone",
   "background_color": "#eef4f1",
   "theme_color": "#071f19",
