@@ -17,6 +17,22 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 12;
 const requestBuckets = new Map<string, { count: number; resetAt: number }>();
+const VERCEL_REQUEST_CONTEXT = Symbol.for("@vercel/request-context");
+
+type VercelRequestContext = { headers?: Record<string, string> };
+
+function runtimeOidcToken(request: Request) {
+  const configured = process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  if (configured) return configured;
+
+  const requestToken = request.headers.get("x-vercel-oidc-token")?.trim();
+  if (requestToken) return requestToken;
+
+  const runtime = globalThis as typeof globalThis & {
+    [VERCEL_REQUEST_CONTEXT]?: { get?: () => VercelRequestContext };
+  };
+  return runtime[VERCEL_REQUEST_CONTEXT]?.get?.().headers?.["x-vercel-oidc-token"]?.trim() || "";
+}
 
 function allowedRequest(userId: string) {
   const now = Date.now();
@@ -99,7 +115,7 @@ export async function POST(request: Request) {
     { clinicName: clinic.name },
   );
 
-  const gatewayToken = process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  const gatewayToken = runtimeOidcToken(request);
   if (!gatewayToken) {
     return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
   }
