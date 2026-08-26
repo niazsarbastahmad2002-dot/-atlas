@@ -50,8 +50,12 @@ const settingsCopy: Record<UiLocale, {
   administrationHelp: string;
   teamAccess: string;
   history: string;
-  exportArchive: string;
-  exportArchiveHelp: string;
+  exportReadable: string;
+  exportReadableHelp: string;
+  exportCsv: string;
+  exportCsvHelp: string;
+  exportJson: string;
+  exportJsonHelp: string;
   deleteClinic: string;
   accountHelp: string;
   accountDeletion: string;
@@ -72,8 +76,12 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "Less-used owner tools stay here instead of competing with the daily schedule.",
     teamAccess: "Team access",
     history: "Appointment history",
-    exportArchive: "Download clinic archive",
-    exportArchiveHelp: "Owner-only JSON backup. Contains patient names and phone numbers — store it securely.",
+    exportReadable: "Readable clinic report",
+    exportReadableHelp: "Open a clean report you can read, print, or save as PDF. Contains patient details — keep it private.",
+    exportCsv: "Appointments spreadsheet (CSV)",
+    exportCsvHelp: "A simple appointments table for Excel, Numbers, or another spreadsheet app.",
+    exportJson: "Technical backup (JSON)",
+    exportJsonHelp: "Machine-readable backup for recovery or migration. Keep it securely.",
     deleteClinic: "Delete this clinic",
     accountHelp: "Your verified phone is your Atlas identity.",
     accountDeletion: "Account & deletion",
@@ -94,8 +102,12 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "ئامرازە کەم‌بەکارهاتووەکانی خاوەن کلینیک لێرە دەمێنن تا خشتەی ڕۆژانە سادە بێت.",
     teamAccess: "دەسەڵاتی ستاف",
     history: "مێژووی وادەکان",
-    exportArchive: "داگرتنی ئەرشیفی کلینیک",
-    exportArchiveHelp: "پاڵپشتی JSON تەنها بۆ خاوەن کلینیکە. ناو و ژمارەی نەخۆش تێدایە — بە پارێزراوی هەڵیبگرە.",
+    exportReadable: "ڕاپۆرتی خوێندنەوەی کلینیک",
+    exportReadableHelp: "ڕاپۆرتێکی پاک بکەرەوە بۆ خوێندنەوە، چاپکردن یان هەڵگرتن وەک PDF. زانیاری نەخۆش تێدایە — بە نهێنی هەڵیبگرە.",
+    exportCsv: "خشتەی وادەکان (CSV)",
+    exportCsvHelp: "خشتەیەکی سادەی وادەکان بۆ Excel، Numbers یان بەرنامەی خشتەسازی.",
+    exportJson: "پاڵپشتی تەکنیکی (JSON)",
+    exportJsonHelp: "پاڵپشتی بۆ گەڕاندنەوە یان گواستنەوە. بە پارێزراوی هەڵیبگرە.",
     deleteClinic: "سڕینەوەی ئەم کلینیکە",
     accountHelp: "ژمارەی پشتڕاستکراوی مۆبایل ناسنامەی Atlas ـەکەتە.",
     accountDeletion: "هەژمار و سڕینەوە",
@@ -116,8 +128,12 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "ئامرازێن کێم‌بکارهاتی یێن خودانێ کلینیکێ ل ڤێرێ دمینن دا خشتەیا ڕۆژانە سادە بیت.",
     teamAccess: "دەستهەلاتا ستافی",
     history: "مێژوویا وادەیان",
-    exportArchive: "داگرتنا ئارشیڤا کلینیکێ",
-    exportArchiveHelp: "پشتگیریا JSON تەنێ بۆ خودانێ کلینیکێ. ناڤ و ژمارێن نەخۆشان تێدانە — ب پاراستی هەلگرە.",
+    exportReadable: "ڕاپۆرتا کلینیکێ یا خواندنێ",
+    exportReadableHelp: "ڕاپۆرتەکا پاک بۆ خواندن، چاپکرن یان هەلگرتن وەک PDF. زانیاریێن نەخۆشان تێدانە — ب نهێنی هەلگرە.",
+    exportCsv: "خشتەیا وادەیان (CSV)",
+    exportCsvHelp: "خشتەیەکا سادە یا وادەیان بۆ Excel، Numbers یان بەرنامەیێن خشتەسازی.",
+    exportJson: "پشتگیریا تەکنیکی (JSON)",
+    exportJsonHelp: "پشتگیری بۆ ڤەگەڕاندن یان گوهۆڕین. ب پاراستی هەلگرە.",
     deleteClinic: "ژێبرنا ڤێ کلینیکێ",
     accountHelp: "ژمارا پشتڕاستکری یا موبایلێ ناسناما Atlas یا تەیە.",
     accountDeletion: "هەژمار و ژێبرن",
@@ -138,8 +154,12 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "أدوات المالك الأقل استخداماً تبقى هنا حتى يظل الجدول اليومي بسيطاً.",
     teamAccess: "صلاحيات الفريق",
     history: "سجل المواعيد",
-    exportArchive: "تنزيل أرشيف العيادة",
-    exportArchiveHelp: "نسخة JSON للمالك فقط. تحتوي أسماء المرضى وأرقامهم — احفظها بشكل آمن.",
+    exportReadable: "تقرير عيادة سهل القراءة",
+    exportReadableHelp: "افتح تقريراً مرتباً للقراءة أو الطباعة أو الحفظ كـ PDF. يحتوي بيانات مرضى — احفظه بخصوصية.",
+    exportCsv: "جدول المواعيد (CSV)",
+    exportCsvHelp: "جدول بسيط للمواعيد لفتحه في Excel أو Numbers أو أي برنامج جداول.",
+    exportJson: "نسخة احتياطية تقنية (JSON)",
+    exportJsonHelp: "نسخة قابلة للمعالجة للاسترجاع أو النقل. احفظها بشكل آمن.",
     deleteClinic: "حذف هذه العيادة",
     accountHelp: "رقم الهاتف الموثق هو هويتك في Atlas.",
     accountDeletion: "الحساب والحذف",
@@ -337,13 +357,32 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             <div className="settings-link-list">
               <Link className="settings-link" href={`/dashboard/staff?clinic=${clinic.id}`} prefetch><span>{copy.teamAccess}</span><span aria-hidden="true">→</span></Link>
               <Link className="settings-link" href={`/dashboard/history?clinic=${clinic.id}`} prefetch><span>{copy.history}</span><span aria-hidden="true">→</span></Link>
-              <form className="settings-export-form" action="/api/clinic-export" method="post">
-                <input type="hidden" name="clinic_id" value={clinic.id} />
-                <button className="settings-link settings-export-button" type="submit">
-                  <span className="settings-export-copy"><strong>{copy.exportArchive}</strong><small>{copy.exportArchiveHelp}</small></span>
-                  <span aria-hidden="true">↓</span>
-                </button>
-              </form>
+              <div className="settings-export-group">
+                <form className="settings-export-form" action="/api/clinic-export" method="post" target="_blank">
+                  <input type="hidden" name="clinic_id" value={clinic.id} />
+                  <input type="hidden" name="format" value="html" />
+                  <button className="settings-link settings-export-button" type="submit">
+                    <span className="settings-export-copy"><strong>{copy.exportReadable}</strong><small>{copy.exportReadableHelp}</small></span>
+                    <span aria-hidden="true">↗</span>
+                  </button>
+                </form>
+                <form className="settings-export-form" action="/api/clinic-export" method="post">
+                  <input type="hidden" name="clinic_id" value={clinic.id} />
+                  <input type="hidden" name="format" value="csv" />
+                  <button className="settings-link settings-export-button" type="submit">
+                    <span className="settings-export-copy"><strong>{copy.exportCsv}</strong><small>{copy.exportCsvHelp}</small></span>
+                    <span aria-hidden="true">↓</span>
+                  </button>
+                </form>
+                <form className="settings-export-form" action="/api/clinic-export" method="post">
+                  <input type="hidden" name="clinic_id" value={clinic.id} />
+                  <input type="hidden" name="format" value="json" />
+                  <button className="settings-link settings-export-button" type="submit">
+                    <span className="settings-export-copy"><strong>{copy.exportJson}</strong><small>{copy.exportJsonHelp}</small></span>
+                    <span aria-hidden="true">↓</span>
+                  </button>
+                </form>
+              </div>
               <Link className="settings-link danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}><span>{copy.deleteClinic}</span><span aria-hidden="true">→</span></Link>
             </div>
           </section>
@@ -378,7 +417,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       </footer>
 
       <style>{`
-        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}.settings-link-list{display:grid;gap:8px}.settings-export-form{margin:0}.settings-export-button{width:100%;font:inherit;text-align:inherit;cursor:pointer}.settings-export-copy{display:grid;gap:2px}.settings-export-copy strong{font:inherit}.settings-export-copy small{max-width:520px;color:var(--muted);font-size:10px;font-weight:650;line-height:1.35}.settings-disclosure{border-top:1px solid var(--line);padding-top:10px}.settings-disclosure>summary{min-height:42px;display:flex;align-items:center;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}.settings-utility-footer{display:flex;justify-content:center;gap:9px;padding:24px 0 110px;color:var(--muted);font-size:11px}.settings-utility-footer a{color:inherit}.doctor-settings-row.is-archived{display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}.settings-link-list{display:grid;gap:8px}.settings-export-group{display:grid;gap:6px}.settings-export-form{margin:0}.settings-export-button{width:100%;font:inherit;text-align:inherit;cursor:pointer}.settings-export-copy{display:grid;gap:2px}.settings-export-copy strong{font:inherit}.settings-export-copy small{max-width:520px;color:var(--muted);font-size:10px;font-weight:650;line-height:1.35}.settings-disclosure{border-top:1px solid var(--line);padding-top:10px}.settings-disclosure>summary{min-height:42px;display:flex;align-items:center;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}.settings-utility-footer{display:flex;justify-content:center;gap:9px;padding:24px 0 110px;color:var(--muted);font-size:11px}.settings-utility-footer a{color:inherit}.doctor-settings-row.is-archived{display:flex;align-items:center;justify-content:space-between;gap:12px}
       `}</style>
     </main>
   );
