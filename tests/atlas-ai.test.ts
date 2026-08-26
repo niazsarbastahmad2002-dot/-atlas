@@ -84,25 +84,58 @@ test("uses Baghdad calendar days across month boundaries", () => {
   assert.equal(shiftAtlasDay("2026-09-01", -1), "2026-08-31");
 });
 
-test("keeps Atlas AI operational and read-only", () => {
+test("keeps Atlas AI useful but read-only and outside patient-specific clinical decisions", () => {
   assert.match(atlasAiSystemPrompt, /read-only/i);
   assert.match(atlasAiSystemPrompt, /Do not provide diagnosis/i);
   assert.match(atlasAiSystemPrompt, /Never claim that you booked/i);
+  assert.match(atlasAiSystemPrompt, /general-knowledge questions/i);
+  assert.match(atlasAiSystemPrompt, /conversation history/i);
 });
 
-test("Atlas AI has an honest user-question privacy boundary", () => {
+test("Atlas AI has an honest conversation privacy boundary", () => {
   const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
-  assert.match(client, /Atlas sends your question plus aggregated appointment statistics/);
-  assert.match(client, /Do not include patient names, phone numbers, message contents, or clinical information/);
+  assert.match(client, /Atlas sends this conversation plus aggregated appointment statistics/);
+  assert.match(client, /Do not include patient names, phone numbers, message contents, or patient-specific clinical information/);
   assert.match(client, /لا تكتب اسم المريض أو رقم الهاتف/);
 });
 
-test("Atlas AI uses Vercel runtime auth without leaking credentials or extra reasoning", () => {
+test("Atlas AI sends multi-turn history without allowing system-role injection", () => {
   const route = read("app/api/atlas-ai/route.ts");
-  assert.match(route, /x-vercel-oidc-token/);
-  assert.match(route, /@vercel\/request-context/);
-  assert.match(route, /AI_GATEWAY_API_KEY/);
+  assert.match(route, /body\.messages/);
+  assert.match(route, /role !== "user" && role !== "assistant"/);
+  assert.match(route, /ATLAS_AI_MAX_HISTORY_MESSAGES/);
+  assert.match(route, /ATLAS_AI_MAX_HISTORY_CHARS/);
+  assert.match(route, /\.\.\.conversation/);
+});
+
+test("Atlas AI Gateway OIDC includes the protocol auth headers Vercel requires", () => {
+  const gateway = read("lib/atlas-ai-gateway.ts");
+  const route = read("app/api/atlas-ai/route.ts");
+  assert.match(gateway, /x-vercel-oidc-token/);
+  assert.match(gateway, /@vercel\/request-context/);
+  assert.match(gateway, /AI_GATEWAY_API_KEY/);
+  assert.match(gateway, /ai-gateway-protocol-version/);
+  assert.match(gateway, /ai-gateway-auth-method/);
+  assert.match(route, /atlasGatewayHeaders\(request\)/);
   assert.doesNotMatch(route, /reasoning_effort/);
-  assert.doesNotMatch(route, /reasoning:\s*\{/);
-  assert.doesNotMatch(route, /console\.(?:log|error)\([^\n]*gatewayToken/);
+  assert.doesNotMatch(route, /console\.(?:log|error)\([^\n]*token/);
+});
+
+test("Atlas AI voice uses authenticated transcription and speech endpoints", () => {
+  const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
+  const transcription = read("app/api/atlas-ai/transcribe/route.ts");
+  const speech = read("app/api/atlas-ai/speech/route.ts");
+
+  assert.match(client, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(client, /new MediaRecorder/);
+  assert.match(client, /\/api\/atlas-ai\/transcribe/);
+  assert.match(client, /\/api\/atlas-ai\/speech/);
+  assert.match(client, /voiceMode/);
+  assert.match(client, /Listening/);
+  assert.match(transcription, /openai\/whisper-1/);
+  assert.match(transcription, /atlasGatewayHeaders/);
+  assert.match(speech, /openai\/tts-1/);
+  assert.match(speech, /atlasGatewayHeaders/);
+  assert.doesNotMatch(transcription, /service_role/i);
+  assert.doesNotMatch(speech, /service_role/i);
 });
