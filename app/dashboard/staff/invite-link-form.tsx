@@ -11,7 +11,7 @@ type DoctorOption = { id: string; name: string };
 const copy = {
   en: {
     title: "Share a secure join link",
-    help: "Choose the receptionist's doctor and create a one-use invitation. When direct WhatsApp invitations are enabled, Atlas can send the secure link for you.",
+    help: "Choose the receptionist's doctor and create a one-use invitation. When direct WhatsApp invitations are enabled, Atlas can send the secure link for you. The receptionist verifies their phone before Atlas grants this clinic membership.",
     doctor: "Receptionist's doctor",
     choose: "Choose one doctor",
     phone: "Recipient mobile number",
@@ -26,7 +26,7 @@ const copy = {
   },
   ku: {
     title: "بەستەری پارێزراوی چوونەژوورەوە بنێرە",
-    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە و بانگهێشتێکی یەکجارە دروست بکە. کاتێک ناردنی ڕاستەوخۆی WhatsApp چالاکە، Atlas دەتوانێت لینکە پارێزراوەکە بۆت بنێرێت.",
+    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە و بانگهێشتێکی یەکجارە دروست بکە. کاتێک ناردنی ڕاستەوخۆی WhatsApp چالاکە، Atlas دەتوانێت لینکە پارێزراوەکە بۆت بنێرێت. ستافەکە ژمارەی مۆبایلەکەی پشتڕاست دەکاتەوە پێش ئەوەی Atlas ئەندامێتی ئەم کلینیکە بدات.",
     doctor: "دکتۆری ستافی ڕیسێپشن",
     choose: "یەک دکتۆر هەڵبژێرە",
     phone: "ژمارەی مۆبایلی وەرگر",
@@ -41,7 +41,7 @@ const copy = {
   },
   bd: {
     title: "لینکا پاراستی یا چوونەژوورێ بهنێرە",
-    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە و بانگهێشتەکا ئێکجارە دروست بکە. دەمێ هنارتنا ڕاستەوخۆ یا WhatsApp چالاک بیت، Atlas دشێت لینکێ پاراستی بۆ تە بهنێریت.",
+    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە و بانگهێشتەکا ئێکجارە دروست بکە. دەمێ هنارتنا ڕاستەوخۆ یا WhatsApp چالاک بیت، Atlas دشێت لینکێ پاراستی بۆ تە بهنێریت. ستاف ژمارا موبایلا خۆ پشتڕاست دکەت بەری کو Atlas ئەندامەتیا ڤێ کلینیکێ بدەت.",
     doctor: "دکتۆرێ ستافێ ڕیسێپشنێ",
     choose: "ئێک دکتۆر هەلبژێرە",
     phone: "ژمارا موبایلا وەرگری",
@@ -56,7 +56,7 @@ const copy = {
   },
   ar: {
     title: "شارك رابط انضمام آمن",
-    help: "اختر طبيب موظف الاستقبال وأنشئ دعوة تستخدم مرة واحدة. عند تفعيل الإرسال المباشر عبر WhatsApp يقدر Atlas يرسل الرابط الآمن عنك.",
+    help: "اختر طبيب موظف الاستقبال وأنشئ دعوة تستخدم مرة واحدة. عند تفعيل الإرسال المباشر عبر WhatsApp يقدر Atlas يرسل الرابط الآمن عنك. الموظف يوثق رقم موبايله قبل ما Atlas يمنحه عضوية هذه العيادة.",
     doctor: "طبيب موظف الاستقبال",
     choose: "اختر طبيباً واحداً",
     phone: "رقم موبايل المستلم",
