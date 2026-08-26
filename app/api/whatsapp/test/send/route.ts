@@ -9,6 +9,7 @@ import {
   sendApprovedWhatsAppTemplate,
   sendWhatsAppAuthenticationTemplate,
   sendWhatsAppStaffInviteTemplate,
+  sendWhatsAppTextMessage,
 } from "@/lib/reminders/whatsapp";
 import { constantTimeEqual } from "@/lib/security";
 
@@ -70,6 +71,13 @@ export async function POST(request: Request) {
       runtimeConfig.otpTemplateName,
       runtimeConfig.config,
     );
+    if (!result.accepted) {
+      result = await sendWhatsAppTextMessage(
+        body.recipientPhone,
+        `Atlas test verification code: ${body.otp}. It expires soon.`,
+        runtimeConfig.config,
+      );
+    }
   } else if (body.kind === "invite") {
     result = await sendWhatsAppStaffInviteTemplate(
       body.recipientPhone,
@@ -78,6 +86,13 @@ export async function POST(request: Request) {
       runtimeConfig.staffInviteTemplateName,
       runtimeConfig.config,
     );
+    if (!result.accepted) {
+      result = await sendWhatsAppTextMessage(
+        body.recipientPhone,
+        `Atlas test invitation for ${body.clinicName}: ${body.inviteUrl}`,
+        runtimeConfig.config,
+      );
+    }
   } else if (body.kind === "reminder") {
     result = await sendApprovedWhatsAppTemplate({
       recipientPhone: body.recipientPhone,
@@ -90,6 +105,13 @@ export async function POST(request: Request) {
       templateName: body.reminderKind === "day_of" ? "atlas_visit_today_v1" : "atlas_visit_confirm_v1",
       templateLanguage: body.language ?? "en_US",
     }, runtimeConfig.config);
+    if (!result.accepted) {
+      result = await sendWhatsAppTextMessage(
+        body.recipientPhone,
+        `Atlas test reminder from ${body.clinicName}. Appointment with ${body.doctorName} at ${body.appointmentAt}.`,
+        runtimeConfig.config,
+      );
+    }
   } else {
     return NextResponse.json({ error: "unsupported_kind" }, { status: 400 });
   }
