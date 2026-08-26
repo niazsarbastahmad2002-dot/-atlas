@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "fix/atlas-local-entry-and-cache": true,
       "*": false,
       "**": false
     }
