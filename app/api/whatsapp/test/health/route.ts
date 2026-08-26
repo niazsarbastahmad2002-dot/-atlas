@@ -50,7 +50,7 @@ export async function GET() {
         { headers, signal: controller.signal, cache: "no-store" },
       ),
       fetch(
-        `https://graph.facebook.com/${graphApiVersion}/${wabaId}/message_templates?fields=name,status,language,category,components&limit=20`,
+        `https://graph.facebook.com/${graphApiVersion}/${wabaId}/message_templates?fields=name,status,language,category&limit=20`,
         { headers, signal: controller.signal, cache: "no-store" },
       ),
     ]);
@@ -63,8 +63,7 @@ export async function GET() {
     const templateBody = templateResponse.ok
       ? await templateResponse.json() as { data?: Array<Record<string, unknown>> }
       : null;
-    const rows = templateBody?.data ?? [];
-    const templates = rows.flatMap((row) => (
+    const templates = (templateBody?.data ?? []).flatMap((row) => (
       typeof row.name === "string" && typeof row.status === "string" && typeof row.language === "string"
         ? [{
             name: row.name,
@@ -74,8 +73,6 @@ export async function GET() {
           }]
         : []
     ));
-    const sampleOrder = rows.find((row) => row.name === "jaspers_market_order_confirmation_v1");
-    const samplePlain = rows.find((row) => row.name === "jaspers_market_plain_text_v1");
 
     return NextResponse.json({
       ok: true,
@@ -88,8 +85,6 @@ export async function GET() {
       wabaConfigured: true,
       templateListAccessible: templateResponse.ok,
       templates,
-      sampleOrderComponents: Array.isArray(sampleOrder?.components) ? sampleOrder.components : null,
-      samplePlainComponents: Array.isArray(samplePlain?.components) ? samplePlain.components : null,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ ok: false, error: "meta_health_check_failed", config: presence }, { status: 502 });
