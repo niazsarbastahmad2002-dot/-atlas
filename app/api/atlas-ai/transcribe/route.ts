@@ -140,7 +140,8 @@ export async function POST(request: Request) {
   if (!allowedLocales.has(localeValue) || !(audio instanceof File)) {
     return NextResponse.json({ error: "invalid_audio_request" }, { status: 400 });
   }
-  if (audio.size < 24 || audio.size > MAX_AUDIO_BYTES || !allowedAudioTypes.has(audio.type)) {
+  const audioType = audio.type.toLowerCase().split(";")[0]?.trim() ?? "";
+  if (audio.size < 24 || audio.size > MAX_AUDIO_BYTES || !allowedAudioTypes.has(audioType)) {
     return NextResponse.json({ error: "invalid_audio" }, { status: 400 });
   }
 
