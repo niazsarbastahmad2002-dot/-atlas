@@ -176,15 +176,78 @@ test("Atlas AI Gateway helper still protects any explicitly configured paid fall
   assert.doesNotMatch(route, /console\.(?:log|error)\([^\n]*token/);
 });
 
-test("Atlas AI voice is free browser speech, not a paid server audio route", () => {
+test("Atlas Voice transcription stays server-side, authenticated, bounded, and secret-free", () => {
+  const provider = read("lib/atlas-ai-cloudflare.ts");
+  const route = read("app/api/atlas-ai/transcribe/route.ts");
+
+  assert.match(provider, /ATLAS_AI_TRANSCRIPTION_MODEL/);
+  assert.match(provider, /@cf\/openai\/whisper-large-v3-turbo/);
+  assert.match(provider, /\/ai\/run\//);
+  assert.match(route, /supabase\.auth\.getUser\(\)/);
+  assert.match(route, /sameOriginRequest/);
+  assert.match(route, /MAX_AUDIO_BYTES/);
+  assert.match(route, /allowedAudioTypes/);
+  assert.match(route, /Buffer\.from\(await audio\.arrayBuffer\(\)\)\.toString\("base64"\)/);
+  assert.match(route, /vad_filter: true/);
+  assert.match(route, /Cache-Control.*no-store, private/s);
+  assert.doesNotMatch(route, /service[_-]?role/i);
+  assert.doesNotMatch(route, /console\./);
+  assert.doesNotMatch(route, /patient_name|patient_phone/);
+});
+
+test("Kurdish Atlas voice no longer depends on unsupported browser ku-IQ recognition", () => {
+  const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
+  const route = read("app/api/atlas-ai/transcribe/route.ts");
+
+  assert.match(client, /MediaRecorder/);
+  assert.match(client, /\/api\/atlas-ai\/transcribe/);
+  assert.doesNotMatch(client, /SpeechRecognition/);
+  assert.doesNotMatch(client, /webkitSpeechRecognition/);
+  assert.match(route, /کوردی سۆرانی/);
+  assert.match(route, /کوردی بادینی/);
+  assert.match(route, /normalizeKurdishTranscript/);
+  assert.match(route, /Sorani Kurdish \(Arabic script\)/);
+  assert.match(route, /Badini Kurdish \(Arabic script\)/);
+});
+
+test("Atlas dictation never auto-sends and leaves the transcript for review", () => {
   const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
 
-  assert.match(client, /SpeechRecognition/);
-  assert.match(client, /webkitSpeechRecognition/);
-  assert.match(client, /speechSynthesis/);
-  assert.match(client, /SpeechSynthesisUtterance/);
-  assert.match(client, /voiceMode/);
-  assert.match(client, /Listening/);
-  assert.doesNotMatch(client, /\/api\/atlas-ai\/transcribe/);
-  assert.doesNotMatch(client, /\/api\/atlas-ai\/speech/);
+  assert.match(client, /purpose === "dictation"/);
+  assert.match(client, /setQuestion\(\(current\) =>/);
+  assert.match(client, /Speak, review the text, then tap Send yourself/);
+  assert.match(client, /Stop dictation/);
+  assert.doesNotMatch(client, /doneSpeaking/i);
+});
+
+test("Atlas live voice has explicit ChatGPT-style turn controls and slower silence detection", () => {
+  const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
+
+  assert.match(client, /Live voice/);
+  assert.match(client, /Atlas Voice/);
+  assert.match(client, /Send now/);
+  assert.match(client, /Interrupt/);
+  assert.match(client, /continueLiveVoice/);
+  assert.match(client, /endLiveVoice/);
+  assert.match(client, /lastSpeechAt > 2800/);
+  assert.match(client, /is-transcribing/);
+  assert.match(client, /is-speaking/);
+});
+
+test("Atlas AI renders simple rich responses instead of exposing raw markdown decoration", () => {
+  const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
+  assert.match(client, /function RichMessage/);
+  assert.match(client, /inlineRichText/);
+  assert.match(client, /<strong/);
+  assert.match(client, /atlas-ai-bullet/);
+});
+
+test("Atlas AI model responses are receptionist-first and Atlas-branded", () => {
+  const route = read("app/api/atlas-ai/route.ts");
+  assert.match(route, /modern clinic assistant made for a busy receptionist/i);
+  assert.match(route, /Start with the useful answer/i);
+  assert.match(route, /plain, familiar words/i);
+  assert.match(route, /Sorani, Badini, and Iraqi Arabic/i);
+  assert.match(route, /Do not introduce yourself repeatedly/i);
+  assert.match(route, /voice-style exchanges/i);
 });
