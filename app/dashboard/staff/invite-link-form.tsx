@@ -5,15 +5,20 @@ import type { UiLocale } from "@/lib/i18n/ui";
 import { createReceptionistInviteLink, type InviteLinkState } from "./invite-actions";
 
 const initialState: InviteLinkState = { status: "idle", message: "" };
+const DIRECT_WHATSAPP_INVITES = process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_DIRECT_INVITES_ENABLED === "true";
 type DoctorOption = { id: string; name: string };
 
 const copy = {
   en: {
     title: "Share a secure join link",
-    help: "Choose the receptionist's doctor, create a one-use link, then share it through WhatsApp, Messages, AirDrop, or any app. The receptionist verifies their phone before Atlas grants this clinic membership.",
+    help: "Choose the receptionist's doctor and create a one-use invitation. When direct WhatsApp invitations are enabled, Atlas can send the secure link for you.",
     doctor: "Receptionist's doctor",
     choose: "Choose one doctor",
+    phone: "Recipient mobile number",
+    phoneHelp: "Optional. In Meta test mode, only recipient numbers registered in the test allowlist can receive this invitation.",
+    phonePlaceholder: "0750 123 4567",
     create: "Create secure join link",
+    send: "Create and send on WhatsApp",
     creating: "Creating…",
     copy: "Copy link",
     copied: "Copied",
@@ -21,10 +26,14 @@ const copy = {
   },
   ku: {
     title: "بەستەری پارێزراوی چوونەژوورەوە بنێرە",
-    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە، بەستەرێکی یەکجارە دروست بکە و بە WhatsApp، Messages، AirDrop یان هەر ئەپێک بنێرە. ستافەکە ژمارەی مۆبایلەکەی پشتڕاست دەکاتەوە پێش ئەوەی Atlas ئەندامێتی ئەم کلینیکە بدات.",
+    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە و بانگهێشتێکی یەکجارە دروست بکە. کاتێک ناردنی ڕاستەوخۆی WhatsApp چالاکە، Atlas دەتوانێت لینکە پارێزراوەکە بۆت بنێرێت.",
     doctor: "دکتۆری ستافی ڕیسێپشن",
     choose: "یەک دکتۆر هەڵبژێرە",
+    phone: "ژمارەی مۆبایلی وەرگر",
+    phoneHelp: "ئارەزوومەندانە. لە دۆخی تاقیکردنەوەی Meta تەنها ژمارە ڕێگەپێدراوەکان دەتوانن بانگهێشتەکە وەربگرن.",
+    phonePlaceholder: "0750 123 4567",
     create: "بەستەری پارێزراو دروست بکە",
+    send: "دروست بکە و بە WhatsApp بنێرە",
     creating: "دروست دەکرێت…",
     copy: "بەستەر کۆپی بکە",
     copied: "کۆپی کرا",
@@ -32,10 +41,14 @@ const copy = {
   },
   bd: {
     title: "لینکا پاراستی یا چوونەژوورێ بهنێرە",
-    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە، لینکەکا ئێکجارە دروست بکە و ب WhatsApp، Messages، AirDrop یان هەر ئەپەکێ بهنێرە. ستاف ژمارا موبایلا خۆ پشتڕاست دکەت بەری کو Atlas ئەندامەتیا ڤێ کلینیکێ بدەت.",
+    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە و بانگهێشتەکا ئێکجارە دروست بکە. دەمێ هنارتنا ڕاستەوخۆ یا WhatsApp چالاک بیت، Atlas دشێت لینکێ پاراستی بۆ تە بهنێریت.",
     doctor: "دکتۆرێ ستافێ ڕیسێپشنێ",
     choose: "ئێک دکتۆر هەلبژێرە",
+    phone: "ژمارا موبایلا وەرگری",
+    phoneHelp: "ئارەزوومەندانە. د مودا تاقیکرنێ یا Meta دا تنێ ژمارێن د لیستا ڕێپێدانێ دا دکارن بانگهێشتێ وەربگرن.",
+    phonePlaceholder: "0750 123 4567",
     create: "لینکا پاراستی دروست بکە",
+    send: "دروست بکە و ب WhatsApp بهنێرە",
     creating: "دهێتە دروستکرن…",
     copy: "لینکێ کۆپی بکە",
     copied: "هاتە کۆپیکرن",
@@ -43,10 +56,14 @@ const copy = {
   },
   ar: {
     title: "شارك رابط انضمام آمن",
-    help: "اختر طبيب موظف الاستقبال، أنشئ رابطاً يُستخدم مرة واحدة، وشاركه عبر WhatsApp أو Messages أو AirDrop أو أي تطبيق. الموظف يوثق رقم موبايله قبل ما Atlas يمنحه عضوية هذه العيادة.",
+    help: "اختر طبيب موظف الاستقبال وأنشئ دعوة تستخدم مرة واحدة. عند تفعيل الإرسال المباشر عبر WhatsApp يقدر Atlas يرسل الرابط الآمن عنك.",
     doctor: "طبيب موظف الاستقبال",
     choose: "اختر طبيباً واحداً",
+    phone: "رقم موبايل المستلم",
+    phoneHelp: "اختياري. في وضع اختبار Meta فقط الأرقام الموجودة في قائمة الاختبار المسموحة تقدر تستلم الدعوة.",
+    phonePlaceholder: "0750 123 4567",
     create: "إنشاء رابط انضمام آمن",
+    send: "إنشاء وإرسال عبر WhatsApp",
     creating: "جارٍ الإنشاء…",
     copy: "نسخ الرابط",
     copied: "تم النسخ",
@@ -62,6 +79,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
   const t = copy[locale];
   const [state, action, pending] = useActionState(createReceptionistInviteLink, initialState);
   const [copied, setCopied] = useState(false);
+  const [recipientPhone, setRecipientPhone] = useState("");
 
   async function copyLink() {
     if (!state.url) return;
@@ -96,8 +114,24 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
           <option value="" disabled>{t.choose}</option>
           {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
         </select>
+        {DIRECT_WHATSAPP_INVITES ? (
+          <>
+            <label htmlFor="invite_recipient_phone">{t.phone}</label>
+            <input
+              id="invite_recipient_phone"
+              name="recipient_phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder={t.phonePlaceholder}
+              value={recipientPhone}
+              onChange={(event) => setRecipientPhone(event.target.value)}
+            />
+            <div className="field-help">{t.phoneHelp}</div>
+          </>
+        ) : null}
         <button className="button" type="submit" disabled={pending || doctors.length === 0}>
-          {pending ? t.creating : t.create}
+          {pending ? t.creating : DIRECT_WHATSAPP_INVITES && recipientPhone.trim() ? t.send : t.create}
         </button>
       </form>
 
