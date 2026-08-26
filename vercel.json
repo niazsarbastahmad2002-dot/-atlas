@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feature/atlas-ai-chat-voice": true,
       "*": false,
       "**": false
     }
