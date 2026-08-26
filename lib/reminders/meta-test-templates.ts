@@ -43,7 +43,9 @@ const variants: Variant[] = [
     category: "UTILITY",
     components: [{
       type: "BODY",
-      text: "You've been invited to join {{1}} on Atlas as reception staff. Open this secure one-use link: {{2}}",
+      // Meta rejects templates whose body ends with a variable. Keep static text
+      // after the one-use URL so this utility template is structurally valid.
+      text: "You've been invited to join {{1}} on Atlas as reception staff. Open this secure one-use link: {{2}}. This invitation expires in 24 hours.",
       example: { body_text: [["Atlas Clinic", "https://example.com/join/example-token"]] },
     }],
   },
