@@ -7,6 +7,7 @@ const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.
 test("Meta test fallbacks stay test-only while production remains template-only", () => {
   const hook = source("app/api/auth/send-sms-hook/route.ts");
   const invites = source("app/dashboard/staff/invite-actions.ts");
+  const dispatcher = source("app/api/whatsapp/test/send/route.ts");
   const testRuntime = source("lib/reminders/whatsapp-runtime.ts");
 
   assert.match(hook, /runtimeConfig\?\.mode === ATLAS_WHATSAPP_META_TEST_MODE/);
@@ -14,6 +15,11 @@ test("Meta test fallbacks stay test-only while production remains template-only"
   assert.match(hook, /sendWhatsAppTextMessage/);
   assert.match(invites, /if \(!sent\.accepted && delivery\.testMode\)/);
   assert.match(invites, /sendWhatsAppTextMessage/);
+  assert.match(dispatcher, /VERCEL_ENV === "production"/);
+  assert.match(dispatcher, /Atlas test verification code/);
+  assert.match(dispatcher, /Atlas test invitation/);
+  assert.match(dispatcher, /Atlas test reminder/);
+  assert.match(dispatcher, /sendWhatsAppTextMessage/);
   assert.match(testRuntime, /VERCEL_ENV === "production"/);
   assert.match(testRuntime, /Meta test WhatsApp mode is forbidden in production/);
 });
