@@ -27,6 +27,15 @@ function PlusIcon() {
   );
 }
 
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3c.8 4.2 2.8 6.2 7 7-4.2.8-6.2 2.8-7 7-.8-4.2-2.8-6.2-7-7 4.2-.8 6.2-2.8 7-7Z" />
+      <path d="M19 16.5c.3 1.7 1.1 2.5 2.8 2.8-1.7.3-2.5 1.1-2.8 2.7-.3-1.6-1.1-2.4-2.8-2.7 1.7-.3 2.5-1.1 2.8-2.8Z" />
+    </svg>
+  );
+}
+
 function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -92,6 +101,16 @@ function withHash(href: string, hash: string) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+function assistantHrefFrom(scheduleHref: string, currentClinic: string | null) {
+  if (currentClinic) return `/dashboard/assistant?${new URLSearchParams({ clinic: currentClinic })}`;
+  try {
+    const clinic = new URL(scheduleHref, window.location.origin).searchParams.get("clinic");
+    return clinic ? `/dashboard/assistant?${new URLSearchParams({ clinic })}` : "/dashboard/assistant";
+  } catch {
+    return "/dashboard/assistant";
+  }
+}
+
 export function AppNavigation({ locale }: { locale: UiLocale }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -105,7 +124,9 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     || visiblePath.startsWith("/dashboard/reminders")
     || visiblePath.startsWith("/dashboard/staff")
     || visiblePath.startsWith("/dashboard/history");
+  const onAssistant = visiblePath.startsWith("/dashboard/assistant");
   const onSchedule = visiblePath === "/dashboard";
+  const assistantHref = assistantHrefFrom(scheduleHref, searchParams.get("clinic"));
 
   useEffect(() => {
     setVisiblePath(pathname);
@@ -137,6 +158,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       if (hasPendingSettingWrite() || needsFreshSettingNavigation()) return;
       router.prefetch(scheduleHref);
       router.prefetch(settingsHref);
+      router.prefetch(assistantHref);
     };
 
     warmCoreRoutes();
@@ -150,7 +172,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [router, scheduleHref, settingsHref]);
+  }, [router, scheduleHref, settingsHref, assistantHref]);
 
   const go = (href: string, interaction: "topbar" | "bottom_nav" | "brand") => async (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainNavigation(event)) return;
@@ -197,6 +219,9 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
             <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onMouseEnter={warm(scheduleHref)} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} title={t.schedule}>
               <CalendarIcon /><span className="icon-button-label">{t.schedule}</span>
             </Link>
+            <Link className={`icon-button ${onAssistant ? "is-active" : ""}`} href={assistantHref} prefetch={true} scroll={true} onPointerDown={warm(assistantHref)} onMouseEnter={warm(assistantHref)} onClick={go(assistantHref, "topbar")} aria-label="Ask Atlas" title="Atlas AI">
+              <SparkleIcon /><span className="icon-button-label">Atlas AI</span>
+            </Link>
             <Link className={`icon-button ${onSettings ? "is-active" : ""}`} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onMouseEnter={warm(settingsHref)} onClick={go(settingsHref, "topbar")} aria-label={t.openSettings} title={t.settings}>
               <GearIcon /><span className="icon-button-label">{t.settings}</span>
             </Link>
@@ -205,12 +230,21 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       </header>
 
       {onSchedule ? (
-        <LiveClinicFlow
-          locale={locale}
-          clinicId={searchParams.get("clinic")}
-          doctorId={searchParams.get("doctor")}
-          day={searchParams.get("day")}
-        />
+        <>
+          <LiveClinicFlow
+            locale={locale}
+            clinicId={searchParams.get("clinic")}
+            doctorId={searchParams.get("doctor")}
+            day={searchParams.get("day")}
+          />
+          <div className="atlas-ai-launcher shell">
+            <Link href={assistantHref} prefetch={true} onPointerDown={warm(assistantHref)}>
+              <SparkleIcon />
+              <span>Ask Atlas</span>
+              <small>Beta</small>
+            </Link>
+          </div>
+        </>
       ) : null}
 
       <nav className="app-bottom-nav" aria-label="Atlas mobile navigation">
@@ -224,6 +258,10 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           <GearIcon /><span>{t.settings}</span>
         </Link>
       </nav>
+
+      <style>{`
+        .atlas-ai-launcher{display:none;margin-top:8px;margin-bottom:2px}.atlas-ai-launcher>a{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.92);color:var(--accent);font-size:10.5px;font-weight:820;text-decoration:none;box-shadow:var(--shadow-sm)}.atlas-ai-launcher svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.atlas-ai-launcher small{border-radius:999px;padding:3px 6px;background:var(--accent-soft);font-size:8px;font-weight:850;text-transform:uppercase}@media(max-width:720px){.atlas-ai-launcher{display:flex;justify-content:flex-end}}
+      `}</style>
     </>
   );
 }
