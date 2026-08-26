@@ -3,11 +3,17 @@
 import { createHash, randomBytes } from "node:crypto";
 import { isUuid } from "@/lib/appointments";
 import { normalizeAuthPhone } from "@/lib/phone-auth";
+import { readClinicMetaWhatsAppConfig } from "@/lib/reminders/meta-clinic-config";
 import {
   atlasWhatsAppRecipientAllowed,
+  ATLAS_WHATSAPP_META_TEST_MODE,
+  ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE,
   readAtlasWhatsAppRuntime,
 } from "@/lib/reminders/whatsapp-runtime";
-import { sendWhatsAppStaffInviteTemplate } from "@/lib/reminders/whatsapp";
+import {
+  sendWhatsAppStaffInviteTemplate,
+  type WhatsAppConfig,
+} from "@/lib/reminders/whatsapp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,6 +25,12 @@ export type InviteLinkState = {
 
 type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
 type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+type InviteWhatsAppDelivery = {
+  config: WhatsAppConfig;
+  templateName: string;
+};
 
 function atlasSiteUrl() {
   const configured = process.env.SITE_URL?.trim();
@@ -30,6 +42,29 @@ function atlasSiteUrl() {
   const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   if (productionHost) return `https://${productionHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
   return "http://localhost:3000";
+}
+
+async function resolveInviteWhatsAppDelivery(
+  admin: AdminClient,
+  clinicId: string,
+  recipientPhone: string,
+): Promise<InviteWhatsAppDelivery | null> {
+  const requestedMode = process.env.ATLAS_WHATSAPP_MODE?.trim().toLowerCase() || "production";
+  if (requestedMode === ATLAS_WHATSAPP_META_TEST_MODE) {
+    const runtime = readAtlasWhatsAppRuntime();
+    if (!runtime || runtime.mode !== ATLAS_WHATSAPP_META_TEST_MODE) return null;
+    if (!atlasWhatsAppRecipientAllowed(runtime, recipientPhone)) return null;
+    return { config: runtime.config, templateName: runtime.staffInviteTemplateName };
+  }
+
+  // Production delivery stays clinic-scoped and therefore keeps the existing
+  // real +964 Coexistence sender. Test credentials never replace this row.
+  const clinicConnection = await readClinicMetaWhatsAppConfig(admin, clinicId);
+  if (!clinicConnection) return null;
+  return {
+    config: clinicConnection.config,
+    templateName: process.env.WHATSAPP_STAFF_INVITE_TEMPLATE?.trim() || ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE,
+  };
 }
 
 export async function createReceptionistInviteLink(
@@ -86,19 +121,25 @@ export async function createReceptionistInviteLink(
 
   const url = `${atlasSiteUrl()}/join/${token}`;
   if (directInviteRequested && recipientPhone) {
-    let runtimeConfig;
-    try { runtimeConfig = readAtlasWhatsAppRuntime(); } catch {
-      return { status: "error", message: "The invitation link was created, but WhatsApp is not configured.", url };
+    let delivery: InviteWhatsAppDelivery | null;
+    try {
+      delivery = await resolveInviteWhatsAppDelivery(admin, clinicId, recipientPhone);
+    } catch {
+      delivery = null;
     }
-    if (!runtimeConfig || !atlasWhatsAppRecipientAllowed(runtimeConfig, recipientPhone)) {
-      return { status: "error", message: "The invitation link was created, but that WhatsApp recipient is not allowed in this environment.", url };
+    if (!delivery) {
+      return {
+        status: "error",
+        message: "The invitation link was created, but WhatsApp is not available for this clinic or recipient in this environment.",
+        url,
+      };
     }
     const sent = await sendWhatsAppStaffInviteTemplate(
       recipientPhone,
       clinic.name,
       url,
-      runtimeConfig.staffInviteTemplateName,
-      runtimeConfig.config,
+      delivery.templateName,
+      delivery.config,
     );
     if (!sent.accepted) {
       return { status: "error", message: `The invitation link was created, but WhatsApp delivery failed (${sent.errorCode}).`, url };
