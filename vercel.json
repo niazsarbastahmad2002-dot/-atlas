@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feature/offline-reception-continuity": true,
       "*": false,
       "**": false
     }
