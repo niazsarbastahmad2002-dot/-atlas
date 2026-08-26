@@ -6,11 +6,13 @@ import test from "node:test";
 const path = (value: string) => join(process.cwd(), value);
 const source = (value: string) => readFileSync(path(value), "utf8");
 
-test("Atlas home has one primary product entry and signed-in users skip it", () => {
+test("Atlas home offers Online and Local as two clear modes while signed-in users keep their fast path", () => {
   const home = source("app/page.tsx");
   const config = source("next.config.mjs");
   assert.match(home, /if \(data\.user\) redirect\("\/dashboard"\)/);
-  assert.equal((home.match(/>Open Atlas</g) ?? []).length, 1);
+  assert.equal((home.match(/>Atlas Online</g) ?? []).length, 1);
+  assert.equal((home.match(/>Atlas Local</g) ?? []).length, 1);
+  assert.match(home, /href="\/atlas-local\.html"/);
   assert.match(home, /Try a sample clinic/);
   assert.doesNotMatch(config, /source:\s*"\/"[\s\S]*destination:\s*"\/dashboard"/);
 });
