@@ -6,8 +6,8 @@ import { maskPhone, normalizeAuthPhone, normalizeOtpToken } from "@/lib/phone-au
 import { createClient } from "@/lib/supabase/client";
 
 const PHONE_SIGNUP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED === "true";
-const WHATSAPP_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true";
 const DIRECT_META_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_DIRECT_META_OTP_ENABLED === "true";
+const WHATSAPP_OTP_ENABLED = DIRECT_META_OTP_ENABLED || process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true";
 const COOLDOWN_KEY = "atlas-join-phone-otp-cooldown";
 
 type Delivery = "sms" | "whatsapp";
@@ -121,7 +121,7 @@ export function JoinClinicAuth({ token, locale }: {
   const [phoneInput, setPhoneInput] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [delivery, setDelivery] = useState<Delivery>("sms");
+  const [delivery, setDelivery] = useState<Delivery>(DIRECT_META_OTP_ENABLED ? "whatsapp" : "sms");
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
@@ -248,7 +248,9 @@ export function JoinClinicAuth({ token, locale }: {
           {WHATSAPP_OTP_ENABLED ? (
             <fieldset className="auth-delivery-options">
               <legend>{t.delivery}</legend>
-              <label><input type="radio" name="delivery" value="sms" checked={delivery === "sms"} onChange={() => setDelivery("sms")} /> {t.sms}</label>
+              {!DIRECT_META_OTP_ENABLED ? (
+                <label><input type="radio" name="delivery" value="sms" checked={delivery === "sms"} onChange={() => setDelivery("sms")} /> {t.sms}</label>
+              ) : null}
               <label><input type="radio" name="delivery" value="whatsapp" checked={delivery === "whatsapp"} onChange={() => setDelivery("whatsapp")} /> {t.whatsapp}</label>
             </fieldset>
           ) : null}
