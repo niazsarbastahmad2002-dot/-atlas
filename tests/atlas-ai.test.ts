@@ -97,7 +97,7 @@ test("keeps Atlas AI useful but read-only and outside patient-specific clinical 
   assert.match(atlasAiSystemPrompt, /conversation history/i);
 });
 
-test("Atlas Core answers useful clinic questions even without a paid model", () => {
+test("Atlas Core answers useful clinic questions even without an external model", () => {
   const context = fixtureContext();
 
   assert.match(buildAtlasCoreAnswer("How busy are we today?", context), /2 appointments/i);
@@ -130,20 +130,44 @@ test("Atlas AI sends multi-turn history without allowing system-role injection",
   assert.match(route, /\.\.\.conversation/);
 });
 
-test("Atlas AI falls back cleanly when the external model provider is blocked", () => {
+test("Atlas AI prefers the free Cloudflare Workers AI provider", () => {
+  const provider = read("lib/atlas-ai-cloudflare.ts");
+  const route = read("app/api/atlas-ai/route.ts");
+
+  assert.match(provider, /CLOUDFLARE_ACCOUNT_ID/);
+  assert.match(provider, /CLOUDFLARE_WORKERS_AI_TOKEN/);
+  assert.match(provider, /@cf\/openai\/gpt-oss-120b/);
+  assert.match(provider, /\/ai\/v1\/chat\/completions/);
+  assert.match(route, /callCloudflareFreeModel/);
+  assert.match(route, /cloudflare_workers_ai/);
+  assert.doesNotMatch(route, /ATLAS_AI_FULL_MODEL_ENABLED/);
+  assert.doesNotMatch(route, /response\.text\(/);
+});
+
+test("Atlas never hits paid Vercel Gateway automatically", () => {
+  const provider = read("lib/atlas-ai-cloudflare.ts");
+  const route = read("app/api/atlas-ai/route.ts");
+
+  assert.match(provider, /atlasPaidVercelGatewayEnabled/);
+  assert.match(provider, /AI_GATEWAY_API_KEY/);
+  assert.doesNotMatch(provider, /VERCEL_OIDC_TOKEN/);
+  assert.match(route, /if \(!atlasPaidVercelGatewayEnabled\(\)\) return null/);
+  assert.match(route, /callPaidVercelModel/);
+});
+
+test("Atlas AI falls back cleanly when the free provider is unavailable or quota-limited", () => {
   const route = read("app/api/atlas-ai/route.ts");
   assert.match(route, /buildAtlasCoreAnswer/);
   assert.match(route, /mode: "atlas_core"/);
   assert.match(route, /MODEL_RETRY_DELAY_MS/);
   assert.match(route, /modelUnavailableUntil/);
-  assert.match(route, /status === 401 \|\| gatewayResponse\.status === 402 \|\| gatewayResponse\.status === 403/);
+  assert.match(route, /if \(!response\.ok\)/);
+  assert.doesNotMatch(route, /diagnostic/);
 });
 
-test("Atlas AI Gateway OIDC includes the protocol auth headers Vercel requires", () => {
+test("Atlas AI Gateway helper still protects any explicitly configured paid fallback", () => {
   const gateway = read("lib/atlas-ai-gateway.ts");
   const route = read("app/api/atlas-ai/route.ts");
-  assert.match(gateway, /x-vercel-oidc-token/);
-  assert.match(gateway, /@vercel\/request-context/);
   assert.match(gateway, /AI_GATEWAY_API_KEY/);
   assert.match(gateway, /ai-gateway-protocol-version/);
   assert.match(gateway, /ai-gateway-auth-method/);
