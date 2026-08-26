@@ -97,10 +97,12 @@ test("Atlas AI has an honest user-question privacy boundary", () => {
   assert.match(client, /لا تكتب اسم المريض أو رقم الهاتف/);
 });
 
-test("Atlas AI reads Vercel OIDC from runtime context without logging credentials", () => {
+test("Atlas AI uses current Vercel runtime auth and reasoning request shape", () => {
   const route = read("app/api/atlas-ai/route.ts");
   assert.match(route, /x-vercel-oidc-token/);
   assert.match(route, /@vercel\/request-context/);
   assert.match(route, /AI_GATEWAY_API_KEY/);
+  assert.match(route, /reasoning: \{ effort: "low" \}/);
+  assert.doesNotMatch(route, /reasoning_effort/);
   assert.doesNotMatch(route, /console\.(?:log|error)\([^\n]*gatewayToken/);
 });
