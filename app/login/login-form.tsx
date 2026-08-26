@@ -7,8 +7,8 @@ import type { UiLocale } from "@/lib/i18n/ui";
 
 const COOLDOWN_KEY = "atlas-phone-otp-cooldown";
 const PHONE_SIGNUP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED === "true";
-const WHATSAPP_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true";
 const DIRECT_META_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_DIRECT_META_OTP_ENABLED === "true";
+const WHATSAPP_OTP_ENABLED = DIRECT_META_OTP_ENABLED || process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true";
 const POST_AUTH_DESTINATION = "/dashboard/select-clinic";
 
 type Delivery = "sms" | "whatsapp";
@@ -196,7 +196,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
   const [phoneInput, setPhoneInput] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState("");
   const [token, setToken] = useState("");
-  const [delivery, setDelivery] = useState<Delivery>("sms");
+  const [delivery, setDelivery] = useState<Delivery>(DIRECT_META_OTP_ENABLED ? "whatsapp" : "sms");
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [busy, setBusy] = useState(false);
   const [quickBusy, setQuickBusy] = useState(false);
@@ -382,7 +382,9 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         {WHATSAPP_OTP_ENABLED ? (
           <fieldset className="auth-delivery-options">
             <legend>{copy.delivery}</legend>
-            <label><input type="radio" name="delivery" value="sms" checked={delivery === "sms"} onChange={() => setDelivery("sms")} /> {copy.sms}</label>
+            {!DIRECT_META_OTP_ENABLED ? (
+              <label><input type="radio" name="delivery" value="sms" checked={delivery === "sms"} onChange={() => setDelivery("sms")} /> {copy.sms}</label>
+            ) : null}
             <label><input type="radio" name="delivery" value="whatsapp" checked={delivery === "whatsapp"} onChange={() => setDelivery("whatsapp")} /> {copy.whatsapp}</label>
           </fieldset>
         ) : null}
