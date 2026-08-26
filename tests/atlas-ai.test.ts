@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   atlasAiSystemPrompt,
@@ -6,6 +7,8 @@ import {
   shiftAtlasDay,
   type AtlasAiAppointment,
 } from "../lib/atlas-ai.ts";
+
+const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("builds useful clinic-operation summaries without patient identifiers", () => {
   const rows = [
@@ -85,4 +88,19 @@ test("keeps Atlas AI operational and read-only", () => {
   assert.match(atlasAiSystemPrompt, /read-only/i);
   assert.match(atlasAiSystemPrompt, /Do not provide diagnosis/i);
   assert.match(atlasAiSystemPrompt, /Never claim that you booked/i);
+});
+
+test("Atlas AI has an honest user-question privacy boundary", () => {
+  const client = read("app/dashboard/assistant/atlas-ai-client.tsx");
+  assert.match(client, /Atlas sends your question plus aggregated appointment statistics/);
+  assert.match(client, /Do not include patient names, phone numbers, message contents, or clinical information/);
+  assert.match(client, /لا تكتب اسم المريض أو رقم الهاتف/);
+});
+
+test("Atlas AI reads Vercel OIDC from runtime context without logging credentials", () => {
+  const route = read("app/api/atlas-ai/route.ts");
+  assert.match(route, /x-vercel-oidc-token/);
+  assert.match(route, /@vercel\/request-context/);
+  assert.match(route, /AI_GATEWAY_API_KEY/);
+  assert.doesNotMatch(route, /console\.(?:log|error)\([^\n]*gatewayToken/);
 });
