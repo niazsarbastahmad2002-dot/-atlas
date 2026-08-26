@@ -1,14 +1,22 @@
-const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v5";
+const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v6";
 const ATLAS_OFFLINE_PAGE = "/atlas-offline.html";
 const ATLAS_LOCAL_PAGE = "/atlas-local.html";
 const ATLAS_LOCAL_SCRIPT = "/atlas-local.js";
 const ATLAS_LOCAL_MANIFEST = "/atlas-local.webmanifest";
 const ATLAS_LOCAL_ICON = "/atlas-icon.svg";
-
+const ATLAS_LOCAL_PARTS = [
+  "/atlas-local-copy.js",
+  "/atlas-local-base.js",
+  "/atlas-local-core.js",
+  "/atlas-local-polish.js",
+  "/atlas-local-app.js",
+  "/atlas-local-after.js",
+];
 const ATLAS_LOCAL_ASSETS = new Set([
   ATLAS_LOCAL_SCRIPT,
   ATLAS_LOCAL_MANIFEST,
   ATLAS_LOCAL_ICON,
+  ...ATLAS_LOCAL_PARTS,
 ]);
 
 self.addEventListener("install", (event) => {
@@ -20,6 +28,7 @@ self.addEventListener("install", (event) => {
         new Request(ATLAS_LOCAL_SCRIPT, { cache: "reload" }),
         new Request(ATLAS_LOCAL_MANIFEST, { cache: "reload" }),
         new Request(ATLAS_LOCAL_ICON, { cache: "reload" }),
+        ...ATLAS_LOCAL_PARTS.map((path) => new Request(path, { cache: "reload" })),
       ]))
       .then(() => self.skipWaiting()),
   );
@@ -30,8 +39,8 @@ self.addEventListener("activate", (event) => {
     caches.keys()
       .then((keys) => Promise.all(
         keys
-          .filter((key) => key.startsWith("atlas-offline-shell-") && key !== ATLAS_OFFLINE_CACHE)
-          .map((key) => caches.delete(key)),
+          .filter((cacheKey) => cacheKey.startsWith("atlas-offline-shell-") && cacheKey !== ATLAS_OFFLINE_CACHE)
+          .map((cacheKey) => caches.delete(cacheKey)),
       ))
       .then(() => self.clients.claim()),
   );
@@ -53,7 +62,6 @@ async function networkFirstLocalAsset(request) {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
@@ -61,7 +69,6 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(networkFirstLocalAsset(request));
     return;
   }
-
   if (request.mode !== "navigate") return;
 
   if (url.pathname === ATLAS_LOCAL_PAGE) {
@@ -83,7 +90,6 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (!url.pathname.startsWith("/dashboard")) return;
-
   event.respondWith((async () => {
     try {
       const response = await fetch(request);
