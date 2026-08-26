@@ -8,6 +8,7 @@ import {
   atlasBaghdadDay,
   atlasDayStartIso,
   buildAtlasAiClinicContext,
+  buildAtlasCoreAnswer,
   shiftAtlasDay,
   type AtlasAiAppointment,
 } from "@/lib/atlas-ai";
@@ -19,7 +20,9 @@ export const dynamic = "force-dynamic";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 18;
+const MODEL_RETRY_DELAY_MS = 10 * 60_000;
 const requestBuckets = new Map<string, { count: number; resetAt: number }>();
+let modelUnavailableUntil = 0;
 
 type AtlasAiMessage = {
   role: "user" | "assistant";
@@ -69,22 +72,16 @@ function parseConversation(body: Record<string, unknown>): AtlasAiMessage[] | nu
   return messages;
 }
 
-function gatewayError(status: number) {
-  if (status === 402) return NextResponse.json({ error: "ai_budget" }, { status: 503 });
-  if (status === 429) return NextResponse.json({ error: "ai_busy" }, { status: 429 });
-  if (status === 401 || status === 403) return NextResponse.json({ error: "ai_auth" }, { status: 503 });
-  return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
-}
-
 async function safeGatewayErrorCode(response: Response) {
   try {
     const payload = await response.clone().json() as {
-      error?: { code?: string } | string;
+      error?: { code?: string; type?: string } | string;
       code?: string;
     };
     if (typeof payload.code === "string") return payload.code.slice(0, 80);
-    if (payload.error && typeof payload.error === "object" && typeof payload.error.code === "string") {
-      return payload.error.code.slice(0, 80);
+    if (payload.error && typeof payload.error === "object") {
+      if (typeof payload.error.code === "string") return payload.error.code.slice(0, 80);
+      if (typeof payload.error.type === "string") return payload.error.type.slice(0, 80);
     }
     return "unknown";
   } catch {
@@ -154,10 +151,15 @@ export async function POST(request: Request) {
     (Array.isArray(appointmentRows) ? appointmentRows : []) as AtlasAiAppointment[],
     { clinicName: clinic.name },
   );
+  const latestQuestion = conversation.at(-1)?.content ?? "";
+  const coreAnswer = () => buildAtlasCoreAnswer(latestQuestion, context);
 
   const gatewayHeaders = atlasGatewayHeaders(request);
-  if (!gatewayHeaders) {
-    return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
+  if (!gatewayHeaders || Date.now() < modelUnavailableUntil) {
+    return NextResponse.json(
+      { answer: coreAnswer(), mode: "atlas_core" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   let gatewayResponse: Response;
@@ -181,25 +183,41 @@ export async function POST(request: Request) {
       signal: AbortSignal.timeout(30_000),
     });
   } catch {
-    return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
+    modelUnavailableUntil = Date.now() + MODEL_RETRY_DELAY_MS;
+    return NextResponse.json(
+      { answer: coreAnswer(), mode: "atlas_core" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   if (!gatewayResponse.ok) {
-    console.error("Atlas AI gateway request failed", {
+    const code = await safeGatewayErrorCode(gatewayResponse);
+    if (gatewayResponse.status === 401 || gatewayResponse.status === 402 || gatewayResponse.status === 403 || gatewayResponse.status >= 500) {
+      modelUnavailableUntil = Date.now() + MODEL_RETRY_DELAY_MS;
+    }
+    console.warn("Atlas AI model provider unavailable; using Atlas Core", {
       status: gatewayResponse.status,
-      code: await safeGatewayErrorCode(gatewayResponse),
+      code,
     });
-    return gatewayError(gatewayResponse.status);
+    return NextResponse.json(
+      { answer: coreAnswer(), mode: "atlas_core" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const payload = await gatewayResponse.json() as {
     choices?: Array<{ message?: { content?: string | null } }>;
   };
   const answer = payload.choices?.[0]?.message?.content?.trim();
-  if (!answer) return NextResponse.json({ error: "ai_empty" }, { status: 503 });
+  if (!answer) {
+    return NextResponse.json(
+      { answer: coreAnswer(), mode: "atlas_core" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   return NextResponse.json(
-    { answer },
+    { answer, mode: "model" },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
