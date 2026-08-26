@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const PHONE_SIGNUP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED === "true";
 const WHATSAPP_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true";
+const DIRECT_META_OTP_ENABLED = process.env.NEXT_PUBLIC_ATLAS_DIRECT_META_OTP_ENABLED === "true";
 const COOLDOWN_KEY = "atlas-join-phone-otp-cooldown";
 
 type Delivery = "sms" | "whatsapp";
@@ -176,7 +177,7 @@ export function JoinClinicAuth({ token, locale }: {
         phone: normalized,
         options: {
           shouldCreateUser: PHONE_SIGNUP_ENABLED,
-          ...(delivery === "whatsapp" ? { channel: "whatsapp" as const } : {}),
+          ...(delivery === "whatsapp" && !DIRECT_META_OTP_ENABLED ? { channel: "whatsapp" as const } : {}),
         },
       });
       if (authError) {
