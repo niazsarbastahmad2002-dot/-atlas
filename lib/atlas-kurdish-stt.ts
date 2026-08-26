@@ -1,4 +1,4 @@
-import { cleanAtlasVoiceTranscript, type AtlasVoiceLocale } from "@/lib/atlas-voice";
+import { cleanAtlasVoiceTranscript, type AtlasVoiceLocale } from "./atlas-voice";
 
 const DEFAULT_KURDISH_STT_ENDPOINT = "https://www.kurdishtts.com/api/stt-proxy";
 
