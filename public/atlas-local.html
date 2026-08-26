@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#071f19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Atlas Local" />
+  <link rel="manifest" href="/atlas-local.webmanifest" />
+  <link rel="icon" href="/atlas-icon.svg" />
+  <title>Atlas Local</title>
+  <style>
+    :root{color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef5f2;color:#102821;--ink:#102821;--muted:#6f807a;--line:#d8e6e0;--accent:#0b8b68;--accent-soft:#e7f5f0;--danger:#a23d3d;--warning:#fff6df;--header:#08291f}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(180deg,#f9fbfa 0,#edf5f2 100%)}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}header{position:sticky;top:0;z-index:20;min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px clamp(16px,4vw,48px);background:var(--header);color:#fff}.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.18em}.brand-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#0ea57d;font-size:18px;letter-spacing:0}.header-actions{display:flex;align-items:center;gap:8px}.pill{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:7px 10px;font-size:10px;font-weight:850;letter-spacing:.06em;white-space:nowrap}.icon-button{width:42px;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#fff;font-weight:900}.shell{width:min(1080px,calc(100% - 28px));margin:24px auto 70px}.card{border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.96);box-shadow:0 16px 42px rgba(6,51,38,.06)}.auth{width:min(520px,100%);margin:clamp(30px,8vh,88px) auto;padding:24px}.eyebrow{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#168261}.auth h1,.workspace h1{margin:7px 0 8px;line-height:1.08}.auth h1{font-size:clamp(28px,6vw,40px)}.muted{color:var(--muted);font-size:13px;line-height:1.55}.notice{margin:14px 0;border-radius:14px;padding:12px 14px;background:var(--warning);color:#654d12;font-size:12px;font-weight:720;line-height:1.5}.notice.safe{background:#eaf7f2;color:#145c49}.notice.error{background:#fff0f0;color:#8e3030}.stack{display:grid;gap:12px}.field{display:grid;gap:6px}.field label{font-size:12px;font-weight:800}.field input,.field select,.date-input{width:100%;min-height:48px;border:1px solid #cfe0d9;border-radius:13px;background:#fff;padding:10px 12px;color:var(--ink);outline:none}.field input:focus,.field select:focus,.date-input:focus{border-color:#54a98f;box-shadow:0 0 0 3px rgba(11,139,104,.10)}.button{min-height:48px;border:0;border-radius:13px;padding:0 16px;background:var(--accent);color:#fff;font-weight:880}.button.secondary{border:1px solid #cfe0d9;background:#fff;color:#176e56}.button.ghost{border:1px solid transparent;background:transparent;color:#176e56}.button.danger{background:#fff;border:1px solid #eccccc;color:var(--danger)}.language-row{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 18px}.language-row button{min-height:38px;border:1px solid #d5e3dd;border-radius:999px;background:#fff;padding:0 12px;color:#335d50;font-weight:820}.language-row button.active{border-color:#7bc0aa;background:#eaf7f2;color:#0e6f54}.workspace{display:none}.workspace.show{display:block}.workspace-head{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;margin-bottom:14px}.workspace-title{min-width:0}.workspace-title h1{font-size:clamp(26px,5vw,40px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.doctor-line{margin-top:5px;color:var(--muted);font-size:12px}.mode-note{border:1px solid #d8e8e1;border-radius:14px;background:#f8fbfa;padding:11px 13px;color:#577168;font-size:11px;line-height:1.45}.daybar{display:grid;grid-template-columns:auto minmax(170px,1fr) auto auto;gap:8px;align-items:center;margin-bottom:14px}.daybar button{min-height:46px;border:1px solid #cfe0d9;border-radius:12px;background:#fff;color:#176e56;font-weight:850;padding:0 14px}.date-input{min-width:0}.composer{padding:18px;margin-bottom:14px}.composer-grid{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(150px,1fr) minmax(130px,.7fr) auto;gap:10px;align-items:end}.composer .button{min-width:118px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 2px 10px}.section-head h2{margin:0;font-size:16px}.count{font-size:11px;color:var(--muted)}.list{display:grid;gap:9px}.appointment{display:grid;grid-template-columns:minmax(82px,110px) minmax(0,1fr) minmax(140px,170px);gap:14px;align-items:center;padding:14px 16px}.appointment .time{font-size:19px;font-weight:900}.appointment .patient{font-size:15px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.appointment .meta{margin-top:4px;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status-select{width:100%;min-height:42px;border:1px solid #d1e1da;border-radius:12px;background:var(--accent-soft);padding:8px 10px;color:#176e56;font-size:12px;font-weight:820}.empty{padding:30px;text-align:center}.empty strong{display:block;margin-bottom:6px}.offline-ready{display:none;margin-bottom:14px;border:1px solid #cfe6dc;border-radius:14px;background:#eaf7f2;padding:11px 13px;color:#145c49;font-size:12px;font-weight:750}.offline-ready.show{display:block}dialog{width:min(560px,calc(100% - 24px));border:0;border-radius:20px;padding:0;box-shadow:0 28px 80px rgba(0,0,0,.22)}dialog::backdrop{background:rgba(3,22,17,.45)}.dialog-body{padding:20px}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.dialog-head h2{margin:0}.close-button{width:40px;height:40px;border:1px solid #d6e4de;border-radius:12px;background:#fff}.settings-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}.settings-divider{height:1px;background:#e2ece8;margin:18px 0}.tiny{font-size:10.5px;line-height:1.5;color:var(--muted)}.hidden{display:none!important}.lock-link{color:#fff;background:transparent;border:0;font-size:11px;font-weight:850;padding:8px}.footer{padding:18px 0 0;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.5}.install-tip{margin-top:14px;padding-top:13px;border-top:1px solid #e2ece8}.danger-zone{display:grid;gap:8px}.connection-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#9bb0a8;margin-inline-end:5px}.connection-dot.on{background:#32b47f}.connection-dot.off{background:#d39a32}@media(max-width:760px){header{min-height:64px;padding:12px 15px}.pill{max-width:150px;overflow:hidden;text-overflow:ellipsis}.shell{margin-top:16px}.workspace-head{grid-template-columns:1fr}.daybar{grid-template-columns:1fr 1fr}.daybar .date-input{grid-column:1/-1;grid-row:1}.composer-grid{grid-template-columns:1fr 1fr}.composer-grid .patient-field{grid-column:1/-1}.composer-grid .button{grid-column:1/-1}.appointment{grid-template-columns:78px minmax(0,1fr);gap:8px 11px}.appointment .status-select{grid-column:1/-1}.settings-actions{grid-template-columns:1fr}}@media(max-width:420px){.composer-grid{grid-template-columns:1fr}.composer-grid .patient-field,.composer-grid .button{grid-column:auto}.daybar{grid-template-columns:1fr 1fr}.daybar button{padding:0 8px}.auth{padding:20px}.appointment{padding:13px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="brand-mark">A</span><span>ATLAS LOCAL</span></div>
+    <div class="header-actions">
+      <span class="pill" id="connection-pill"><span class="connection-dot" id="connection-dot"></span><span id="connection-copy">THIS DEVICE</span></span>
+      <button class="lock-link hidden" id="lock-button" type="button">Lock</button>
+      <button class="icon-button hidden" id="settings-button" type="button" aria-label="Settings">•••</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="card auth" id="setup-screen">
+      <div class="eyebrow" data-t="setupEyebrow">Offline clinic</div>
+      <h1 data-t="setupTitle">Create Atlas Local on this device.</h1>
+      <p class="muted" data-t="setupHelp">This clinic stays separate from Atlas Online. It works without internet and never syncs automatically.</p>
+      <div class="language-row" id="setup-languages" aria-label="Language"></div>
+      <div class="notice safe" data-t="setupSafety">Appointments are encrypted on this device. Atlas Local stores scheduling details only — no clinical notes.</div>
+      <form class="stack" id="setup-form">
+        <div class="field"><label for="setup-clinic" data-t="clinicName">Clinic name</label><input id="setup-clinic" maxlength="120" required autocomplete="organization" /></div>
+        <div class="field"><label for="setup-doctor" data-t="doctorOptional">Doctor name (optional)</label><input id="setup-doctor" maxlength="120" autocomplete="name" /></div>
+        <div class="field"><label for="setup-pin" data-t="createPin">Create a 6–12 digit clinic PIN</label><input id="setup-pin" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" type="password" required autocomplete="new-password" /></div>
+        <div class="field"><label for="setup-pin-confirm" data-t="confirmPin">Confirm PIN</label><input id="setup-pin-confirm" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" type="password" required autocomplete="new-password" /></div>
+        <p class="notice error hidden" id="setup-error" role="alert"></p>
+        <button class="button" type="submit" data-t="createLocal">Create local clinic</button>
+      </form>
+    </section>
+
+    <section class="card auth hidden" id="unlock-screen">
+      <div class="eyebrow" data-t="localEyebrow">Atlas Local</div>
+      <h1 id="unlock-title" data-t="unlockTitle">Open this clinic.</h1>
+      <p class="muted" data-t="unlockHelp">Enter the clinic PIN. Nothing is sent to Atlas servers.</p>
+      <div class="language-row" id="unlock-languages" aria-label="Language"></div>
+      <form class="stack" id="unlock-form">
+        <div class="field"><label for="unlock-pin" data-t="clinicPin">Clinic PIN</label><input id="unlock-pin" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" type="password" required autocomplete="current-password" /></div>
+        <p class="notice error hidden" id="unlock-error" role="alert"></p>
+        <button class="button" type="submit" data-t="unlock">Open clinic</button>
+      </form>
+      <div class="install-tip tiny" data-t="installTip">For reliable offline use on iPhone or iPad, open this page once while online and use Share → Add to Home Screen.</div>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="offline-ready" id="offline-ready"><span data-t="offlineReady">Offline-ready. Atlas Local will keep working on this device without internet.</span></div>
+      <div class="workspace-head">
+        <div class="workspace-title">
+          <div class="eyebrow" data-t="localEyebrow">Atlas Local</div>
+          <h1 id="clinic-title">Clinic</h1>
+          <div class="doctor-line" id="doctor-line"></div>
+        </div>
+        <div class="mode-note" data-t="separationNote">Local mode is separate: these appointments stay on this device and are never merged into Atlas Online automatically.</div>
+      </div>
+
+      <div class="daybar">
+        <button type="button" id="previous-day" data-t="previous">Previous</button>
+        <input class="date-input" id="selected-day" type="date" />
+        <button type="button" id="today-button" data-t="today">Today</button>
+        <button type="button" id="next-day" data-t="next">Next</button>
+      </div>
+
+      <section class="card composer">
+        <form class="composer-grid" id="appointment-form">
+          <div class="field patient-field"><label for="patient-name" data-t="patientName">Patient name</label><input id="patient-name" maxlength="120" required autocomplete="off" /></div>
+          <div class="field"><label for="patient-phone" data-t="phoneOptional">Phone (optional)</label><input id="patient-phone" maxlength="30" inputmode="tel" autocomplete="off" /></div>
+          <div class="field"><label for="appointment-time" data-t="time">Time</label><input id="appointment-time" type="time" required /></div>
+          <button class="button" type="submit" data-t="addAppointment">Add appointment</button>
+        </form>
+        <p class="notice error hidden" id="appointment-error" role="alert"></p>
+      </section>
+
+      <div class="section-head"><h2 data-t="appointments">Appointments</h2><span class="count" id="appointment-count"></span></div>
+      <section class="list" id="appointment-list"></section>
+      <section class="card empty hidden" id="empty-state"><strong data-t="noAppointments">No appointments on this day.</strong><span class="muted" data-t="noAppointmentsHelp">Add the first patient above.</span></section>
+      <div class="footer" data-t="localFooter">Atlas Local is scheduling-only. Keep clinical notes in the clinic's approved medical record system.</div>
+    </section>
+  </main>
+
+  <dialog id="settings-dialog">
+    <div class="dialog-body">
+      <div class="dialog-head"><h2 data-t="localSettings">Local clinic settings</h2><button class="close-button" id="settings-close" type="button" aria-label="Close">×</button></div>
+      <form class="stack" id="settings-form">
+        <div class="field"><label for="settings-clinic" data-t="clinicName">Clinic name</label><input id="settings-clinic" maxlength="120" required /></div>
+        <div class="field"><label for="settings-doctor" data-t="doctorOptional">Doctor name (optional)</label><input id="settings-doctor" maxlength="120" /></div>
+        <div class="field"><label for="settings-language" data-t="language">Language</label><select id="settings-language"><option value="en">English</option><option value="ku">کوردی</option><option value="bd">بادینی</option><option value="ar">العربية</option></select></div>
+        <button class="button" type="submit" data-t="saveSettings">Save settings</button>
+      </form>
+      <div class="settings-divider"></div>
+      <div class="tiny" data-t="backupHelp">Because this clinic is not stored in the cloud, keep an encrypted backup somewhere safe. The backup can only be opened with the same clinic PIN.</div>
+      <div class="settings-actions">
+        <button class="button secondary" id="backup-button" type="button" data-t="backup">Encrypted backup</button>
+        <button class="button secondary" id="restore-button" type="button" data-t="restore">Restore backup</button>
+      </div>
+      <input class="hidden" id="restore-file" type="file" accept="application/json,.json" />
+      <p class="notice error hidden" id="settings-error" role="alert"></p>
+      <div class="settings-divider"></div>
+      <div class="settings-actions">
+        <a class="button secondary" id="online-link" href="/login" style="display:grid;place-items:center;text-decoration:none" data-t="openOnline">Open Atlas Online</a>
+        <button class="button ghost" id="dialog-lock" type="button" data-t="lock">Lock local clinic</button>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="danger-zone">
+        <div class="tiny" data-t="deleteHelp">Deleting Atlas Local removes every local appointment from this browser/device. It does not affect Atlas Online.</div>
+        <button class="button danger" id="delete-local" type="button" data-t="deleteLocal">Delete local clinic from this device</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const DB_NAME = "atlas-local-v1";
+      const STORE = "vault";
+      const META_ID = "meta";
+      const PAYLOAD_ID = "payload";
+      const BACKUP_MARKER = "atlas-local-backup-v1";
+      const ITERATIONS = 310000;
+      const MAX_APPOINTMENTS = 5000;
+      const ACTIVE_STATUSES = new Set(["pending", "confirmed"]);
+
+      const copy = {
+        en: {
+          setupEyebrow:"Offline clinic",setupTitle:"Create Atlas Local on this device.",setupHelp:"This clinic stays separate from Atlas Online. It works without internet and never syncs automatically.",setupSafety:"Appointments are encrypted on this device. Atlas Local stores scheduling details only — no clinical notes.",clinicName:"Clinic name",doctorOptional:"Doctor name (optional)",createPin:"Create a 6–12 digit clinic PIN",confirmPin:"Confirm PIN",createLocal:"Create local clinic",localEyebrow:"Atlas Local",unlockTitle:"Open this clinic.",unlockHelp:"Enter the clinic PIN. Nothing is sent to Atlas servers.",clinicPin:"Clinic PIN",unlock:"Open clinic",installTip:"For reliable offline use on iPhone or iPad, open this page once while online and use Share → Add to Home Screen.",offlineReady:"Offline-ready. Atlas Local will keep working on this device without internet.",separationNote:"Local mode is separate: these appointments stay on this device and are never merged into Atlas Online automatically.",previous:"Previous",today:"Today",next:"Next",patientName:"Patient name",phoneOptional:"Phone (optional)",time:"Time",addAppointment:"Add appointment",appointments:"Appointments",noAppointments:"No appointments on this day.",noAppointmentsHelp:"Add the first patient above.",localFooter:"Atlas Local is scheduling-only. Keep clinical notes in the clinic's approved medical record system.",localSettings:"Local clinic settings",language:"Language",saveSettings:"Save settings",backupHelp:"Because this clinic is not stored in the cloud, keep an encrypted backup somewhere safe. The backup can only be opened with the same clinic PIN.",backup:"Encrypted backup",restore:"Restore backup",openOnline:"Open Atlas Online",lock:"Lock local clinic",deleteHelp:"Deleting Atlas Local removes every local appointment from this browser/device. It does not affect Atlas Online.",deleteLocal:"Delete local clinic from this device",doctor:"Doctor",thisDevice:"THIS DEVICE",onlineLocal:"LOCAL · INTERNET AVAILABLE",offlineLocal:"LOCAL · OFFLINE",pending:"Pending",confirmed:"Confirmed",completed:"Completed",no_show:"No show",cancelled:"Cancelled",count:"appointments",pinMismatch:"The two PINs do not match.",pinFormat:"Use 6–12 digits for the clinic PIN.",setupFailed:"Atlas Local could not be created on this device.",wrongPin:"That PIN did not open this clinic.",unlockFailed:"Atlas Local could not open the local clinic.",duplicate:"That time already has an active appointment.",saveFailed:"The appointment could not be saved locally.",backupFailed:"The encrypted backup could not be created.",restoreFailed:"That file is not a valid Atlas Local backup.",restoreDone:"Backup restored. Enter its clinic PIN to open it.",deleteConfirm:"Delete every Atlas Local appointment from this device? This cannot be undone unless you have a backup.",settingsSaved:"Settings saved.",patientRequired:"Enter a patient name and appointment time."
+        },
+        ku: {
+          setupEyebrow:"کلینیکی ئۆفلاین",setupTitle:"Atlas Local لەم ئامێرە دروست بکە.",setupHelp:"ئەم کلینیکە لە Atlas Online جیاوازە. بەبێ ئینتەرنێت کار دەکات و خۆکارانە هاوکات نابێت.",setupSafety:"مەوعیدەکان لەم ئامێرە بە شێوەی پارێزراو هەڵدەگیرێن. تەنها زانیاری خشتەی کار — نە نۆتی پزیشکی.",clinicName:"ناوی کلینیک",doctorOptional:"ناوی دکتۆر (ئارەزوومەندانە)",createPin:"PIN ـێکی ٦–١٢ ژمارەیی دروست بکە",confirmPin:"PIN دووبارە بکە",createLocal:"کلینیکی ناوخۆیی دروست بکە",localEyebrow:"Atlas Local",unlockTitle:"ئەم کلینیکە بکەرەوە.",unlockHelp:"PIN ـی کلینیک بنووسە. هیچ شتێک بۆ سێرڤەری Atlas نەنێردرێت.",clinicPin:"PIN ـی کلینیک",unlock:"کردنەوەی کلینیک",installTip:"بۆ کارکردنی باشی ئۆفلاین لە iPhone/iPad، یەکجار بە ئینتەرنێت ئەم پەڕەیە بکەرەوە و Share → Add to Home Screen هەڵبژێرە.",offlineReady:"ئامادەی ئۆفلاینە. Atlas Local بەبێ ئینتەرنێت لەم ئامێرە کار دەکات.",separationNote:"Local جیاوازە: ئەم مەوعیدانە تەنها لەم ئامێرەن و خۆکارانە ناخرێنە Atlas Online.",previous:"پێشوو",today:"ئەمڕۆ",next:"داهاتوو",patientName:"ناوی نەخۆش",phoneOptional:"ژمارەی مۆبایل (ئارەزوومەندانە)",time:"کات",addAppointment:"مەوعید زیاد بکە",appointments:"مەوعیدەکان",noAppointments:"لەم ڕۆژە هیچ مەوعیدێک نییە.",noAppointmentsHelp:"یەکەم نەخۆش لە سەرەوە زیاد بکە.",localFooter:"Atlas Local تەنها بۆ خشتە و مەوعیدە. نۆتی پزیشکی لە سیستەمی تایبەتی کلینیکدا هەڵبگرە.",localSettings:"ڕێکخستنەکانی کلینیکی Local",language:"زمان",saveSettings:"ڕێکخستنەکان هەڵبگرە",backupHelp:"چونکە ئەم کلینیکە لە کلاود نییە، backup ـێکی کۆدکراو لە شوێنێکی پارێزراو هەڵبگرە. تەنها بە هەمان PIN دەکرێتەوە.",backup:"Backup ـی پارێزراو",restore:"گەڕاندنەوەی backup",openOnline:"کردنەوەی Atlas Online",lock:"داخستنی کلینیک",deleteHelp:"سڕینەوەی Atlas Local هەموو مەوعیدە ناوخۆییەکان لەم ئامێرە دەسڕێتەوە و کاریگەری لە Atlas Online نییە.",deleteLocal:"سڕینەوەی کلینیکی Local",doctor:"دکتۆر",thisDevice:"ئەم ئامێرە",onlineLocal:"LOCAL · ئینتەرنێت هەیە",offlineLocal:"LOCAL · ئۆفلاین",pending:"چاوەڕوان",confirmed:"پشتڕاستکراو",completed:"تەواو",no_show:"نەهات",cancelled:"هەڵوەشاوە",count:"مەوعید",pinMismatch:"دوو PIN ـەکە وەک یەک نین.",pinFormat:"PIN دەبێت ٦–١٢ ژمارە بێت.",setupFailed:"Atlas Local لەم ئامێرە دروست نەکرا.",wrongPin:"ئەم PIN ـە کلینیکەکەی نەکردەوە.",unlockFailed:"Atlas Local نەیتوانی کلینیکەکە بکاتەوە.",duplicate:"لەم کاتەدا پێشتر مەوعیدێکی چالاک هەیە.",saveFailed:"مەوعیدەکە بە ناوخۆیی هەڵنەگیرا.",backupFailed:"Backup دروست نەکرا.",restoreFailed:"ئەم فایلە backup ـی دروستی Atlas Local نییە.",restoreDone:"Backup گەڕێندرایەوە. PIN ـی کلینیک بنووسە بۆ کردنەوە.",deleteConfirm:"هەموو مەوعیدەکانی Atlas Local لەم ئامێرە بسڕدرێنەوە؟ ئەگەر backup نەبێت ناگەڕێنرێنەوە.",settingsSaved:"ڕێکخستنەکان هەڵگیران.",patientRequired:"ناوی نەخۆش و کاتی مەوعید بنووسە."
+        },
+        bd: {
+          setupEyebrow:"کلینیکا ئۆفلاین",setupTitle:"Atlas Local ل سەر ڤێ ئامێرێ دروست بکە.",setupHelp:"ئەم کلینیکە ژ Atlas Online جودایە. بێ ئینتەرنێت کار دکەت و خودکار هاوکات نابیت.",setupSafety:"مەوعید ل سەر ڤێ ئامێرێ ب پاراستی هاتین هەلگرتن. تەنێ زانیارییا خشتەی کار — نە تێبینیێن پزیشکی.",clinicName:"ناڤێ کلینیکێ",doctorOptional:"ناڤێ دکتۆری (ئارەزوومەندانە)",createPin:"PIN ـەکا ٦–١٢ ژمارەیی دروست بکە",confirmPin:"PIN دووبارە بکە",createLocal:"کلینیکا ناوخۆیی دروست بکە",localEyebrow:"Atlas Local",unlockTitle:"ڤێ کلینیکێ ڤەکە.",unlockHelp:"PIN ـا کلینیکێ بنڤیسە. چ تشت بۆ سێرڤەرێن Atlas ناهێتە هنارتن.",clinicPin:"PIN ـا کلینیکێ",unlock:"کلینیکێ ڤەکە",installTip:"بۆ کارکرنا باش یا ئۆفلاین ل iPhone/iPad، جارەکێ ب ئینتەرنێت ڤێ پەڕێ ڤەکە و Share → Add to Home Screen بکە.",offlineReady:"بۆ ئۆفلاین ئامادەیە. Atlas Local بێ ئینتەرنێت ل سەر ڤێ ئامێرێ کار دکەت.",separationNote:"Local جودایە: ئەم مەوعید تەنێ ل سەر ڤێ ئامێرێن و خودکار ناچنە Atlas Online.",previous:"بەرێ",today:"ئەڤرۆ",next:"پاش",patientName:"ناڤێ نەخۆشی",phoneOptional:"ژمارا موبایلێ (ئارەزوومەندانە)",time:"دەم",addAppointment:"مەوعید زێدە بکە",appointments:"مەوعید",noAppointments:"ل ڤێ ڕۆژێ چ مەوعید نینن.",noAppointmentsHelp:"نەخۆشێ ئێکێ ل سەرێ زێدە بکە.",localFooter:"Atlas Local تەنێ بۆ خشتە و مەوعیدانە. تێبینیێن پزیشکی د ناڤ سیستەمێ پەسەندکریێ کلینیکێ دا هەلگرە.",localSettings:"ڕێکخستنێن کلینیکا Local",language:"زمان",saveSettings:"ڕێکخستنان هەلگرە",backupHelp:"ژبەر کو ئەم کلینیکە ل کلاودێ نینە، backup ـەکا کۆدکری ل جهەکێ پاراستی هەلگرە. تەنێ ب هەمان PIN دهێتە ڤەکرن.",backup:"Backup ـا پاراستی",restore:"ڤەگەراندنا backup",openOnline:"Atlas Online ڤەکە",lock:"کلینیکێ قفل بکە",deleteHelp:"ژێبرنا Atlas Local هەمی مەوعیدێن ناوخۆیی ژ ڤێ ئامێرێ دژبریت و کاریگەری ل Atlas Online نینە.",deleteLocal:"کلینیکا Local ژێببە",doctor:"دکتۆر",thisDevice:"ڤێ ئامێرێ",onlineLocal:"LOCAL · ئینتەرنێت هەیە",offlineLocal:"LOCAL · ئۆفلاین",pending:"چاوەڕێ",confirmed:"پشتڕاستکری",completed:"تەواو",no_show:"نەهات",cancelled:"هەلوەشاندی",count:"مەوعید",pinMismatch:"هەردوو PIN وەک هەڤ نینن.",pinFormat:"PIN دبێت ٦–١٢ ژمارە بیت.",setupFailed:"Atlas Local ل سەر ڤێ ئامێرێ نەهات دروستکرن.",wrongPin:"ڤێ PIN ـێ کلینیک نەڤەکر.",unlockFailed:"Atlas Local نەشیا کلینیکێ ڤەکەت.",duplicate:"ل ڤی دەمی مەوعیدەکا چالاک هەیە.",saveFailed:"مەوعید نەهات هەلگرتن.",backupFailed:"Backup نەهات دروستکرن.",restoreFailed:"ئەم فایل backup ـا دروست یا Atlas Local نینە.",restoreDone:"Backup هات ڤەگەراندن. PIN ـا کلینیکێ بنڤیسە.",deleteConfirm:"هەمی مەوعیدێن Atlas Local ژ ڤێ ئامێرێ بهێن ژێبرن؟ بێ backup ناگەڕنەوە.",settingsSaved:"ڕێکخستن هاتن هەلگرتن.",patientRequired:"ناڤێ نەخۆشی و دەمێ مەوعیدی بنڤیسە."
+        },
+        ar: {
+          setupEyebrow:"عيادة بدون إنترنت",setupTitle:"أنشئ Atlas Local على هذا الجهاز.",setupHelp:"هذه العيادة منفصلة عن Atlas Online. تعمل بدون إنترنت ولا تتزامن تلقائياً.",setupSafety:"المواعيد مشفرة على هذا الجهاز. Atlas Local يحفظ معلومات الجدول فقط — بدون ملاحظات طبية.",clinicName:"اسم العيادة",doctorOptional:"اسم الطبيب (اختياري)",createPin:"أنشئ PIN من 6–12 رقم",confirmPin:"أكد الـ PIN",createLocal:"إنشاء عيادة محلية",localEyebrow:"Atlas Local",unlockTitle:"افتح هذه العيادة.",unlockHelp:"أدخل PIN العيادة. لا يتم إرسال أي شيء إلى خوادم Atlas.",clinicPin:"PIN العيادة",unlock:"فتح العيادة",installTip:"للاستخدام الموثوق بدون إنترنت على iPhone أو iPad، افتح هذه الصفحة مرة واحدة بالإنترنت ثم Share → Add to Home Screen.",offlineReady:"جاهز بدون إنترنت. سيستمر Atlas Local بالعمل على هذا الجهاز.",separationNote:"الوضع المحلي منفصل: هذه المواعيد تبقى على هذا الجهاز ولا تندمج تلقائياً مع Atlas Online.",previous:"السابق",today:"اليوم",next:"التالي",patientName:"اسم المريض",phoneOptional:"الهاتف (اختياري)",time:"الوقت",addAppointment:"إضافة موعد",appointments:"المواعيد",noAppointments:"ماكو مواعيد بهذا اليوم.",noAppointmentsHelp:"ضيف أول مريض من فوق.",localFooter:"Atlas Local للمواعيد والتنظيم فقط. خلي الملاحظات الطبية بنظام السجل الطبي المعتمد بالعيادة.",localSettings:"إعدادات العيادة المحلية",language:"اللغة",saveSettings:"حفظ الإعدادات",backupHelp:"لأن هذه العيادة ليست محفوظة بالسحابة، احتفظ بنسخة احتياطية مشفرة بمكان آمن. لا تُفتح إلا بنفس PIN العيادة.",backup:"نسخة مشفرة",restore:"استعادة نسخة",openOnline:"فتح Atlas Online",lock:"قفل العيادة المحلية",deleteHelp:"حذف Atlas Local يمسح كل المواعيد المحلية من هذا الجهاز ولا يؤثر على Atlas Online.",deleteLocal:"حذف العيادة المحلية من الجهاز",doctor:"الطبيب",thisDevice:"هذا الجهاز",onlineLocal:"LOCAL · الإنترنت متوفر",offlineLocal:"LOCAL · بدون إنترنت",pending:"انتظار",confirmed:"مؤكد",completed:"مكتمل",no_show:"لم يحضر",cancelled:"ملغي",count:"موعد",pinMismatch:"الـ PIN غير متطابق.",pinFormat:"استخدم 6–12 رقم للـ PIN.",setupFailed:"تعذر إنشاء Atlas Local على هذا الجهاز.",wrongPin:"هذا الـ PIN لم يفتح العيادة.",unlockFailed:"تعذر فتح العيادة المحلية.",duplicate:"هذا الوقت عنده موعد فعال بالفعل.",saveFailed:"تعذر حفظ الموعد محلياً.",backupFailed:"تعذر إنشاء النسخة المشفرة.",restoreFailed:"هذا الملف ليس نسخة Atlas Local صالحة.",restoreDone:"تمت استعادة النسخة. أدخل PIN العيادة لفتحها.",deleteConfirm:"تحذف كل مواعيد Atlas Local من هذا الجهاز؟ ما تگدر ترجعها بدون نسخة احتياطية.",settingsSaved:"تم حفظ الإعدادات.",patientRequired:"أدخل اسم المريض ووقت الموعد."
+        }
+      };
+
+      const el = (id) => document.getElementById(id);
+      let locale = "en";
+      let db = null;
+      let meta = null;
+      let state = null;
+      let key = null;
+      let selectedDay = baghdadDay();
+
+      function t(name) { return (copy[locale] && copy[locale][name]) || copy.en[name] || name; }
+      function setText(id, value) { const node = el(id); if (node) node.textContent = value; }
+      function showError(id, message) { const node = el(id); node.textContent = message; node.classList.remove("hidden"); }
+      function clearError(id) { const node = el(id); node.textContent = ""; node.classList.add("hidden"); }
+      function applyLocale(next) {
+        locale = copy[next] ? next : "en";
+        document.documentElement.lang = locale === "ku" ? "ckb" : locale === "bd" ? "ku" : locale;
+        document.documentElement.dir = locale === "en" ? "ltr" : "rtl";
+        document.querySelectorAll("[data-t]").forEach((node) => { const value = t(node.dataset.t); if (value) node.textContent = value; });
+        renderLanguageButtons();
+        updateConnection();
+        if (state) renderWorkspace();
+      }
+
+      function renderLanguageButtons() {
+        const languages = [["en","EN"],["ku","کوردی"],["bd","بادینی"],["ar","عربي"]];
+        for (const id of ["setup-languages","unlock-languages"]) {
+          const root = el(id); root.replaceChildren();
+          for (const [value, label] of languages) {
+            const button = document.createElement("button");
+            button.type = "button"; button.textContent = label; button.className = value === locale ? "active" : "";
+            button.addEventListener("click", () => applyLocale(value)); root.append(button);
+          }
+        }
+      }
+
+      function baghdadDay(date = new Date()) {
+        const parts = new Intl.DateTimeFormat("en", { timeZone:"Asia/Baghdad", year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(date);
+        const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+        return `${values.year}-${values.month}-${values.day}`;
+      }
+
+      function shiftDay(day, amount) {
+        const date = new Date(`${day}T12:00:00+03:00`); date.setUTCDate(date.getUTCDate() + amount); return baghdadDay(date);
+      }
+
+      function displayTime(value) {
+        const match = /^(\d{2}):(\d{2})$/.exec(value || ""); if (!match) return value || "—";
+        const date = new Date(`2000-01-01T${value}:00+03:00`);
+        return new Intl.DateTimeFormat(locale === "ar" ? "ar-IQ" : locale === "ku" ? "ckb-IQ" : locale === "bd" ? "ku-IQ" : "en", { hour:"numeric", minute:"2-digit", timeZone:"Asia/Baghdad" }).format(date);
+      }
+
+      function randomId() {
+        if (crypto.randomUUID) return crypto.randomUUID();
+        const values = crypto.getRandomValues(new Uint8Array(16));
+        return Array.from(values, (value) => value.toString(16).padStart(2,"0")).join("");
+      }
+
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, 1);
+          request.onupgradeneeded = () => { const database = request.result; if (!database.objectStoreNames.contains(STORE)) database.createObjectStore(STORE, { keyPath:"id" }); };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error("db_unavailable"));
+        });
+      }
+
+      function readRecord(id) {
+        return new Promise((resolve, reject) => {
+          const request = db.transaction(STORE,"readonly").objectStore(STORE).get(id);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error || new Error("read_failed"));
+        });
+      }
+
+      function writeRecords(records) {
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(STORE,"readwrite"); const store = transaction.objectStore(STORE);
+          records.forEach((record) => store.put(record));
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error || new Error("write_failed"));
+          transaction.onabort = () => reject(transaction.error || new Error("write_aborted"));
+        });
+      }
+
+      function bytesToArray(bytes) { return Array.from(new Uint8Array(bytes)); }
+      function arrayToBytes(values) { return new Uint8Array(Array.isArray(values) ? values : []); }
+
+      async function deriveKey(pin, salt, iterations) {
+        const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveKey"]);
+        return crypto.subtle.deriveKey({ name:"PBKDF2", salt, iterations, hash:"SHA-256" }, material, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]);
+      }
+
+      async function encryptState(cryptoKey, value) {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const ciphertext = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, cryptoKey, new TextEncoder().encode(JSON.stringify(value)));
+        return { id:PAYLOAD_ID, iv:bytesToArray(iv), ciphertext:bytesToArray(ciphertext), savedAt:new Date().toISOString() };
+      }
+
+      async function decryptState(cryptoKey, payload) {
+        const decrypted = await crypto.subtle.decrypt({ name:"AES-GCM", iv:arrayToBytes(payload.iv) }, cryptoKey, arrayToBytes(payload.ciphertext));
+        const value = JSON.parse(new TextDecoder().decode(decrypted));
+        if (!value || value.version !== 1 || !Array.isArray(value.appointments) || value.appointments.length > MAX_APPOINTMENTS) throw new Error("invalid_state");
+        return value;
+      }
+
+      async function saveState() {
+        state.updatedAt = new Date().toISOString();
+        const payload = await encryptState(key, state);
+        meta.updatedAt = state.updatedAt;
+        await writeRecords([meta, payload]);
+      }
+
+      function validatePin(pin) { return /^\d{6,12}$/.test(pin); }
+      function sanitizeState(value) {
+        value.clinicName = String(value.clinicName || "").slice(0,120);
+        value.doctorName = String(value.doctorName || "").slice(0,120);
+        value.locale = copy[value.locale] ? value.locale : "en";
+        value.appointments = value.appointments.slice(0,MAX_APPOINTMENTS).filter((item) => item && typeof item.id === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item.day || "") && /^\d{2}:\d{2}$/.test(item.time || "") && typeof item.patientName === "string");
+        return value;
+      }
+
+      function statusOptions(select, current) {
+        const statuses = ["pending","confirmed","completed","no_show","cancelled"];
+        select.replaceChildren();
+        for (const status of statuses) { const option = document.createElement("option"); option.value = status; option.textContent = t(status); option.selected = status === current; select.append(option); }
+      }
+
+      function renderWorkspace() {
+        applyLocale(state.locale || locale);
+        setText("clinic-title", state.clinicName || "Atlas Local");
+        const doctor = state.doctorName ? `${t("doctor")}: ${state.doctorName}` : ""; setText("doctor-line", doctor);
+        el("selected-day").value = selectedDay;
+        const rows = state.appointments.filter((item) => item.day === selectedDay).sort((a,b) => a.time.localeCompare(b.time) || a.createdAt.localeCompare(b.createdAt));
+        const list = el("appointment-list"); list.replaceChildren();
+        rows.forEach((item) => {
+          const card = document.createElement("article"); card.className = "card appointment";
+          const time = document.createElement("div"); time.className = "time"; time.textContent = displayTime(item.time);
+          const main = document.createElement("div");
+          const patient = document.createElement("div"); patient.className = "patient"; patient.textContent = item.patientName.slice(0,120);
+          const detail = document.createElement("div"); detail.className = "meta"; detail.textContent = item.phone ? item.phone.slice(0,30) : (state.doctorName || "");
+          main.append(patient, detail);
+          const select = document.createElement("select"); select.className = "status-select"; select.setAttribute("aria-label", `${item.patientName} status`); statusOptions(select, item.status);
+          select.addEventListener("change", async () => { const previous = item.status; item.status = select.value; try { await saveState(); renderWorkspace(); } catch { item.status = previous; showError("appointment-error", t("saveFailed")); } });
+          card.append(time, main, select); list.append(card);
+        });
+        setText("appointment-count", `${rows.length} ${t("count")}`);
+        el("empty-state").classList.toggle("hidden", rows.length !== 0);
+        el("workspace").classList.add("show");
+        el("setup-screen").classList.add("hidden"); el("unlock-screen").classList.add("hidden");
+        el("lock-button").classList.remove("hidden"); el("settings-button").classList.remove("hidden");
+        el("settings-clinic").value = state.clinicName || ""; el("settings-doctor").value = state.doctorName || ""; el("settings-language").value = state.locale || "en";
+        updateConnection();
+      }
+
+      function lock() {
+        key = null; state = null; selectedDay = baghdadDay();
+        el("workspace").classList.remove("show"); el("lock-button").classList.add("hidden"); el("settings-button").classList.add("hidden");
+        if (el("settings-dialog").open) el("settings-dialog").close();
+        el("unlock-screen").classList.remove("hidden"); el("setup-screen").classList.add("hidden"); el("unlock-pin").value = ""; clearError("unlock-error");
+      }
+
+      function updateConnection() {
+        const online = navigator.onLine !== false;
+        setText("connection-copy", state ? (online ? t("onlineLocal") : t("offlineLocal")) : t("thisDevice"));
+        el("connection-dot").className = `connection-dot ${online ? "on" : "off"}`;
+        el("offline-ready").classList.toggle("show", !!state && !online);
+        el("online-link").setAttribute("aria-disabled", online ? "false" : "true");
+      }
+
+      async function setupClinic(event) {
+        event.preventDefault(); clearError("setup-error");
+        const clinicName = el("setup-clinic").value.trim(); const doctorName = el("setup-doctor").value.trim(); const pin = el("setup-pin").value; const confirmPin = el("setup-pin-confirm").value;
+        if (!validatePin(pin)) return showError("setup-error", t("pinFormat"));
+        if (pin !== confirmPin) return showError("setup-error", t("pinMismatch"));
+        try {
+          const salt = crypto.getRandomValues(new Uint8Array(16));
+          const derived = await deriveKey(pin, salt, ITERATIONS); const now = new Date().toISOString();
+          const nextState = { version:1, clinicName:clinicName.slice(0,120), doctorName:doctorName.slice(0,120), locale, createdAt:now, updatedAt:now, appointments:[] };
+          const nextMeta = { id:META_ID, version:1, locale, salt:bytesToArray(salt), iterations:ITERATIONS, createdAt:now, updatedAt:now };
+          const payload = await encryptState(derived, nextState); await writeRecords([nextMeta,payload]);
+          key = derived; meta = nextMeta; state = nextState; selectedDay = baghdadDay(); renderWorkspace();
+          el("setup-pin").value = ""; el("setup-pin-confirm").value = "";
+        } catch { showError("setup-error", t("setupFailed")); }
+      }
+
+      async function unlockClinic(event) {
+        event.preventDefault(); clearError("unlock-error"); const pin = el("unlock-pin").value;
+        if (!validatePin(pin)) return showError("unlock-error", t("pinFormat"));
+        try {
+          const payload = await readRecord(PAYLOAD_ID); if (!meta || !payload) throw new Error("missing_vault");
+          const derived = await deriveKey(pin, arrayToBytes(meta.salt), Number(meta.iterations) || ITERATIONS);
+          let nextState; try { nextState = await decryptState(derived, payload); } catch { return showError("unlock-error", t("wrongPin")); }
+          nextState = sanitizeState(nextState); key = derived; state = nextState; locale = nextState.locale || meta.locale || locale; selectedDay = baghdadDay(); el("unlock-pin").value = ""; renderWorkspace();
+        } catch { showError("unlock-error", t("unlockFailed")); }
+      }
+
+      async function addAppointment(event) {
+        event.preventDefault(); clearError("appointment-error");
+        const patientName = el("patient-name").value.trim(); const phone = el("patient-phone").value.trim(); const time = el("appointment-time").value;
+        if (!patientName || !/^\d{2}:\d{2}$/.test(time)) return showError("appointment-error", t("patientRequired"));
+        const duplicate = state.appointments.some((item) => item.day === selectedDay && item.time === time && ACTIVE_STATUSES.has(item.status));
+        if (duplicate) return showError("appointment-error", t("duplicate"));
+        const appointment = { id:randomId(), day:selectedDay, patientName:patientName.slice(0,120), phone:phone.slice(0,30), time, status:"pending", createdAt:new Date().toISOString() };
+        if (state.appointments.length >= MAX_APPOINTMENTS) return showError("appointment-error", t("saveFailed"));
+        state.appointments.push(appointment);
+        try { await saveState(); el("patient-name").value = ""; el("patient-phone").value = ""; el("appointment-time").value = ""; renderWorkspace(); el("patient-name").focus(); }
+        catch { state.appointments = state.appointments.filter((item) => item.id !== appointment.id); showError("appointment-error", t("saveFailed")); }
+      }
+
+      async function saveSettings(event) {
+        event.preventDefault(); clearError("settings-error");
+        const previous = { clinicName:state.clinicName, doctorName:state.doctorName, locale:state.locale };
+        state.clinicName = el("settings-clinic").value.trim().slice(0,120); state.doctorName = el("settings-doctor").value.trim().slice(0,120); state.locale = el("settings-language").value;
+        try { meta.locale = state.locale; await saveState(); applyLocale(state.locale); renderWorkspace(); el("settings-dialog").close(); }
+        catch { Object.assign(state, previous); showError("settings-error", t("saveFailed")); }
+      }
+
+      async function backup() {
+        clearError("settings-error");
+        try {
+          const payload = await readRecord(PAYLOAD_ID); const currentMeta = await readRecord(META_ID); if (!payload || !currentMeta) throw new Error("missing");
+          const backupValue = { marker:BACKUP_MARKER, version:1, meta:currentMeta, payload };
+          const blob = new Blob([JSON.stringify(backupValue)], { type:"application/json" }); const url = URL.createObjectURL(blob); const link = document.createElement("a");
+          link.href = url; link.download = `atlas-local-backup-${baghdadDay()}.json`; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+        } catch { showError("settings-error", t("backupFailed")); }
+      }
+
+      function validBackup(value) {
+        return value && value.marker === BACKUP_MARKER && value.version === 1 && value.meta && value.meta.id === META_ID && value.meta.version === 1 && Array.isArray(value.meta.salt) && Number(value.meta.iterations) >= 100000 && value.payload && value.payload.id === PAYLOAD_ID && Array.isArray(value.payload.iv) && Array.isArray(value.payload.ciphertext) && value.payload.ciphertext.length > 16;
+      }
+
+      async function restoreFile(file) {
+        clearError("settings-error");
+        try {
+          if (!file || file.size > 8 * 1024 * 1024) throw new Error("invalid_file");
+          const value = JSON.parse(await file.text()); if (!validBackup(value)) throw new Error("invalid_backup");
+          await writeRecords([value.meta,value.payload]); meta = value.meta; applyLocale(meta.locale || "en"); key = null; state = null; el("settings-dialog").close(); lock(); showError("unlock-error", t("restoreDone"));
+        } catch { showError("settings-error", t("restoreFailed")); }
+      }
+
+      async function deleteLocal() {
+        if (!confirm(t("deleteConfirm"))) return;
+        try { if (db) db.close(); await new Promise((resolve,reject) => { const request = indexedDB.deleteDatabase(DB_NAME); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); request.onblocked = () => reject(new Error("blocked")); }); location.reload(); }
+        catch { showError("settings-error", t("saveFailed")); }
+      }
+
+      function bindEvents() {
+        el("setup-form").addEventListener("submit", setupClinic); el("unlock-form").addEventListener("submit", unlockClinic); el("appointment-form").addEventListener("submit", addAppointment); el("settings-form").addEventListener("submit", saveSettings);
+        el("previous-day").addEventListener("click", () => { selectedDay = shiftDay(selectedDay,-1); renderWorkspace(); }); el("today-button").addEventListener("click", () => { selectedDay = baghdadDay(); renderWorkspace(); }); el("next-day").addEventListener("click", () => { selectedDay = shiftDay(selectedDay,1); renderWorkspace(); });
+        el("selected-day").addEventListener("change", () => { const value = el("selected-day").value; if (/^\d{4}-\d{2}-\d{2}$/.test(value)) { selectedDay = value; renderWorkspace(); } });
+        el("settings-button").addEventListener("click", () => { clearError("settings-error"); el("settings-dialog").showModal(); }); el("settings-close").addEventListener("click", () => el("settings-dialog").close()); el("lock-button").addEventListener("click", lock); el("dialog-lock").addEventListener("click", lock);
+        el("backup-button").addEventListener("click", backup); el("restore-button").addEventListener("click", () => el("restore-file").click()); el("restore-file").addEventListener("change", () => { const file = el("restore-file").files && el("restore-file").files[0]; if (file) void restoreFile(file); el("restore-file").value = ""; }); el("delete-local").addEventListener("click", deleteLocal);
+        window.addEventListener("online", updateConnection); window.addEventListener("offline", updateConnection);
+      }
+
+      async function init() {
+        bindEvents(); renderLanguageButtons(); updateConnection();
+        if (!("indexedDB" in window) || !crypto.subtle) { el("setup-screen").classList.remove("hidden"); return showError("setup-error", "Atlas Local needs a modern secure browser on this device."); }
+        try {
+          db = await openDb(); meta = await readRecord(META_ID);
+          if (meta && meta.version === 1) { applyLocale(meta.locale || "en"); el("setup-screen").classList.add("hidden"); el("unlock-screen").classList.remove("hidden"); }
+          else { el("setup-screen").classList.remove("hidden"); el("unlock-screen").classList.add("hidden"); }
+          if ("serviceWorker" in navigator) navigator.serviceWorker.register("/atlas-sw.js").catch(() => undefined);
+        } catch { showError("setup-error", t("setupFailed")); }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
