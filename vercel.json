@@ -6,8 +6,8 @@
   "regions": ["sin1"],
   "git": {
     "deploymentEnabled": {
-      "main": true,
       "feature/atlas-local-offline-polish": true,
+      "main": true,
       "*": false,
       "**": false
     }
