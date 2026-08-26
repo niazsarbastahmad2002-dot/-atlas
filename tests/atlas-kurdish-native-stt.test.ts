@@ -43,6 +43,7 @@ test("Kurdish-native STT accepts only HTTPS endpoints and cleans provider text",
 });
 
 test("Kurdish provider credential remains server-side and native recognition runs before Cloudflare recovery", () => {
+  assert.match(helper, /https:\/\/www\.kurdishtts\.com\/api\/stt-proxy/);
   assert.match(helper, /process\.env\.ATLAS_KURDISH_STT_API_KEY/);
   assert.match(helper, /headers: \{ "x-api-key": config\.apiKey \}/);
   assert.doesNotMatch(helper, /NEXT_PUBLIC_/);
