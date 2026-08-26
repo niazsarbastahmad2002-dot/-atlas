@@ -54,11 +54,15 @@ test("normal staff provisioning cannot create email auth users anymore", () => {
   assert.match(invite, /create_staff_invite_link_service/);
 });
 
-test("last-clinic deletion preserves auth account and explicitly signs out", () => {
+test("last-clinic deletion preserves the auth account and keeps the session for an explicit account choice", () => {
   const deletion = read("app/dashboard/settings/delete/actions.ts");
+  const account = read("app/dashboard/settings/account/page.tsx");
 
   assert.match(deletion, /from\("clinics"\)\s*\.delete\(\)/);
-  assert.match(deletion, /auth\.signOut\(\)/);
-  assert.match(deletion, /\/login\?notice=clinic_deleted/);
+  assert.doesNotMatch(deletion, /auth\.signOut\(\)/);
+  assert.match(deletion, /\/dashboard\/settings\/account\?notice=clinic_deleted/);
+  assert.match(account, /Clinic deleted\. Your Atlas account is still active\./);
+  assert.match(account, /Keep my Atlas account \/ Create a clinic later/);
+  assert.match(account, /Delete my Atlas account too/);
   assert.doesNotMatch(deletion, /auth\.admin\.deleteUser/);
 });
