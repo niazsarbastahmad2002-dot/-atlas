@@ -20,7 +20,8 @@ test("account deletion remains explicit and cannot cascade an owned clinic", asy
   );
 
   assert.match(page, /Type DELETE to confirm/);
-  assert.match(page, /Permanently delete my account/);
+  assert.match(page, /Permanently delete my Atlas account/);
+  assert.match(page, /Deleting a clinic removes only that clinic workspace/);
   assert.match(page, /\/dashboard\/staff\?clinic=/);
   assert.match(page, /\/dashboard\/settings\/delete\?clinic=/);
 
@@ -29,4 +30,34 @@ test("account deletion remains explicit and cannot cascade an owned clinic", asy
 
   assert.match(nativeApp, /url\.path == "\/login"/);
   assert.match(nativeApp, /parent\.onContinuityClear\(\)/);
+});
+
+test("clinic deletion requires two confirmations and keeps account deletion separate", async () => {
+  const [deleteAction, deletePage, accountPage] = await Promise.all([
+    read("app/dashboard/settings/delete/actions.ts"),
+    read("app/dashboard/settings/delete/page.tsx"),
+    read("app/dashboard/settings/account/page.tsx"),
+  ]);
+
+  assert.match(deletePage, /Permanent and irreversible/);
+  assert.match(deletePage, /Type the clinic name exactly to confirm/);
+  assert.match(deletePage, /name="acknowledge" value="yes" required/);
+  assert.match(deletePage, /I understand this clinic and its data will be permanently deleted\./);
+
+  assert.match(deleteAction, /const acknowledged = String\(formData\.get\("acknowledge"\) \?\? ""\) === "yes"/);
+  assert.match(deleteAction, /if \(!acknowledged\) redirect\(deleteUrl\(clinicId, "confirmation_required"\)\)/);
+  assert.match(deleteAction, /if \(confirmation !== clinic\.name\) redirect\(deleteUrl\(clinicId, "name_mismatch"\)\)/);
+  assert.ok(
+    deleteAction.indexOf("!acknowledged") < deleteAction.indexOf('.from("clinics")\n    .delete()'),
+    "acknowledgement must be required before clinic deletion",
+  );
+
+  assert.match(deleteAction, /redirect\("\/dashboard\/settings\/account\?notice=clinic_deleted"\)/);
+  assert.doesNotMatch(deleteAction, /supabase\.auth\.signOut/);
+
+  assert.match(accountPage, /Clinic deleted\. Your Atlas account is still active\./);
+  assert.match(accountPage, /Keep my Atlas account \/ Create a clinic later/);
+  assert.match(accountPage, /Delete my Atlas account too/);
+  assert.match(accountPage, /href="#delete-atlas-account"/);
+  assert.match(accountPage, /id="delete-atlas-account"/);
 });

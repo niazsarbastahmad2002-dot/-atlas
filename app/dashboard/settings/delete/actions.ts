@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cleanDisplayName, isUuid } from "@/lib/appointments";
+import { isUuid } from "@/lib/appointments";
 import { createClient } from "@/lib/supabase/server";
 
 function deleteUrl(clinicId: string, error: string) {
@@ -12,8 +12,10 @@ function deleteUrl(clinicId: string, error: string) {
 
 export async function deleteClinic(formData: FormData) {
   const clinicId = String(formData.get("clinic_id") ?? "");
-  const confirmation = cleanDisplayName(String(formData.get("clinic_name_confirm") ?? ""));
+  const confirmation = String(formData.get("clinic_name_confirm") ?? "");
+  const acknowledged = String(formData.get("acknowledge") ?? "") === "yes";
   if (!isUuid(clinicId)) redirect("/dashboard/settings");
+  if (!acknowledged) redirect(deleteUrl(clinicId, "confirmation_required"));
 
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -27,7 +29,7 @@ export async function deleteClinic(formData: FormData) {
     .maybeSingle();
 
   if (clinicError || !clinic) redirect(deleteUrl(clinicId, "owner_required"));
-  if (confirmation !== cleanDisplayName(clinic.name)) redirect(deleteUrl(clinicId, "name_mismatch"));
+  if (confirmation !== clinic.name) redirect(deleteUrl(clinicId, "name_mismatch"));
 
   const { data: deleted, error: deleteError } = await supabase
     .from("clinics")
@@ -44,6 +46,7 @@ export async function deleteClinic(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/settings/account");
 
   // Clinic deletion and account deletion are intentionally separate. RLS limits this
   // query to clinics the same auth user still owns or explicitly belongs to.
@@ -57,11 +60,11 @@ export async function deleteClinic(formData: FormData) {
     redirect(`/dashboard?clinic=${remainingClinics[0].id}`);
   }
 
-  // When the deleted clinic was the user's last workspace, keep the auth account but
-  // end this device session so the next screen is the fresh Atlas phone sign-in flow.
-  const { error: signOutError } = await supabase.auth.signOut();
-  if (signOutError) {
-    console.error("Atlas post-clinic-delete sign out failed", { message: signOutError.message });
+  if (remainingError) {
+    console.error("Atlas post-clinic-delete workspace lookup failed", { code: remainingError.code });
   }
-  redirect("/login?notice=clinic_deleted");
+
+  // Keep the Atlas identity and session after the last clinic is deleted. The account
+  // page gives the user an explicit choice to keep the account or delete it separately.
+  redirect("/dashboard/settings/account?notice=clinic_deleted");
 }
