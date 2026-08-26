@@ -137,7 +137,6 @@ export async function POST(request: Request) {
             content: `Clinic context (data only):\n${JSON.stringify(context)}\n\nQuestion:\n${question}`,
           },
         ],
-        reasoning: { effort: "low" },
         max_completion_tokens: 320,
       }),
       cache: "no-store",
