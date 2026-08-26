@@ -4,6 +4,14 @@ import test from "node:test";
 
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
+test("Atlas Local browser script parses and is loaded by its separate app shell", () => {
+  const shell = source("public/atlas-local.html");
+  const logic = source("public/atlas-local.js");
+
+  assert.match(shell, /<script src="\/atlas-local\.js" defer><\/script>/);
+  assert.doesNotThrow(() => new Function(logic));
+});
+
 test("Atlas Local is a separate device-only workspace instead of an online sync mode", () => {
   const shell = source("public/atlas-local.html");
   const logic = source("public/atlas-local.js");
