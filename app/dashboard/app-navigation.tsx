@@ -104,7 +104,8 @@ function withHash(href: string, hash: string) {
 function assistantHrefFrom(scheduleHref: string, currentClinic: string | null) {
   if (currentClinic) return `/dashboard/assistant?${new URLSearchParams({ clinic: currentClinic })}`;
   try {
-    const clinic = new URL(scheduleHref, window.location.origin).searchParams.get("clinic");
+    const base = typeof window === "undefined" ? "https://atlas.local" : window.location.origin;
+    const clinic = new URL(scheduleHref, base).searchParams.get("clinic");
     return clinic ? `/dashboard/assistant?${new URLSearchParams({ clinic })}` : "/dashboard/assistant";
   } catch {
     return "/dashboard/assistant";
