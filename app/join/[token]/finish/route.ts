@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { normalizeAuthPhone } from "@/lib/phone-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,12 +26,23 @@ export async function GET(request: Request, { params }: Context) {
     return NextResponse.redirect(new URL(`/join/${encodeURIComponent(token)}`, requestUrl.origin));
   }
 
+  const verifiedPhone = userData.user.phone_confirmed_at
+    ? normalizeAuthPhone(userData.user.phone ?? "")
+    : null;
+  if (!verifiedPhone) {
+    const destination = new URL("/dashboard", requestUrl.origin);
+    destination.searchParams.set("notice", "verified_phone_required_for_invite");
+    return NextResponse.redirect(destination);
+  }
+
   const admin = createAdminClient();
   const rpc = admin.rpc as unknown as Rpc;
-  const hash = createHash("sha256").update(token).digest("hex");
-  const { data, error } = await rpc("redeem_staff_invite_link_service", {
-    p_token_hash: hash,
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const verifiedPhoneHash = createHash("sha256").update(verifiedPhone).digest("hex");
+  const { data, error } = await rpc("redeem_phone_staff_invite_link_service", {
+    p_token_hash: tokenHash,
     p_user_id: userData.user.id,
+    p_verified_phone_hash: verifiedPhoneHash,
   });
 
   if (error || typeof data !== "string") {
