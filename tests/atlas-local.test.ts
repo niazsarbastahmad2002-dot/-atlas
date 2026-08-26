@@ -82,7 +82,7 @@ test("appointment interval drives the next local slot without wrapping to anothe
   const local = logic();
   assert.match(source("public/atlas-local.html"), /id="new-doctor-interval"/);
   assert.match(local, /doctorById\(doctorId\)\.intervalMinutes/);
-  assert.match(local, /appointment-time.*addMinutes/s);
+  assert.match(local, /appointment-time[\s\S]*addMinutes/);
   assert.match(local, /if \(total < 0 \|\| total >= 1440\) return ""/);
 });
 
