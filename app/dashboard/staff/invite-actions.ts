@@ -12,6 +12,7 @@ import {
 } from "@/lib/reminders/whatsapp-runtime";
 import {
   sendWhatsAppStaffInviteTemplate,
+  sendWhatsAppTextMessage,
   type WhatsAppConfig,
 } from "@/lib/reminders/whatsapp";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -30,6 +31,7 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 type InviteWhatsAppDelivery = {
   config: WhatsAppConfig;
   templateName: string;
+  testMode: boolean;
 };
 
 function atlasSiteUrl() {
@@ -44,6 +46,11 @@ function atlasSiteUrl() {
   return "http://localhost:3000";
 }
 
+function directInvitesEnabled() {
+  return process.env.WHATSAPP_DIRECT_INVITES_ENABLED === "true"
+    || (process.env.ATLAS_WHATSAPP_MODE === ATLAS_WHATSAPP_META_TEST_MODE && process.env.VERCEL_ENV !== "production");
+}
+
 async function resolveInviteWhatsAppDelivery(
   admin: AdminClient,
   clinicId: string,
@@ -54,7 +61,7 @@ async function resolveInviteWhatsAppDelivery(
     const runtime = readAtlasWhatsAppRuntime();
     if (!runtime || runtime.mode !== ATLAS_WHATSAPP_META_TEST_MODE) return null;
     if (!atlasWhatsAppRecipientAllowed(runtime, recipientPhone)) return null;
-    return { config: runtime.config, templateName: runtime.staffInviteTemplateName };
+    return { config: runtime.config, templateName: runtime.staffInviteTemplateName, testMode: true };
   }
 
   // Production delivery stays clinic-scoped and therefore keeps the existing
@@ -64,6 +71,7 @@ async function resolveInviteWhatsAppDelivery(
   return {
     config: clinicConnection.config,
     templateName: process.env.WHATSAPP_STAFF_INVITE_TEMPLATE?.trim() || ATLAS_WHATSAPP_STAFF_INVITE_TEMPLATE,
+    testMode: false,
   };
 }
 
@@ -74,7 +82,7 @@ export async function createReceptionistInviteLink(
   const clinicId = String(formData.get("clinic_id") ?? "");
   const doctorId = String(formData.get("assigned_doctor_id") ?? "");
   const rawRecipientPhone = String(formData.get("recipient_phone") ?? "").trim();
-  const directInviteRequested = Boolean(rawRecipientPhone) && process.env.WHATSAPP_DIRECT_INVITES_ENABLED === "true";
+  const directInviteRequested = Boolean(rawRecipientPhone) && directInvitesEnabled();
   const recipientPhone = rawRecipientPhone ? normalizeAuthPhone(rawRecipientPhone) : null;
   if (!isUuid(clinicId) || !isUuid(doctorId)) {
     return { status: "error", message: "Choose the receptionist's doctor first." };
@@ -134,13 +142,24 @@ export async function createReceptionistInviteLink(
         url,
       };
     }
-    const sent = await sendWhatsAppStaffInviteTemplate(
+    let sent = await sendWhatsAppStaffInviteTemplate(
       recipientPhone,
       clinic.name,
       url,
       delivery.templateName,
       delivery.config,
     );
+    // Official Meta test WABAs can lack eligibility for custom templates. A
+    // plain-text fallback is permitted only in non-production test mode and
+    // only succeeds when the registered test recipient has an open 24-hour
+    // conversation window. Production always remains template-only.
+    if (!sent.accepted && delivery.testMode) {
+      sent = await sendWhatsAppTextMessage(
+        recipientPhone,
+        `Atlas test invitation for ${clinic.name}: ${url}`,
+        delivery.config,
+      );
+    }
     if (!sent.accepted) {
       return { status: "error", message: `The invitation link was created, but WhatsApp delivery failed (${sent.errorCode}).`, url };
     }
