@@ -90,7 +90,7 @@ test("clinic access management uses secure join links and phone identity instead
   assert.match(inviteAction, /24 \* 60 \* 60 \* 1000/);
 });
 
-test("settings use phone identity and last-clinic deletion returns to sign-in without deleting auth user", () => {
+test("settings use phone identity and last-clinic deletion keeps the Atlas account for an explicit next choice", () => {
   const settings = read("app/dashboard/settings/page.tsx");
   const account = read("app/dashboard/settings/account/page.tsx");
   const deletion = read("app/dashboard/settings/delete/actions.ts");
@@ -99,8 +99,10 @@ test("settings use phone identity and last-clinic deletion returns to sign-in wi
   assert.doesNotMatch(settings, /userData\.user\.email/);
   assert.match(account, /userData\.user\.phone/);
   assert.doesNotMatch(account, /userData\.user\.email/);
-  assert.match(deletion, /supabase\.auth\.signOut\(\)/);
-  assert.match(deletion, /\/login\?notice=clinic_deleted/);
+  assert.doesNotMatch(deletion, /supabase\.auth\.signOut\(\)/);
+  assert.match(deletion, /\/dashboard\/settings\/account\?notice=clinic_deleted/);
+  assert.match(account, /Clinic deleted\. Your Atlas account is still active\./);
+  assert.match(account, /Delete my Atlas account too/);
   assert.doesNotMatch(deletion, /admin\.deleteUser|deleteUser\(/);
 });
 
