@@ -8,7 +8,7 @@ import { deleteAtlasAccount } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ error?: string }> };
+type Props = { searchParams: Promise<{ error?: string; notice?: string }> };
 
 type Copy = {
   eyebrow: string;
@@ -16,9 +16,15 @@ type Copy = {
   intro: string;
   warning: string;
   membership: string;
+  differenceTitle: string;
+  difference: string;
   ownerBlock: string;
   ownerTransfer: string;
   ownerDelete: string;
+  clinicDeletedTitle: string;
+  clinicDeletedBody: string;
+  keepAccount: string;
+  deleteAccountToo: string;
   confirm: string;
   acknowledge: string;
   button: string;
@@ -32,16 +38,22 @@ type Copy = {
 const copyByLocale: Record<UiLocale, Copy> = {
   en: {
     eyebrow: "Your Atlas account",
-    title: "Delete my account",
-    intro: "You can permanently delete your Atlas sign-in from inside Atlas.",
+    title: "Delete my Atlas account",
+    intro: "This deletes your Atlas identity and login. It does not mean the same thing as deleting a clinic.",
     warning: "This permanently removes your Atlas identity, active sessions, saved passkeys and clinic memberships. This cannot be undone.",
     membership: "Clinic appointment records are controlled by the clinic. Historical audit entries may remain without your account identity where record integrity requires it.",
+    differenceTitle: "Two different deletions:",
+    difference: "Deleting a clinic removes only that clinic workspace; your Atlas account remains. Deleting your Atlas account removes your Atlas identity/login and is blocked until every clinic you own is transferred or deleted.",
     ownerBlock: "You still own a clinic. Transfer administration or permanently delete every clinic you own before deleting your Atlas account.",
     ownerTransfer: "Transfer administration",
     ownerDelete: "Delete this clinic",
+    clinicDeletedTitle: "Clinic deleted. Your Atlas account is still active.",
+    clinicDeletedBody: "You do not need to create another clinic now. Keep your Atlas account and create a clinic later, or delete your Atlas account separately below.",
+    keepAccount: "Keep my Atlas account / Create a clinic later",
+    deleteAccountToo: "Delete my Atlas account too",
     confirm: "Type DELETE to confirm",
     acknowledge: "I understand that my Atlas account will be permanently deleted.",
-    button: "Permanently delete my account",
+    button: "Permanently delete my Atlas account",
     deleting: "Deleting account…",
     back: "Back to settings",
     confirmationError: "Type DELETE and confirm the checkbox. Nothing was deleted.",
@@ -50,16 +62,22 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
   ku: {
     eyebrow: "هەژماری Atlas ـی تۆ",
-    title: "سڕینەوەی هەژمارەکەم",
-    intro: "دەتوانیت لە ناو Atlas هەژماری چوونەژوورەوەت بە هەمیشەیی بسڕیتەوە.",
+    title: "سڕینەوەی هەژماری Atlas ـەکەم",
+    intro: "ئەم کارە ناسنامە و چوونەژووری Atlas ـەکەت دەسڕێتەوە. لە سڕینەوەی کلینیک جیاوازە.",
     warning: "ئەم کارە ناسنامەی Atlas، سێشنە چالاکەکان، پاسکییە هەڵگیراوەکان و ئەندامێتی کلینیکەکانت بە هەمیشەیی دەسڕێتەوە. ناگەڕێتەوە.",
     membership: "تۆمارەکانی مەوعیدی کلینیک لەلایەن کلینیکەوە بەڕێوەدەبرێن. بۆ پاراستنی دروستی تۆمار، هەندێک تۆماری مێژوویی لەوانەیە بەبێ ناسنامەی هەژمارەکەت بمێننەوە.",
+    differenceTitle: "دوو جۆری جیاوازی سڕینەوە:",
+    difference: "سڕینەوەی کلینیک تەنها ئەو کلینیکە دەسڕێتەوە و هەژماری Atlas ـەکەت دەمێنێتەوە. سڕینەوەی هەژماری Atlas ناسنامە و چوونەژوورەکەت دەسڕێتەوە و تا هەموو کلینیکە خاوەندارەکانت نەگوازرێنەوە یان نەسڕدرێنەوە ڕێگەپێنەدراوە.",
     ownerBlock: "هێشتا خاوەنی کلینیکێکیت. پێش سڕینەوەی هەژماری Atlas، بەڕێوەبردن بگوازەوە یان هەموو کلینیکە خاوەندارەکانت بە هەمیشەیی بسڕەوە.",
     ownerTransfer: "گواستنەوەی بەڕێوەبردن",
     ownerDelete: "سڕینەوەی ئەم کلینیکە",
+    clinicDeletedTitle: "کلینیکەکە سڕایەوە. هەژماری Atlas ـەکەت هێشتا چالاکە.",
+    clinicDeletedBody: "پێویست ناکات ئێستا کلینیکێکی تر دروست بکەیت. دەتوانیت هەژمارەکەت بهێڵیتەوە و دواتر کلینیک دروست بکەیت، یان هەژماری Atlas ـەکەت لە خوارەوە جیاواز بسڕیتەوە.",
+    keepAccount: "هەژماری Atlas ـەکەم بهێڵەوە / دواتر کلینیک دروست بکەم",
+    deleteAccountToo: "هەژماری Atlas ـەکەمیش بسڕەوە",
     confirm: "DELETE بنووسە بۆ پشتڕاستکردنەوە",
     acknowledge: "تێدەگەم کە هەژماری Atlas ـەکەم بە هەمیشەیی دەسڕێتەوە.",
-    button: "هەژمارەکەم بە هەمیشەیی بسڕەوە",
+    button: "هەژماری Atlas ـەکەم بە هەمیشەیی بسڕەوە",
     deleting: "هەژمار دەسڕدرێتەوە…",
     back: "گەڕانەوە بۆ ڕێکخستنەکان",
     confirmationError: "DELETE بنووسە و خانەکە پشتڕاست بکەوە. هیچ شتێک نەسڕایەوە.",
@@ -68,16 +86,22 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
   bd: {
     eyebrow: "هەژمارا Atlas یا تە",
-    title: "ژێبرنا هەژمارا من",
-    intro: "تو دشێی ژ ناڤ Atlas هەژمارا چوونەژوورا خۆ بۆ هەردەم ژێ ببەی.",
+    title: "ژێبرنا هەژمارا Atlas یا من",
+    intro: "ئەم کارە ناسناما Atlas و چوونەژوورا تە ژێ دبەت. ژ ژێبرنا کلینیکێ جودایە.",
     warning: "ئەم کارە ناسناما Atlas، سێشنێن چالاک، پاسکییێن پاراستی و ئەندامەتیا کلینیکان بۆ هەردەم ژێ دبەت. ناگەڕێتەڤە.",
     membership: "تۆمارێن مەوعیدێ کلینیکێ ژ لایێ کلینیکێ ڤە دهێنە بەڕێڤەبرن. بۆ پاراستنا دروستیا تۆماران، هەندەک تۆمارێن مێژوویی دکارن بێ ناسناما هەژمارا تە بمینن.",
+    differenceTitle: "دوو جۆرێن جودا یێن ژێبرنێ:",
+    difference: "ژێبرنا کلینیکێ تەنێ وێ کلینیکێ ژێ دبەت و هەژمارا Atlas یا تە دمینیت. ژێبرنا هەژمارا Atlas ناسناما Atlas و چوونەژوورا تە ژێ دبەت و هەتا هەمی کلینیکێن تە نهێنە گوهەستن یان ژێبرن ڕێ پێ نادات.",
     ownerBlock: "هێشتا تو خاوەنێ کلینیکەکێی. بەری ژێبرنا هەژمارا Atlas، بەڕێڤەبرنێ بگوهێزە یان هەمی کلینیکێن خۆ بۆ هەردەم ژێ ببە.",
     ownerTransfer: "گوهەستنا بەڕێڤەبرنێ",
     ownerDelete: "ژێبرنا ڤێ کلینیکێ",
+    clinicDeletedTitle: "کلینیک هاتە ژێبرن. هەژمارا Atlas یا تە هێشتا چالاکە.",
+    clinicDeletedBody: "پێدڤی ناکەت نوکە کلینیکەکا دی دروست بکەی. هەژمارا خۆ بهێلە و پاشتر کلینیک دروست بکە، یان هەژمارا Atlas یا خۆ ژ خوارێ جودا ژێ ببە.",
+    keepAccount: "هەژمارا Atlas یا خۆ بهێلم / پاشتر کلینیک دروست بکەم",
+    deleteAccountToo: "هەژمارا Atlas یا من ژی ژێ ببە",
     confirm: "DELETE بنڤیسە بۆ پشتڕاستکرنێ",
     acknowledge: "دزانم هەژمارا Atlas یا من بۆ هەردەم دهێتە ژێبرن.",
-    button: "هەژمارا من بۆ هەردەم ژێ ببە",
+    button: "هەژمارا Atlas یا من بۆ هەردەم ژێ ببە",
     deleting: "هەژمار دهێتە ژێبرن…",
     back: "ڤەگەڕە بۆ ڕێکخستنان",
     confirmationError: "DELETE بنڤیسە و خانەکێ پشتڕاست بکە. چ تشت نەهاتە ژێبرن.",
@@ -86,16 +110,22 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
   ar: {
     eyebrow: "حسابك في Atlas",
-    title: "حذف حسابي",
-    intro: "تقدر تحذف تسجيل دخولك وحسابك في Atlas نهائياً من داخل Atlas.",
+    title: "حذف حسابي في Atlas",
+    intro: "هذا يحذف هوية Atlas وتسجيل دخولك. وهو مختلف عن حذف عيادة.",
     warning: "هذا يحذف هوية Atlas والجلسات الحالية ومفاتيح الدخول المحفوظة وعضويات العيادات نهائياً. ما تقدر ترجع الحساب بعد الحذف.",
     membership: "سجلات مواعيد العيادة تديرها العيادة. بعض سجلات التدقيق التاريخية قد تبقى بدون هوية حسابك إذا كان هذا مطلوباً للحفاظ على سلامة السجل.",
+    differenceTitle: "هناك نوعان مختلفان من الحذف:",
+    difference: "حذف العيادة يحذف مساحة تلك العيادة فقط ويبقى حساب Atlas. حذف حساب Atlas يحذف هويتك وتسجيل دخولك، ويظل ممنوعاً حتى تنقل أو تحذف كل عيادة تملكها.",
     ownerBlock: "أنت ما زلت مالك عيادة. انقل الإدارة أو احذف كل عيادة تملكها نهائياً قبل حذف حساب Atlas.",
     ownerTransfer: "نقل إدارة العيادة",
     ownerDelete: "حذف هذه العيادة",
+    clinicDeletedTitle: "تم حذف العيادة. حسابك في Atlas ما زال فعالاً.",
+    clinicDeletedBody: "لا تحتاج إلى إنشاء عيادة ثانية الآن. يمكنك إبقاء حسابك وإنشاء عيادة لاحقاً، أو حذف حساب Atlas بشكل منفصل أدناه.",
+    keepAccount: "إبقاء حساب Atlas / إنشاء عيادة لاحقاً",
+    deleteAccountToo: "حذف حساب Atlas أيضاً",
     confirm: "اكتب DELETE للتأكيد",
     acknowledge: "أفهم أن حسابي في Atlas سيتم حذفه نهائياً.",
-    button: "حذف حسابي نهائياً",
+    button: "حذف حسابي في Atlas نهائياً",
     deleting: "جارٍ حذف الحساب…",
     back: "الرجوع للإعدادات",
     confirmationError: "اكتب DELETE وفعّل مربع التأكيد. ما انحذف شيء.",
@@ -123,6 +153,8 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
     : params.error === "owns_clinic" ? copy.ownerBlock
       : params.error === "failed" ? copy.failed
         : null;
+  const clinicDeleted = params.notice === "clinic_deleted" && !ownedClinics?.length;
+  const backHref = clinicDeleted ? "/dashboard" : "/dashboard/settings";
 
   return (
     <main className="settings-page shell">
@@ -132,12 +164,29 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
           <h1>{copy.title}</h1>
           <p>{copy.intro}</p>
         </div>
-        <Link className="button button-ghost button-small" href="/dashboard/settings">{copy.back}</Link>
+        <Link className="button button-ghost button-small" href={backHref}>{copy.back}</Link>
       </header>
 
       {errorMessage ? <p className="notice notice-error" role="alert">{errorMessage}</p> : null}
 
-      <section className="settings-card">
+      {clinicDeleted ? (
+        <section className="settings-card settings-card-wide" role="status">
+          <div className="settings-card-heading">
+            <span className="settings-card-icon" aria-hidden="true">✓</span>
+            <div>
+              <div className="eyebrow">{copy.eyebrow}</div>
+              <h2>{copy.clinicDeletedTitle}</h2>
+              <p>{copy.clinicDeletedBody}</p>
+            </div>
+          </div>
+          <div className="compact-actions">
+            <Link className="button button-ghost button-small" href="/dashboard">{copy.keepAccount}</Link>
+            <a className="button button-ghost button-small danger-link" href="#delete-atlas-account">{copy.deleteAccountToo}</a>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="settings-card" id="delete-atlas-account">
         <div className="settings-card-heading">
           <span className="settings-card-icon" aria-hidden="true">!</span>
           <div>
@@ -146,6 +195,7 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
             <p>{copy.warning}</p>
           </div>
         </div>
+        <p className="field-help"><strong>{copy.differenceTitle}</strong> {copy.difference}</p>
         <p className="field-help">{copy.membership}</p>
 
         {ownedClinics?.length ? (
