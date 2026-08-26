@@ -38,12 +38,10 @@ self.addEventListener("activate", (event) => {
 });
 
 async function networkFirstLocalAsset(request) {
-  const cache = await caches.open(ATLAS_OFFLINE_CACHE);
   try {
-    const response = await fetch(new Request(request, { cache: "no-store" }));
-    if (response.ok) await cache.put(request, response.clone());
-    return response;
+    return await fetch(new Request(request, { cache: "no-store" }));
   } catch {
+    const cache = await caches.open(ATLAS_OFFLINE_CACHE);
     const cached = await cache.match(request, { ignoreSearch: true });
     return cached ?? new Response("Atlas Local asset is unavailable on this device.", {
       status: 503,
@@ -68,17 +66,13 @@ self.addEventListener("fetch", (event) => {
 
   if (url.pathname === ATLAS_LOCAL_PAGE) {
     event.respondWith((async () => {
-      const cache = await caches.open(ATLAS_OFFLINE_CACHE);
       try {
         const response = await fetch(new Request(request, { cache: "no-store" }));
-        if (response.ok) {
-          await cache.put(ATLAS_LOCAL_PAGE, response.clone());
-          return response;
-        }
-        const fallback = await cache.match(ATLAS_LOCAL_PAGE);
+        if (response.ok) return response;
+        const fallback = await caches.match(ATLAS_LOCAL_PAGE);
         return fallback ?? response;
       } catch {
-        const fallback = await cache.match(ATLAS_LOCAL_PAGE);
+        const fallback = await caches.match(ATLAS_LOCAL_PAGE);
         return fallback ?? new Response("Atlas Local is unavailable on this device.", {
           status: 503,
           headers: { "Content-Type": "text/plain; charset=utf-8" },
