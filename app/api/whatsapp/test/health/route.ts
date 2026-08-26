@@ -7,6 +7,17 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function configPresence() {
+  return {
+    mode: process.env.ATLAS_WHATSAPP_MODE === "meta_test",
+    enabled: process.env.WHATSAPP_TEST_ENABLED === "true",
+    accessToken: Boolean(process.env.WHATSAPP_TEST_ACCESS_TOKEN?.trim()),
+    phoneNumberId: Boolean(process.env.WHATSAPP_TEST_PHONE_NUMBER_ID?.trim()),
+    wabaId: Boolean(process.env.WHATSAPP_TEST_WABA_ID?.trim()),
+    allowedRecipients: Boolean(process.env.WHATSAPP_TEST_ALLOWED_RECIPIENTS?.trim()),
+  };
+}
+
 export async function GET() {
   if (process.env.VERCEL_ENV === "production") {
     return NextResponse.json({ error: "test_mode_forbidden" }, { status: 403 });
@@ -16,11 +27,11 @@ export async function GET() {
   try {
     runtimeConfig = readAtlasWhatsAppRuntime();
   } catch {
-    return NextResponse.json({ ok: false, error: "test_mode_not_configured" }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "test_mode_not_configured", config: configPresence() }, { status: 503 });
   }
 
   if (!runtimeConfig || runtimeConfig.mode !== ATLAS_WHATSAPP_META_TEST_MODE || !runtimeConfig.wabaId) {
-    return NextResponse.json({ ok: false, error: "test_mode_not_configured" }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "test_mode_not_configured", config: configPresence() }, { status: 503 });
   }
 
   const controller = new AbortController();
