@@ -17,8 +17,88 @@ function audioContextConstructor() {
   return window.AudioContext ?? (window as WebkitAudioWindow).webkitAudioContext ?? null;
 }
 
+function appleMobileBrowser() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/i.test(ua)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 export function atlasPcmCaptureSupported() {
-  return Boolean(audioContextConstructor()) && Boolean(navigator.mediaDevices?.getUserMedia);
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return false;
+  return typeof MediaRecorder !== "undefined" || Boolean(audioContextConstructor());
+}
+
+function preferredRecorderMimeType() {
+  if (typeof MediaRecorder === "undefined") return "";
+  const candidates = [
+    "audio/mp4",
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+  ];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+}
+
+async function startMediaRecorderCapture(
+  stream: MediaStream,
+  onLevel?: (level: number) => void,
+): Promise<AtlasPcmCapture> {
+  if (typeof MediaRecorder === "undefined") throw new Error("media_recorder_unavailable");
+  const mimeType = preferredRecorderMimeType();
+  const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+  const chunks: BlobPart[] = [];
+  let settled = false;
+  let resolveStop: ((blob: Blob | null) => void) | null = null;
+  let discardOnStop = false;
+
+  recorder.ondataavailable = (event) => {
+    if (event.data.size > 0) {
+      chunks.push(event.data);
+      onLevel?.(0.2);
+    }
+  };
+  recorder.onerror = () => {
+    if (resolveStop && !settled) {
+      settled = true;
+      resolveStop(null);
+      resolveStop = null;
+    }
+  };
+  recorder.onstop = () => {
+    if (!resolveStop || settled) return;
+    settled = true;
+    onLevel?.(0);
+    const blob = discardOnStop
+      ? null
+      : new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" });
+    resolveStop(blob);
+    resolveStop = null;
+  };
+
+  recorder.start(250);
+
+  async function finish(discard: boolean) {
+    if (recorder.state === "inactive") {
+      if (discard) return null;
+      return new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" });
+    }
+    discardOnStop = discard;
+    settled = false;
+    return await new Promise<Blob | null>((resolve) => {
+      resolveStop = resolve;
+      try {
+        recorder.requestData();
+      } catch {}
+      recorder.stop();
+    });
+  }
+
+  return {
+    startedAt: performance.now(),
+    stop: async () => (await finish(false)) ?? new Blob([], { type: recorder.mimeType || mimeType || "audio/mp4" }),
+    discard: async () => { await finish(true); },
+  };
 }
 
 function flatten(chunks: Float32Array[]) {
@@ -79,7 +159,7 @@ function encodeWav(samples: Float32Array, sampleRate: number) {
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-export async function startAtlasPcmCapture(
+async function startPcmCapture(
   stream: MediaStream,
   onLevel?: (level: number) => void,
 ): Promise<AtlasPcmCapture> {
@@ -88,6 +168,11 @@ export async function startAtlasPcmCapture(
 
   const context = new Context();
   if (context.state === "suspended") await context.resume();
+  if (context.state !== "running") {
+    await context.close();
+    throw new Error("audio_context_suspended");
+  }
+
   const sourceSampleRate = context.sampleRate;
   const source = context.createMediaStreamSource(stream);
   const processor = context.createScriptProcessor(4096, 1, 1);
@@ -136,4 +221,19 @@ export async function startAtlasPcmCapture(
     stop: async () => (await close(false)) ?? encodeWav(new Float32Array(), TARGET_SAMPLE_RATE),
     discard: async () => { await close(true); },
   };
+}
+
+export async function startAtlasPcmCapture(
+  stream: MediaStream,
+  onLevel?: (level: number) => void,
+): Promise<AtlasPcmCapture> {
+  if (appleMobileBrowser() && typeof MediaRecorder !== "undefined") {
+    return startMediaRecorderCapture(stream, onLevel);
+  }
+  try {
+    return await startPcmCapture(stream, onLevel);
+  } catch {
+    if (typeof MediaRecorder !== "undefined") return startMediaRecorderCapture(stream, onLevel);
+    throw new Error("voice_capture_unavailable");
+  }
 }
