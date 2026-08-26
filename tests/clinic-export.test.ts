@@ -136,6 +136,17 @@ test("clinic export route is owner-only, same-origin, tenant-scoped, audited, an
   assert.equal(route.includes('from("clinic_members")'), false);
 });
 
+test("clinic export is only surfaced inside the owner-only administration block", async () => {
+  const settings = await read("app/dashboard/settings/page.tsx");
+  const ownerBlock = settings.match(/\{isOwner \? \([\s\S]*?\) : null\}/)?.[0] ?? "";
+
+  assert.match(ownerBlock, /action="\/api\/clinic-export"/);
+  assert.match(ownerBlock, /name="clinic_id" value=\{clinic\.id\}/);
+  assert.match(ownerBlock, /copy\.exportArchive/);
+  assert.match(ownerBlock, /copy\.exportArchiveHelp/);
+  assert.match(settings, /Contains patient names and phone numbers/);
+});
+
 test("clinic export audit is patient-data-free and inaccessible as a direct client table", async () => {
   const migration = await read("supabase/migrations/20260826104500_secure_clinic_export_audit.sql");
 
@@ -148,7 +159,7 @@ test("clinic export audit is patient-data-free and inaccessible as a direct clie
   assert.match(migration, /requested_at >= now\(\) - interval '1 hour'/);
   assert.match(migration, /grant execute on function public\.reserve_clinic_export\(uuid\) to authenticated/);
 
-  for (const forbidden of ["patient_name", "patient_phone", "token", "provider_message_id", "archive_contents"]) {
+  for (const forbidden of ["patient_name", "patient_phone", "provider_message_id", "archive_contents", "access_token", "token_hash"]) {
     assert.equal(migration.includes(forbidden), false, `${forbidden} must not be stored in export audit`);
   }
 });
