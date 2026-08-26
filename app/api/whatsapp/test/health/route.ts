@@ -42,33 +42,49 @@ export async function GET() {
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
+  const headers = { Authorization: `Bearer ${accessToken}`, Accept: "application/json" };
   try {
-    const response = await fetch(
-      `https://graph.facebook.com/${graphApiVersion}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/json",
-        },
-        signal: controller.signal,
-        cache: "no-store",
-      },
-    );
+    const [phoneResponse, templateResponse] = await Promise.all([
+      fetch(
+        `https://graph.facebook.com/${graphApiVersion}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`,
+        { headers, signal: controller.signal, cache: "no-store" },
+      ),
+      fetch(
+        `https://graph.facebook.com/${graphApiVersion}/${wabaId}/message_templates?fields=name,status,language,category&limit=20`,
+        { headers, signal: controller.signal, cache: "no-store" },
+      ),
+    ]);
 
-    if (!response.ok) {
-      return NextResponse.json({ ok: false, error: "meta_credentials_rejected", status: response.status, config: presence }, { status: 502 });
+    if (!phoneResponse.ok) {
+      return NextResponse.json({ ok: false, error: "meta_credentials_rejected", status: phoneResponse.status, config: presence }, { status: 502 });
     }
 
-    const body = await response.json() as Record<string, unknown>;
+    const phone = await phoneResponse.json() as Record<string, unknown>;
+    const templateBody = templateResponse.ok
+      ? await templateResponse.json() as { data?: Array<Record<string, unknown>> }
+      : null;
+    const templates = (templateBody?.data ?? []).flatMap((row) => (
+      typeof row.name === "string" && typeof row.status === "string" && typeof row.language === "string"
+        ? [{
+            name: row.name,
+            status: row.status,
+            language: row.language,
+            category: typeof row.category === "string" ? row.category : null,
+          }]
+        : []
+    ));
+
     return NextResponse.json({
       ok: true,
       mode: "meta_test",
-      phoneNumberIdMatches: body.id === phoneNumberId,
-      displayPhoneNumber: typeof body.display_phone_number === "string" ? body.display_phone_number : null,
-      verifiedName: typeof body.verified_name === "string" ? body.verified_name : null,
-      qualityRating: typeof body.quality_rating === "string" ? body.quality_rating : null,
+      phoneNumberIdMatches: phone.id === phoneNumberId,
+      displayPhoneNumber: typeof phone.display_phone_number === "string" ? phone.display_phone_number : null,
+      verifiedName: typeof phone.verified_name === "string" ? phone.verified_name : null,
+      qualityRating: typeof phone.quality_rating === "string" ? phone.quality_rating : null,
       recipientAllowlistConfigured: presence.allowedRecipients,
       wabaConfigured: true,
+      templateListAccessible: templateResponse.ok,
+      templates,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ ok: false, error: "meta_health_check_failed", config: presence }, { status: 502 });
