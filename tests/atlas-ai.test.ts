@@ -189,7 +189,7 @@ test("Atlas Voice transcription stays server-side, authenticated, bounded, and s
   assert.match(route, /allowedAudioTypes/);
   assert.match(route, /Buffer\.from\(await audio\.arrayBuffer\(\)\)\.toString\("base64"\)/);
   assert.match(route, /vad_filter: true/);
-  assert.match(route, /Cache-Control.*no-store, private/s);
+  assert.match(route, /Cache-Control[\s\S]*no-store, private/);
   assert.doesNotMatch(route, /service[_-]?role/i);
   assert.doesNotMatch(route, /console\./);
   assert.doesNotMatch(route, /patient_name|patient_phone/);
@@ -229,7 +229,7 @@ test("Atlas live voice has explicit ChatGPT-style turn controls and slower silen
   assert.match(client, /Interrupt/);
   assert.match(client, /continueLiveVoice/);
   assert.match(client, /endLiveVoice/);
-  assert.match(client, /lastSpeechAt > 2800/);
+  assert.match(client, /now - lastSpeechAt > 2800/);
   assert.match(client, /is-transcribing/);
   assert.match(client, /is-speaking/);
 });
