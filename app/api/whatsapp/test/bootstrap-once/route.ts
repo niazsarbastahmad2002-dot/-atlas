@@ -26,6 +26,44 @@ function safeConfig() {
   return { accessToken, wabaId, graphApiVersion };
 }
 
+async function createUtilityTemplate(
+  config: NonNullable<ReturnType<typeof safeConfig>>,
+  name: string,
+  text: string,
+  examples: string[],
+) {
+  const response = await fetch(
+    `https://graph.facebook.com/${config.graphApiVersion}/${config.wabaId}/message_templates`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        language: "en_US",
+        category: "UTILITY",
+        components: [{ type: "BODY", text, example: { body_text: [examples] } }],
+      }),
+      cache: "no-store",
+    },
+  );
+  let body: Record<string, unknown> = {};
+  try { body = await response.json() as Record<string, unknown>; } catch {}
+  const error = body.error && typeof body.error === "object" ? body.error as Record<string, unknown> : null;
+  return {
+    name,
+    ok: response.ok,
+    status: response.status,
+    id: typeof body.id === "string" ? body.id : null,
+    templateStatus: typeof body.status === "string" ? body.status : null,
+    errorCode: typeof error?.code === "number" || typeof error?.code === "string" ? String(error.code) : null,
+    errorMessage: typeof error?.message === "string" ? error.message.slice(0, 220) : null,
+  };
+}
+
 export async function GET(request: NextRequest) {
   if (process.env.VERCEL_ENV === "production") {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -60,5 +98,25 @@ export async function GET(request: NextRequest) {
     bootstrapAtlasAppointmentReminderTemplates({ ...config, existingTemplates: existing }),
     bootstrapMetaSupportTemplates({ ...config, existingTemplates: existing }),
   ]);
-  return NextResponse.json({ patientLoop, support }, { headers: { "Cache-Control": "no-store" } });
+
+  const fallbackNames = new Set(existing.map((item) => item.name));
+  const fallback = [] as Array<Awaited<ReturnType<typeof createUtilityTemplate>>>;
+  if (!fallbackNames.has("atlas_login_otp_test_v1")) {
+    fallback.push(await createUtilityTemplate(
+      config,
+      "atlas_login_otp_test_v1",
+      "Your Atlas test code is {{1}}. It expires in 5 minutes.",
+      ["561166"],
+    ));
+  }
+  if (!fallbackNames.has("atlas_staff_invite_test_v1")) {
+    fallback.push(await createUtilityTemplate(
+      config,
+      "atlas_staff_invite_test_v1",
+      "You have an Atlas test invitation for {{1}}. Open this secure link: {{2}}",
+      ["Atlas Clinic", "https://example.com/join/test-token"],
+    ));
+  }
+
+  return NextResponse.json({ patientLoop, support, fallback }, { headers: { "Cache-Control": "no-store" } });
 }
