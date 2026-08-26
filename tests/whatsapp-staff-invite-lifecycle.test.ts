@@ -20,6 +20,15 @@ test("WhatsApp staff invites are phone-bound and activate only after accepted de
   assert.ok(activation > rejectedDelivery);
 });
 
+test("staff invitation UI requires a recipient phone and fails closed until direct WhatsApp is ready", () => {
+  const form = source("app/dashboard/staff/invite-link-form.tsx");
+
+  assert.match(form, /name="recipient_phone"/);
+  assert.match(form, /required/);
+  assert.match(form, /!directWhatsAppInvites \|\| !recipientPhone\.trim\(\)/);
+  assert.doesNotMatch(form, /phoneHelp: "Optional/);
+});
+
 test("staff invite redemption requires the authenticated user's verified invited phone", () => {
   const finish = source("app/join/[token]/finish/route.ts");
 
