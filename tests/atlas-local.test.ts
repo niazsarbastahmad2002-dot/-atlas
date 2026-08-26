@@ -108,7 +108,7 @@ test("Atlas Local supports all four Atlas interface languages", () => {
   assert.match(logic, /document\.documentElement\.dir=locale==="en"\?"ltr":"rtl"/);
 });
 
-test("Atlas Local updates its cached app assets when internet is available", () => {
+test("Atlas Local prefers fresh app assets online and falls back to the installed cache offline", () => {
   const worker = source("public/atlas-sw.js");
   assert.match(worker, /atlas-offline-shell-v4/);
   assert.match(worker, /ATLAS_LOCAL_PAGE = "\/atlas-local\.html"/);
@@ -116,8 +116,8 @@ test("Atlas Local updates its cached app assets when internet is available", () 
   assert.match(worker, /ATLAS_LOCAL_MANIFEST = "\/atlas-local\.webmanifest"/);
   assert.match(worker, /networkFirstLocalAsset/);
   assert.match(worker, /cache: "no-store"/);
-  assert.match(worker, /cache\.put\(request, response\.clone\(\)\)/);
   assert.match(worker, /cache\.match\(request, \{ ignoreSearch: true \}\)/);
+  assert.doesNotMatch(worker, /cache\.put\(|response\.clone\(/);
   assert.match(worker, /url\.pathname\.startsWith\("\/dashboard"\)/);
   assert.match(worker, /ATLAS_OFFLINE_PAGE/);
 });
