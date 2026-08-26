@@ -2,6 +2,12 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { isUuid } from "@/lib/appointments";
+import { normalizeAuthPhone } from "@/lib/phone-auth";
+import {
+  atlasWhatsAppRecipientAllowed,
+  readAtlasWhatsAppRuntime,
+} from "@/lib/reminders/whatsapp-runtime";
+import { sendWhatsAppStaffInviteTemplate } from "@/lib/reminders/whatsapp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,6 +23,10 @@ type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
 function atlasSiteUrl() {
   const configured = process.env.SITE_URL?.trim();
   if (configured) return configured.replace(/\/$/, "");
+  if (process.env.VERCEL_ENV !== "production") {
+    const previewHost = process.env.VERCEL_URL?.trim();
+    if (previewHost) return `https://${previewHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
   const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   if (productionHost) return `https://${productionHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
   return "http://localhost:3000";
@@ -28,8 +38,14 @@ export async function createReceptionistInviteLink(
 ): Promise<InviteLinkState> {
   const clinicId = String(formData.get("clinic_id") ?? "");
   const doctorId = String(formData.get("assigned_doctor_id") ?? "");
+  const rawRecipientPhone = String(formData.get("recipient_phone") ?? "").trim();
+  const directInviteRequested = Boolean(rawRecipientPhone) && process.env.WHATSAPP_DIRECT_INVITES_ENABLED === "true";
+  const recipientPhone = rawRecipientPhone ? normalizeAuthPhone(rawRecipientPhone) : null;
   if (!isUuid(clinicId) || !isUuid(doctorId)) {
     return { status: "error", message: "Choose the receptionist's doctor first." };
+  }
+  if (directInviteRequested && !recipientPhone) {
+    return { status: "error", message: "Enter a valid mobile number for the WhatsApp invitation." };
   }
 
   const supabase = await createClient();
@@ -39,7 +55,7 @@ export async function createReceptionistInviteLink(
   }
 
   const [{ data: clinic }, { data: doctor }] = await Promise.all([
-    supabase.from("clinics").select("id, owner_id").eq("id", clinicId).maybeSingle(),
+    supabase.from("clinics").select("id, owner_id, name").eq("id", clinicId).maybeSingle(),
     supabase.from("doctors").select("id").eq("id", doctorId).eq("clinic_id", clinicId).eq("active", true).maybeSingle(),
   ]);
 
@@ -68,9 +84,35 @@ export async function createReceptionistInviteLink(
     return { status: "error", message: "Atlas could not create the invitation. Try again." };
   }
 
+  const url = `${atlasSiteUrl()}/join/${token}`;
+  if (directInviteRequested && recipientPhone) {
+    let runtimeConfig;
+    try { runtimeConfig = readAtlasWhatsAppRuntime(); } catch {
+      return { status: "error", message: "The invitation link was created, but WhatsApp is not configured.", url };
+    }
+    if (!runtimeConfig || !atlasWhatsAppRecipientAllowed(runtimeConfig, recipientPhone)) {
+      return { status: "error", message: "The invitation link was created, but that WhatsApp recipient is not allowed in this environment.", url };
+    }
+    const sent = await sendWhatsAppStaffInviteTemplate(
+      recipientPhone,
+      clinic.name,
+      url,
+      runtimeConfig.staffInviteTemplateName,
+      runtimeConfig.config,
+    );
+    if (!sent.accepted) {
+      return { status: "error", message: `The invitation link was created, but WhatsApp delivery failed (${sent.errorCode}).`, url };
+    }
+    return {
+      status: "success",
+      message: "Secure one-use invitation sent on WhatsApp. It expires in 24 hours.",
+      url,
+    };
+  }
+
   return {
     status: "success",
     message: "Secure one-use invitation ready. It expires in 24 hours.",
-    url: `${atlasSiteUrl()}/join/${token}`,
+    url,
   };
 }
