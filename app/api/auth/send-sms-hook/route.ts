@@ -5,11 +5,13 @@ import {
 } from "@/lib/auth/send-sms-hook";
 import {
   atlasWhatsAppRecipientAllowed,
+  ATLAS_WHATSAPP_META_TEST_MODE,
   readAtlasWhatsAppRuntime,
 } from "@/lib/reminders/whatsapp-runtime";
 import {
   readBodyWithLimit,
   sendWhatsAppAuthenticationTemplate,
+  sendWhatsAppTextMessage,
 } from "@/lib/reminders/whatsapp";
 
 export const runtime = "nodejs";
@@ -27,7 +29,8 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
-  if (!runtimeConfig || process.env.WHATSAPP_DIRECT_OTP_ENABLED !== "true") {
+  const testMode = runtimeConfig?.mode === ATLAS_WHATSAPP_META_TEST_MODE;
+  if (!runtimeConfig || (!testMode && process.env.WHATSAPP_DIRECT_OTP_ENABLED !== "true")) {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
@@ -42,12 +45,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "recipient_not_allowed" }, { status: 403 });
   }
 
-  const result = await sendWhatsAppAuthenticationTemplate(
+  let result = await sendWhatsAppAuthenticationTemplate(
     values.phone,
     values.otp,
     runtimeConfig.otpTemplateName,
     runtimeConfig.config,
   );
+
+  // Meta test WABAs may not be eligible to create AUTHENTICATION templates.
+  // Inside the official 24-hour test conversation window only, use a plain
+  // text transport fallback while Supabase remains the OTP authority. Never
+  // use this fallback for the production sender.
+  if (!result.accepted && testMode) {
+    result = await sendWhatsAppTextMessage(
+      values.phone,
+      `Atlas test verification code: ${values.otp}. It expires soon.`,
+      runtimeConfig.config,
+    );
+  }
+
   if (!result.accepted) {
     return NextResponse.json({
       error: "delivery_failed",
