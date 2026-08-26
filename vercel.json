@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "fix/atlas-voice-ipad-capture": true,
       "*": false,
       "**": false
     }
