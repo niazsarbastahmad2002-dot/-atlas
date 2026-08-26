@@ -13,9 +13,36 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  mode?: "model" | "atlas_core";
 };
 
-type VoiceStage = "idle" | "listening" | "transcribing" | "thinking" | "speaking";
+type VoiceStage = "idle" | "listening" | "thinking" | "speaking";
+
+type RecognitionAlternative = { transcript: string; confidence?: number };
+type RecognitionResult = { isFinal: boolean; length: number; [index: number]: RecognitionAlternative };
+type RecognitionResultList = { length: number; [index: number]: RecognitionResult };
+type RecognitionEvent = Event & { resultIndex: number; results: RecognitionResultList };
+type RecognitionErrorEvent = Event & { error: string; message?: string };
+
+type BrowserSpeechRecognition = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: RecognitionEvent) => void) | null;
+  onerror: ((event: RecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+};
+
+type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
+
+type SpeechWindow = typeof window & {
+  SpeechRecognition?: BrowserSpeechRecognitionConstructor;
+  webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
+};
 
 type Copy = {
   eyebrow: string;
@@ -35,11 +62,11 @@ type Copy = {
   voice: string;
   voiceOff: string;
   listening: string;
-  transcribing: string;
   speaking: string;
   doneSpeaking: string;
   voiceUnavailable: string;
   voicePermission: string;
+  voiceLanguage: string;
   replay: string;
   presets: string[];
 };
@@ -50,7 +77,7 @@ const copy: Record<UiLocale, Copy> = {
     title: "Atlas AI",
     subtitle: "Chat naturally about Atlas, clinic operations, writing, planning, translation, or everyday questions.",
     beta: "Beta · read-only",
-    privacy: "Atlas sends this conversation plus aggregated appointment statistics to the AI provider. Do not include patient names, phone numbers, message contents, or patient-specific clinical information.",
+    privacy: "Atlas sends this conversation plus aggregated appointment statistics to the AI provider when full AI is available. Do not include patient names, phone numbers, message contents, or patient-specific clinical information.",
     placeholder: "Message Atlas AI…",
     send: "Send",
     thinking: "Thinking…",
@@ -63,11 +90,11 @@ const copy: Record<UiLocale, Copy> = {
     voice: "Voice",
     voiceOff: "End voice",
     listening: "Listening… speak naturally",
-    transcribing: "Understanding your voice…",
     speaking: "Atlas AI is speaking…",
     doneSpeaking: "Done speaking",
     voiceUnavailable: "Voice mode is not supported by this browser/device.",
     voicePermission: "Atlas needs microphone permission for voice mode.",
+    voiceLanguage: "This device does not support speech recognition for the selected language.",
     replay: "Listen",
     presets: [
       "How busy are we today?",
@@ -81,7 +108,7 @@ const copy: Record<UiLocale, Copy> = {
     title: "Atlas AI",
     subtitle: "بە ئاسایی گفتوگۆ بکە لەسەر Atlas، کاری کلینیک، نووسین، پلاندانان، وەرگێڕان یان پرسیاری ڕۆژانە.",
     beta: "Beta · تەنها خوێندنەوە",
-    privacy: "Atlas ئەم گفتوگۆیە لەگەڵ ئاماری کۆکراوەی مەوعیدەکان بۆ دابینکەری AI دەنێرێت. ناوی نەخۆش، ژمارەی مۆبایل، ناوەڕۆکی نامە یان زانیاری پزیشکی تایبەت بە نەخۆش مەنووسە.",
+    privacy: "کاتێک AI تەواو بەردەست بێت، Atlas ئەم گفتوگۆیە لەگەڵ ئاماری کۆکراوەی مەوعیدەکان دەنێرێت. ناوی نەخۆش، ژمارەی مۆبایل، ناوەڕۆکی نامە یان زانیاری پزیشکی تایبەت بە نەخۆش مەنووسە.",
     placeholder: "نامە بۆ Atlas AI…",
     send: "بنێرە",
     thinking: "بیر دەکاتەوە…",
@@ -94,11 +121,11 @@ const copy: Record<UiLocale, Copy> = {
     voice: "دەنگ",
     voiceOff: "کۆتایی دەنگ",
     listening: "گوێ دەگرێت… بە ئاسایی قسە بکە",
-    transcribing: "دەنگەکەت تێدەگات…",
     speaking: "Atlas AI قسە دەکات…",
     doneSpeaking: "قسەم تەواو بوو",
     voiceUnavailable: "Voice mode لەم وێبگەڕ/ئامێرەدا بەردەست نییە.",
     voicePermission: "بۆ Voice mode ڕێگە بە مایکرۆفۆن بدە.",
+    voiceLanguage: "ئەم ئامێرە ناسینەوەی دەنگ بۆ زمانی هەڵبژێردراو پشتگیری ناکات.",
     replay: "گوێ بگرە",
     presets: [
       "ئەمڕۆ چەند قەرەباڵغین؟",
@@ -112,7 +139,7 @@ const copy: Record<UiLocale, Copy> = {
     title: "Atlas AI",
     subtitle: "ب ئاسایی گفتوگۆ بکە ل سەر Atlas، کارێ کلینیکێ، نڤیسین، پلانکرن، وەرگێڕان یان پسیارێن ڕۆژانە.",
     beta: "Beta · تەنێ خواندن",
-    privacy: "Atlas ئەڤ گفتوگۆیێ ل گەل ئامارێن کۆمکری یێن مەوعیدان بۆ دابینکەرێ AI دفرێنیت. ناڤێ نەخۆشی، ژمارا موبایلێ، ناڤەروکا پەیامان یان زانیاریێن پزیشکی یێن تایبەت ب نەخۆشی مەنووسە.",
+    privacy: "دەمێ AI یا تەمام بەردەست بیت، Atlas ئەڤ گفتوگۆیێ ل گەل ئامارێن کۆمکری یێن مەوعیدان دفرێنیت. ناڤێ نەخۆشی، ژمارا موبایلێ، ناڤەروکا پەیامان یان زانیاریێن پزیشکی یێن تایبەت ب نەخۆشی مەنووسە.",
     placeholder: "پەیام بۆ Atlas AI…",
     send: "بفرێنە",
     thinking: "هزر دکەت…",
@@ -125,11 +152,11 @@ const copy: Record<UiLocale, Copy> = {
     voice: "دەنگ",
     voiceOff: "دوماهیکا دەنگی",
     listening: "گوهدار دکەت… ب ئاسایی باخڤە",
-    transcribing: "دەنگێ تە تێدگەهیت…",
     speaking: "Atlas AI دئاخڤیت…",
     doneSpeaking: "ئاخفتنا من تەواو بوو",
     voiceUnavailable: "Voice mode ل ڤی وێبگەڕی/ئامێری بەردەست نینە.",
     voicePermission: "بۆ Voice mode ڕێکێ بدە مایکرۆفۆنێ.",
+    voiceLanguage: "ئەڤ ئامێرە ناسینا دەنگی بۆ زمانێ هەلبژارتی پشتگیری ناکەت.",
     replay: "گوهدار بکە",
     presets: [
       "ئەڤرۆ چەند قەرەبالغین؟",
@@ -143,7 +170,7 @@ const copy: Record<UiLocale, Copy> = {
     title: "Atlas AI",
     subtitle: "احچي بشكل طبيعي عن Atlas، شغل العيادة، الكتابة، التخطيط، الترجمة أو الأسئلة اليومية.",
     beta: "Beta · للقراءة فقط",
-    privacy: "Atlas يرسل هالمحادثة ويّا إحصائيات مجمعة للمواعيد إلى مزود الذكاء الاصطناعي. لا تكتب اسم المريض أو رقم الهاتف أو محتوى الرسائل أو معلومات طبية خاصة بمريض.",
+    privacy: "لما يكون الذكاء الاصطناعي الكامل متاح، Atlas يرسل هالمحادثة ويّا إحصائيات مجمعة للمواعيد. لا تكتب اسم المريض أو رقم الهاتف أو محتوى الرسائل أو معلومات طبية خاصة بمريض.",
     placeholder: "اكتب لـ Atlas AI…",
     send: "إرسال",
     thinking: "يفكر…",
@@ -156,11 +183,11 @@ const copy: Record<UiLocale, Copy> = {
     voice: "صوت",
     voiceOff: "إنهاء الصوت",
     listening: "أسمعك… احچي بشكل طبيعي",
-    transcribing: "أفهم صوتك…",
     speaking: "Atlas AI يحچي…",
     doneSpeaking: "خلصت حچي",
     voiceUnavailable: "وضع الصوت غير مدعوم بهذا المتصفح أو الجهاز.",
     voicePermission: "Atlas يحتاج إذن المايكروفون حتى يستخدم وضع الصوت.",
+    voiceLanguage: "هذا الجهاز ما يدعم التعرف على الكلام باللغة المختارة.",
     replay: "اسمع",
     presets: [
       "شلون زحمة العيادة اليوم؟",
@@ -177,24 +204,16 @@ function makeId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function blobToBase64(blob: Blob) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      const comma = result.indexOf(",");
-      resolve(comma >= 0 ? result.slice(comma + 1) : "");
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("audio_read_failed"));
-    reader.readAsDataURL(blob);
-  });
+function speechLanguage(locale: UiLocale) {
+  if (locale === "ar") return "ar-IQ";
+  if (locale === "ku" || locale === "bd") return "ku-IQ";
+  return "en-US";
 }
 
-function base64AudioUrl(base64: string, mediaType: string) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return URL.createObjectURL(new Blob([bytes], { type: mediaType }));
+function speechRecognitionConstructor() {
+  if (typeof window === "undefined") return null;
+  const speechWindow = window as SpeechWindow;
+  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null;
 }
 
 function MicIcon() {
@@ -237,15 +256,8 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
   const messagesRef = useRef<ChatMessage[]>([]);
   const loadingRef = useRef(false);
   const voiceModeRef = useRef(false);
-  const recordingRef = useRef(false);
   const speakingRef = useRef(false);
-  const discardRecordingRef = useRef(false);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const playbackRef = useRef<HTMLAudioElement | null>(null);
-  const playbackUrlRef = useRef<string | null>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -255,13 +267,9 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
 
   useEffect(() => () => {
     voiceModeRef.current = false;
-    discardRecordingRef.current = true;
-    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    if (animationFrameRef.current != null) cancelAnimationFrame(animationFrameRef.current);
-    void audioContextRef.current?.close();
-    playbackRef.current?.pause();
-    if (playbackUrlRef.current) URL.revokeObjectURL(playbackUrlRef.current);
+    recognitionRef.current?.abort();
+    recognitionRef.current = null;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
   }, []);
 
   function setVoiceModeValue(value: boolean) {
@@ -274,72 +282,55 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
     setLoading(value);
   }
 
-  function cleanupRecording() {
-    recordingRef.current = false;
-    recorderRef.current = null;
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-    if (animationFrameRef.current != null) cancelAnimationFrame(animationFrameRef.current);
-    animationFrameRef.current = null;
-    const context = audioContextRef.current;
-    audioContextRef.current = null;
-    if (context && context.state !== "closed") void context.close();
+  function voiceSupported() {
+    return Boolean(speechRecognitionConstructor())
+      && typeof window !== "undefined"
+      && "speechSynthesis" in window
+      && typeof SpeechSynthesisUtterance !== "undefined";
   }
 
-  async function transcribeAudio(blob: Blob) {
-    const audio = await blobToBase64(blob);
-    const mediaType = (blob.type || "audio/webm").split(";")[0];
-    const response = await fetch("/api/atlas-ai/transcribe", {
-      method: "POST",
-      credentials: "same-origin",
-      cache: "no-store",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ audio, mediaType }),
-    });
-    const payload = await response.json() as { text?: string; error?: string };
-    if (!response.ok || !payload.text) throw new Error(payload.error || "voice_unavailable");
-    return payload.text.trim();
+  function chooseVoice(lang: string) {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return undefined;
+    const voices = window.speechSynthesis.getVoices();
+    const normalized = lang.toLowerCase();
+    const exact = voices.find((voice) => voice.lang.toLowerCase() === normalized);
+    if (exact) return exact;
+    const root = normalized.split("-")[0];
+    return voices.find((voice) => voice.lang.toLowerCase().startsWith(`${root}-`))
+      ?? voices.find((voice) => voice.lang.toLowerCase() === root);
   }
 
-  async function playSpokenAnswer(text: string, continueConversation: boolean) {
-    if (!text || speakingRef.current) return;
+  async function speakAnswer(text: string, continueConversation: boolean) {
+    if (!text || speakingRef.current || typeof window === "undefined" || !("speechSynthesis" in window)) {
+      if (continueConversation && voiceModeRef.current) window.setTimeout(() => void startListening(), 350);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = speechLanguage(locale);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    const voice = chooseVoice(utterance.lang);
+    if (voice) utterance.voice = voice;
+
     speakingRef.current = true;
     setVoiceStage("speaking");
     setVoiceError(null);
-    try {
-      const response = await fetch("/api/atlas-ai/speech", {
-        method: "POST",
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      const payload = await response.json() as { audio?: string; mediaType?: string; error?: string };
-      if (!response.ok || !payload.audio) throw new Error(payload.error || "voice_unavailable");
 
-      playbackRef.current?.pause();
-      if (playbackUrlRef.current) URL.revokeObjectURL(playbackUrlRef.current);
-      const url = base64AudioUrl(payload.audio, payload.mediaType || "audio/mpeg");
-      playbackUrlRef.current = url;
-      const player = new Audio(url);
-      playbackRef.current = player;
-      player.onended = () => {
-        speakingRef.current = false;
-        setVoiceStage("idle");
-        if (continueConversation && voiceModeRef.current) window.setTimeout(() => void beginRecording(), 350);
-      };
-      player.onerror = () => {
-        speakingRef.current = false;
-        setVoiceStage("idle");
-        setVoiceError(t.voiceUnavailable);
-      };
-      await player.play();
-    } catch {
+    utterance.onend = () => {
+      speakingRef.current = false;
+      setVoiceStage("idle");
+      if (continueConversation && voiceModeRef.current) window.setTimeout(() => void startListening(), 350);
+    };
+    utterance.onerror = () => {
       speakingRef.current = false;
       setVoiceStage("idle");
       setVoiceError(t.voiceUnavailable);
-      if (continueConversation && voiceModeRef.current) window.setTimeout(() => void beginRecording(), 500);
-    }
+      if (continueConversation && voiceModeRef.current) window.setTimeout(() => void startListening(), 500);
+    };
+    window.speechSynthesis.speak(utterance);
   }
 
   async function askAtlas(value: string, fromVoice = false) {
@@ -367,7 +358,7 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
           messages: requestHistory.map(({ role, content }) => ({ role, content })),
         }),
       });
-      const payload = await response.json() as { answer?: string; error?: string };
+      const payload = await response.json() as { answer?: string; error?: string; mode?: "model" | "atlas_core" };
       if (!response.ok || !payload.answer) {
         if (payload.error === "ai_not_configured" || payload.error === "ai_auth") throw new Error("unavailable");
         if (payload.error === "ai_budget") throw new Error("budget");
@@ -375,12 +366,17 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
         throw new Error("failed");
       }
 
-      const assistantMessage: ChatMessage = { id: makeId(), role: "assistant", content: payload.answer };
+      const assistantMessage: ChatMessage = {
+        id: makeId(),
+        role: "assistant",
+        content: payload.answer,
+        mode: payload.mode,
+      };
       const nextMessages = [...messagesRef.current, assistantMessage].slice(-14);
       messagesRef.current = nextMessages;
       setMessages(nextMessages);
       setLoadingValue(false);
-      if (fromVoice || voiceModeRef.current) await playSpokenAnswer(payload.answer, true);
+      if (fromVoice || voiceModeRef.current) await speakAnswer(payload.answer, true);
       else setVoiceStage("idle");
       return;
     } catch (caught) {
@@ -392,132 +388,89 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
     }
   }
 
-  async function beginRecording() {
-    if (!voiceModeRef.current || recordingRef.current || loadingRef.current || speakingRef.current) return;
+  async function startListening() {
+    if (!voiceModeRef.current || loadingRef.current || speakingRef.current || recognitionRef.current) return;
     setVoiceError(null);
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+
+    const Recognition = speechRecognitionConstructor();
+    if (!Recognition || !voiceSupported()) {
       setVoiceError(t.voiceUnavailable);
       setVoiceModeValue(false);
       return;
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      });
-      if (!voiceModeRef.current) {
-        stream.getTracks().forEach((track) => track.stop());
+    const recognition = new Recognition();
+    recognitionRef.current = recognition;
+    recognition.lang = speechLanguage(locale);
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalText = "";
+    let restartAfterEnd = true;
+
+    recognition.onresult = (event) => {
+      let interimText = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const transcript = result?.[0]?.transcript?.trim() ?? "";
+        if (!transcript) continue;
+        if (result.isFinal) finalText = `${finalText} ${transcript}`.trim();
+        else interimText = `${interimText} ${transcript}`.trim();
+      }
+      setQuestion(`${finalText}${finalText && interimText ? " " : ""}${interimText}`.trim());
+    };
+
+    recognition.onerror = (event) => {
+      const code = event.error;
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        restartAfterEnd = false;
+        setVoiceError(t.voicePermission);
+        setVoiceModeValue(false);
+      } else if (code === "language-not-supported") {
+        restartAfterEnd = false;
+        setVoiceError(t.voiceLanguage);
+        setVoiceModeValue(false);
+      } else if (code !== "no-speech" && code !== "aborted") {
+        setVoiceError(t.voiceUnavailable);
+      }
+    };
+
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      const transcript = finalText.trim();
+      if (transcript.length >= 2) {
+        setQuestion("");
+        void askAtlas(transcript, true);
         return;
       }
-      streamRef.current = stream;
-
-      const candidates = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"];
-      const mimeType = candidates.find((candidate) => MediaRecorder.isTypeSupported(candidate));
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      recorderRef.current = recorder;
-      recordingRef.current = true;
-      discardRecordingRef.current = false;
-      const chunks: Blob[] = [];
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunks.push(event.data);
-      };
-      recorder.onerror = () => {
-        cleanupRecording();
-        setVoiceStage("idle");
-        setVoiceError(t.voiceUnavailable);
-      };
-      recorder.onstop = async () => {
-        const discard = discardRecordingRef.current;
-        const recordedType = recorder.mimeType || mimeType || "audio/webm";
-        cleanupRecording();
-        if (discard || !voiceModeRef.current) return;
-        if (!chunks.length) {
-          setVoiceStage("idle");
-          setVoiceError(t.voiceUnavailable);
-          return;
-        }
-
-        try {
-          setVoiceStage("transcribing");
-          const transcript = await transcribeAudio(new Blob(chunks, { type: recordedType }));
-          if (transcript.length >= 2) await askAtlas(transcript, true);
-          else if (voiceModeRef.current) window.setTimeout(() => void beginRecording(), 400);
-        } catch (caught) {
-          setVoiceStage("idle");
-          const code = caught instanceof Error ? caught.message : "voice_unavailable";
-          setVoiceError(code === "ai_budget" ? t.budget : t.voiceUnavailable);
-        }
-      };
-
-      const AudioContextCtor = window.AudioContext
-        ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (AudioContextCtor) {
-        const context = new AudioContextCtor();
-        audioContextRef.current = context;
-        if (context.state === "suspended") await context.resume();
-        const analyser = context.createAnalyser();
-        analyser.fftSize = 512;
-        context.createMediaStreamSource(stream).connect(analyser);
-        const samples = new Uint8Array(analyser.fftSize);
-        const startedAt = performance.now();
-        let lastVoiceAt = startedAt;
-        let heardSpeech = false;
-
-        const monitor = () => {
-          if (recorder.state !== "recording") return;
-          analyser.getByteTimeDomainData(samples);
-          let power = 0;
-          for (const sample of samples) {
-            const centered = (sample - 128) / 128;
-            power += centered * centered;
-          }
-          const rms = Math.sqrt(power / samples.length);
-          const now = performance.now();
-          if (rms > 0.032) {
-            heardSpeech = true;
-            lastVoiceAt = now;
-          }
-          if (heardSpeech && now - lastVoiceAt > 1300 && now - startedAt > 900) {
-            recorder.stop();
-            return;
-          }
-          if (now - startedAt > 20_000) {
-            recorder.stop();
-            return;
-          }
-          animationFrameRef.current = requestAnimationFrame(monitor);
-        };
-        animationFrameRef.current = requestAnimationFrame(monitor);
-      } else {
-        window.setTimeout(() => {
-          if (recorder.state === "recording") recorder.stop();
-        }, 15_000);
+      setVoiceStage("idle");
+      if (restartAfterEnd && voiceModeRef.current && !loadingRef.current && !speakingRef.current) {
+        window.setTimeout(() => void startListening(), 450);
       }
+    };
 
-      recorder.start(250);
+    try {
+      recognition.start();
       setVoiceStage("listening");
     } catch {
-      cleanupRecording();
+      recognitionRef.current = null;
       setVoiceStage("idle");
-      setVoiceError(t.voicePermission);
-      setVoiceModeValue(false);
+      setVoiceError(t.voiceUnavailable);
     }
   }
 
   function stopListeningTurn() {
-    discardRecordingRef.current = false;
-    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+    recognitionRef.current?.stop();
   }
 
   function stopVoiceMode() {
     setVoiceModeValue(false);
     setVoiceStage("idle");
-    discardRecordingRef.current = true;
-    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
-    playbackRef.current?.pause();
+    recognitionRef.current?.abort();
+    recognitionRef.current = null;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
     speakingRef.current = false;
-    cleanupRecording();
   }
 
   function toggleVoiceMode() {
@@ -525,11 +478,15 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
       stopVoiceMode();
       return;
     }
+    if (!voiceSupported()) {
+      setVoiceError(t.voiceUnavailable);
+      return;
+    }
     setVoiceModeValue(true);
     setVoiceStage("idle");
     setError(null);
     setVoiceError(null);
-    void beginRecording();
+    window.setTimeout(() => void startListening(), 0);
   }
 
   function newChat() {
@@ -555,13 +512,11 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
 
   const voiceStatus = voiceStage === "listening"
     ? t.listening
-    : voiceStage === "transcribing"
-      ? t.transcribing
-      : voiceStage === "thinking"
-        ? t.thinking
-        : voiceStage === "speaking"
-          ? t.speaking
-          : null;
+    : voiceStage === "thinking"
+      ? t.thinking
+      : voiceStage === "speaking"
+        ? t.speaking
+        : null;
 
   return (
     <section className="atlas-ai-card" aria-labelledby="atlas-ai-title">
@@ -600,7 +555,7 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
               <div className="atlas-ai-message-role">{message.role === "assistant" ? "Atlas AI" : "You"}</div>
               <p>{message.content}</p>
               {message.role === "assistant" ? (
-                <button className="atlas-ai-listen-button" type="button" onClick={() => void playSpokenAnswer(message.content, false)} disabled={speakingRef.current}>
+                <button className="atlas-ai-listen-button" type="button" onClick={() => void speakAnswer(message.content, false)}>
                   <SpeakerIcon /> {t.replay}
                 </button>
               ) : null}
