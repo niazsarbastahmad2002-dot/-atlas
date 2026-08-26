@@ -7,7 +7,10 @@ import {
   atlasWhatsAppRecipientAllowed,
   readAtlasWhatsAppRuntime,
 } from "@/lib/reminders/whatsapp-runtime";
-import { sendWhatsAppAuthenticationTemplate } from "@/lib/reminders/whatsapp";
+import {
+  readBodyWithLimit,
+  sendWhatsAppAuthenticationTemplate,
+} from "@/lib/reminders/whatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +31,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
-  const rawBody = await request.text();
+  const bodyBytes = await readBodyWithLimit(request.body, 100_000);
+  if (!bodyBytes) return NextResponse.json({ error: "request_too_large" }, { status: 413 });
+  const rawBody = new TextDecoder().decode(bodyBytes);
   const payload = verifySupabaseSendSmsHook(rawBody, request.headers, hookSecret);
   if (!payload) return NextResponse.json({ error: "invalid_hook_signature" }, { status: 403 });
 
