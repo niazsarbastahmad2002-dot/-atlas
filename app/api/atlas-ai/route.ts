@@ -89,6 +89,11 @@ async function safeGatewayErrorCode(response: Response) {
   }
 }
 
+function fullModelEnabled() {
+  return process.env.ATLAS_AI_FULL_MODEL_ENABLED === "true"
+    || Boolean(process.env.AI_GATEWAY_API_KEY?.trim());
+}
+
 export async function POST(request: Request) {
   let body: Record<string, unknown>;
   try {
@@ -153,6 +158,13 @@ export async function POST(request: Request) {
   );
   const latestQuestion = conversation.at(-1)?.content ?? "";
   const coreAnswer = () => buildAtlasCoreAnswer(latestQuestion, context);
+
+  if (!fullModelEnabled()) {
+    return NextResponse.json(
+      { answer: coreAnswer(), mode: "atlas_core" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   const gatewayHeaders = atlasGatewayHeaders(request);
   if (!gatewayHeaders || Date.now() < modelUnavailableUntil) {
