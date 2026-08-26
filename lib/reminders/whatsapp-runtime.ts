@@ -27,12 +27,17 @@ function runtimeMode(env: Record<string, string | undefined>) {
 }
 
 function parseAllowedRecipients(value: string | undefined) {
-  const recipients = [...new Set((value ?? "")
+  const raw = value?.trim() ?? "";
+  // Meta's official test WABA already limits delivery to recipients explicitly
+  // registered in Meta. Atlas can optionally narrow that set further without
+  // requiring a duplicate app-level allowlist just to exercise test transport.
+  if (!raw) return null;
+  const recipients = [...new Set(raw
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean))];
   if (!recipients.length || recipients.some((phone) => !e164Pattern.test(phone))) {
-    throw new Error("Meta test mode requires a valid E.164 recipient allowlist.");
+    throw new Error("Meta test recipient allowlist must contain valid E.164 numbers.");
   }
   return recipients;
 }
