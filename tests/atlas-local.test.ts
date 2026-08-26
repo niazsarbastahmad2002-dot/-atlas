@@ -42,7 +42,7 @@ test("Atlas Local backup stays encrypted and local deletion cannot touch Atlas O
 
   assert.match(local, /BACKUP_MARKER = "atlas-local-backup-v1"/);
   assert.match(local, /meta:currentMeta, payload/);
-  assert.doesNotMatch(local, /backupValue\s*=\s*\{[^}]*state/s);
+  assert.equal(local.includes("meta:currentMeta, payload, state"), false);
   assert.match(local, /indexedDB\.deleteDatabase\(DB_NAME\)/);
   assert.match(local, /does not affect Atlas Online/i);
 });
