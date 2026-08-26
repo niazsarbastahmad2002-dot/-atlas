@@ -21,7 +21,10 @@ export async function GET(request: Request) {
       cache: "no-store",
       signal: AbortSignal.timeout(20_000),
     });
-    if (!response.ok) return NextResponse.json({ ready: false, status: response.status }, { status: 503 });
+    if (!response.ok) {
+      const diagnostic = (await response.text()).slice(0, 600);
+      return NextResponse.json({ ready: false, status: response.status, diagnostic }, { status: 503 });
+    }
     const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }> };
     const text = payload.choices?.[0]?.message?.content?.trim() ?? "";
     return NextResponse.json({ ready: text.includes("ATLAS_READY") });
