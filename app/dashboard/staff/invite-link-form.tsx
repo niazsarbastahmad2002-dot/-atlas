@@ -10,61 +10,65 @@ type DoctorOption = { id: string; name: string };
 
 const copy = {
   en: {
-    title: "Share a secure join link",
-    help: "Choose the receptionist's doctor and create a one-use invitation. When direct WhatsApp invitations are enabled, Atlas can send the secure link for you. The receptionist verifies their phone before Atlas grants this clinic membership.",
+    title: "Send a secure join link",
+    help: "Choose the receptionist's doctor and send a one-use WhatsApp invitation. Atlas binds the invitation to that mobile number, and the receptionist must verify the same number before clinic membership is granted.",
     doctor: "Receptionist's doctor",
     choose: "Choose one doctor",
     phone: "Recipient mobile number",
-    phoneHelp: "Optional. In Meta test mode, Meta only delivers to recipient numbers registered for the test account.",
+    phoneHelp: "Required. In Meta test mode, Meta only delivers to recipient numbers registered for the test account.",
     phonePlaceholder: "0750 123 4567",
-    create: "Create secure join link",
+    create: "WhatsApp invitations are not ready here yet",
     send: "Create and send on WhatsApp",
     creating: "Creating…",
+    unavailable: "Secure direct WhatsApp invitations are not enabled in this environment yet.",
     copy: "Copy link",
     copied: "Copied",
     share: "Share",
   },
   ku: {
     title: "بەستەری پارێزراوی چوونەژوورەوە بنێرە",
-    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە و بانگهێشتێکی یەکجارە دروست بکە. کاتێک ناردنی ڕاستەوخۆی WhatsApp چالاکە، Atlas دەتوانێت لینکە پارێزراوەکە بۆت بنێرێت. ستافەکە ژمارەی مۆبایلەکەی پشتڕاست دەکاتەوە پێش ئەوەی Atlas ئەندامێتی ئەم کلینیکە بدات.",
+    help: "دکتۆری ستافی ڕیسێپشن هەڵبژێرە و بانگهێشتێکی یەکجارە بە WhatsApp بنێرە. Atlas بانگهێشتەکە بە هەمان ژمارەی مۆبایل دەبەستێتەوە و ستافەکە دەبێت هەمان ژمارە پشتڕاست بکاتەوە پێش وەرگرتنی ئەندامێتی کلینیک.",
     doctor: "دکتۆری ستافی ڕیسێپشن",
     choose: "یەک دکتۆر هەڵبژێرە",
     phone: "ژمارەی مۆبایلی وەرگر",
-    phoneHelp: "ئارەزوومەندانە. لە دۆخی تاقیکردنەوەی Meta تەنها ژمارە تۆمارکراوەکانی تاقیکردنەوە پەیام وەردەگرن.",
+    phoneHelp: "پێویستە. لە دۆخی تاقیکردنەوەی Meta تەنها ژمارە تۆمارکراوەکانی تاقیکردنەوە پەیام وەردەگرن.",
     phonePlaceholder: "0750 123 4567",
-    create: "بەستەری پارێزراو دروست بکە",
+    create: "بانگهێشتی WhatsApp هێشتا ئامادە نییە",
     send: "دروست بکە و بە WhatsApp بنێرە",
     creating: "دروست دەکرێت…",
+    unavailable: "بانگهێشتی پارێزراوی ڕاستەوخۆی WhatsApp هێشتا لەم ژینگەیە چالاک نییە.",
     copy: "بەستەر کۆپی بکە",
     copied: "کۆپی کرا",
     share: "بنێرە",
   },
   bd: {
     title: "لینکا پاراستی یا چوونەژوورێ بهنێرە",
-    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە و بانگهێشتەکا ئێکجارە دروست بکە. دەمێ هنارتنا ڕاستەوخۆ یا WhatsApp چالاک بیت، Atlas دشێت لینکێ پاراستی بۆ تە بهنێریت. ستاف ژمارا موبایلا خۆ پشتڕاست دکەت بەری کو Atlas ئەندامەتیا ڤێ کلینیکێ بدەت.",
+    help: "دکتۆرێ ستافێ ڕیسێپشنێ هەلبژێرە و بانگهێشتەکا ئێکجارە ب WhatsApp بهنێرە. Atlas بانگهێشتێ ب هەمان ژمارا موبایلێ گرێددەت و ستاف دڤێت هەمان ژمارە پشتڕاست بکەت بەری وەرگرتنا ئەندامەتیا کلینیکێ.",
     doctor: "دکتۆرێ ستافێ ڕیسێپشنێ",
     choose: "ئێک دکتۆر هەلبژێرە",
     phone: "ژمارا موبایلا وەرگری",
-    phoneHelp: "ئارەزوومەندانە. د مودا تاقیکرنێ یا Meta دا تنێ ژمارێن تۆمارکری یێن تاقیکرنێ پەیام وەردگرن.",
+    phoneHelp: "پێدڤییە. د مودا تاقیکرنێ یا Meta دا تنێ ژمارێن تۆمارکری یێن تاقیکرنێ پەیام وەردگرن.",
     phonePlaceholder: "0750 123 4567",
-    create: "لینکا پاراستی دروست بکە",
+    create: "بانگهێشتا WhatsApp هێشتا ئامادە نینە",
     send: "دروست بکە و ب WhatsApp بهنێرە",
     creating: "دهێتە دروستکرن…",
+    unavailable: "بانگهێشتا پاراستی یا ڕاستەوخۆ ب WhatsApp هێشتا د ڤێ ژینگەهێ دا چالاک نینە.",
     copy: "لینکێ کۆپی بکە",
     copied: "هاتە کۆپیکرن",
     share: "بهنێرە",
   },
   ar: {
-    title: "شارك رابط انضمام آمن",
-    help: "اختر طبيب موظف الاستقبال وأنشئ دعوة تستخدم مرة واحدة. عند تفعيل الإرسال المباشر عبر WhatsApp يقدر Atlas يرسل الرابط الآمن عنك. الموظف يوثق رقم موبايله قبل ما Atlas يمنحه عضوية هذه العيادة.",
+    title: "أرسل رابط انضمام آمن",
+    help: "اختر طبيب موظف الاستقبال وأرسل دعوة WhatsApp تستخدم مرة واحدة. Atlas يربط الدعوة بنفس رقم الموبايل، ولا تُمنح عضوية العيادة إلا بعد توثيق الموظف لهذا الرقم نفسه.",
     doctor: "طبيب موظف الاستقبال",
     choose: "اختر طبيباً واحداً",
     phone: "رقم موبايل المستلم",
-    phoneHelp: "اختياري. بوضع اختبار Meta الرسائل توصل فقط للأرقام المسجلة كمستلمين للاختبار.",
+    phoneHelp: "مطلوب. بوضع اختبار Meta الرسائل توصل فقط للأرقام المسجلة كمستلمين للاختبار.",
     phonePlaceholder: "0750 123 4567",
-    create: "إنشاء رابط انضمام آمن",
+    create: "دعوات WhatsApp غير جاهزة هنا بعد",
     send: "إنشاء وإرسال عبر WhatsApp",
     creating: "جارٍ الإنشاء…",
+    unavailable: "دعوات WhatsApp المباشرة والآمنة غير مفعلة في هذه البيئة بعد.",
     copy: "نسخ الرابط",
     copied: "تم النسخ",
     share: "مشاركة",
@@ -139,12 +143,19 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
               placeholder={t.phonePlaceholder}
               value={recipientPhone}
               onChange={(event) => setRecipientPhone(event.target.value)}
+              required
             />
             <div className="field-help">{t.phoneHelp}</div>
           </>
-        ) : null}
-        <button className="button" type="submit" disabled={pending || doctors.length === 0}>
-          {pending ? t.creating : directWhatsAppInvites && recipientPhone.trim() ? t.send : t.create}
+        ) : (
+          <div className="field-help">{t.unavailable}</div>
+        )}
+        <button
+          className="button"
+          type="submit"
+          disabled={pending || doctors.length === 0 || !directWhatsAppInvites || !recipientPhone.trim()}
+        >
+          {pending ? t.creating : directWhatsAppInvites ? t.send : t.create}
         </button>
       </form>
 
