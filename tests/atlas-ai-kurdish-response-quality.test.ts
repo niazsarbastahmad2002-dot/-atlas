@@ -83,16 +83,18 @@ test("Kurdish finalizer treats question and draft as data and preserves facts", 
   assert.match(messages[0].content, /Badini Kurdish as used around Duhok/i);
 });
 
-test("Atlas route uses low-temperature reasoning plus a Kurdish-only quality pass", () => {
+test("Atlas route uses low-temperature locale routing plus conditional Kurdish cleanup", () => {
   const route = read("app/api/atlas-ai/route.ts");
   assert.match(route, /atlasAiDomainPrompt/);
   assert.match(route, /atlasAiLanguagePrompt\(responseLocale\)/);
   assert.match(route, /inferAtlasAiLocale/);
   assert.match(route, /resolveAtlasAiResponseLocale/);
-  assert.match(route, /temperature: 0\.2/);
+  assert.match(route, /atlasCloudflareModelOrder/);
+  assert.match(route, /temperature: 0\.15/);
+  assert.match(route, /atlasAnswerNeedsKurdishRefinement/);
   assert.match(route, /refineKurdishAnswer/);
   assert.match(route, /ATLAS_AI_KURDISH_REFINER_MODEL/);
-  assert.match(route, /temperature: 0\.1/);
+  assert.match(route, /temperature: 0\.05/);
   assert.match(route, /isSafeKurdishRefinement/);
   assert.match(route, /return draft/);
 });

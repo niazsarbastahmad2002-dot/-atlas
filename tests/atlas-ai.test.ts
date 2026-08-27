@@ -10,7 +10,7 @@ import {
 } from "../lib/atlas-ai.ts";
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const voiceClient = () => read("app/dashboard/assistant/atlas-ai-client-v3.tsx");
+const voiceClient = () => read("app/dashboard/assistant/atlas-ai-client-v4.tsx");
 
 function fixtureContext() {
   const rows = [
@@ -67,11 +67,12 @@ test("Atlas Core is honest when a general model is unavailable", () => {
   assert.match(buildAtlasCoreAnswer("Explain quantum gravity in detail", fixtureContext()), /Full general-purpose chat needs an external AI model provider/i);
 });
 
-test("Atlas AI has an honest conversation privacy boundary", () => {
+test("Atlas AI explains its current privacy boundary accurately", () => {
   const client = voiceClient();
-  assert.match(client, /Atlas sends this conversation plus aggregated appointment statistics/);
-  assert.match(client, /Do not include patient names, phone numbers, message contents, or patient-specific clinical information/);
-  assert.match(client, /لا تكتب اسم المريض أو رقم الهاتف/);
+  assert.match(client, /clinic statistics and non-patient Atlas configuration/);
+  assert.match(client, /Patient-specific appointment lookups are answered inside Atlas/);
+  assert.match(client, /Do not enter diagnoses, clinical notes/);
+  assert.match(client, /أسئلة تفاصيل مواعيد المرضى تنجاوب داخل Atlas/);
 });
 
 test("Atlas AI sends multi-turn history without allowing system-role injection", () => {
@@ -83,14 +84,17 @@ test("Atlas AI sends multi-turn history without allowing system-role injection",
   assert.match(route, /\.\.\.conversation/);
 });
 
-test("Atlas AI prefers the free Cloudflare Workers AI provider", () => {
+test("Atlas AI uses Cloudflare free models with locale-aware model routing", () => {
   const provider = read("lib/atlas-ai-cloudflare.ts");
   const route = read("app/api/atlas-ai/route.ts");
+  const quality = read("lib/atlas-ai-model-quality.ts");
   assert.match(provider, /CLOUDFLARE_ACCOUNT_ID/);
   assert.match(provider, /CLOUDFLARE_WORKERS_AI_TOKEN/);
   assert.match(provider, /@cf\/openai\/gpt-oss-120b/);
   assert.match(provider, /\/ai\/v1\/chat\/completions/);
-  assert.match(route, /callCloudflareFreeModel/);
+  assert.match(quality, /@cf\/zai-org\/glm-4\.7-flash/);
+  assert.match(route, /callCloudflareModel/);
+  assert.match(route, /atlasCloudflareModelOrder/);
   assert.match(route, /cloudflare_workers_ai/);
   assert.doesNotMatch(route, /ATLAS_AI_FULL_MODEL_ENABLED/);
   assert.doesNotMatch(route, /response\.text\(/);
@@ -106,7 +110,7 @@ test("Atlas never hits paid Vercel Gateway automatically", () => {
   assert.match(route, /callPaidVercelModel/);
 });
 
-test("Atlas AI falls back cleanly when the free provider is unavailable or quota-limited", () => {
+test("Atlas AI falls back cleanly when free models are unavailable or quota-limited", () => {
   const route = read("app/api/atlas-ai/route.ts");
   assert.match(route, /buildAtlasCoreAnswer/);
   assert.match(route, /mode: "atlas_core"/);
@@ -146,13 +150,20 @@ test("Atlas Voice transcription stays server-side, authenticated, bounded, and s
   assert.doesNotMatch(route, /patient_name|patient_phone/);
 });
 
-test("Atlas Voice V2 uses deterministic PCM WAV instead of browser MediaRecorder containers", () => {
+test("Atlas Voice V4 uses deterministic PCM WAV and exposes immediate progress", () => {
   const active = read("app/dashboard/assistant/atlas-ai-client.tsx");
   const client = voiceClient();
   const recorder = read("app/dashboard/assistant/atlas-pcm-recorder.ts");
-  assert.match(active, /atlas-ai-client-v3/);
+  assert.match(active, /atlas-ai-client-v4/);
   assert.match(client, /startAtlasPcmCapture/);
   assert.match(client, /atlas-voice\.wav/);
+  assert.match(client, /"starting"/);
+  assert.match(client, /setVoiceStage\("starting"\)/);
+  assert.match(client, /setVoiceStage\("transcribing"\)/);
+  assert.match(client, /LoadingRing/);
+  assert.match(client, /aria-busy/);
+  assert.match(client, /Converting voice to text/);
+  assert.match(client, /atlas-ai-record-dot/);
   assert.match(recorder, /TARGET_SAMPLE_RATE = 16_000/);
   assert.match(recorder, /RIFF/);
   assert.match(recorder, /WAVE/);
@@ -180,12 +191,12 @@ test("Atlas dictation leaves recognized text for review and never auto-sends it"
   const client = voiceClient();
   assert.match(client, /purpose==="dictation"/);
   assert.match(client, /setQuestion\(current=>/);
-  assert.match(client, /Speak, review the text, then tap Send yourself/);
+  assert.match(client, /Tap, speak, then stop/);
   assert.match(client, /stopCapture\(false\)/);
   assert.doesNotMatch(client, /doneSpeaking/i);
 });
 
-test("Atlas live voice exposes mic activity and never silently retries a failed transcription", () => {
+test("Atlas live voice exposes recording and transcription activity without fake delay", () => {
   const client = voiceClient();
   assert.match(client, /Live voice/);
   assert.match(client, /Atlas Voice/);
@@ -193,9 +204,10 @@ test("Atlas live voice exposes mic activity and never silently retries a failed 
   assert.match(client, /Interrupt/);
   assert.match(client, /Try again/);
   assert.match(client, /setMicLevel/);
-  assert.match(client, /Microphone is hearing you/);
-  assert.match(client, /unclearSpeech/);
-  assert.doesNotMatch(client, /setTimeout\(\(\)=>[^\n]*startCapture\("live"\)[^\n]*900/);
+  assert.match(client, /Recording — microphone is hearing you/);
+  assert.match(client, /atlas-ai-loading-ring/);
+  assert.match(client, /atlasSpin/);
+  assert.doesNotMatch(client, /setTimeout\([^\n]*(?:2000|3000)/);
 });
 
 test("Atlas AI renders rich responses instead of exposing raw markdown decoration", () => {
@@ -204,16 +216,33 @@ test("Atlas AI renders rich responses instead of exposing raw markdown decoratio
   assert.match(client, /inlineRichText/);
   assert.match(client, /<strong/);
   assert.match(client, /atlas-ai-bullet/);
+  assert.match(client, /\[-\*•\]/);
 });
 
-test("Atlas AI model responses are receptionist-first, Atlas-branded, and voice-aware", () => {
+test("Atlas AI model responses are receptionist-first, Atlas-grounded, RTL-safe, and voice-aware", () => {
   const route = read("app/api/atlas-ai/route.ts");
-  assert.match(route, /modern clinic assistant made for a busy receptionist/i);
+  const knowledge = read("lib/atlas-ai-product-knowledge.ts");
+  assert.match(route, /operating assistant inside Atlas/i);
   assert.match(route, /Start with the useful answer/i);
   assert.match(route, /plain, familiar words/i);
   assert.match(route, /Sorani, Badini, and Iraqi Arabic/i);
-  assert.match(route, /Do not introduce yourself repeatedly/i);
+  assert.match(route, /never output raw Markdown table syntax/i);
+  assert.match(route, /do not tell the user to click an "Appointments" page/i);
   assert.match(route, /This turn came from Atlas Voice/);
   assert.match(route, /Usually use 1-3 short sentences/);
   assert.match(route, /interaction === "voice"/);
+  assert.match(knowledge, /verified daily appointment surface is Schedule/i);
+  assert.match(knowledge, /Atlas Online/);
+  assert.match(knowledge, /Atlas Local/);
+  assert.match(knowledge, /Smart Fill/);
+});
+
+test("Atlas external model context contains configuration but not patient record rows", () => {
+  const route = read("app/api/atlas-ai/route.ts");
+  const knowledge = read("lib/atlas-ai-product-knowledge.ts");
+  assert.match(route, /resolveAtlasRecordRequest\(authorizedRows, conversation, responseLocale\)/);
+  assert.match(route, /if \(recordResolution\?\.localOnly && recordResolution\.answer\)/);
+  assert.match(route, /modelContext = \{ clinicOperations: clinicContext, atlasConfiguration: operationalContext \}/);
+  assert.doesNotMatch(route, /modelContext =[^\n]*authorizedRows/);
+  assert.match(knowledge, /No patient names or phone numbers are included in this context/);
 });
