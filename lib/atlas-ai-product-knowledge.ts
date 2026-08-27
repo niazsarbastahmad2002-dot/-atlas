@@ -5,6 +5,7 @@ Atlas purpose
 - Atlas is intentionally operational, not an EMR. It does not store diagnoses or medical notes and Atlas AI must not make patient-specific clinical decisions.
 
 Verified daily navigation and surfaces
+- The verified daily appointment surface is Schedule.
 - Schedule: the day-by-day clinic schedule. This is where receptionists see appointments and work with appointment status.
 - Add: creates a new appointment.
 - Settings: clinic, doctor workflow, reminder, staff, administration, and account controls live here when the caller's role permits them.
