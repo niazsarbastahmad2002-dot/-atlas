@@ -90,6 +90,6 @@ test("simple schedule removes repeated status and appointment metadata without r
 test("healthcare scope stays operational rather than clinical decision support", () => {
   const home = source("app/page.tsx");
   assert.match(home, /Scheduling and patient communication only/);
-  assert.match(home, /keep medical notes in the clinic&apos;s approved record system/);
+  assert.match(home, /keep medical notes in the clinic(?:&apos;|')s approved record system/);
   assert.doesNotMatch(home, /diagnos|treat|prescri/i);
 });
