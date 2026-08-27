@@ -30,18 +30,22 @@ test("Atlas Local hides Safari time affordance without changing the native time 
   assert.match(responsive, /::-webkit-date-and-time-value[\s\S]*text-align: center/);
 });
 
-test("Atlas Local responsive fixes adapt for phones and tablets", () => {
+test("Atlas Local status controls remain readable across desktop, tablets and phones", () => {
   const responsive = source("public/atlas-local-responsive.js");
+  assert.match(responsive, /\.appointment[\s\S]*minmax\(210px, 260px\)/);
+  assert.match(responsive, /@media \(max-width: 1100px\)/);
   assert.match(responsive, /@media \(max-width: 900px\)/);
-  assert.match(responsive, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(responsive, /@media \(max-width: 640px\)/);
-  assert.match(responsive, /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(responsive, /\.status-select\[data-status="pending"\]/);
+  assert.match(responsive, /\.status-select\[data-status="waiting"\]/);
+  assert.match(responsive, /\.call-link[\s\S]*display: inline-flex/);
+  assert.match(responsive, /\.queue-empty[\s\S]*visibility: hidden/);
 });
 
 test("Atlas Local loader and offline cache include the responsive fixes", () => {
   const loader = source("public/atlas-local.js");
   const worker = source("public/atlas-sw.js");
   assert.match(loader, /"\/atlas-local-responsive\.js"/);
-  assert.match(worker, /atlas-offline-shell-v10/);
+  assert.match(worker, /atlas-offline-shell-v11/);
   assert.match(worker, /"\/atlas-local-responsive\.js"/);
 });

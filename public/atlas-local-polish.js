@@ -1,8 +1,29 @@
 "use strict";
 
 // Atlas Local polish is loaded after the core and before the app starts.
-// It keeps the local product focused, fixes RTL copy leaks, and hardens slot behavior.
+// Keep the product genuinely offline-first: clear receptionist language,
+// manual phone contact only, no online messaging, and a queue that means
+// patients who have actually arrived at the clinic.
+Object.assign(EN, {
+  pending: "Attendance not confirmed",
+  confirmed: "Attendance confirmed",
+  waiting: "Arrived — waiting at clinic",
+  completed: "Visit completed",
+  no_show: "Did not attend",
+  cancelled: "Appointment cancelled",
+  callPatient: "Call",
+  callPatientTitle: "Call patient using this device",
+  printDay: "Print schedule",
+});
 Object.assign(KU, {
+  pending: "هێشتا هاتن پشتڕاست نەکراوە",
+  confirmed: "هاتن پشتڕاستکراوە",
+  waiting: "گەیشتووە کلینیک، چاوەڕوانە",
+  completed: "سەردان تەواوبوو",
+  no_show: "بۆ وادە نەهات",
+  cancelled: "وادە هەڵوەشێنراوە",
+  callPatient: "پەیوەندی",
+  callPatientTitle: "بەم ئامێرە پەیوەندی بە نەخۆشەوە بکە",
   installTip: "بۆ کارکردنی جێگیر بەبێ ئینتەرنێت، دوای دامەزراندن Atlas Local زیاد بکە بۆ شاشەی سەرەکی.",
   localData: "پاشەکەوت و داتای ئامێر",
   backupHelp: "پاشەکەوتێکی پارێزراو لە شوێنێکی سەلامەت هەڵبگرە. بە هەمان PIN دەتوانرێت بگەڕێندرێتەوە.",
@@ -13,10 +34,18 @@ Object.assign(KU, {
   restorePin: "PIN ـی ئەم پاشەکەوتە بنووسە.",
   restoreReplace: "ئەم پاشەکەوتە بگەڕێنرێتەوە و کلینیکی ناوخۆیی ئێستا بگۆڕدرێت؟",
   restoreDone: "پاشەکەوت گەڕێندرایەوە.",
-  deleteConfirm: "کلینیکی ناوخۆیی و هەموو وادەکان لەم ئامێرە بسڕێتەوە؟ بەبێ پاشەکەوت ناگەڕێتەوە.",
+  deleteConfirm: "کلینیکی ناوخۆیی و هەموو وادەکان لەم ئامێرە بسڕەوە؟ بەبێ پاشەکەوت ناگەڕێتەوە.",
   backupPinFormat: "PIN ـی پاشەکەوت دەبێت ٦–١٢ ژمارە بێت.",
 });
 Object.assign(BD, {
+  pending: "هێشتا هاتن نەهاتیە پشتڕاستکرن",
+  confirmed: "هاتن پشتڕاستکریە",
+  waiting: "گەهشتیە کلینیکێ، چاڤەڕێیە",
+  completed: "سەردان تەمام بوو",
+  no_show: "بۆ مەوعیدی نەهات",
+  cancelled: "مەوعید هەلوەشیا",
+  callPatient: "پەیوەندی",
+  callPatientTitle: "ب ڤێ ئامێرێ پەیوەندی ب نەخۆشی بکە",
   installTip: "بۆ کارکرنا باش بێ ئینتەرنێت، پشتی دامەزراندنێ Atlas Local زیاد بکە بۆ شاشەیا سەرەکی.",
   localData: "پاراستن و داتای ئامێرێ",
   backupHelp: "فایلەکا پاراستی ل شوینەکێ سەلامەت هەلگرە. ب هەمان PIN دشیێت ڤەگەڕێنیت.",
@@ -30,8 +59,17 @@ Object.assign(BD, {
   deleteConfirm: "کلینیکا ناوخۆیی و هەمی مەوعیدان ژ ڤێ ئامێرێ ژێببە؟ بێ فایلەکا پاراستی ناگەڕێتەوە.",
   backupPinFormat: "PIN ـا فایلێ پاراستی دڤێت ٦–١٢ ژمارە بن.",
 });
-EN.printDay = "Print schedule";
-AR.printDay = "طباعة الجدول";
+Object.assign(AR, {
+  pending: "الحضور غير مؤكد بعد",
+  confirmed: "الحضور مؤكد",
+  waiting: "وصل للعيادة وينتظر",
+  completed: "انتهت الزيارة",
+  no_show: "لم يحضر",
+  cancelled: "الموعد ملغي",
+  callPatient: "اتصال",
+  callPatientTitle: "اتصل بالمريض من هذا الجهاز",
+  printDay: "طباعة الجدول",
+});
 
 function addMinutes(time, amount) {
   const match = /^(\d{2}):(\d{2})$/.exec(time || "");
@@ -39,6 +77,27 @@ function addMinutes(time, amount) {
   const total = Number(match[1]) * 60 + Number(match[2]) + amount;
   if (total < 0 || total >= 1440) return "";
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+// Queue position is only meaningful after the patient is physically at the clinic.
+// Pending/confirmed appointments are scheduled patients, not people standing in a queue.
+// Keep the order deterministic using the scheduled time rather than updatedAt, so editing
+// a patient name or phone number never moves someone around the waiting list.
+function queueMap(rows) {
+  const map = new Map();
+  rows
+    .filter((appointment) => appointment.status === "waiting")
+    .sort((a, b) => a.time.localeCompare(b.time) || a.createdAt.localeCompare(b.createdAt))
+    .forEach((appointment, index) => map.set(appointment.id, index + 1));
+  return map;
+}
+
+function localPhoneHref(value) {
+  const phone = String(value || "").trim();
+  if (!phone) return "";
+  const normalized = phone.replace(/[^\d+]/g, "");
+  if (!/^(?:\+?\d{5,20})$/.test(normalized)) return "";
+  return `tel:${normalized}`;
 }
 
 function renderSchedule() {
@@ -57,12 +116,24 @@ function renderSchedule() {
   rows.forEach((appointment) => {
     const card = document.createElement("article");
     card.className = "card appointment";
+    card.dataset.status = appointment.status;
+
     const time = document.createElement("div");
     time.className = "time";
     time.textContent = formatTime(appointment.time);
+
     const queueNumber = document.createElement("div");
     queueNumber.className = "queue";
-    queueNumber.textContent = queue.get(appointment.id) || "·";
+    const queuePosition = queue.get(appointment.id);
+    if (queuePosition) {
+      queueNumber.textContent = String(queuePosition);
+      queueNumber.setAttribute("aria-label", `${t("waiting")} ${queuePosition}`);
+    } else {
+      queueNumber.textContent = "";
+      queueNumber.classList.add("queue-empty");
+      queueNumber.setAttribute("aria-hidden", "true");
+    }
+
     const main = document.createElement("div");
     const patient = document.createElement("div");
     patient.className = "patient";
@@ -75,7 +146,8 @@ function renderSchedule() {
 
     const status = document.createElement("select");
     status.className = "status-select";
-    status.setAttribute("aria-label", t("status"));
+    status.dataset.status = appointment.status;
+    status.setAttribute("aria-label", `${t("status")}: ${appointment.patientName}`);
     fillStatusSelect(status);
     status.value = appointment.status;
     status.onchange = async () => {
@@ -95,12 +167,23 @@ function renderSchedule() {
 
     const actions = document.createElement("div");
     actions.className = "row-actions";
+    const phoneHref = localPhoneHref(appointment.phone);
+    if (phoneHref) {
+      const call = document.createElement("a");
+      call.href = phoneHref;
+      call.className = "button secondary small call-link";
+      call.textContent = t("callPatient");
+      call.title = t("callPatientTitle");
+      call.setAttribute("aria-label", `${t("callPatientTitle")}: ${appointment.patientName}`);
+      actions.append(call);
+    }
     const edit = document.createElement("button");
     edit.type = "button";
     edit.className = "button secondary small";
     edit.textContent = t("edit");
     edit.onclick = () => openEdit(appointment.id);
     actions.append(edit);
+
     card.append(time, queueNumber, main, status, actions);
     list.append(card);
   });
