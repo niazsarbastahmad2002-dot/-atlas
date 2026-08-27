@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feat/atlas-ai-quality-v2": true,
       "*": false,
       "**": false
     }
