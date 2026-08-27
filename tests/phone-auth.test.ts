@@ -71,8 +71,11 @@ test("authentication and clinic membership remain separate concepts", () => {
   assert.match(chooser, /if \(clinics\.length === 1\) redirect/);
   assert.match(chooser, /Choose a clinic/);
   assert.match(inviteAuth, /signInWithOtp/);
-  assert.match(inviteFinish, /redeem_staff_invite_link_service/);
+  assert.match(inviteFinish, /phone_confirmed_at/);
+  assert.match(inviteFinish, /redeem_phone_staff_invite_link_service/);
   assert.match(inviteFinish, /p_user_id: userData\.user\.id/);
+  assert.match(inviteFinish, /p_verified_phone_hash: verifiedPhoneHash/);
+  assert.doesNotMatch(inviteFinish, /redeem_staff_invite_link_service/);
   assert.doesNotMatch(inviteAuth, /clinic_members/);
 });
 
@@ -85,7 +88,7 @@ test("clinic access management uses secure join links and phone identity instead
   assert.doesNotMatch(staffPage, /StaffProvisionForm/);
   assert.match(staffPage, /user\.phone \?\?/);
   assert.doesNotMatch(staffPage, /user\.email/);
-  assert.match(inviteForm, /verifies their phone/);
+  assert.match(inviteForm, /must verify the same number/);
   assert.match(inviteAction, /randomBytes\(32\)/);
   assert.match(inviteAction, /24 \* 60 \* 60 \* 1000/);
 });
