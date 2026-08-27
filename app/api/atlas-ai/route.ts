@@ -19,6 +19,11 @@ import {
 } from "@/lib/atlas-ai-cloudflare";
 import { atlasGatewayHeaders } from "@/lib/atlas-ai-gateway";
 import {
+  buildAtlasAuthorizedRecordContext,
+  buildAtlasRecordFallbackAnswer,
+  type AtlasAiRecordAppointment,
+} from "@/lib/atlas-ai-record-context";
+import {
   ATLAS_AI_KURDISH_REFINER_MODEL,
   atlasAiDomainPrompt,
   atlasAiLanguagePrompt,
@@ -254,7 +259,7 @@ export async function POST(request: Request) {
   const from = atlasDayStartIso(shiftAtlasDay(today, -30));
   const until = atlasDayStartIso(shiftAtlasDay(today, 31));
   let appointmentQuery = db.from("appointments")
-    .select("appointment_at, status, doctor_id, doctor_name, reminder_status, arrival_signal")
+    .select("appointment_at, status, doctor_id, doctor_name, reminder_status, reminder_language, arrival_signal, patient_name, patient_phone, contact_relationship")
     .eq("clinic_id", clinicId).is("voided_at", null).gte("appointment_at", from).lt("appointment_at", until)
     .order("appointment_at", { ascending: true }).limit(5000);
   if (membership?.role === "receptionist" && membership.assigned_doctor_id) appointmentQuery = appointmentQuery.eq("doctor_id", membership.assigned_doctor_id);
@@ -265,10 +270,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "context_unavailable" }, { status: 503 });
   }
 
-  const context = buildAtlasAiClinicContext((Array.isArray(appointmentRows) ? appointmentRows : []) as AtlasAiAppointment[], { clinicName: clinic.name });
+  const authorizedRows = (Array.isArray(appointmentRows) ? appointmentRows : []) as AtlasAiRecordAppointment[];
+  const context = buildAtlasAiClinicContext(authorizedRows as AtlasAiAppointment[], { clinicName: clinic.name });
   const latestQuestion = conversation.at(-1)?.content ?? "";
   const inferredLocale = inferAtlasAiLocale(latestQuestion);
   const responseLocale = resolveAtlasAiResponseLocale(latestQuestion, inferredLocale, localeHint);
+  const recordContext = buildAtlasAuthorizedRecordContext(authorizedRows, conversation);
+  const recordAnswer = recordContext ? buildAtlasRecordFallbackAnswer(recordContext, responseLocale) : null;
+
+  // Patient-identifying appointment answers stay inside Atlas. They are built from the
+  // caller's existing RLS/role-scoped query and are not forwarded to an external model.
+  if (recordAnswer) {
+    return NextResponse.json({ answer: recordAnswer, mode: "atlas_core" }, { headers: { "Cache-Control": "no-store" } });
+  }
+
   const coreAnswer = () => buildAtlasCoreAnswer(latestQuestion, context);
 
   if (Date.now() >= modelUnavailableUntil) {
