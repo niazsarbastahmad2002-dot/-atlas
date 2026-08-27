@@ -42,13 +42,16 @@
       white-space: nowrap;
     }
 
+    input[type="date"],
     input[type="time"] {
       -webkit-appearance: none;
       appearance: none;
       background-image: none;
       padding-inline: 12px;
       overflow: hidden;
+      background-clip: padding-box;
     }
+    input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="time"]::-webkit-calendar-picker-indicator {
       display: none;
       -webkit-appearance: none;
@@ -58,6 +61,7 @@
       padding: 0;
       opacity: 0;
     }
+    input[type="date"]::-webkit-date-and-time-value,
     input[type="time"]::-webkit-date-and-time-value {
       margin: 0;
       padding: 0;
