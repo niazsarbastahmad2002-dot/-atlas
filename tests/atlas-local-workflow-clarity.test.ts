@@ -16,11 +16,14 @@ test("Atlas Local uses explicit receptionist status language instead of ambiguou
   assert.match(polish, /وصل للعيادة وينتظر/);
 });
 
-test("Atlas Local queue numbers only patients physically waiting at the clinic", () => {
+test("Atlas Local queue numbers only patients physically waiting at the clinic and stays stable after edits", () => {
   const polish = source("public/atlas-local-polish.js");
   assert.match(polish, /function queueMap\(rows\)/);
   assert.match(polish, /appointment\.status === "waiting"/);
+  assert.match(polish, /a\.time\.localeCompare\(b\.time\)/);
+  assert.match(polish, /a\.createdAt\.localeCompare\(b\.createdAt\)/);
   assert.doesNotMatch(polish, /\.filter\(\(appointment\) => ACTIVE\.has\(appointment\.status\)\)/);
+  assert.doesNotMatch(polish, /a\.updatedAt\.localeCompare\(b\.updatedAt\)/);
   assert.match(polish, /queueNumber\.classList\.add\("queue-empty"\)/);
 });
 
