@@ -1,3 +1,3 @@
 "use client";
 
-export { AtlasAiClient } from "./atlas-ai-client-v6";
+export { AtlasAiClient } from "./atlas-ai-client-v5";
