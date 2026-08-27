@@ -288,7 +288,7 @@ function answerHeading(locale: AtlasRecordLocale, matchedCount: number, uniqueDo
   }
   if (locale === "ar") {
     const scope = `${uniqueDoctors.length === 1 ? ` للدكتور ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` بتاريخ ${uniqueDays[0]}` : ""}`;
-    return `لكيت ${matchedCount} موعد${matchedCount === 1 ? "" : ""}${scope}.${table ? " الجدول:" : " التفاصيل:"}`;
+    return `لكيت ${matchedCount} موعد${scope}.${table ? " الجدول:" : " التفاصيل:"}`;
   }
   const scope = `${uniqueDoctors.length === 1 ? ` for ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` on ${uniqueDays[0]}` : ""}`;
   return `I found ${matchedCount} matching appointment${matchedCount === 1 ? "" : "s"}${scope}.${table ? " Here is the table:" : " Details:"}`;
@@ -345,7 +345,7 @@ function buildAnswer(appointments: SelectedAppointment[], matchedCount: number, 
   const wantsTable = hasAny(latestQuestion, tableWords);
   const wantsFull = hasAny(latestQuestion, fullDetailWords);
   const uniqueDays = Array.from(new Set(appointments.map((item) => stamp(item.appointmentAt).day)));
-  const uniqueDoctors = Array.from(new Set(appointments.map((item) => item.doctorName));
+  const uniqueDoctors = Array.from(new Set(appointments.map((item) => item.doctorName)));
   const includePhone = appointments.some((item) => Boolean(item.patientPhone));
   const heading = answerHeading(locale, matchedCount, uniqueDoctors, uniqueDays, wantsTable);
 
