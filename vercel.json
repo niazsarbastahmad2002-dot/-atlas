@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "upgrade/online-schedule-summary-v2": true,
       "*": false,
       "**": false
     }
