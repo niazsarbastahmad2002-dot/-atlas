@@ -4,6 +4,7 @@ import { atlasKurdishSttConfig, transcribeWithAtlasKurdishStt } from "@/lib/atla
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// Preview-only accuracy probe. Remove before merge to main.
 const FLEURS_FIRST_ROWS = "https://datasets-server.huggingface.co/first-rows?dataset=google%2Ffleurs&config=ckb_iq&split=test";
 const SAMPLE_COUNT = 3;
 const MAX_ACCEPTABLE_CER = 0.35;
