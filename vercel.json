@@ -1,13 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "npm run check && node scripts/kurdish-stt-preview-smoke.mjs",
+  "buildCommand": "npm run check",
   "outputDirectory": ".next",
   "regions": ["sin1"],
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "fix/atlas-kurdish-voice-final-v2": true,
       "*": false,
       "**": false
     }
