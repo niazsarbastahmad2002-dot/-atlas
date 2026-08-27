@@ -46,10 +46,12 @@ test("online status selector has state colors and responsive phone/tablet layout
   assert.match(actions, /@media \(max-width: 520px\)/);
 });
 
-test("destructive removal is moved behind a compact more menu", () => {
+test("destructive removal sits behind a visible More menu that opens inside the card", () => {
   const actions = source("app/dashboard/appointment-actions.tsx");
   assert.match(actions, /<details className="appointment-more-menu">/);
-  assert.match(actions, /<summary[\s\S]*>•••<\/summary>/);
+  assert.match(actions, /<summary[^>]*>\{workflow\.more\}<\/summary>/);
+  assert.match(actions, /bottom: calc\(100% \+ 6px\)/);
+  assert.doesNotMatch(actions, /top: calc\(100% \+ 6px\)/);
   assert.match(actions, /archiveAppointmentInline/);
 });
 
