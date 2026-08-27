@@ -47,13 +47,26 @@ const baghdadDay = new Intl.DateTimeFormat("en-CA", {
 });
 
 const detailWords = [
-  "detail", "details", "everything", "all of them", "each one", "show me", "tell me", "list", "who are", "which patients", "patient name", "status", "time", "reminder", "note", "notes",
-  "وردەکاری", "هەموو", "هەمووی", "هەر یەک", "ئەوانە", "ئەوەکان", "پێم بڵێ", "بۆم بڵێ", "بڵێ", "پیشان", "ناوی نەخۆش", "ناوەکان", "کێن", "کات", "دۆخ", "بیرخستنەوە", "تێبینی",
-  "هەمی", "هەمیان", "هەر ئێک", "وان", "بێژە", "نیشان", "ناڤێ نەخۆشی", "ناڤان", "کێنە", "دەم", "بار", "بیرخستنەوە",
-  "التفاصيل", "تفاصيل", "كلهم", "كل واحد", "واحد واحد", "وريني", "كلي", "احچيلي", "منو", "اسم المريض", "الأسماء", "الاسماء", "الوقت", "الحالة", "التذكير", "ملاحظة", "ملاحظات",
+  "detail", "details", "everything", "all details", "full details", "all of them", "each one", "show me", "tell me", "list", "who are", "which patients", "patient name", "doctor name", "status", "time", "reminder", "note", "notes", "schedule",
+  "وردەکاری", "وردەکارییەکان", "هەموو وردەکاری", "هەموو زانیاری", "هەموو", "هەمووی", "هەر یەک", "ئەوانە", "ئەوەکان", "پێم بڵێ", "بۆم بڵێ", "بڵێ", "پیشان", "پیشان بدە", "ناوی نەخۆش", "ناوی دکتۆر", "ناوەکان", "کێن", "کات", "دۆخ", "بیرخستنەوە", "تێبینی", "خشتە",
+  "هەمی", "هەمیان", "هەر ئێک", "وان", "بێژە", "نیشان", "ناڤێ نەخۆشی", "ناڤێ دکتۆری", "ناڤان", "کێنە", "دەم", "بار", "بیرخستنەوە", "خشتە",
+  "التفاصيل", "تفاصيل", "كل التفاصيل", "كل المعلومات", "كلهم", "كل واحد", "واحد واحد", "وريني", "كلي", "احچيلي", "منو", "اسم المريض", "اسم الدكتور", "الأسماء", "الاسماء", "الوقت", "الحالة", "التذكير", "ملاحظة", "ملاحظات", "جدول",
 ];
 
-const appointmentWords = ["appointment", "appointments", "مەوعید", "مەوعیدە", "مەوعیدان", "موعد", "مواعيد"];
+const fullDetailWords = [
+  "everything", "all details", "full details", "all information", "complete details",
+  "هەموو وردەکاری", "هەموو زانیاری", "وردەکاریی تەواو", "هەمووی",
+  "هەمی وردەکاری", "هەمی زانیاری",
+  "كل التفاصيل", "كل المعلومات", "التفاصيل كاملة",
+];
+
+const tableWords = [
+  "table", "table format", "in a table", "as a table",
+  "خشتە", "خشتەی", "بە خشتە", "لە خشتەدا",
+  "جدول", "بجدول", "على شكل جدول",
+];
+
+const appointmentWords = ["appointment", "appointments", "schedule", "مەوعید", "مەوعیدە", "مەوعیدەکان", "مەوعیدان", "وادە", "وادەکان", "موعد", "مواعيد"];
 const countWords = ["how many", "count", "total", "چەند", "کۆی", "چەند دانە", "كم", "عدد", "المجموع"];
 const phoneWords = [
   "phone", "mobile", "phone number", "contact number", "number",
@@ -61,6 +74,7 @@ const phoneWords = [
   "رقم الهاتف", "رقم الموبايل", "رقم تلفون", "تلفون", "موبايل",
 ];
 const patientWords = ["patient", "patient name", "نەخۆش", "ناوی نەخۆش", "نەخۆشەکان", "نەخۆشان", "مريض", "المريض", "المرضى"];
+const doctorWords = ["doctor", "doctor name", "دکتۆر", "ناوی دکتۆر", "پزیشک", "ناوی پزیشک", "دكتور", "الدكتور", "اسم الدكتور"];
 const noteWords = ["note", "notes", "تێبینی", "ملاحظة", "ملاحظات"];
 const honorifics = new Set(["dr", "doctor", "دکتۆر", "دكتور", "دكتورة"]);
 
@@ -120,7 +134,7 @@ function explicitDays(text: string, now: Date) {
     return baghdadDay.format(date);
   };
   if (["today", "ئەمڕۆ", "ئەڤرۆ", "اليوم"].some((word) => q.includes(normalizeText(word)))) days.add(today);
-  if (["tomorrow", "سبەی", "سبەینێ", "غدا", "باچر"].some((word) => q.includes(normalizeText(word)))) days.add(shift(1));
+  if (["tomorrow", "سبەی", "سبەینێ", "سبەهێ", "غدا", "باچر"].some((word) => q.includes(normalizeText(word)))) days.add(shift(1));
   if (["yesterday", "دوێنێ", "دووهی", "امس", "أمس"].some((word) => q.includes(normalizeText(word)))) days.add(shift(-1));
   return days;
 }
@@ -165,12 +179,13 @@ function nearestPhoneSelector(rows: AtlasAiRecordAppointmentV2[], conversation: 
 
 function recordIntent(latestQuestion: string, hasSelector: boolean): RecordIntent {
   const wantsPhone = hasAny(latestQuestion, phoneWords);
-  if (wantsPhone) return "phone";
-  const wantsDetail = hasAny(latestQuestion, detailWords);
-  const countOnly = hasAny(latestQuestion, countWords) && !wantsDetail;
+  const wantsTable = hasAny(latestQuestion, tableWords);
+  const wantsDetail = hasAny(latestQuestion, detailWords) || hasAny(latestQuestion, fullDetailWords);
+  const countOnly = hasAny(latestQuestion, countWords) && !wantsDetail && !wantsTable && !wantsPhone;
   if (countOnly) return "none";
-  if (wantsDetail) return "details";
-  if (hasSelector && hasAny(latestQuestion, appointmentWords) && hasAny(latestQuestion, ["show", "tell", "give", "list", "بڵێ", "بێژە", "پیشان", "وريني", "احچيلي"])) return "details";
+  if (wantsPhone) return "phone";
+  if (wantsDetail || wantsTable) return "details";
+  if (hasSelector && hasAny(latestQuestion, appointmentWords)) return "details";
   return "none";
 }
 
@@ -182,7 +197,7 @@ function statusLabel(locale: AtlasRecordLocale, status: string) {
   const labels: Record<string, Record<AtlasRecordLocale, string>> = {
     pending: { en: "pending", ku: "چاوەڕێ", bd: "چاوەڕێ", ar: "قيد الانتظار" },
     confirmed: { en: "confirmed", ku: "پشتڕاستکراو", bd: "پشتڕاستکری", ar: "مؤكد" },
-    completed: { en: "completed", ku: "تەواوبوو", bd: "دوماهیک هاتی", ar: "مكتمل" },
+    completed: { en: "completed", ku: "تەواوبوو", bd: "تەمام بوو", ar: "مكتمل" },
     cancelled: { en: "cancelled", ku: "هەڵوەشاوەتەوە", bd: "هەلوەشیا", ar: "ملغي" },
     no_show: { en: "no-show", ku: "نەهاتوو", bd: "نەهات", ar: "عدم حضور" },
   };
@@ -195,9 +210,20 @@ function reminderLabel(locale: AtlasRecordLocale, status: string | null) {
     pending: { en: "pending", ku: "چاوەڕێ", bd: "چاوەڕێ", ar: "قيد الانتظار" },
     sent: { en: "sent", ku: "نێردراوە", bd: "هاتە فرێدان", ar: "انرسل" },
     failed: { en: "failed", ku: "سەرنەکەوتوو", bd: "سەرنەکەفتی", ar: "فشل" },
-    skipped: { en: "skipped", ku: "تێپەڕێنراو", bd: "هاتە تێپەڕاندن", ar: "متجاوز" },
+    skipped: { en: "skipped", ku: "تێپەڕێنراوە", bd: "هاتە تێپەڕاندن", ar: "متجاوز" },
   };
   return labels[status]?.[locale] ?? status;
+}
+
+function reminderLanguageLabel(locale: AtlasRecordLocale, language: string | null) {
+  if (!language) return null;
+  const labels: Record<string, Record<AtlasRecordLocale, string>> = {
+    en: { en: "English", ku: "ئینگلیزی", bd: "ئینگلیزی", ar: "إنكليزي" },
+    ku: { en: "Sorani Kurdish", ku: "کوردی (سۆرانی)", bd: "کوردی (سۆرانی)", ar: "كردي سوراني" },
+    bd: { en: "Badini Kurdish", ku: "کوردی (بادینی)", bd: "کوردی (بادینی)", ar: "كردي باديني" },
+    ar: { en: "Arabic", ku: "عەرەبی", bd: "عەرەبی", ar: "عربي" },
+  };
+  return labels[language]?.[locale] ?? language;
 }
 
 function relationshipLabel(locale: AtlasRecordLocale, relationship: string | null) {
@@ -224,55 +250,169 @@ function arrivalLabel(locale: AtlasRecordLocale, signal: string | null) {
 function stamp(value: string) {
   const date = new Date(value);
   const day = baghdadDay.format(date);
-  const time = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Baghdad", hour: "numeric", minute: "2-digit", hour12: true }).format(date);
+  const time = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Baghdad",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
   return { day, time };
 }
 
 function clarification(locale: AtlasRecordLocale) {
-  if (locale === "ku") return "دەتوانم وردەکاری مەوعیدەکان لە Atlas بدۆزمەوە. تکایە دکتۆر، ڕۆژ، یان ناوی نەخۆش دیاری بکە تا تەنها ئەو تۆمارانە ببینم کە ڕێگەت پێیان هەیە.";
-  if (locale === "bd") return "دکارم وردەکاریێن مەوعیدان ل Atlas بدۆزمەوە. تکایە دکتۆر، ڕۆژ یان ناڤێ نەخۆشی دیار بکە دا تەنێ ئەو تۆماران ببینم یێن تو مافێ دیتنا وان هەی.";
-  if (locale === "ar") return "أكدر أطلع تفاصيل المواعيد من Atlas. حدد الدكتور أو اليوم أو اسم المريض حتى أبحث فقط بالسجلات اللي عندك صلاحية تشوفها.";
-  return "I can look up appointment details in Atlas. Give me the doctor, day, or patient name so I can search only the records you are allowed to see.";
+  if (locale === "ku") return "دەتوانم وردەکاری مەوعیدەکان پیشان بدەم. تکایە ڕۆژ، دکتۆر، یان ناوی نەخۆش دیاری بکە.";
+  if (locale === "bd") return "دکارم وردەکاریێن مەوعیدان نیشان بدەم. تکایە ڕۆژ، دکتۆر یان ناڤێ نەخۆشی دیار بکە.";
+  if (locale === "ar") return "أكدر أعرض تفاصيل المواعيد. حدد اليوم أو الدكتور أو اسم المريض.";
+  return "I can show appointment details. Give me the day, doctor, or patient name.";
+}
+
+function safeCell(value: string | null | undefined) {
+  return (value?.trim() || "—").replace(/\|/g, "/").replace(/\s+/g, " ");
+}
+
+function tableLabels(locale: AtlasRecordLocale) {
+  if (locale === "ku") return { day: "ڕۆژ", time: "کات", patient: "نەخۆش", doctor: "دکتۆر", status: "دۆخ", reminder: "بیرخستنەوە", reminderLanguage: "زمانی بیرخستنەوە", arrival: "گەیشتن", phone: "مۆبایل", relationship: "خاوەنی ژمارە" };
+  if (locale === "bd") return { day: "ڕۆژ", time: "دەم", patient: "نەخۆش", doctor: "دکتۆر", status: "بار", reminder: "بیرخستنەوە", reminderLanguage: "زمانێ بیرخستنەوە", arrival: "گەهشتن", phone: "موبایل", relationship: "خودانێ ژمارێ" };
+  if (locale === "ar") return { day: "اليوم", time: "الوقت", patient: "المريض", doctor: "الدكتور", status: "الحالة", reminder: "التذكير", reminderLanguage: "لغة التذكير", arrival: "الوصول", phone: "الموبايل", relationship: "صاحب الرقم" };
+  return { day: "Date", time: "Time", patient: "Patient", doctor: "Doctor", status: "Status", reminder: "Reminder", reminderLanguage: "Reminder language", arrival: "Arrival", phone: "Phone", relationship: "Phone belongs to" };
+}
+
+function answerHeading(locale: AtlasRecordLocale, matchedCount: number, uniqueDoctors: string[], uniqueDays: string[], table: boolean) {
+  if (locale === "ku") {
+    const scope = `${uniqueDoctors.length === 1 ? ` بۆ ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` لە ${uniqueDays[0]}` : ""}`;
+    return `${matchedCount} مەوعید دۆزرایەوە${scope}.${table ? " خشتەکە:" : " وردەکارییەکان:"}`;
+  }
+  if (locale === "bd") {
+    const scope = `${uniqueDoctors.length === 1 ? ` بۆ ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` ل ${uniqueDays[0]}` : ""}`;
+    return `${matchedCount} مەوعید هاتنە دیتن${scope}.${table ? " خشتە:" : " وردەکاری:"}`;
+  }
+  if (locale === "ar") {
+    const scope = `${uniqueDoctors.length === 1 ? ` للدكتور ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` بتاريخ ${uniqueDays[0]}` : ""}`;
+    return `لكيت ${matchedCount} موعد${matchedCount === 1 ? "" : ""}${scope}.${table ? " الجدول:" : " التفاصيل:"}`;
+  }
+  const scope = `${uniqueDoctors.length === 1 ? ` for ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` on ${uniqueDays[0]}` : ""}`;
+  return `I found ${matchedCount} matching appointment${matchedCount === 1 ? "" : "s"}${scope}.${table ? " Here is the table:" : " Details:"}`;
+}
+
+function buildTable(appointments: SelectedAppointment[], locale: AtlasRecordLocale, includePhone: boolean) {
+  const labels = tableLabels(locale);
+  const uniqueDays = new Set(appointments.map((item) => stamp(item.appointmentAt).day));
+  const includeDay = uniqueDays.size > 1;
+  const includeReminderLanguage = appointments.some((item) => Boolean(item.reminderLanguage));
+  const includeArrival = appointments.some((item) => Boolean(item.arrivalSignal));
+  const includeRelationship = appointments.some((item) => Boolean(item.contactRelationship && item.contactRelationship !== "patient"));
+
+  const headers = [
+    ...(includeDay ? [labels.day] : []),
+    labels.time,
+    labels.patient,
+    labels.doctor,
+    labels.status,
+    labels.reminder,
+    ...(includeReminderLanguage ? [labels.reminderLanguage] : []),
+    ...(includeArrival ? [labels.arrival] : []),
+    ...(includePhone ? [labels.phone] : []),
+    ...(includeRelationship ? [labels.relationship] : []),
+  ];
+
+  const lines = [
+    `| ${headers.join(" | ")} |`,
+    `| ${headers.map(() => "---").join(" | ")} |`,
+  ];
+
+  for (const item of appointments) {
+    const { day, time } = stamp(item.appointmentAt);
+    const cells = [
+      ...(includeDay ? [day] : []),
+      time,
+      safeCell(item.patientName),
+      safeCell(item.doctorName),
+      safeCell(statusLabel(locale, item.status)),
+      safeCell(reminderLabel(locale, item.reminderStatus)),
+      ...(includeReminderLanguage ? [safeCell(reminderLanguageLabel(locale, item.reminderLanguage))] : []),
+      ...(includeArrival ? [safeCell(arrivalLabel(locale, item.arrivalSignal))] : []),
+      ...(includePhone ? [safeCell(item.patientPhone)] : []),
+      ...(includeRelationship ? [safeCell(relationshipLabel(locale, item.contactRelationship))] : []),
+    ];
+    lines.push(`| ${cells.join(" | ")} |`);
+  }
+
+  return lines.join("\n");
 }
 
 function buildAnswer(appointments: SelectedAppointment[], matchedCount: number, locale: AtlasRecordLocale, latestQuestion: string) {
-  const shown = appointments.slice(0, 12);
   const asksNotes = hasAny(latestQuestion, noteWords);
-  const uniqueDays = Array.from(new Set(shown.map((item) => stamp(item.appointmentAt).day)));
-  const uniqueDoctors = Array.from(new Set(shown.map((item) => item.doctorName)));
-  const heading = locale === "ku"
-    ? `بەڵێ — ${matchedCount} مەوعیدی پەیوەندیدار لە Atlas دۆزییەوە${uniqueDoctors.length === 1 ? ` بۆ ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` لە ${uniqueDays[0]}` : ""}:`
-    : locale === "bd"
-      ? `بەلێ — ${matchedCount} مەوعیدێن پەیوەندیدار ل Atlas هاتنە دیتن${uniqueDoctors.length === 1 ? ` بۆ ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` ل ${uniqueDays[0]}` : ""}:`
-      : locale === "ar"
-        ? `إي — لكيت ${matchedCount} مواعيد مرتبطة بسؤالك داخل Atlas${uniqueDoctors.length === 1 ? ` للدكتور ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` بتاريخ ${uniqueDays[0]}` : ""}:`
-        : `Yes — I found ${matchedCount} matching appointments in Atlas${uniqueDoctors.length === 1 ? ` for ${uniqueDoctors[0]}` : ""}${uniqueDays.length === 1 ? ` on ${uniqueDays[0]}` : ""}:`;
+  const wantsTable = hasAny(latestQuestion, tableWords);
+  const wantsFull = hasAny(latestQuestion, fullDetailWords);
+  const uniqueDays = Array.from(new Set(appointments.map((item) => stamp(item.appointmentAt).day)));
+  const uniqueDoctors = Array.from(new Set(appointments.map((item) => item.doctorName));
+  const includePhone = appointments.some((item) => Boolean(item.patientPhone));
+  const heading = answerHeading(locale, matchedCount, uniqueDoctors, uniqueDays, wantsTable);
 
-  const lines = shown.map((item) => {
+  if (wantsTable) {
+    const table = buildTable(appointments, locale, includePhone);
+    const note = asksNotes
+      ? locale === "ku"
+        ? "تێبینی: Atlas تێبینی پزیشکیی نەخۆش هەڵناگرێت، بۆیە تێبینی پزیشکی لێرە نییە."
+        : locale === "bd"
+          ? "تێبینی: Atlas تێبینیێن پزیشکی یێن نەخۆشی هەڵناگریت، لەورا تێبینییا پزیشکی ل ڤێرێ نینە."
+          : locale === "ar"
+            ? "ملاحظة: Atlas ما يخزن ملاحظات طبية عن المريض، لذلك ماكو ملاحظة طبية أعرضها هنا."
+            : "Note: Atlas does not store patient clinical notes, so there is no clinical note to show here."
+      : null;
+    return [heading, table, note].filter(Boolean).join("\n\n");
+  }
+
+  const lines = appointments.map((item) => {
     const { day, time } = stamp(item.appointmentAt);
     const status = statusLabel(locale, item.status);
     const reminder = reminderLabel(locale, item.reminderStatus);
+    const reminderLanguage = reminderLanguageLabel(locale, item.reminderLanguage);
     const relationship = relationshipLabel(locale, item.contactRelationship);
     const arrival = arrivalLabel(locale, item.arrivalSignal);
-    const bits = locale === "ar"
-      ? [`${uniqueDays.length > 1 ? `${day} — ` : ""}${time}`, item.patientName, `الحالة: ${status}`]
-      : locale === "en"
-        ? [`${uniqueDays.length > 1 ? `${day} — ` : ""}${time}`, item.patientName, `status: ${status}`]
-        : [`${uniqueDays.length > 1 ? `${day} — ` : ""}${time}`, item.patientName, `دۆخ: ${status}`];
-    if (reminder) bits.push(locale === "ar" ? `التذكير: ${reminder}` : locale === "en" ? `reminder: ${reminder}` : `بیرخستنەوە: ${reminder}`);
-    if (relationship) bits.push(locale === "ar" ? `صاحب الرقم: ${relationship}` : locale === "en" ? `phone belongs to: ${relationship}` : locale === "bd" ? `خودانێ ژمارێ: ${relationship}` : `خاوەنی ژمارە: ${relationship}`);
-    if (arrival) bits.push(locale === "ar" ? `الوصول: ${arrival}` : locale === "en" ? `arrival: ${arrival}` : `گەیشتن: ${arrival}`);
-    if (item.patientPhone) bits.push(item.patientPhone);
+    const dayPrefix = uniqueDays.length > 1 ? `${day} — ` : "";
+
+    if (locale === "ku") {
+      const bits = [`${dayPrefix}${time}`, `نەخۆش: ${item.patientName}`, `دکتۆر: ${item.doctorName}`, `دۆخ: ${status}`];
+      if (reminder) bits.push(`بیرخستنەوە: ${reminder}`);
+      if (reminderLanguage && wantsFull) bits.push(`زمانی بیرخستنەوە: ${reminderLanguage}`);
+      if (arrival) bits.push(`گەیشتن: ${arrival}`);
+      if (item.patientPhone) bits.push(`مۆبایل: ${item.patientPhone}`);
+      if (relationship) bits.push(`خاوەنی ژمارە: ${relationship}`);
+      return `• ${bits.join(" — ")}`;
+    }
+    if (locale === "bd") {
+      const bits = [`${dayPrefix}${time}`, `نەخۆش: ${item.patientName}`, `دکتۆر: ${item.doctorName}`, `بار: ${status}`];
+      if (reminder) bits.push(`بیرخستنەوە: ${reminder}`);
+      if (reminderLanguage && wantsFull) bits.push(`زمانێ بیرخستنەوە: ${reminderLanguage}`);
+      if (arrival) bits.push(`گەهشتن: ${arrival}`);
+      if (item.patientPhone) bits.push(`موبایل: ${item.patientPhone}`);
+      if (relationship) bits.push(`خودانێ ژمارێ: ${relationship}`);
+      return `• ${bits.join(" — ")}`;
+    }
+    if (locale === "ar") {
+      const bits = [`${dayPrefix}${time}`, `المريض: ${item.patientName}`, `الدكتور: ${item.doctorName}`, `الحالة: ${status}`];
+      if (reminder) bits.push(`التذكير: ${reminder}`);
+      if (reminderLanguage && wantsFull) bits.push(`لغة التذكير: ${reminderLanguage}`);
+      if (arrival) bits.push(`الوصول: ${arrival}`);
+      if (item.patientPhone) bits.push(`الموبايل: ${item.patientPhone}`);
+      if (relationship) bits.push(`صاحب الرقم: ${relationship}`);
+      return `• ${bits.join(" — ")}`;
+    }
+    const bits = [`${dayPrefix}${time}`, `patient: ${item.patientName}`, `doctor: ${item.doctorName}`, `status: ${status}`];
+    if (reminder) bits.push(`reminder: ${reminder}`);
+    if (reminderLanguage && wantsFull) bits.push(`reminder language: ${reminderLanguage}`);
+    if (arrival) bits.push(`arrival: ${arrival}`);
+    if (item.patientPhone) bits.push(`phone: ${item.patientPhone}`);
+    if (relationship) bits.push(`phone belongs to: ${relationship}`);
     return `• ${bits.join(" — ")}`;
   });
 
-  const more = matchedCount > shown.length ? matchedCount - shown.length : 0;
-  if (more) lines.push(locale === "ku" ? `• ${more} مەوعیدی تریش هەیە.` : locale === "bd" ? `• ${more} مەوعیدێن دی ژی هەنە.` : locale === "ar" ? `• أكو ${more} مواعيد إضافية.` : `• ${more} more appointments.`);
   if (asksNotes) {
     lines.push(locale === "ku"
-      ? "تێبینی: Atlas تێبینی پزیشکی/کلینیکیی نەخۆش هەڵناگرێت؛ بۆیە تێبینی پزیشکی لێرە نییە."
+      ? "تێبینی: Atlas تێبینی پزیشکیی نەخۆش هەڵناگرێت، بۆیە تێبینی پزیشکی لێرە نییە."
       : locale === "bd"
-        ? "تێبینی: Atlas تێبینیێن پزیشکی یێن نەخۆشی هەڵناگریت؛ لەورا تێبینییا پزیشکی ل ڤێرێ نینە."
+        ? "تێبینی: Atlas تێبینیێن پزیشکی یێن نەخۆشی هەڵناگریت، لەورا تێبینییا پزیشکی ل ڤێرێ نینە."
         : locale === "ar"
           ? "ملاحظة: Atlas ما يخزن ملاحظات طبية عن المريض، لذلك ماكو ملاحظة طبية أعرضها هنا."
           : "Note: Atlas does not store patient clinical notes, so there is no clinical note to show here.");
@@ -296,11 +436,15 @@ export function resolveAtlasRecordRequest(
   const hasSelector = Boolean(doctors.size || patients.size || days.size || phoneSelectorText);
   const intent = recordIntent(latestQuestion, hasSelector);
   const knownPatientInLatest = rows.some((row) => entityMentioned(latestQuestion, row.patient_name));
+  const knownDoctorInLatest = rows.some((row) => entityMentioned(latestQuestion, row.doctor_name));
   const patientSpecificLanguage = hasAny(latestQuestion, patientWords) || knownPatientInLatest || phoneLikeInput(latestQuestion);
-  const localOnly = intent !== "none" || patientSpecificLanguage;
+  const appointmentSpecificLanguage = hasAny(latestQuestion, appointmentWords) || hasAny(latestQuestion, doctorWords) || knownDoctorInLatest;
+  const localOnly = intent !== "none" || patientSpecificLanguage || (hasSelector && appointmentSpecificLanguage);
 
   if (intent === "none") {
-    return localOnly ? { localOnly: true, answer: clarification(locale), matchedCount: 0, appointments: [] } : null;
+    return localOnly && !hasAny(latestQuestion, countWords)
+      ? { localOnly: true, answer: clarification(locale), matchedCount: 0, appointments: [] }
+      : null;
   }
   if (!hasSelector) return { localOnly: true, answer: clarification(locale), matchedCount: 0, appointments: [] };
 
@@ -315,17 +459,17 @@ export function resolveAtlasRecordRequest(
 
   if (!filtered.length) {
     const answer = locale === "ku"
-      ? "هیچ مەوعیدێکی هاوتا لەو بەشەی Atlas کە ڕێگەت پێی هەیە نەدۆزرایەوە. دکتۆر/ڕۆژ/ناوی نەخۆش بپشکنەوە."
+      ? "هیچ مەوعیدێکی هاوتا نەدۆزرایەوە. ڕۆژ، دکتۆر، یان ناوی نەخۆش بپشکنەوە."
       : locale === "bd"
-        ? "هیچ مەوعیدەکا هاوتا ل وێ بەشا Atlas یا تو مافێ دیتنێ هەی نەهاتە دیتن. دکتۆر/ڕۆژ/ناڤێ نەخۆشی بپشکنەوە."
+        ? "هیچ مەوعیدەکا هاوتا نەهاتە دیتن. ڕۆژ، دکتۆر یان ناڤێ نەخۆشی بپشکنەوە."
         : locale === "ar"
-          ? "ما لكيت موعد مطابق ضمن جزء Atlas اللي عندك صلاحية تشوفه. راجع الدكتور/اليوم/اسم المريض."
-          : "I couldn't find a matching appointment in the part of Atlas you are allowed to see. Check the doctor/day/patient name.";
+          ? "ما لكيت موعد مطابق. راجع اليوم أو الدكتور أو اسم المريض."
+          : "I couldn't find a matching appointment. Check the day, doctor, or patient name.";
     return { localOnly: true, answer, matchedCount: 0, appointments: [] };
   }
 
-  const includePhone = intent === "phone";
-  const max = Math.max(1, Math.min(options?.maxAppointments ?? 20, 40));
+  const includePhone = intent === "phone" || hasAny(latestQuestion, fullDetailWords);
+  const max = Math.max(1, Math.min(options?.maxAppointments ?? 40, 80));
   const appointments = filtered
     .slice()
     .sort((a, b) => a.appointment_at.localeCompare(b.appointment_at))
@@ -334,7 +478,7 @@ export function resolveAtlasRecordRequest(
       patientName: row.patient_name,
       ...(includePhone ? { patientPhone: row.patient_phone } : {}),
       contactRelationship: row.contact_relationship,
-      doctorName: row.doctor_name?.trim() || "Unassigned",
+      doctorName: row.doctor_name?.trim() || (locale === "ar" ? "غير محدد" : locale === "en" ? "Unassigned" : "دیاری نەکراوە"),
       appointmentAt: row.appointment_at,
       status: row.status,
       reminderStatus: row.reminder_status,
@@ -342,10 +486,6 @@ export function resolveAtlasRecordRequest(
       arrivalSignal: row.arrival_signal,
     }));
 
-  return {
-    localOnly: true,
-    answer: buildAnswer(appointments, filtered.length, locale, latestQuestion),
-    matchedCount: filtered.length,
-    appointments,
-  };
+  const answer = buildAnswer(appointments, filtered.length, locale, latestQuestion);
+  return { localOnly: true, answer, matchedCount: filtered.length, appointments };
 }
