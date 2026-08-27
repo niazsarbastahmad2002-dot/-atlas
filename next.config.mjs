@@ -8,6 +8,17 @@ const metaTestPreview = (
   && process.env.VERCEL_ENV !== "production"
 );
 
+let testSupabaseOrigin = "";
+if (metaTestPreview && process.env.NEXT_PUBLIC_ATLAS_TEST_SUPABASE_ENABLED === "true") {
+  try {
+    testSupabaseOrigin = new URL(process.env.NEXT_PUBLIC_ATLAS_TEST_SUPABASE_URL ?? "").origin;
+  } catch {}
+}
+
+const supabaseConnectOrigins = [...new Set([supabaseOrigin, testSupabaseOrigin].filter(Boolean))]
+  .map((origin) => ` ${origin}`)
+  .join("");
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -18,7 +29,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""} https://graph.facebook.com https://www.facebook.com`,
+  `connect-src 'self'${supabaseConnectOrigins} https://graph.facebook.com https://www.facebook.com`,
   "frame-src 'self' https://www.facebook.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
