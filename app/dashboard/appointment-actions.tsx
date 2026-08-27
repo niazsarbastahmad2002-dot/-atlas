@@ -55,14 +55,12 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
 
 const workflowCopy: Record<UiLocale, {
   status: string;
-  more: string;
   remove: string;
   removeQuestion: string;
   labels: Record<AppointmentStatus, string>;
 }> = {
   en: {
     status: "Patient status",
-    more: "More",
     remove: "Remove",
     removeQuestion: "Remove this appointment from the schedule? Atlas will keep its history.",
     labels: {
@@ -75,7 +73,6 @@ const workflowCopy: Record<UiLocale, {
   },
   ku: {
     status: "دۆخی نەخۆش",
-    more: "زیاتر",
     remove: "لابردن",
     removeQuestion: "ئەم مەوعیدە لە خشتە لاببرێت؟ مێژووەکەی لە Atlas دەپارێزرێت.",
     labels: {
@@ -88,7 +85,6 @@ const workflowCopy: Record<UiLocale, {
   },
   bd: {
     status: "بارێ نەخۆشی",
-    more: "زێدەتر",
     remove: "لابرن",
     removeQuestion: "ئەڤ مەوعید ژ خشتەیێ لاببەین؟ Atlas مێژوویا وێ دپارێزیت.",
     labels: {
@@ -101,7 +97,6 @@ const workflowCopy: Record<UiLocale, {
   },
   ar: {
     status: "حالة المريض",
-    more: "المزيد",
     remove: "إزالة",
     removeQuestion: "إزالة هذا الموعد من الجدول؟ سيحتفظ Atlas بسجله.",
     labels: {
@@ -227,19 +222,14 @@ export function AppointmentActions({
 
       <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} />
 
-      <details className="appointment-more-menu">
-        <summary aria-label={workflow.more} title={workflow.more}>{workflow.more}</summary>
-        <div className="appointment-more-popover">
-          <button
-            className="archive-action"
-            type="button"
-            disabled={pending}
-            onClick={(event) => remove(event.currentTarget)}
-          >
-            {workflow.remove}
-          </button>
-        </div>
-      </details>
+      <button
+        className="appointment-remove-action"
+        type="button"
+        disabled={pending}
+        onClick={(event) => remove(event.currentTarget)}
+      >
+        {workflow.remove}
+      </button>
 
       {error ? <span className="appointment-action-feedback" role="alert">{error}</span> : null}
 
@@ -272,46 +262,20 @@ export function AppointmentActions({
         .appointment-status-select.is-cancelled { color: #705858; background: #f6f2f2; border-color: #dfd2d2; }
         .appointment-action-feedback { grid-column: 1 / -1; color: var(--danger); font-size: 10.5px; line-height: 1.4; }
 
-        .appointment-more-menu { position: relative; }
-        .appointment-more-menu summary {
-          display: grid;
-          min-width: 64px;
-          height: 38px;
-          place-items: center;
-          border: 1px solid var(--line-strong);
+        .appointment-remove-action {
+          min-height: 38px;
+          border: 1px solid #ecd1d1;
           border-radius: 10px;
-          padding-inline: 12px;
+          padding: 7px 12px;
           background: #fff;
-          color: var(--muted);
+          color: var(--danger);
           font-size: 11px;
           font-weight: 780;
           line-height: 1;
           white-space: nowrap;
-          list-style: none;
           cursor: pointer;
         }
-        .appointment-more-menu summary::-webkit-details-marker { display: none; }
-        .appointment-more-menu[open] summary { border-color: rgba(31,90,67,.35); background: var(--accent-soft); color: var(--accent); }
-        .appointment-more-popover {
-          position: absolute;
-          z-index: 30;
-          inset-inline-end: 0;
-          bottom: calc(100% + 6px);
-          min-width: 130px;
-          border: 1px solid var(--line);
-          border-radius: 11px;
-          padding: 6px;
-          background: #fff;
-          box-shadow: var(--shadow-md);
-        }
-        .appointment-more-popover .archive-action {
-          width: 100%;
-          min-height: 36px;
-          margin: 0 !important;
-          color: var(--danger);
-          background: transparent;
-          text-align: start;
-        }
+        .appointment-remove-action:hover { background: var(--danger-bg); }
 
         @media (max-width: 720px) {
           .polished-appointment .appointment-details { grid-template-columns: 1fr 1fr; }
@@ -322,7 +286,7 @@ export function AppointmentActions({
           .polished-appointment .appointment-details { grid-template-columns: 1fr; }
           .appointment-action-bar { grid-template-columns: minmax(0, 1fr) auto; }
           .appointment-status-control { grid-column: 1 / -1; }
-          .appointment-more-menu { justify-self: end; }
+          .appointment-remove-action { justify-self: end; }
         }
       `}</style>
     </div>
