@@ -7,7 +7,7 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feat/meta-test-whatsapp-mode": false,
+      "feat/meta-test-whatsapp-mode": true,
       "*": false,
       "**": false
     }
