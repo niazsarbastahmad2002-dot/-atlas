@@ -6,7 +6,6 @@
   "regions": ["sin1"],
   "git": {
     "deploymentEnabled": {
-      "feature/atlas-online-receptionist-simplify-v1": true,
       "main": true,
       "*": false,
       "**": false
