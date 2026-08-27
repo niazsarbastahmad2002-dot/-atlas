@@ -16,6 +16,7 @@ During the failed UI attempt, the isolated Supabase Auth logs showed readiness `
 - The browser still lets Supabase own OTP generation, verification, and the resulting session; Atlas only removes the browser-network dependency for this isolated test.
 - The first Atlas screen and login now use the same persisted UI-language cookie. English renders LTR; Sorani, Badini, and Iraqi Arabic render RTL. The first screen offers the same four-language picker.
 - When WhatsApp is the only test delivery option it is styled as already selected, not as an untapped radio control.
+- Use the stable branch Preview alias `atlasdemofixed-git-feat-meta-test-whatsapp-mode-atlas-fca2.vercel.app` for the live test instead of bookmarking immutable deployment hostnames.
 
 ## Remaining live gate
 
