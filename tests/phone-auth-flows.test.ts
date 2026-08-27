@@ -51,7 +51,8 @@ test("normal staff provisioning cannot create email auth users anymore", () => {
   assert.match(page, /InviteLinkForm/);
   assert.doesNotMatch(page, /StaffProvisionForm/);
   assert.doesNotMatch(actions, /createUser\(\{|signInWithOtp\(\{\s*email|normalizeEmail|validEmail/);
-  assert.match(invite, /create_staff_invite_link_service/);
+  assert.match(invite, /create_phone_staff_invite_link_service/);
+  assert.doesNotMatch(invite, /create_staff_invite_link_service/);
 });
 
 test("last-clinic deletion preserves the auth account and keeps the session for an explicit account choice", () => {
