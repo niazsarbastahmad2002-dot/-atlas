@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "fix/schedule-tint-and-build": true,
       "*": false,
       "**": false
     }
