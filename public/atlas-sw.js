@@ -1,4 +1,5 @@
-const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v10";
+// Atlas Local shell refresh: Safari date-control polish.
+const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v9";
 const ATLAS_OFFLINE_PAGE = "/atlas-offline.html";
 const ATLAS_LOCAL_PAGE = "/atlas-local.html";
 const ATLAS_LOCAL_SCRIPT = "/atlas-local.js";
