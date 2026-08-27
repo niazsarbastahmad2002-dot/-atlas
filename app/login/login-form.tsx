@@ -45,12 +45,13 @@ const authCopy = {
     sms: "SMS",
     whatsapp: "WhatsApp",
     delivery: "Send code by",
+    deliveryFixed: "Verification code will be sent by WhatsApp",
     invalidPhone: "Enter a valid mobile number. Atlas stores verified numbers in international E.164 form, for example +9647501234567.",
     invalidCode: "Enter the verification code you received.",
     incorrectCode: "That code is incorrect or expired. Check the newest code and try again.",
     rateLimited: "Too many code requests. Wait for the countdown before requesting another code.",
     notReady: PHONE_SIGNUP_ENABLED
-      ? "Atlas could not send a code to that number. Check the number and try again."
+      ? "Atlas could not send the verification code right now. Please try again in a moment."
       : "This number is not linked to an Atlas account yet. Existing accounts must verify a phone number before open phone signup is enabled.",
     network: "Atlas could not reach the verification service. Check your connection and try again.",
     quick: "Use saved passkey",
@@ -77,11 +78,12 @@ const authCopy = {
     sms: "SMS",
     whatsapp: "WhatsApp",
     delivery: "کۆد بنێرە بە",
+    deliveryFixed: "کۆدی پشتڕاستکردنەوە بە WhatsApp دەنێردرێت",
     invalidPhone: "ژمارەیەکی دروست بنووسە. Atlas ژمارەی پشتڕاستکراو بە شێوەی نێودەوڵەتی E.164 هەڵدەگرێت، وەک +9647501234567.",
     invalidCode: "کۆدی پشتڕاستکردنەوە بنووسە.",
     incorrectCode: "کۆدەکە هەڵەیە یان بەسەرچووە. نوێترین کۆد بەکاربهێنە.",
     rateLimited: "داواکاری کۆد زۆر بووە. تا تەواوبوونی کاتژمێرەکە چاوەڕێ بکە.",
-    notReady: PHONE_SIGNUP_ENABLED ? "Atlas نەیتوانی کۆد بنێرێت. ژمارەکە بپشکنە." : "ئەم ژمارەیە هێشتا بە هەژماری Atlas نەبەستراوەتەوە. هەژمارە کۆنەکان پێویستە سەرەتا ژمارەیەک پشتڕاست بکەنەوە.",
+    notReady: PHONE_SIGNUP_ENABLED ? "Atlas ئێستا نەیتوانی کۆدی پشتڕاستکردنەوە بنێرێت. کەمێک دواتر دووبارە هەوڵ بدە." : "ئەم ژمارەیە هێشتا بە هەژماری Atlas نەبەستراوەتەوە. هەژمارە کۆنەکان پێویستە سەرەتا ژمارەیەک پشتڕاست بکەنەوە.",
     network: "Atlas نەیتوانی پەیوەندی بە خزمەتگوزاری پشتڕاستکردنەوە بکات.",
     quick: "Passkey ی پارێزراو بەکاربهێنە",
     quickOpening: "Passkey دەکرێتەوە…",
@@ -107,11 +109,12 @@ const authCopy = {
     sms: "SMS",
     whatsapp: "WhatsApp",
     delivery: "کۆد بهنێرە ب",
+    deliveryFixed: "کۆدێ پشتڕاستکرنێ ب WhatsApp دهێتە هنارتن",
     invalidPhone: "ژمارەکا دروست بنڤیسە. Atlas ژمارا پشتڕاستکری ب فۆرماتا نێودەولەتی E.164 پاراستن دکەت، وەک +9647501234567.",
     invalidCode: "کۆدێ پشتڕاستکرنێ بنڤیسە.",
     incorrectCode: "کۆد خەلەتە یان دەمێ وی بەسەرچووە. نووترین کۆد بکاربینە.",
     rateLimited: "داخوازێن کۆدی زۆر بوون. هەتا کاتژمێر دکەڤیت چاوەرێ بکە.",
-    notReady: PHONE_SIGNUP_ENABLED ? "Atlas نەشیا کۆدێ بهنێریت. ژمارێ بپشکنە." : "ئەڤ ژمارە هێشتا ب هەژمارەکێ Atlas نەهاتییە گرێدان. هەژمارێن کەڤن پێدڤییە پێشدا ژمارەکێ پشتڕاست بکەن.",
+    notReady: PHONE_SIGNUP_ENABLED ? "Atlas نوکە نەشیا کۆدێ پشتڕاستکرنێ بهنێریت. پشتی کەمەکێ دووبارە هەول بدە." : "ئەڤ ژمارە هێشتا ب هەژمارەکێ Atlas نەهاتییە گرێدان. هەژمارێن کەڤن پێدڤییە پێشدا ژمارەکێ پشتڕاست بکەن.",
     network: "Atlas نەشیا پەیوەندی ب خزمەتا پشتڕاستکرنێ بکەت.",
     quick: "Passkey یا پاراستی بکاربینە",
     quickOpening: "Passkey ڤەدبیت…",
@@ -137,11 +140,12 @@ const authCopy = {
     sms: "SMS",
     whatsapp: "WhatsApp",
     delivery: "إرسال الرمز عبر",
+    deliveryFixed: "رمز التحقق راح يوصلك على WhatsApp",
     invalidPhone: "أدخل رقم موبايل صحيح. Atlas يحفظ الرقم الموثق بصيغة E.164 الدولية، مثلاً +9647501234567.",
     invalidCode: "أدخل رمز التحقق الذي وصلك.",
     incorrectCode: "الرمز غير صحيح أو منتهي. استخدم أحدث رمز وحاول مرة ثانية.",
     rateLimited: "تم طلب رموز كثيرة. انتظر انتهاء العد التنازلي قبل طلب رمز جديد.",
-    notReady: PHONE_SIGNUP_ENABLED ? "تعذر إرسال الرمز. تأكد من الرقم وحاول مرة ثانية." : "هذا الرقم غير مربوط بحساب Atlas بعد. الحسابات الحالية لازم تضيف وتتحقق من رقم الهاتف أولاً.",
+    notReady: PHONE_SIGNUP_ENABLED ? "تعذر إرسال رمز التحقق حالياً. حاول مرة ثانية بعد شوي." : "هذا الرقم غير مربوط بحساب Atlas بعد. الحسابات الحالية لازم تضيف وتتحقق من رقم الهاتف أولاً.",
     network: "تعذر الاتصال بخدمة التحقق. تأكد من الإنترنت وحاول مرة ثانية.",
     quick: "استخدام Passkey محفوظ",
     quickOpening: "جارٍ فتح Passkey…",
@@ -379,13 +383,67 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
           dir="ltr"
           required
         />
-        {WHATSAPP_OTP_ENABLED ? (
+        {DIRECT_META_OTP_ENABLED ? (
+          <div
+            role="status"
+            aria-label={copy.deliveryFixed}
+            style={{
+              display: "flex",
+              minHeight: 44,
+              alignItems: "center",
+              gap: 10,
+              border: "1px solid #cfe2d8",
+              borderRadius: 12,
+              padding: "10px 12px",
+              background: "#f1f8f4",
+              color: "#1f5a43",
+              fontSize: 12,
+              fontWeight: 760,
+              lineHeight: 1.35,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-grid",
+                width: 22,
+                height: 22,
+                flex: "0 0 22px",
+                placeItems: "center",
+                borderRadius: 999,
+                background: "#1f5a43",
+                color: "white",
+                fontSize: 13,
+                fontWeight: 900,
+              }}
+            >✓</span>
+            <span>{copy.deliveryFixed}</span>
+          </div>
+        ) : WHATSAPP_OTP_ENABLED ? (
           <fieldset className="auth-delivery-options">
             <legend>{copy.delivery}</legend>
-            {!DIRECT_META_OTP_ENABLED ? (
-              <label><input type="radio" name="delivery" value="sms" checked={delivery === "sms"} onChange={() => setDelivery("sms")} /> {copy.sms}</label>
-            ) : null}
-            <label><input type="radio" name="delivery" value="whatsapp" checked={delivery === "whatsapp"} onChange={() => setDelivery("whatsapp")} /> {copy.whatsapp}</label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="radio"
+                name="delivery"
+                value="sms"
+                checked={delivery === "sms"}
+                onChange={() => setDelivery("sms")}
+                style={{ width: 18, minHeight: 18, height: 18, margin: 0, padding: 0, flex: "0 0 18px" }}
+              />
+              {copy.sms}
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="radio"
+                name="delivery"
+                value="whatsapp"
+                checked={delivery === "whatsapp"}
+                onChange={() => setDelivery("whatsapp")}
+                style={{ width: 18, minHeight: 18, height: 18, margin: 0, padding: 0, flex: "0 0 18px" }}
+              />
+              {copy.whatsapp}
+            </label>
           </fieldset>
         ) : null}
         <button className="button login-primary-action" type="submit" disabled={busy || quickBusy || cooldown > 0}>
