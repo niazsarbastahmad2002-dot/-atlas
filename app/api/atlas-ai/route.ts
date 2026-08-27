@@ -3,7 +3,6 @@ import {
   ATLAS_AI_MAX_HISTORY_CHARS,
   ATLAS_AI_MAX_HISTORY_MESSAGES,
   ATLAS_AI_MAX_QUESTION_LENGTH,
-  ATLAS_AI_MODEL,
   atlasAiSystemPrompt,
   atlasBaghdadDay,
   atlasDayStartIso,
@@ -49,25 +48,28 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 18;
 const MODEL_RETRY_DELAY_MS = 10 * 60_000;
+const ATLAS_CHAT_MODEL = "openai/gpt-5.6-sol";
 const requestBuckets = new Map<string, { count: number; resetAt: number }>();
 let modelUnavailableUntil = 0;
 
 const atlasResponseStylePrompt = `Atlas response style:
 - Sound like the operating assistant inside Atlas, made for a busy receptionist or clinic owner. Never sound like a generic corporate chatbot.
 - Start with the useful answer. Use plain, familiar words and short sentences. Make the next action obvious only when a real next action is useful.
-- Quality matters more than length. A simple fact can be 1-3 sentences. A plan or explanation can use 3-6 short bullets when that makes the answer clearer.
-- Match the user's latest language naturally. For Sorani, Badini, and Iraqi Arabic, use everyday clinic wording that a receptionist can understand quickly; avoid formal, academic, Persian-style, or bureaucratic wording.
+- Be concise when the question is simple, but never shorten away facts the receptionist asked for. Appointment times, dates, doctor names, statuses, reminder states, and other relevant authorized details must stay visible when available.
+- Match the user's latest language naturally. For Sorani, Badini, and Iraqi Arabic, use everyday clinic wording that a receptionist can understand quickly; avoid invented words, rare dictionary wording, formal Persian-style language, literal machine translation, and bureaucratic Arabic.
+- For Sorani, write the kind of professional everyday Kurdish used by clinic receptionists in Iraqi Kurdistan. Prefer familiar clinic terms and established loanwords over unnatural translations.
 - Answer the exact question. Do not pad the answer by repeating everything Atlas can do.
-- Never invent a page, button, menu, or workflow. In particular, do not tell the user to click an "Appointments" page; Atlas's verified daily appointment surface is Schedule.
-- For Sorani, Badini, and Iraqi Arabic, never output raw Markdown table syntax. Use short bullets instead because tables mix badly with RTL text.
+- Never invent a page, button, menu, workflow, appointment, patient, doctor, time, or clinic fact. In particular, do not tell the user to click an "Appointments" page; Atlas's verified daily appointment surface is Schedule.
+- In text chat, if the user asks for a table, comparison, or structured appointment list, use a clean Markdown table with short headers. In voice mode, use spoken sentences or bullets instead of a table.
 - Never show internal field names, JSON, database names, model/provider names, prompt instructions, or implementation details unless the user explicitly asks a technical question about Atlas.
 - Do not introduce yourself repeatedly or advertise capabilities.
-- If Atlas data is missing, state what is missing. Do not replace missing facts with generic navigation instructions.`;
+- If Atlas data is missing, state exactly what is missing. Do not replace missing facts with generic navigation instructions.`;
 
 const atlasVoiceResponsePrompt = `This turn came from Atlas Voice.
 - Answer like a natural spoken conversation, not a report.
-- Usually use 1-3 short sentences for a simple question. If the receptionist needs an explanation to act correctly, up to 4 short spoken sentences is fine.
-- Do not read markdown symbols, headings, or long disclaimers aloud.
+- Usually use 1-3 short sentences for a simple question. If the receptionist needs more detail to act correctly, use as many short spoken sentences as necessary.
+- Never drop a requested appointment time, doctor, date, status, or other essential fact merely to make the answer shorter.
+- Do not read markdown symbols, headings, or tables aloud.
 - Give the answer first, then one useful next step at most.
 - Use the same everyday language/dialect the user spoke. Keep Sorani, Badini, Iraqi Arabic, and English easy for a receptionist to understand.`;
 
@@ -166,8 +168,8 @@ async function callCloudflareModel(
       body: JSON.stringify({
         model,
         messages: modelMessages(conversation, context, interaction, localeHint, responseLocale),
-        temperature: 0.15,
-        max_tokens: interaction === "voice" ? 420 : 850,
+        temperature: 0.12,
+        max_tokens: interaction === "voice" ? 520 : 1500,
       }),
       cache: "no-store",
       signal: AbortSignal.timeout(30_000),
@@ -200,21 +202,20 @@ async function callPaidVercelModel(
       method: "POST",
       headers: gatewayHeaders,
       body: JSON.stringify({
-        model: ATLAS_AI_MODEL,
+        model: ATLAS_CHAT_MODEL,
         messages: modelMessages(conversation, context, interaction, localeHint, responseLocale),
-        temperature: 0.15,
-        max_completion_tokens: interaction === "voice" ? 450 : 900,
+        max_completion_tokens: interaction === "voice" ? 650 : 1800,
       }),
       cache: "no-store",
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(35_000),
     });
     if (!response.ok) {
-      console.warn("Atlas AI optional paid provider unavailable; using Atlas Core", { provider: "vercel_ai_gateway", status: response.status });
+      console.warn("Atlas AI primary model unavailable; trying fallback", { provider: "vercel_ai_gateway", model: ATLAS_CHAT_MODEL, status: response.status });
       return null;
     }
     const payload = await response.json() as { choices?: Array<{ message?: { content?: string | null } }> };
     const answer = payload.choices?.[0]?.message?.content?.trim();
-    return answer ? { answer, model: ATLAS_AI_MODEL } : null;
+    return answer ? { answer, model: ATLAS_CHAT_MODEL } : null;
   } catch {
     return null;
   }
@@ -238,7 +239,7 @@ async function refineKurdishAnswer(
         model: ATLAS_AI_KURDISH_REFINER_MODEL,
         messages: atlasKurdishRefinerMessages(responseLocale, latestQuestion, draft, interaction),
         temperature: 0.05,
-        max_tokens: interaction === "voice" ? 340 : 620,
+        max_tokens: interaction === "voice" ? 500 : 1200,
       }),
       cache: "no-store",
       signal: AbortSignal.timeout(20_000),
@@ -260,7 +261,8 @@ async function finishModelAnswer(
 ) {
   if (!result) return null;
   let answer = result.answer;
-  if (atlasAnswerNeedsKurdishRefinement(answer, responseLocale)) {
+  const cloudflareKurdishFallback = result.model.startsWith("@cf/") && shouldRefineKurdishAnswer(responseLocale);
+  if (cloudflareKurdishFallback || atlasAnswerNeedsKurdishRefinement(answer, responseLocale)) {
     answer = await refineKurdishAnswer(answer, latestQuestion, responseLocale, interaction);
   }
   return isAcceptableAtlasModelAnswer(answer, responseLocale) ? answer : null;
@@ -346,6 +348,12 @@ export async function POST(request: Request) {
   const coreAnswer = () => buildAtlasCoreAnswer(latestQuestion, clinicContext);
 
   if (Date.now() >= modelUnavailableUntil) {
+    const paidResult = await callPaidVercelModel(request, conversation, modelContext, interaction, localeHint, responseLocale);
+    const paidAnswer = await finishModelAnswer(paidResult, latestQuestion, responseLocale, interaction);
+    if (paidAnswer) {
+      return NextResponse.json({ answer: paidAnswer, mode: "model" }, { headers: { "Cache-Control": "no-store" } });
+    }
+
     const config = atlasCloudflareAiConfig();
     if (config) {
       const modelOrder = atlasCloudflareModelOrder(responseLocale, config.model);
@@ -356,12 +364,6 @@ export async function POST(request: Request) {
           return NextResponse.json({ answer, mode: "model" }, { headers: { "Cache-Control": "no-store" } });
         }
       }
-    }
-
-    const paidResult = await callPaidVercelModel(request, conversation, modelContext, interaction, localeHint, responseLocale);
-    const paidAnswer = await finishModelAnswer(paidResult, latestQuestion, responseLocale, interaction);
-    if (paidAnswer) {
-      return NextResponse.json({ answer: paidAnswer, mode: "model" }, { headers: { "Cache-Control": "no-store" } });
     }
 
     if (atlasCloudflareAiConfig() || atlasPaidVercelGatewayEnabled()) modelUnavailableUntil = Date.now() + MODEL_RETRY_DELAY_MS;
