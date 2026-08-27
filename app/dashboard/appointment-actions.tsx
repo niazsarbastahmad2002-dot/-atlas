@@ -264,10 +264,10 @@ export function AppointmentActions({
 
         .appointment-remove-action {
           min-height: 38px;
-          border: 1px solid #e7bcbc;
+          border: 1px solid #dfa9a9;
           border-radius: 10px;
           padding: 7px 12px;
-          background: #fff4f4;
+          background: #fde8e8;
           color: var(--danger);
           font-size: 11px;
           font-weight: 780;
@@ -275,7 +275,7 @@ export function AppointmentActions({
           white-space: nowrap;
           cursor: pointer;
         }
-        .appointment-remove-action:hover { background: #ffe8e8; border-color: #dda7a7; }
+        .appointment-remove-action:hover { background: #fbd8d8; border-color: #d89595; }
 
         @media (max-width: 720px) {
           .polished-appointment .appointment-details { grid-template-columns: 1fr 1fr; }
