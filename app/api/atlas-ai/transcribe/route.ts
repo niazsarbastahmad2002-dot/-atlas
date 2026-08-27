@@ -3,6 +3,7 @@ import {
   ATLAS_AI_TRANSCRIPTION_MODEL,
   atlasCloudflareAiConfig,
 } from "@/lib/atlas-ai-cloudflare";
+import { transcribeWithAtlasKurdishStt } from "@/lib/atlas-kurdish-stt";
 import {
   atlasKurdishAsrPasses,
   checkAtlasVoiceUpload,
@@ -121,6 +122,58 @@ function kurdishTranslationLanguages(locale: "ku" | "bd") {
   return locale === "ku" ? [undefined, "fa"] : [undefined, "tr"];
 }
 
+async function normalizeNativeKurdishTranscript(
+  rawText: string,
+  locale: "ku" | "bd",
+  config: CloudflareConfig,
+) {
+  const text = cleanAtlasVoiceTranscript(rawText);
+  if (!text) return null;
+
+  // Sorani-native STT normally already returns the script Atlas uses. Avoid unnecessary rewriting when it is valid.
+  if (locale === "ku" && isPlausibleAtlasVoiceTranscript(text, locale)) {
+    return { text, confidence: "high" as const };
+  }
+
+  const target = locale === "ku"
+    ? "natural Sorani Kurdish in Arabic-based Kurdish script used in Iraqi Kurdistan"
+    : "natural Badini Kurdish in the Arabic-based script used by Atlas in Iraqi Kurdistan";
+
+  try {
+    const response = await fetch(config.endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: config.model,
+        temperature: 0,
+        max_tokens: 260,
+        messages: [
+          {
+            role: "system",
+            content: `You normalize a speech transcript for Atlas Voice. The audio was already recognized by a Kurdish-specific ASR engine. Rewrite ONLY that transcript into ${target}. For Badini, the source may be Kurmanji written in Latin script; convert it faithfully into Atlas's Arabic-based Badini spelling. Do not answer the speaker, translate into a different meaning, add facts, or invent missing words. Preserve names, numbers, Atlas/product terms, and clinic terminology when present. If the source is too broken to recover faithfully, return low confidence and empty text. Return JSON only: {"text":"...","confidence":"high|medium|low"}.`,
+          },
+          { role: "user", content: text },
+        ],
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!response.ok) return null;
+    const payload = await response.json() as {
+      choices?: Array<{ message?: { content?: string | null } }>;
+    };
+    const parsed = parseAtlasKurdishReconciliation(payload.choices?.[0]?.message?.content ?? "");
+    if (!parsed || parsed.confidence === "low") return null;
+    if (!isPlausibleAtlasVoiceTranscript(parsed.text, locale)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 async function reconcileKurdishTranscript(
   transcriptCandidates: string[],
   meaningCandidates: string[],
@@ -179,8 +232,16 @@ async function reconcileKurdishTranscript(
   }
 }
 
-async function transcribeAudio(audioBase64: string, locale: AtlasVoiceLocale, config: CloudflareConfig) {
+async function transcribeAudio(audio: File, audioBase64: string, locale: AtlasVoiceLocale, config: CloudflareConfig) {
   if (locale === "ku" || locale === "bd") {
+    // Primary Kurdish path: use an ASR service trained specifically for Kurdish speech.
+    const nativeResult = await transcribeWithAtlasKurdishStt(audio, locale);
+    if (nativeResult?.text) {
+      const normalized = await normalizeNativeKurdishTranscript(nativeResult.text, locale, config);
+      if (normalized) return normalized;
+    }
+
+    // Emergency fallback: preserve the existing Cloudflare multi-pass recovery path if the Kurdish provider is unavailable.
     const transcriptPasses = atlasKurdishAsrPasses(locale);
     const translationLanguages = kurdishTranslationLanguages(locale);
     const [transcriptCandidates, meaningCandidates] = await Promise.all([
@@ -248,7 +309,7 @@ export async function POST(request: Request) {
   if (!config) return privateJson({ error: "voice_unavailable" }, { status: 503 });
 
   const audioBase64 = Buffer.from(await audio.arrayBuffer()).toString("base64");
-  const result = await transcribeAudio(audioBase64, localeValue, config);
+  const result = await transcribeAudio(audio, audioBase64, localeValue, config);
   if (!result?.text) {
     const error = localeValue === "ku" || localeValue === "bd" ? "unclear_speech" : "no_speech";
     return privateJson({ error }, { status: 422 });
