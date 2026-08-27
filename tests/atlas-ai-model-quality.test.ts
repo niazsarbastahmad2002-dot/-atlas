@@ -9,7 +9,7 @@ import {
 
 const defaultModel = "@cf/openai/gpt-oss-120b";
 
-test("Kurdish and Iraqi Arabic prefer the multilingual Atlas writer", () => {
+test("Kurdish and Iraqi Arabic prefer the multilingual Atlas fallback writer", () => {
   for (const locale of ["ku", "bd", "ar"] as const) {
     const order = atlasCloudflareModelOrder(locale, defaultModel);
     assert.equal(order[0], ATLAS_AI_MULTILINGUAL_MODEL);
@@ -17,7 +17,7 @@ test("Kurdish and Iraqi Arabic prefer the multilingual Atlas writer", () => {
   }
 });
 
-test("English keeps the reasoning model first with multilingual fallback", () => {
+test("English keeps the reasoning fallback first with multilingual fallback", () => {
   const order = atlasCloudflareModelOrder("en", defaultModel);
   assert.deepEqual(order, [defaultModel, ATLAS_AI_MULTILINGUAL_MODEL]);
 });
@@ -26,10 +26,10 @@ test("model order never calls the same model twice", () => {
   assert.deepEqual(atlasCloudflareModelOrder("ku", ATLAS_AI_MULTILINGUAL_MODEL), [ATLAS_AI_MULTILINGUAL_MODEL]);
 });
 
-test("RTL Atlas responses reject raw markdown tables from the screenshot failure", () => {
-  const table = "| ژمارە | ناوی نەخۆش | دۆخ |\n|---|---|---|\n| 1 | Ari | pending |";
-  assert.equal(isAcceptableAtlasModelAnswer(table, "ku"), false);
-  assert.equal(atlasAnswerNeedsKurdishRefinement(table, "ku"), true);
+test("RTL Atlas responses accept clean markdown tables for the table-capable client", () => {
+  const table = "| کات | ناوی نەخۆش | دۆخ |\n|---|---|---|\n| 09:30 | Ari | چاوەڕێ |";
+  assert.equal(isAcceptableAtlasModelAnswer(table, "ku"), true);
+  assert.equal(atlasAnswerNeedsKurdishRefinement(table, "ku"), false);
 });
 
 test("Atlas rejects invented Appointments UI instructions without rejecting ordinary appointment wording", () => {
