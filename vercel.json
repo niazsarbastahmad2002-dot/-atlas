@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "npm run check",
+  "buildCommand": "npm run check && node scripts/kurdish-stt-preview-smoke.mjs",
   "outputDirectory": ".next",
   "regions": ["sin1"],
   "git": {
