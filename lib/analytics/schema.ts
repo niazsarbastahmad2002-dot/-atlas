@@ -3,6 +3,7 @@ export const atlasAnalyticsEvents = [
   "atlas_navigation",
   "atlas_appointment_created",
   "atlas_appointment_status_changed",
+  "atlas_home_language_changed",
   "atlas_login_language_changed",
   "atlas_login_email_requested",
   "atlas_quick_signin",
@@ -30,7 +31,7 @@ export type AtlasScreen = (typeof atlasScreens)[number];
 const allowedValues = {
   screen: atlasScreens,
   target: atlasScreens,
-  locale: ["en", "ku", "ar"],
+  locale: ["en", "ku", "bd", "ar"],
   surface: ["clinic", "demo", "patient", "public"],
   direction: ["previous", "next"],
   relative_day: ["yesterday", "today", "tomorrow", "other"],
