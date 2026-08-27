@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "feat/atlas-ai-secure-record-knowledge": true,
       "*": false,
       "**": false
     }
