@@ -6,6 +6,16 @@ import { AtlasAiClient as AtlasAiClientV4 } from "./atlas-ai-client-v4";
 
 type AtlasAiClientProps = { clinicId: string; clinicName: string; locale: UiLocale };
 
+const soraniPresets = [
+  "مەوعیدەکانی ئەمڕۆ بە کات و ناوی نەخۆش و دکتۆر پیشان بدە.",
+  "مەوعیدەکانی ئەمڕۆی دکتۆر سارا پیشان بدە.",
+  "ئەمڕۆ چەند مەوعیدمان هەیە؟",
+  "کام مەوعیدەکان هێشتا پشتڕاست نەکراونەتەوە؟",
+  "کام نەخۆشەکان بیرخستنەوەیان بۆ نەنێردراوە؟",
+  "ئەمڕۆ ڕیسێپشن سەرنجی لە چی بدات؟",
+  "خشتەی هەموو مەوعیدەکانی ئەمڕۆ پیشان بدە.",
+];
+
 function parseTableRow(value: string) {
   const line = value.trim();
   if (!line.startsWith("|") || !line.endsWith("|")) return null;
@@ -86,6 +96,38 @@ function enhanceTables(root: HTMLElement) {
   }
 }
 
+function askThroughComposer(root: HTMLElement, question: string) {
+  const textarea = root.querySelector<HTMLTextAreaElement>("textarea");
+  if (!textarea) return;
+  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+  setter?.call(textarea, question);
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  textarea.dispatchEvent(new Event("change", { bubbles: true }));
+  window.setTimeout(() => textarea.closest("form")?.requestSubmit(), 0);
+}
+
+function polishSorani(root: HTMLElement) {
+  const privacy = root.querySelector<HTMLElement>(".atlas-ai-privacy");
+  if (privacy) privacy.textContent = "Atlas AI لە زانیارییەکانی کلینیک بۆ وەڵامدانەوە بەکاردێنێت. وردەکاری مەوعیدەکان لە ناو Atlas دەپشکنرێت. تکایە زانیاری پزیشکی وەک دەستنیشانکردنی نەخۆشی یان تێبینی پزیشکی لێرە مەنووسە.";
+
+  const empty = root.querySelector<HTMLElement>(".atlas-ai-empty");
+  const presets = empty?.querySelector<HTMLElement>(".atlas-ai-presets");
+  if (!empty || !presets || presets.dataset.atlasSoraniPolish === "1") return;
+  presets.dataset.atlasSoraniPolish = "1";
+
+  const label = Array.from(empty.children).find((node) => node instanceof HTMLSpanElement) as HTMLSpanElement | undefined;
+  if (label) label.textContent = "دەتوانیت بەم پرسیارانە دەست پێ بکەیت";
+
+  presets.replaceChildren();
+  for (const question of soraniPresets) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = question;
+    button.addEventListener("click", () => askThroughComposer(root, question));
+    presets.appendChild(button);
+  }
+}
+
 export function AtlasAiClient(props: AtlasAiClientProps) {
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".atlas-ai-card");
@@ -95,6 +137,7 @@ export function AtlasAiClient(props: AtlasAiClientProps) {
     const run = () => {
       queued = false;
       enhanceTables(root);
+      if (props.locale === "ku") polishSorani(root);
     };
     const schedule = () => {
       if (queued) return;
@@ -106,7 +149,7 @@ export function AtlasAiClient(props: AtlasAiClientProps) {
     const observer = new MutationObserver(schedule);
     observer.observe(root, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, []);
+  }, [props.locale]);
 
   return (
     <>
@@ -120,6 +163,9 @@ export function AtlasAiClient(props: AtlasAiClientProps) {
         .atlas-ai-table tbody tr:last-child td{border-bottom:0}
         .atlas-ai-table-wrap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
         [dir="rtl"] .atlas-ai-table{direction:rtl}
+        .atlas-ai-presets{max-width:920px;margin-inline:auto}
+        .atlas-ai-presets button{white-space:normal;line-height:1.35;text-wrap:balance}
+        @media(min-width:760px){.atlas-ai-presets{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.atlas-ai-presets button{max-width:360px}}
         @media(max-width:700px){.atlas-ai-table{min-width:520px;font-size:11px}.atlas-ai-table th,.atlas-ai-table td{padding:8px}}
       `}</style>
     </>
