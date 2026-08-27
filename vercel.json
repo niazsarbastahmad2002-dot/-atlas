@@ -6,6 +6,7 @@
   "regions": ["sin1"],
   "git": {
     "deploymentEnabled": {
+      "fix/atlas-local-ios-date-field-polish": true,
       "main": true,
       "*": false,
       "**": false
