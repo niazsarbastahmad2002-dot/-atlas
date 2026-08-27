@@ -35,6 +35,7 @@ test("Atlas Local loader and offline cache include the responsive fixes", () => 
   const loader = source("public/atlas-local.js");
   const worker = source("public/atlas-sw.js");
   assert.match(loader, /"\/atlas-local-responsive\.js"/);
-  assert.match(worker, /atlas-offline-shell-v10/);
+  assert.match(worker, /atlas-offline-shell-v9/);
+  assert.match(worker, /Safari date-control polish/);
   assert.match(worker, /"\/atlas-local-responsive\.js"/);
 });
