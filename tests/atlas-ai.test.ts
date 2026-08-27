@@ -84,7 +84,7 @@ test("Atlas AI sends multi-turn history without allowing system-role injection",
   assert.match(route, /\.\.\.conversation/);
 });
 
-test("Atlas AI uses Cloudflare free models with locale-aware model routing", () => {
+test("Atlas AI retains Cloudflare fallback models with locale-aware routing", () => {
   const provider = read("lib/atlas-ai-cloudflare.ts");
   const route = read("app/api/atlas-ai/route.ts");
   const quality = read("lib/atlas-ai-model-quality.ts");
@@ -100,17 +100,21 @@ test("Atlas AI uses Cloudflare free models with locale-aware model routing", () 
   assert.doesNotMatch(route, /response\.text\(/);
 });
 
-test("Atlas never hits paid Vercel Gateway automatically", () => {
+test("Atlas AI uses GPT-5.6 Sol through Vercel Gateway first and supports OIDC", () => {
   const provider = read("lib/atlas-ai-cloudflare.ts");
   const route = read("app/api/atlas-ai/route.ts");
   assert.match(provider, /atlasPaidVercelGatewayEnabled/);
   assert.match(provider, /AI_GATEWAY_API_KEY/);
-  assert.doesNotMatch(provider, /VERCEL_OIDC_TOKEN/);
+  assert.match(provider, /VERCEL_OIDC_TOKEN/);
+  assert.match(provider, /process\.env\.VERCEL === "1"/);
+  assert.match(route, /ATLAS_CHAT_MODEL = "openai\/gpt-5\.6-sol"/);
   assert.match(route, /if \(!atlasPaidVercelGatewayEnabled\(\)\) return null/);
-  assert.match(route, /callPaidVercelModel/);
+  const paid = route.indexOf("const paidResult = await callPaidVercelModel");
+  const cloudflare = route.indexOf("const config = atlasCloudflareAiConfig", paid);
+  assert.ok(paid >= 0 && cloudflare > paid);
 });
 
-test("Atlas AI falls back cleanly when free models are unavailable or quota-limited", () => {
+test("Atlas AI falls back cleanly when models are unavailable or quota-limited", () => {
   const route = read("app/api/atlas-ai/route.ts");
   assert.match(route, /buildAtlasCoreAnswer/);
   assert.match(route, /mode: "atlas_core"/);
@@ -120,7 +124,7 @@ test("Atlas AI falls back cleanly when free models are unavailable or quota-limi
   assert.doesNotMatch(route, /diagnostic/);
 });
 
-test("Atlas AI Gateway helper still protects any explicitly configured paid fallback", () => {
+test("Atlas AI Gateway helper protects primary model credentials", () => {
   const gateway = read("lib/atlas-ai-gateway.ts");
   const route = read("app/api/atlas-ai/route.ts");
   assert.match(gateway, /AI_GATEWAY_API_KEY/);
@@ -150,11 +154,15 @@ test("Atlas Voice transcription stays server-side, authenticated, bounded, and s
   assert.doesNotMatch(route, /patient_name|patient_phone/);
 });
 
-test("Atlas Voice V4 uses deterministic PCM WAV and exposes immediate progress", () => {
+test("Atlas Voice V4 stays intact behind the V5 table-capable client", () => {
   const active = read("app/dashboard/assistant/atlas-ai-client.tsx");
+  const tableClient = read("app/dashboard/assistant/atlas-ai-client-v5.tsx");
   const client = voiceClient();
   const recorder = read("app/dashboard/assistant/atlas-pcm-recorder.ts");
-  assert.match(active, /atlas-ai-client-v4/);
+  assert.match(active, /atlas-ai-client-v5/);
+  assert.match(tableClient, /AtlasAiClientV4/);
+  assert.match(tableClient, /atlas-ai-table/);
+  assert.match(tableClient, /MutationObserver/);
   assert.match(client, /startAtlasPcmCapture/);
   assert.match(client, /atlas-voice\.wav/);
   assert.match(client, /"starting"/);
@@ -212,21 +220,25 @@ test("Atlas live voice exposes recording and transcription activity without fake
 
 test("Atlas AI renders rich responses instead of exposing raw markdown decoration", () => {
   const client = voiceClient();
+  const tableClient = read("app/dashboard/assistant/atlas-ai-client-v5.tsx");
   assert.match(client, /function RichMessage/);
   assert.match(client, /inlineRichText/);
   assert.match(client, /<strong/);
   assert.match(client, /atlas-ai-bullet/);
   assert.match(client, /\[-\*•\]/);
+  assert.match(tableClient, /parseTableRow/);
+  assert.match(tableClient, /document\.createElement\("table"\)/);
 });
 
-test("Atlas AI model responses are receptionist-first, Atlas-grounded, RTL-safe, and voice-aware", () => {
+test("Atlas AI model responses are receptionist-first, Atlas-grounded, table-capable, and voice-aware", () => {
   const route = read("app/api/atlas-ai/route.ts");
   const knowledge = read("lib/atlas-ai-product-knowledge.ts");
   assert.match(route, /operating assistant inside Atlas/i);
   assert.match(route, /Start with the useful answer/i);
   assert.match(route, /plain, familiar words/i);
   assert.match(route, /Sorani, Badini, and Iraqi Arabic/i);
-  assert.match(route, /never output raw Markdown table syntax/i);
+  assert.match(route, /if the user asks for a table/i);
+  assert.match(route, /use a clean Markdown table/i);
   assert.match(route, /do not tell the user to click an "Appointments" page/i);
   assert.match(route, /This turn came from Atlas Voice/);
   assert.match(route, /Usually use 1-3 short sentences/);
