@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/lib/database.types";
+import { readAtlasSupabasePublicConfig } from "@/lib/supabase/runtime-config";
 
 const cookieOptions = {
   path: "/",
@@ -13,15 +14,14 @@ const cookieOptions = {
  * implicit/PKCE split and ensures sessions are written to the same cookie store.
  */
 export function createClient() {
-  return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      auth: {
-        flowType: "pkce",
-        experimental: { passkey: true },
-      },
-      cookieOptions,
+  const { url, publishableKey } = readAtlasSupabasePublicConfig();
+  if (!url || !publishableKey) throw new Error("Atlas Supabase browser credentials are not configured.");
+
+  return createBrowserClient<Database>(url, publishableKey, {
+    auth: {
+      flowType: "pkce",
+      experimental: { passkey: true },
     },
-  );
+    cookieOptions,
+  });
 }
