@@ -1,4 +1,4 @@
-const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v6";
+const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v10";
 const ATLAS_OFFLINE_PAGE = "/atlas-offline.html";
 const ATLAS_LOCAL_PAGE = "/atlas-local.html";
 const ATLAS_LOCAL_SCRIPT = "/atlas-local.js";
@@ -9,6 +9,7 @@ const ATLAS_LOCAL_PARTS = [
   "/atlas-local-base.js",
   "/atlas-local-core.js",
   "/atlas-local-polish.js",
+  "/atlas-local-responsive.js",
   "/atlas-local-app.js",
   "/atlas-local-after.js",
 ];

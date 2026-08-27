@@ -5,6 +5,7 @@
     "/atlas-local-base.js",
     "/atlas-local-core.js",
     "/atlas-local-polish.js",
+    "/atlas-local-responsive.js",
     "/atlas-local-app.js",
     "/atlas-local-after.js",
   ];

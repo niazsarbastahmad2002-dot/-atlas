@@ -1,0 +1,124 @@
+"use strict";
+
+// Focused responsive spacing fixes for Atlas Local.
+// Keep controls comfortable on iPad, iPhone, Galaxy and other phone/tablet widths.
+(() => {
+  const style = document.createElement("style");
+  style.id = "atlas-local-responsive-fixes";
+  style.textContent = `
+    .toolbar {
+      grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+      column-gap: 18px;
+      row-gap: 10px;
+    }
+    .toolbar > *,
+    .composer-grid > * {
+      min-width: 0;
+    }
+    .day-input {
+      min-width: 0;
+      width: 100%;
+    }
+    .toolbar button {
+      white-space: nowrap;
+    }
+    #today-day {
+      margin-inline-start: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .composer-grid {
+      grid-template-columns:
+        minmax(180px, 1.3fr)
+        minmax(160px, 1fr)
+        minmax(150px, .8fr)
+        minmax(150px, .65fr);
+      column-gap: 14px;
+      row-gap: 12px;
+    }
+    .composer-grid .button {
+      grid-column: 1 / -1;
+      width: 100%;
+      min-height: 48px;
+      white-space: nowrap;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: none;
+      padding-inline: 12px;
+      overflow: hidden;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      display: none;
+      -webkit-appearance: none;
+      width: 0;
+      height: 0;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+    }
+    input[type="date"]::-webkit-date-and-time-value,
+    input[type="time"]::-webkit-date-and-time-value {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .toolbar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 12px;
+      }
+      .toolbar .day-input {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+      .toolbar button {
+        width: 100%;
+      }
+      #today-day {
+        margin-inline-start: 0;
+      }
+
+      .composer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .composer-grid .wide,
+      .composer-grid .button {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 18px, 1180px);
+        margin-top: 14px;
+      }
+      .toolbar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .toolbar button {
+        min-width: 0;
+        padding-inline: 8px;
+        font-size: 12px;
+      }
+      .composer {
+        padding: 13px;
+      }
+      .composer-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .composer-grid .wide,
+      .composer-grid .button {
+        grid-column: auto;
+      }
+    }
+  `;
+  document.head.append(style);
+})();
