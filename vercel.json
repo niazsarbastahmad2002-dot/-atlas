@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "fix/clear-remove-and-count": true,
       "*": false,
       "**": false
     }
