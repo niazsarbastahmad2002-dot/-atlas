@@ -153,7 +153,7 @@ test("archived doctors stay readable but cannot be newly selected", () => {
 
 test("service worker installs every Local module and refreshes safely online", () => {
   const worker = source("public/atlas-sw.js");
-  assert.match(worker, /atlas-offline-shell-v7/);
+  assert.match(worker, /atlas-offline-shell-v8/);
   for (const part of ["copy", "base", "core", "polish", "responsive", "app", "after"]) {
     assert.match(worker, new RegExp(`/atlas-local-${part}\\.js`));
   }
