@@ -1,13 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/database.types";
+import { readAtlasSupabasePublicConfig } from "@/lib/supabase/runtime-config";
 
 export async function createClient() {
   const cookieStore = await cookies();
+  const { url, publishableKey } = readAtlasSupabasePublicConfig();
+  if (!url || !publishableKey) throw new Error("Atlas Supabase server credentials are not configured.");
 
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    url,
+    publishableKey,
     {
       cookieOptions: {
         path: "/",
