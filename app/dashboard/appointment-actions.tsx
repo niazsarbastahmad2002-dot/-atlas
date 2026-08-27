@@ -7,7 +7,7 @@ import {
   type AppointmentMutationFailure,
   type AppointmentStatus,
 } from "@/lib/appointments";
-import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import type { UiLocale } from "@/lib/i18n/ui";
 import {
   archiveAppointmentInline,
   updateAppointmentStatusInline,
@@ -18,13 +18,6 @@ function findAppointmentCard(target: EventTarget | null) {
   return target instanceof HTMLElement ? target.closest<HTMLElement>(".appointment-row") : null;
 }
 
-function paintStatus(card: HTMLElement | null, status: AppointmentStatus, label: string) {
-  const badge = card?.querySelector<HTMLElement>(".appointment-badges > .status:not(.status-reminder)");
-  if (!badge) return;
-  badge.className = `status status-${status}`;
-  badge.textContent = label;
-}
-
 function paintOrderVisibility(card: HTMLElement | null, status: AppointmentStatus) {
   const badge = card?.querySelector<HTMLElement>(".appointment-order-badge");
   if (!badge) return;
@@ -33,17 +26,17 @@ function paintOrderVisibility(card: HTMLElement | null, status: AppointmentStatu
 
 function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
   if (locale === "ku") {
-    if (reason === "busy") return "وادەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.";
-    if (reason === "too_early") return "هێشتا کاتی وادەکە نەهاتووە. دوای کاتی وادە دۆخی کۆتایی تۆمار بکە.";
-    if (reason === "past_cancelled") return "وادەی هەڵوەشێنراوی ڕابردوو ناگەڕێندرێتەوە؛ وادەیەکی نوێ دروست بکە.";
-    if (reason === "invalid") return "ئەم گۆڕانکارییە بۆ ئەم وادەیە ڕێگەپێدراو نییە.";
+    if (reason === "busy") return "مەوعیدەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.";
+    if (reason === "too_early") return "هێشتا کاتی مەوعیدەکە نەهاتووە. دوای کاتی مەوعید دۆخی کۆتایی تۆمار بکە.";
+    if (reason === "past_cancelled") return "مەوعیدی هەڵوەشێنراوی ڕابردوو ناگەڕێندرێتەوە؛ مەوعیدێکی نوێ دروست بکە.";
+    if (reason === "invalid") return "ئەم گۆڕانکارییە بۆ ئەم مەوعیدە ڕێگەپێدراو نییە.";
     return "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.";
   }
   if (locale === "bd") {
-    if (reason === "busy") return "وادە هێشتا دهێتە نوێکرن. دووبارە هەول بدە.";
-    if (reason === "too_early") return "هێشتا دەمێ وادەیێ نەهاتییە. پشتی دەمێ وادەیێ ئەنجامێ تۆمار بکە.";
-    if (reason === "past_cancelled") return "وادەیا هەلوەشاندی یا دەربازبووی ناهێتە ڤەگەراندن؛ وادەیا نوو دروست بکە.";
-    if (reason === "invalid") return "ئەڤ گۆڕین بۆ ڤێ وادەیێ بەردەست نینە.";
+    if (reason === "busy") return "مەوعید هێشتا دهێتە نوێکرن. دووبارە هەول بدە.";
+    if (reason === "too_early") return "هێشتا دەمێ مەوعیدی نەهاتییە. پشتی دەمێ مەوعیدی ئەنجامێ تۆمار بکە.";
+    if (reason === "past_cancelled") return "مەوعیدا هەلوەشاندی یا دەربازبووی ناهێتە ڤەگەراندن؛ مەوعیدا نوو دروست بکە.";
+    if (reason === "invalid") return "ئەڤ گۆڕین بۆ ڤی مەوعیدی بەردەست نینە.";
     return "گۆڕین نەهاتە پاراستن. دووبارە هەول بدە.";
   }
   if (locale === "ar") {
@@ -60,32 +53,66 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
   return "The change was not saved. Try again.";
 }
 
-const correctionCopy = {
+const workflowCopy: Record<UiLocale, {
+  status: string;
+  more: string;
+  remove: string;
+  removeQuestion: string;
+  labels: Record<AppointmentStatus, string>;
+}> = {
   en: {
-    restore: "Restore",
-    backToPending: "Back to pending",
-    undoCompleted: "Undo completed",
-    undoNoShow: "Undo no-show",
+    status: "Patient status",
+    more: "More",
+    remove: "Remove",
+    removeQuestion: "Remove this appointment from the schedule? Atlas will keep its history.",
+    labels: {
+      pending: "Attendance not confirmed",
+      confirmed: "Attendance confirmed",
+      cancelled: "Appointment cancelled",
+      completed: "Visit completed",
+      no_show: "Did not attend",
+    },
   },
   ku: {
-    restore: "گەڕاندنەوە",
-    backToPending: "بگەڕێنەوە بۆ چاوەڕوان",
-    undoCompleted: "کۆتایی هەڵبوەشێنەوە",
-    undoNoShow: "نەهاتن هەڵبوەشێنەوە",
+    status: "دۆخی نەخۆش",
+    more: "زیاتر",
+    remove: "لابردن",
+    removeQuestion: "ئەم مەوعیدە لە خشتە لاببرێت؟ مێژووەکەی لە Atlas دەپارێزرێت.",
+    labels: {
+      pending: "هێشتا هاتن پشتڕاست نەکراوە",
+      confirmed: "هاتن پشتڕاستکراوە",
+      cancelled: "مەوعید هەڵوەشێنراوە",
+      completed: "سەردان تەواوبوو",
+      no_show: "بۆ مەوعید نەهات",
+    },
   },
   bd: {
-    restore: "ڤەگەرینە",
-    backToPending: "ڤەگەرینە بۆ چاڤەڕێ",
-    undoCompleted: "تەمامبوونێ هەلوەشێنە",
-    undoNoShow: "نەهاتنێ هەلوەشێنە",
+    status: "بارێ نەخۆشی",
+    more: "زێدەتر",
+    remove: "لابرن",
+    removeQuestion: "ئەڤ مەوعید ژ خشتەیێ لاببەین؟ Atlas مێژوویا وێ دپارێزیت.",
+    labels: {
+      pending: "هێشتا هاتن نەهاتیە پشتڕاستکرن",
+      confirmed: "هاتن پشتڕاستکریە",
+      cancelled: "مەوعید هەلوەشیا",
+      completed: "سەردان تەمام بوو",
+      no_show: "بۆ مەوعیدی نەهات",
+    },
   },
   ar: {
-    restore: "استعادة",
-    backToPending: "إعادة إلى قيد الانتظار",
-    undoCompleted: "تراجع عن مكتمل",
-    undoNoShow: "تراجع عن عدم الحضور",
+    status: "حالة المريض",
+    more: "المزيد",
+    remove: "إزالة",
+    removeQuestion: "إزالة هذا الموعد من الجدول؟ سيحتفظ Atlas بسجله.",
+    labels: {
+      pending: "الحضور غير مؤكد بعد",
+      confirmed: "الحضور مؤكد",
+      cancelled: "الموعد ملغي",
+      completed: "انتهت الزيارة",
+      no_show: "لم يحضر",
+    },
   },
-} as const;
+};
 
 export function AppointmentActions({
   clinicId,
@@ -104,48 +131,20 @@ export function AppointmentActions({
   const [optimisticStatus, setOptimisticStatus] = useState(status);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const t = uiText(locale);
+  const workflow = workflowCopy[locale];
 
   useEffect(() => {
     setOptimisticStatus(status);
   }, [status]);
 
-  const statusLabels: Record<AppointmentStatus, string> = {
-    pending: t.pending,
-    confirmed: t.confirmed,
-    cancelled: t.cancelled,
-    completed: t.completed,
-    no_show: t.noShow,
-  };
-  const removeLabel = locale === "ku" ? "لابردن" : locale === "bd" ? "لابرن" : locale === "ar" ? "إزالة" : "Remove";
-  const removeQuestion = locale === "ku"
-    ? "ئەم وادەیە لە خشتە لاببرێت؟ مێژووەکەی لە Atlas دەپارێزرێت."
-    : locale === "bd"
-      ? "ئەڤ وادە ژ خشتەیێ لاببەین؟ Atlas مێژوویا وێ دپارێزیت."
-      : locale === "ar"
-        ? "إزالة هذا الموعد من الجدول؟ سيحتفظ Atlas بسجله."
-        : "Remove this appointment from the schedule? Atlas will keep its history.";
   const scheduledAt = new Date(appointmentAt).getTime();
   const tooEarlyForOutcome = Number.isFinite(scheduledAt) && scheduledAt > Date.now() + 5 * 60 * 1000;
   const tooLateToRestore = Number.isFinite(scheduledAt) && scheduledAt < Date.now() - 5 * 60 * 1000;
-  const corrections = correctionCopy[locale];
 
   function unavailableReason(nextStatus: AppointmentStatus) {
     if ((nextStatus === "completed" || nextStatus === "no_show") && tooEarlyForOutcome) return "too_early" as const;
     if (nextStatus === "pending" && optimisticStatus === "cancelled" && tooLateToRestore) return "past_cancelled" as const;
     return null;
-  }
-
-  function transitionLabel(nextStatus: AppointmentStatus) {
-    if (optimisticStatus === "pending" && nextStatus === "confirmed") return t.confirm;
-    if (nextStatus === "cancelled") return t.cancel;
-    if (nextStatus === "completed") return t.complete;
-    if (nextStatus === "no_show") return t.noShow;
-    if (optimisticStatus === "cancelled" && nextStatus === "pending") return corrections.restore;
-    if (optimisticStatus === "confirmed" && nextStatus === "pending") return corrections.backToPending;
-    if (optimisticStatus === "completed" && nextStatus === "confirmed") return corrections.undoCompleted;
-    if (optimisticStatus === "no_show" && nextStatus === "confirmed") return corrections.undoNoShow;
-    return statusLabels[nextStatus];
   }
 
   function shouldShowTransition(nextStatus: AppointmentStatus) {
@@ -168,25 +167,22 @@ export function AppointmentActions({
     const previousOrderDisplay = orderBadge?.style.display ?? "";
     setError(null);
     setOptimisticStatus(nextStatus);
-    paintStatus(card, nextStatus, statusLabels[nextStatus]);
     paintOrderVisibility(card, nextStatus);
 
     startTransition(async () => {
       const result = await updateAppointmentStatusInline(clinicId, appointmentId, nextStatus);
       if (!result.ok) {
         setOptimisticStatus(previousStatus);
-        paintStatus(card, previousStatus, statusLabels[previousStatus]);
         if (orderBadge) orderBadge.style.display = previousOrderDisplay;
         setError(actionFeedback(locale, result.reason));
         return;
       }
-
       router.refresh();
     });
   }
 
   function remove(target: EventTarget | null) {
-    if (pending || !window.confirm(removeQuestion)) return;
+    if (pending || !window.confirm(workflow.removeQuestion)) return;
     const card = findAppointmentCard(target);
     const previousVisibility = card?.style.visibility ?? "";
     const previousPointerEvents = card?.style.pointerEvents ?? "";
@@ -211,34 +207,122 @@ export function AppointmentActions({
   }
 
   const transitions = allowedAppointmentTransitions(optimisticStatus).filter(shouldShowTransition);
+  const options = [optimisticStatus, ...transitions.filter((item) => item !== optimisticStatus)];
 
   return (
-    <div className="row-actions polished-actions" aria-label="Appointment actions" aria-busy={pending}>
-      {transitions.map((nextStatus) => (
-        <button
-          type="button"
+    <div className="row-actions polished-actions appointment-action-bar" aria-label={workflow.status} aria-busy={pending}>
+      <div className="appointment-status-control">
+        <label className="sr-only" htmlFor={`appointment-status-${appointmentId}`}>{workflow.status}</label>
+        <select
+          id={`appointment-status-${appointmentId}`}
+          className={`appointment-status-select is-${optimisticStatus}`}
+          value={optimisticStatus}
           disabled={pending}
-          key={nextStatus}
-          onClick={(event) => changeStatus(nextStatus, event.currentTarget)}
+          onChange={(event) => changeStatus(event.currentTarget.value as AppointmentStatus, event.currentTarget)}
+          aria-label={workflow.status}
         >
-          {transitionLabel(nextStatus)}
-        </button>
-      ))}
+          {options.map((value) => <option key={value} value={value}>{workflow.labels[value]}</option>)}
+        </select>
+      </div>
+
       <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} />
-      <button
-        className="archive-action"
-        style={{ marginInlineStart: "auto", color: "var(--danger)", background: "transparent" }}
-        type="button"
-        disabled={pending}
-        onClick={(event) => remove(event.currentTarget)}
-      >
-        {removeLabel}
-      </button>
-      {error ? (
-        <span className="appointment-action-feedback" role="alert">
-          {error}
-        </span>
-      ) : null}
+
+      <details className="appointment-more-menu">
+        <summary aria-label={workflow.more} title={workflow.more}>•••</summary>
+        <div className="appointment-more-popover">
+          <button
+            className="archive-action"
+            type="button"
+            disabled={pending}
+            onClick={(event) => remove(event.currentTarget)}
+          >
+            {workflow.remove}
+          </button>
+        </div>
+      </details>
+
+      {error ? <span className="appointment-action-feedback" role="alert">{error}</span> : null}
+
+      <style jsx global>{`
+        .appointment-badges > .status:not(.status-reminder) { display: none; }
+        .polished-appointment .appointment-details { grid-template-columns: minmax(120px, .8fr) minmax(180px, 1.25fr); }
+        .polished-appointment .appointment-details > div:nth-child(3) { display: none; }
+
+        .appointment-action-bar {
+          display: grid;
+          grid-template-columns: minmax(220px, 300px) auto auto;
+          align-items: center;
+          gap: 8px;
+        }
+        .appointment-status-control { min-width: 0; }
+        .appointment-status-select {
+          min-height: 38px;
+          height: 38px;
+          border-radius: 10px;
+          padding-block: 6px;
+          font-size: 11.5px;
+          font-weight: 780;
+          line-height: 1.2;
+          box-shadow: none;
+        }
+        .appointment-status-select.is-pending { color: #6d5615; background: #fff7e5; border-color: #ead7a0; }
+        .appointment-status-select.is-confirmed { color: #176f56; background: #eaf7f2; border-color: #b9ddcf; }
+        .appointment-status-select.is-completed { color: #53655f; background: #f1f4f3; border-color: #d8e0dd; }
+        .appointment-status-select.is-no_show { color: #8b3434; background: #fff0f0; border-color: #eccaca; }
+        .appointment-status-select.is-cancelled { color: #705858; background: #f6f2f2; border-color: #dfd2d2; }
+        .appointment-action-feedback { grid-column: 1 / -1; color: var(--danger); font-size: 10.5px; line-height: 1.4; }
+
+        .appointment-more-menu { position: relative; }
+        .appointment-more-menu summary {
+          display: grid;
+          width: 38px;
+          height: 38px;
+          place-items: center;
+          border: 1px solid var(--line-strong);
+          border-radius: 10px;
+          background: #fff;
+          color: var(--muted);
+          font-size: 17px;
+          font-weight: 850;
+          line-height: 1;
+          list-style: none;
+          cursor: pointer;
+        }
+        .appointment-more-menu summary::-webkit-details-marker { display: none; }
+        .appointment-more-menu[open] summary { border-color: rgba(31,90,67,.35); background: var(--accent-soft); color: var(--accent); }
+        .appointment-more-popover {
+          position: absolute;
+          z-index: 15;
+          inset-inline-end: 0;
+          top: calc(100% + 6px);
+          min-width: 130px;
+          border: 1px solid var(--line);
+          border-radius: 11px;
+          padding: 6px;
+          background: #fff;
+          box-shadow: var(--shadow-md);
+        }
+        .appointment-more-popover .archive-action {
+          width: 100%;
+          min-height: 36px;
+          margin: 0 !important;
+          color: var(--danger);
+          background: transparent;
+          text-align: start;
+        }
+
+        @media (max-width: 720px) {
+          .polished-appointment .appointment-details { grid-template-columns: 1fr 1fr; }
+          .appointment-action-bar { grid-template-columns: minmax(0, 1fr) auto auto; }
+          .appointment-status-select { width: 100%; }
+        }
+        @media (max-width: 520px) {
+          .polished-appointment .appointment-details { grid-template-columns: 1fr; }
+          .appointment-action-bar { grid-template-columns: minmax(0, 1fr) auto; }
+          .appointment-status-control { grid-column: 1 / -1; }
+          .appointment-more-menu { justify-self: end; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -15,7 +15,8 @@ const initialPatientLinkState = {
 
 const copy = {
   en: {
-    shareAppointment: "Share details",
+    shareShort: "Share",
+    shareAppointment: "Share appointment details",
     creating: "Preparing…",
     help: "Manual backup. The WhatsApp message includes the appointment itself; the private link is only for full details or changes.",
     copy: "Copy details link",
@@ -28,6 +29,7 @@ const copy = {
     details: "Full details or changes",
   },
   ku: {
+    shareShort: "ناردن",
     shareAppointment: "زانیاری مەوعید بنێرە",
     creating: "ئامادە دەکرێت…",
     help: "ڕێگای دەستییە. خودی مەوعیدەکە لە پەیامی WhatsApp ـدا دەردەکەوێت؛ بەستەرە تایبەتەکە تەنها بۆ زانیاری تەواو یان گۆڕانکارییە.",
@@ -41,6 +43,7 @@ const copy = {
     details: "زانیاری تەواو یان گۆڕانکاری",
   },
   bd: {
+    shareShort: "هنارتن",
     shareAppointment: "زانیاریێن مەوعیدی بهنێرە",
     creating: "دهێتە ئامادەکرن…",
     help: "ڕێکا دەستییە. خودێ مەوعیدی د پەیاما WhatsApp دا دیار دبیت؛ لینکێ تایبەت تەنێ بۆ زانیاریێن تەمام یان گوهۆڕینێیە.",
@@ -54,6 +57,7 @@ const copy = {
     details: "زانیاریێن تەمام یان گوهۆڕین",
   },
   ar: {
+    shareShort: "مشاركة",
     shareAppointment: "إرسال تفاصيل الموعد",
     creating: "جارٍ التجهيز…",
     help: "خيار يدوي احتياطي. تفاصيل الموعد تظهر داخل رسالة واتساب نفسها؛ الرابط الخاص فقط للتفاصيل الكاملة أو التغيير.",
@@ -152,12 +156,12 @@ export function PatientLinkButton({
         <form action={action}>
           <input type="hidden" name="clinic_id" value={clinicId} />
           <input type="hidden" name="appointment_id" value={appointmentId} />
-          <button type="submit" disabled={pending}>
-            {pending ? t.creating : t.shareAppointment}
+          <button type="submit" disabled={pending} aria-label={t.shareAppointment} title={t.shareAppointment}>
+            {pending ? t.creating : t.shareShort}
           </button>
         </form>
       ) : !showResult ? (
-        <button type="button" onClick={() => setShowResult(true)}>{t.shareAppointment}</button>
+        <button type="button" onClick={() => setShowResult(true)} aria-label={t.shareAppointment} title={t.shareAppointment}>{t.shareShort}</button>
       ) : null}
 
       {state.error ? <span className="field-help" role="alert">{state.error}</span> : null}
@@ -180,7 +184,7 @@ export function PatientLinkButton({
 
       <style jsx>{`
         .patient-link-control { display: contents; }
-        .patient-link-result { flex-basis: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; margin-top: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--surface-soft); }
+        .patient-link-result { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; margin-top: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--surface-soft); }
         .patient-link-copy-block strong { display: block; margin-bottom: 4px; font-size: 11.5px; }
         .patient-link-copy-block p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
         .patient-link-share-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
