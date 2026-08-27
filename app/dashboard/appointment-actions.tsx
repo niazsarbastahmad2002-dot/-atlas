@@ -228,7 +228,7 @@ export function AppointmentActions({
       <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} />
 
       <details className="appointment-more-menu">
-        <summary aria-label={workflow.more} title={workflow.more}>•••</summary>
+        <summary aria-label={workflow.more} title={workflow.more}>{workflow.more}</summary>
         <div className="appointment-more-popover">
           <button
             className="archive-action"
@@ -275,16 +275,18 @@ export function AppointmentActions({
         .appointment-more-menu { position: relative; }
         .appointment-more-menu summary {
           display: grid;
-          width: 38px;
+          min-width: 64px;
           height: 38px;
           place-items: center;
           border: 1px solid var(--line-strong);
           border-radius: 10px;
+          padding-inline: 12px;
           background: #fff;
           color: var(--muted);
-          font-size: 17px;
-          font-weight: 850;
+          font-size: 11px;
+          font-weight: 780;
           line-height: 1;
+          white-space: nowrap;
           list-style: none;
           cursor: pointer;
         }
@@ -292,9 +294,9 @@ export function AppointmentActions({
         .appointment-more-menu[open] summary { border-color: rgba(31,90,67,.35); background: var(--accent-soft); color: var(--accent); }
         .appointment-more-popover {
           position: absolute;
-          z-index: 15;
+          z-index: 30;
           inset-inline-end: 0;
-          top: calc(100% + 6px);
+          bottom: calc(100% + 6px);
           min-width: 130px;
           border: 1px solid var(--line);
           border-radius: 11px;
