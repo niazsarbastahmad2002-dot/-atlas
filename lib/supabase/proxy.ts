@@ -1,48 +1,48 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { readAtlasSupabasePublicConfig } from "@/lib/supabase/runtime-config";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookieOptions: {
-        path: "/",
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+  const { url, publishableKey } = readAtlasSupabasePublicConfig();
+  if (!url || !publishableKey) throw new Error("Atlas Supabase proxy credentials are not configured.");
+
+  const supabase = createServerClient<Database>(url, publishableKey, {
+    cookieOptions: {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
       },
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet, headersToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-          Object.entries(headersToSet).forEach(([key, value]) => response.headers.set(key, value));
-        },
+      setAll(cookiesToSet, headersToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        Object.entries(headersToSet).forEach(([key, value]) => response.headers.set(key, value));
       },
     },
-  );
+  });
 
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims);
   const protectedRoute = request.nextUrl.pathname.startsWith("/dashboard");
 
   if (!signedIn && protectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = "";
-    return NextResponse.redirect(url);
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/login";
+    redirectUrl.search = "";
+    return NextResponse.redirect(redirectUrl);
   }
 
   if (signedIn && request.nextUrl.pathname === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    url.search = "";
-    return NextResponse.redirect(url);
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/dashboard";
+    redirectUrl.search = "";
+    return NextResponse.redirect(redirectUrl);
   }
 
   return response;
