@@ -34,7 +34,7 @@ Object.assign(KU, {
   restorePin: "PIN ـی ئەم پاشەکەوتە بنووسە.",
   restoreReplace: "ئەم پاشەکەوتە بگەڕێنرێتەوە و کلینیکی ناوخۆیی ئێستا بگۆڕدرێت؟",
   restoreDone: "پاشەکەوت گەڕێندرایەوە.",
-  deleteConfirm: "کلینیکی ناوخۆیی و هەموو وادەکان لەم ئامێرە بسڕێتەوە؟ بەبێ پاشەکەوت ناگەڕێتەوە.",
+  deleteConfirm: "کلینیکی ناوخۆیی و هەموو وادەکان لەم ئامێرە بسڕەوە؟ بەبێ پاشەکەوت ناگەڕێتەوە.",
   backupPinFormat: "PIN ـی پاشەکەوت دەبێت ٦–١٢ ژمارە بێت.",
 });
 Object.assign(BD, {
@@ -81,11 +81,13 @@ function addMinutes(time, amount) {
 
 // Queue position is only meaningful after the patient is physically at the clinic.
 // Pending/confirmed appointments are scheduled patients, not people standing in a queue.
+// Keep the order deterministic using the scheduled time rather than updatedAt, so editing
+// a patient name or phone number never moves someone around the waiting list.
 function queueMap(rows) {
   const map = new Map();
   rows
     .filter((appointment) => appointment.status === "waiting")
-    .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt) || a.time.localeCompare(b.time))
+    .sort((a, b) => a.time.localeCompare(b.time) || a.createdAt.localeCompare(b.createdAt))
     .forEach((appointment, index) => map.set(appointment.id, index + 1));
   return map;
 }
