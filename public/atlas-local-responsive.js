@@ -1,7 +1,7 @@
 "use strict";
 
 // Focused responsive spacing fixes for Atlas Local.
-// Keep controls from visually colliding on iPad, iPhone, Galaxy and other narrow screens.
+// Keep controls comfortable on iPad, iPhone, Galaxy and other phone/tablet widths.
 (() => {
   const style = document.createElement("style");
   style.id = "atlas-local-responsive-fixes";
@@ -25,16 +25,17 @@
 
     .composer-grid {
       grid-template-columns:
-        minmax(170px, 1.25fr)
-        minmax(150px, 1fr)
-        minmax(140px, .8fr)
-        minmax(130px, .6fr)
-        minmax(170px, max-content);
-      column-gap: 12px;
-      row-gap: 10px;
+        minmax(180px, 1.3fr)
+        minmax(160px, 1fr)
+        minmax(150px, .8fr)
+        minmax(150px, .65fr);
+      column-gap: 14px;
+      row-gap: 12px;
     }
     .composer-grid .button {
+      grid-column: 1 / -1;
       width: 100%;
+      min-height: 48px;
       white-space: nowrap;
     }
 
@@ -82,9 +83,6 @@
       .composer-grid .wide,
       .composer-grid .button {
         grid-column: auto;
-      }
-      .composer-grid .button {
-        min-height: 48px;
       }
     }
   `;
