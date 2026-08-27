@@ -1,7 +1,7 @@
 "use strict";
 
 // Final Atlas Local hardening layer. It runs only after the local app has initialized.
-// Everything here stays device-only; no network APIs or Atlas Online data are used.
+// Everything here stays device-only; no network APIs or remote clinic data are used.
 
 // Keep archived doctors visible for old appointments, but prevent assigning new work to them.
 const atlasLocalFillDoctorSelect = fillDoctorSelect;
