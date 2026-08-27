@@ -1,7 +1,8 @@
 "use strict";
 
-// Focused responsive spacing fixes for Atlas Local.
-// Keep controls comfortable on iPad, iPhone, Galaxy and other phone/tablet widths.
+// Responsive and workflow clarity for Atlas Local.
+// Keep the offline receptionist surface readable on iPad, iPhone, Galaxy,
+// Android tablets and desktop without changing any online Atlas behavior.
 (() => {
   const style = document.createElement("style");
   style.id = "atlas-local-responsive-fixes";
@@ -12,7 +13,8 @@
       row-gap: 10px;
     }
     .toolbar > *,
-    .composer-grid > * {
+    .composer-grid > *,
+    .appointment > * {
       min-width: 0;
     }
     .day-input {
@@ -69,6 +71,67 @@
       text-align: center;
     }
 
+    .appointment {
+      grid-template-columns: 88px 38px minmax(0, 1fr) minmax(210px, 260px) auto;
+    }
+    .status-select {
+      min-width: 0;
+      line-height: 1.2;
+    }
+    .status-select[data-status="pending"] {
+      background: #fff7e5;
+      border-color: #ead7a0;
+      color: #6d5615;
+    }
+    .status-select[data-status="confirmed"] {
+      background: #eaf7f2;
+      border-color: #b9ddcf;
+      color: #176f56;
+    }
+    .status-select[data-status="waiting"] {
+      background: #eef5ff;
+      border-color: #cbdcf2;
+      color: #285a82;
+    }
+    .status-select[data-status="completed"] {
+      background: #f1f4f3;
+      border-color: #d8e0dd;
+      color: #53655f;
+    }
+    .status-select[data-status="no_show"] {
+      background: #fff0f0;
+      border-color: #eccaca;
+      color: #8b3434;
+    }
+    .status-select[data-status="cancelled"] {
+      background: #f6f2f2;
+      border-color: #dfd2d2;
+      color: #705858;
+    }
+    .queue-empty {
+      visibility: hidden;
+    }
+    .call-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .stat span {
+      line-height: 1.25;
+    }
+
+    @media (max-width: 1100px) {
+      .appointment {
+        grid-template-columns: 78px 32px minmax(0, 1fr) minmax(190px, 240px);
+      }
+      .row-actions {
+        grid-column: 3 / 5;
+        justify-content: flex-end;
+      }
+    }
+
     @media (max-width: 900px) {
       .toolbar {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -91,6 +154,17 @@
       .composer-grid .wide,
       .composer-grid .button {
         grid-column: 1 / -1;
+      }
+      .appointment {
+        grid-template-columns: 74px 30px minmax(0, 1fr);
+      }
+      .status-select,
+      .row-actions {
+        grid-column: 3;
+        width: 100%;
+      }
+      .row-actions {
+        justify-content: flex-start;
       }
     }
 
@@ -117,6 +191,27 @@
       .composer-grid .wide,
       .composer-grid .button {
         grid-column: auto;
+      }
+      .appointment {
+        grid-template-columns: 66px 28px minmax(0, 1fr);
+        gap: 8px;
+        padding-inline: 11px;
+      }
+      .status-select {
+        font-size: 11px;
+      }
+      .row-actions .button,
+      .row-actions .call-link {
+        flex: 1 1 90px;
+      }
+      .stats {
+        gap: 7px;
+      }
+      .stat {
+        padding: 11px 12px;
+      }
+      .stat span {
+        font-size: 10px;
       }
     }
   `;
