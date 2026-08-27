@@ -8,7 +8,7 @@
   style.textContent = `
     .toolbar {
       grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
-      column-gap: 12px;
+      column-gap: 16px;
       row-gap: 10px;
     }
     .toolbar > *,
@@ -21,6 +21,9 @@
     }
     .toolbar button {
       white-space: nowrap;
+    }
+    #today-day {
+      margin-inline-start: 2px;
     }
 
     .composer-grid {
@@ -39,9 +42,32 @@
       white-space: nowrap;
     }
 
+    input[type="time"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: none;
+      padding-inline: 12px;
+      overflow: hidden;
+    }
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      display: none;
+      -webkit-appearance: none;
+      width: 0;
+      height: 0;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+    }
+    input[type="time"]::-webkit-date-and-time-value {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
     @media (max-width: 900px) {
       .toolbar {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 12px;
       }
       .toolbar .day-input {
         grid-column: 1 / -1;
@@ -49,6 +75,9 @@
       }
       .toolbar button {
         width: 100%;
+      }
+      #today-day {
+        margin-inline-start: 0;
       }
 
       .composer-grid {
