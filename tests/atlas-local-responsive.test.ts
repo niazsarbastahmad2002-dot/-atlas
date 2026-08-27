@@ -13,13 +13,14 @@ test("Atlas Local responsive fixes keep date and appointment controls from colli
   assert.match(responsive, /\.composer-grid \.button[\s\S]*grid-column: 1 \/ -1[\s\S]*width: 100%/);
 });
 
-test("Atlas Local hides Safari time affordance without changing the native time input type", () => {
+test("Atlas Local hides Safari native date and time affordances without changing input types", () => {
   const responsive = source("public/atlas-local-responsive.js");
   const shell = source("public/atlas-local.html");
+  assert.match(shell, /id="selected-day" type="date"/);
   assert.match(shell, /id="appointment-time" type="time"/);
-  assert.match(responsive, /input\[type="time"\][\s\S]*-webkit-appearance: none/);
-  assert.match(responsive, /::-webkit-calendar-picker-indicator[\s\S]*display: none/);
-  assert.match(responsive, /::-webkit-date-and-time-value[\s\S]*text-align: center/);
+  assert.match(responsive, /input\[type="date"\][\s\S]*input\[type="time"\][\s\S]*-webkit-appearance: none/);
+  assert.match(responsive, /input\[type="date"\]::-webkit-calendar-picker-indicator[\s\S]*input\[type="time"\]::-webkit-calendar-picker-indicator[\s\S]*display: none/);
+  assert.match(responsive, /input\[type="date"\]::-webkit-date-and-time-value[\s\S]*input\[type="time"\]::-webkit-date-and-time-value[\s\S]*text-align: center/);
 });
 
 test("Atlas Local responsive fixes adapt for phones and tablets", () => {
@@ -34,6 +35,6 @@ test("Atlas Local loader and offline cache include the responsive fixes", () => 
   const loader = source("public/atlas-local.js");
   const worker = source("public/atlas-sw.js");
   assert.match(loader, /"\/atlas-local-responsive\.js"/);
-  assert.match(worker, /atlas-offline-shell-v9/);
+  assert.match(worker, /atlas-offline-shell-v10/);
   assert.match(worker, /"\/atlas-local-responsive\.js"/);
 });
