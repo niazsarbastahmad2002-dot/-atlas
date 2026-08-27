@@ -177,7 +177,7 @@ test("Atlas patient-detail resolution stays before external AI and inside the ro
   assert.match(route, /membership\?\.role === "receptionist"[\s\S]*appointmentQuery = appointmentQuery\.eq\("doctor_id", membership\.assigned_doctor_id\)/);
   assert.match(route, /resolveAtlasRecordRequest\(authorizedRows, conversation, responseLocale\)/);
   const localAnswer = route.indexOf("if (recordResolution?.localOnly && recordResolution.answer)");
-  const externalModel = route.indexOf("callCloudflareModel(");
+  const externalModel = route.indexOf("const result = await callCloudflareModel", localAnswer);
   assert.ok(localAnswer >= 0 && externalModel > localAnswer);
   assert.doesNotMatch(route, /modelContext[^\n]*authorizedRows/);
 });
