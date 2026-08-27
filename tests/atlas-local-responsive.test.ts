@@ -8,8 +8,8 @@ test("Atlas Local responsive fixes keep date and appointment controls from colli
   const responsive = source("public/atlas-local-responsive.js");
   assert.match(responsive, /grid-template-columns: max-content minmax\(0, 1fr\) max-content max-content/);
   assert.match(responsive, /\.day-input[\s\S]*min-width: 0/);
-  assert.match(responsive, /\.composer-grid[\s\S]*minmax\(170px, max-content\)/);
-  assert.match(responsive, /\.composer-grid \.button[\s\S]*width: 100%/);
+  assert.match(responsive, /\.composer-grid[\s\S]*minmax\(180px, 1\.3fr\)[\s\S]*minmax\(150px, \.65fr\)/);
+  assert.match(responsive, /\.composer-grid \.button[\s\S]*grid-column: 1 \/ -1[\s\S]*width: 100%/);
 });
 
 test("Atlas Local responsive fixes adapt for phones and tablets", () => {
@@ -24,6 +24,6 @@ test("Atlas Local loader and offline cache include the responsive fixes", () => 
   const loader = source("public/atlas-local.js");
   const worker = source("public/atlas-sw.js");
   assert.match(loader, /"\/atlas-local-responsive\.js"/);
-  assert.match(worker, /atlas-offline-shell-v7/);
+  assert.match(worker, /atlas-offline-shell-v8/);
   assert.match(worker, /"\/atlas-local-responsive\.js"/);
 });
