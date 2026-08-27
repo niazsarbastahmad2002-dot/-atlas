@@ -7,6 +7,40 @@
   pointer-events: none;
 }
 
+/* When WhatsApp is the only enabled delivery path, present it as an already-selected
+   state instead of an ambiguous radio control that looks like it still needs a tap. */
+.auth-delivery-options label:only-of-type {
+  position: relative;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 44px 10px 12px;
+  border: 1px solid rgba(8, 119, 90, .28);
+  border-radius: 14px;
+  background: rgba(8, 119, 90, .07);
+  font-weight: 800;
+  cursor: default;
+}
+.auth-delivery-options label:only-of-type::after {
+  content: "✓";
+  position: absolute;
+  inset-inline-end: 14px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+.auth-delivery-options label:only-of-type input[type="radio"] {
+  accent-color: var(--accent);
+  pointer-events: none;
+}
+
 /* iPad portrait needs genuinely flexible columns instead of minimum widths that can overlap. */
 @media (min-width: 901px) and (max-width: 1080px) {
   .login-page {
