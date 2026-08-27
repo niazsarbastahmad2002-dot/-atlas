@@ -150,7 +150,11 @@ test("Completion endpoint stores the business token server-side and never return
   assert.match(route, /validOptionalId\(body\.phoneNumberId\)/);
   assert.match(route, /store_meta_whatsapp_connection/);
   assert.match(route, /p_access_token: completion\.accessToken/);
-  assert.doesNotMatch(route, /accessToken: completion\.accessToken/);
+  assert.match(route, /bootstrapAtlasMetaTemplateSuite\(\{[\s\S]*accessToken: completion\.accessToken/);
+
+  const responseMatch = route.match(/return NextResponse\.json\(\{\s*connected: true,[\s\S]*?templateBootstrap,[\s\S]*?\}, \{ headers:/);
+  assert.ok(responseMatch, "completion response should remain explicit and inspectable");
+  assert.doesNotMatch(responseMatch[0], /accessToken/);
 
   assert.match(migration, /vault\.create_secret/);
   assert.match(migration, /vault\.update_secret/);
