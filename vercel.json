@@ -6,7 +6,6 @@
   "regions": ["sin1"],
   "git": {
     "deploymentEnabled": {
-      "feature/atlas-local-workflow-clarity-v2": true,
       "main": true,
       "*": false,
       "**": false
