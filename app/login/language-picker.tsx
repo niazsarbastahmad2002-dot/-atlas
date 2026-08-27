@@ -11,7 +11,15 @@ const choices: Array<{ value: UiLocale; label: string; detail: string }> = [
   { value: "en", label: "English", detail: "English" },
 ];
 
-export function LoginLanguagePicker({ locale }: { locale: UiLocale }) {
+type LanguagePickerSource = "home" | "login";
+
+export function LoginLanguagePicker({
+  locale,
+  source = "login",
+}: {
+  locale: UiLocale;
+  source?: LanguagePickerSource;
+}) {
   const [busy, setBusy] = useState(false);
 
   async function choose(value: UiLocale) {
@@ -23,7 +31,7 @@ export function LoginLanguagePicker({ locale }: { locale: UiLocale }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ locale: value }),
       });
-      trackAtlasEvent("atlas_login_language_changed", {
+      trackAtlasEvent(source === "home" ? "atlas_home_language_changed" : "atlas_login_language_changed", {
         locale: value,
         outcome: response.ok ? "success" : "failure",
         interaction: "form",
