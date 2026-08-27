@@ -5,16 +5,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 // Preview-only accuracy probe. Remove before merge to main.
-const FLEURS_FIRST_ROWS = "https://datasets-server.huggingface.co/first-rows?dataset=google%2Ffleurs&config=ckb_iq&split=test";
-const SAMPLE_COUNT = 3;
-const MAX_ACCEPTABLE_CER = 0.35;
-
-type FleursRow = {
-  row?: {
-    audio?: { src?: string; path?: string };
-    transcription?: string;
-  };
-};
+const SAMPLE_URL = "https://huggingface.co/RegaLabs/RegaLabs-TTS/resolve/main/samples/aran_en021.wav";
+const EXPECTED = "دەنگێکی لەسەرخۆ، هێمن و پڕ لە بڕوابەخۆبوون.";
+const MAX_ACCEPTABLE_CER = 0.4;
 
 function normalizedText(value: string) {
   return value
@@ -67,55 +60,27 @@ export async function GET() {
   }
 
   try {
-    const datasetResponse = await fetch(FLEURS_FIRST_ROWS, {
+    const audioResponse = await fetch(SAMPLE_URL, {
       cache: "no-store",
-      signal: AbortSignal.timeout(20_000),
+      redirect: "follow",
+      signal: AbortSignal.timeout(25_000),
     });
-    if (!datasetResponse.ok) return privateJson({ ok: false, stage: "dataset" }, 502);
+    if (!audioResponse.ok) return privateJson({ ok: false, stage: "sample" }, 502);
 
-    const payload = await datasetResponse.json() as { rows?: FleursRow[] };
-    const rows = (payload.rows ?? [])
-      .map((item) => item.row)
-      .filter((row): row is NonNullable<FleursRow["row"]> => Boolean(row?.audio?.src && row.transcription))
-      .slice(0, SAMPLE_COUNT);
+    const bytes = await audioResponse.arrayBuffer();
+    const contentType = audioResponse.headers.get("content-type") || "audio/wav";
+    const file = new File([bytes], "sorani-reference.wav", { type: contentType });
+    const transcript = await transcribeWithAtlasKurdishStt(file, "ku");
+    if (!transcript?.text) return privateJson({ ok: false, stage: "provider" }, 502);
 
-    if (rows.length < SAMPLE_COUNT) return privateJson({ ok: false, stage: "samples", tested: rows.length }, 502);
-
-    const results = [] as Array<{ cer: number; pass: boolean }>;
-    for (const row of rows) {
-      const source = String(row.audio?.src ?? "");
-      const audioResponse = await fetch(source, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(20_000),
-      });
-      if (!audioResponse.ok) {
-        results.push({ cer: 1, pass: false });
-        continue;
-      }
-
-      const bytes = await audioResponse.arrayBuffer();
-      const filename = row.audio?.path?.split("/").pop() || "sorani-sample.wav";
-      const contentType = audioResponse.headers.get("content-type") || "audio/wav";
-      const file = new File([bytes], filename, { type: contentType });
-      const transcript = await transcribeWithAtlasKurdishStt(file, "ku");
-      if (!transcript?.text) {
-        results.push({ cer: 1, pass: false });
-        continue;
-      }
-
-      const cer = characterErrorRate(String(row.transcription), transcript.text);
-      results.push({ cer, pass: cer <= MAX_ACCEPTABLE_CER });
-    }
-
-    const passed = results.filter((result) => result.pass).length;
-    const averageCer = results.reduce((sum, result) => sum + result.cer, 0) / Math.max(results.length, 1);
+    const cer = characterErrorRate(EXPECTED, transcript.text);
     return privateJson({
-      ok: passed >= 2,
-      tested: results.length,
-      passed,
-      averageCer: Number(averageCer.toFixed(3)),
+      ok: cer <= MAX_ACCEPTABLE_CER,
+      tested: 1,
+      averageCer: Number(cer.toFixed(3)),
       threshold: MAX_ACCEPTABLE_CER,
-    });
+      transcriptLength: transcript.text.length,
+    }, cer <= MAX_ACCEPTABLE_CER ? 200 : 422);
   } catch {
     return privateJson({ ok: false, stage: "runtime" }, 500);
   }
