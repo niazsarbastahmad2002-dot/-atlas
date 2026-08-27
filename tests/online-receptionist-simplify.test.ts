@@ -46,13 +46,28 @@ test("online status selector has state colors and responsive phone/tablet layout
   assert.match(actions, /@media \(max-width: 520px\)/);
 });
 
-test("destructive removal sits behind a visible More menu that opens inside the card", () => {
+test("remove is a direct visible action with confirmation rather than a one-item More menu", () => {
   const actions = source("app/dashboard/appointment-actions.tsx");
-  assert.match(actions, /<details className="appointment-more-menu">/);
-  assert.match(actions, /<summary[^>]*>\{workflow\.more\}<\/summary>/);
-  assert.match(actions, /bottom: calc\(100% \+ 6px\)/);
-  assert.doesNotMatch(actions, /top: calc\(100% \+ 6px\)/);
+  assert.match(actions, /className="appointment-remove-action"/);
+  assert.match(actions, /window\.confirm\(workflow\.removeQuestion\)/);
   assert.match(actions, /archiveAppointmentInline/);
+  assert.doesNotMatch(actions, /appointment-more-menu|appointment-more-popover|<summary/);
+});
+
+test("schedule summary stays focused on the four receptionist signals that matter most", () => {
+  const page = source("app/dashboard/page.tsx");
+  assert.match(page, /className="stats workspace-stats schedule-summary"/);
+  assert.match(page, /All appointments/);
+  assert.match(page, /Attendance not confirmed/);
+  assert.match(page, /Attendance confirmed/);
+  assert.match(page, /Visit completed/);
+  assert.match(page, /هەموو مەوعیدەکان/);
+  assert.match(page, /هاتن پشتڕاست نەکراوە/);
+  assert.match(page, /هاتن پشتڕاستکراوە/);
+  assert.match(page, /سەردان تەواوبوو/);
+  assert.match(page, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.doesNotMatch(page, /<Stat label=\{t\.noShow\}/);
+  assert.doesNotMatch(page, /<Stat label=\{t\.cancelled\}/);
 });
 
 test("patient sharing remains available but the everyday row uses a short label", () => {

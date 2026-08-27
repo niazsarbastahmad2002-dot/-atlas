@@ -37,6 +37,18 @@ const dayCopy: Record<UiLocale, {
   ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد", quickDates: "أيام سريعة", doctorSchedules: "جداول الأطباء" },
 };
 
+const summaryCopy: Record<UiLocale, {
+  all: string;
+  notConfirmed: string;
+  confirmed: string;
+  completed: string;
+}> = {
+  en: { all: "All appointments", notConfirmed: "Attendance not confirmed", confirmed: "Attendance confirmed", completed: "Visit completed" },
+  ku: { all: "هەموو مەوعیدەکان", notConfirmed: "هاتن پشتڕاست نەکراوە", confirmed: "هاتن پشتڕاستکراوە", completed: "سەردان تەواوبوو" },
+  bd: { all: "هەمی مەوعید", notConfirmed: "هاتن نەهاتیە پشتڕاستکرن", confirmed: "هاتن پشتڕاستکریە", completed: "سەردان تەمام بوو" },
+  ar: { all: "كل المواعيد", notConfirmed: "الحضور غير مؤكد", confirmed: "الحضور مؤكد", completed: "انتهت الزيارة" },
+};
+
 function validBaghdadDay(value: string | undefined, fallback: string) {
   if (!value || !dayPattern.test(value)) return fallback;
   const date = new Date(`${value}T12:00:00+03:00`);
@@ -84,6 +96,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const locale = await getUiLocale();
   const t = uiText(locale);
   const days = dayCopy[locale];
+  const summary = summaryCopy[locale];
   const messageError = getDashboardMessage(params.error);
   const notice = getDashboardMessage(params.notice);
   const supabase = await createClient();
@@ -146,8 +159,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const confirmed = visibleRows.filter((row) => row.status === "confirmed").length;
   const pending = visibleRows.filter((row) => row.status === "pending").length;
   const completed = visibleRows.filter((row) => row.status === "completed").length;
-  const noShow = visibleRows.filter((row) => row.status === "no_show").length;
-  const cancelled = visibleRows.filter((row) => row.status === "cancelled").length;
 
   const appointmentOrder = new Map<string, number>();
   let activeOrder = 0;
@@ -205,7 +216,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     {clinics.length > 1 ? <form className="clinic-switcher workspace-switcher" method="get"><label htmlFor="clinic">{t.clinicWorkspace}</label><input type="hidden" name="day" value={selectedDay} /><select id="clinic" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select><button className="button button-ghost button-small" type="submit">{t.switch}</button></form> : null}
     {multiDoctor ? <nav className="doctor-schedule-tabs" aria-label={days.doctorSchedules}>{activeDoctors.map((doctor) => { const count = rows.filter((row) => row.doctor_id === doctor.id).length; const selected = doctor.id === selectedDoctor?.id; return <a href={scheduleHref(clinic.id, selectedDay, doctor.id)} className={selected ? "is-selected" : ""} aria-current={selected ? "page" : undefined} key={doctor.id}><strong>{doctor.name}</strong><span>{count}</span></a>; })}</nav> : null}
     {messageError || selectionError ? <p className="notice notice-error workspace-notice" role="alert">{messageError ?? selectionError}</p> : null}{notice ? <p className="notice notice-success workspace-notice" role="status">{notice}</p> : null}
-    <section className="stats workspace-stats" aria-label={days.appointments}><Stat label={days.appointments} value={visibleRows.length} /><Stat label={t.pending} value={pending} /><Stat label={t.confirmed} value={confirmed} /><Stat label={t.completed} value={completed} /><Stat label={t.noShow} value={noShow} /><Stat label={t.cancelled} value={cancelled} /></section>
+    <section className="stats workspace-stats schedule-summary" aria-label={days.appointments}><Stat label={summary.all} value={visibleRows.length} tone="total" /><Stat label={summary.notConfirmed} value={pending} tone="pending" /><Stat label={summary.confirmed} value={confirmed} tone="confirmed" /><Stat label={summary.completed} value={completed} tone="completed" /></section>
     <div className={`workspace-grid ${canCreateOnSelectedDay ? "" : "is-read-only-day"}`}>
       {canCreateOnSelectedDay ? <section className="panel appointment-composer" id="new-appointment"><div className="panel-heading composer-heading"><div><div className="eyebrow">{relativeDay ?? formatBaghdadDay(selectedDate, locale)}</div><h2>{t.newAppointment}</h2></div><span className="composer-shortcut" aria-hidden="true">+</span></div>
         <form action={createAppointment} className="stack-form appointment-form" key={`${clinic.id}:${selectedDay}:${selectedDoctor?.id ?? "none"}`}><input type="hidden" name="clinic_id" value={clinic.id} /><input type="hidden" name="return_day" value={selectedDay} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
@@ -223,9 +234,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <style>{`
       .workspace-grid.is-read-only-day{grid-template-columns:1fr}
       .workspace-grid.is-read-only-day .appointments-panel{min-width:0}
+      .schedule-summary{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+      .schedule-summary .schedule-stat{position:relative;min-height:82px;padding:15px 16px;overflow:hidden}
+      .schedule-summary .schedule-stat::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:4px;background:#dbe4df}
+      .schedule-summary .schedule-stat-pending{background:#fffaf0;border-color:#eadfbe}
+      .schedule-summary .schedule-stat-pending::before{background:#d4ad43}
+      .schedule-summary .schedule-stat-confirmed{background:#f3faf7;border-color:#cfe5db}
+      .schedule-summary .schedule-stat-confirmed::before{background:#3f9b79}
+      .schedule-summary .schedule-stat-completed{background:#f7f9f8;border-color:#dbe2de}
+      .schedule-summary .schedule-stat-completed::before{background:#7d9188}
+      .schedule-summary .schedule-stat span{font-size:11px;line-height:1.35}
+      .schedule-summary .schedule-stat strong{margin-top:5px;font-size:27px}
       .composer-doctor-lock{display:flex;min-height:46px;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line-strong);border-radius:12px;padding:10px 13px;background:var(--surface-soft);color:var(--ink)}
       .composer-doctor-lock strong{font-size:14px;font-weight:780}
       .composer-doctor-lock span{display:grid;width:24px;height:24px;place-items:center;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:900}
+      @media(max-width:900px){.schedule-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media(max-width:520px){.schedule-summary{gap:8px}.schedule-summary .schedule-stat{min-height:76px;padding:13px 14px}.schedule-summary .schedule-stat strong{font-size:24px}}
     `}</style>
     {multiDoctor ? <style>{`
       .doctor-schedule-tabs{display:flex;gap:8px;overflow-x:auto;margin:4px 0 14px;padding:1px 0 4px;scrollbar-width:none}
@@ -239,5 +263,5 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   </main>;
 }
 
-function Stat({ label, value }: { label: string; value: number }) { return <article className="stat"><span>{label}</span><strong>{value}</strong></article>; }
+function Stat({ label, value, tone }: { label: string; value: number; tone: "total" | "pending" | "confirmed" | "completed" }) { return <article className={`stat schedule-stat schedule-stat-${tone}`}><span>{label}</span><strong>{value}</strong></article>; }
 function DashboardError() { return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>Atlas could not load this clinic.</h1><p className="quiet">Refresh once. If it continues, check the clinic connection before entering any patient details.</p></section></main>; }
