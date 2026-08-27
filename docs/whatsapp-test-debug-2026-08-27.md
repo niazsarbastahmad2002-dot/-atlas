@@ -17,6 +17,10 @@ During the failed UI attempt, the isolated Supabase Auth logs showed readiness `
 - The first Atlas screen and login now use the same persisted UI-language cookie. English renders LTR; Sorani, Badini, and Iraqi Arabic render RTL. The first screen offers the same four-language picker.
 - When WhatsApp is the only test delivery option it is styled as already selected, not as an untapped radio control.
 
+## Remaining live gate
+
+The Preview is protected by Vercel Authentication. Once Supabase reaches `/auth/v1/otp`, the configured Send SMS Hook must also be able to reach the protected Preview `/api/auth/send-sms-hook` endpoint. If the next live OTP attempt reaches Supabase but the hook cannot reach Atlas, fix the Preview automation-bypass path for that hook rather than weakening production or moving the test onto the production deployment.
+
 ## Safety
 
 No production Supabase Auth setting, production WhatsApp sender/WABA/Coexistence, production reminder queue, DNS, or production-only credential was modified by these changes.
