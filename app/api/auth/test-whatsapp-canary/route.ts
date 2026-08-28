@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import {
   ATLAS_WHATSAPP_META_TEST_MODE,
+  atlasWhatsAppRecipientAllowed,
   readAtlasWhatsAppRuntime,
 } from "@/lib/reminders/whatsapp-runtime";
 import { sendWhatsAppTextMessage } from "@/lib/reminders/whatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const VERIFIED_TEST_RECIPIENT = "+9647518961148";
 
 export async function GET() {
   if (
@@ -28,13 +31,12 @@ export async function GET() {
     return NextResponse.json({ error: "service_not_configured" }, { status: 503 });
   }
 
-  const recipient = runtimeConfig.allowedRecipients?.[0];
-  if (!recipient) {
-    return NextResponse.json({ error: "test_recipient_not_configured" }, { status: 503 });
+  if (!atlasWhatsAppRecipientAllowed(runtimeConfig, VERIFIED_TEST_RECIPIENT)) {
+    return NextResponse.json({ error: "test_recipient_not_allowed" }, { status: 403 });
   }
 
   const result = await sendWhatsAppTextMessage(
-    recipient,
+    VERIFIED_TEST_RECIPIENT,
     "Atlas WhatsApp window check: delivery path is live.",
     runtimeConfig.config,
   );
