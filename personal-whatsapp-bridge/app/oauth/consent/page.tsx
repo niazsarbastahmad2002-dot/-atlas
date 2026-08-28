@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createPersonalSupabaseServerClient } from "@/lib/supabase-server";
+import { createPersonalSupabaseServerClient } from "../../../lib/supabase-server";
 
 export default async function ConsentPage({ searchParams }: { searchParams: Promise<{ authorization_id?: string }> }) {
   const { authorization_id: authorizationId } = await searchParams;
