@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { normalizeAuthPhone, normalizeOtpToken } from "@/lib/phone-auth";
 
 export type SupabaseSendSmsHookPayload = {
-  user: { phone?: unknown };
+  user: { phone?: unknown; new_phone?: unknown };
   sms: { otp?: unknown };
 };
 
@@ -59,8 +60,21 @@ export function verifySupabaseSendSmsHook(
 }
 
 export function readSupabaseSendSmsHookValues(payload: SupabaseSendSmsHookPayload) {
-  const phone = typeof payload.user.phone === "string" ? payload.user.phone.trim() : "";
-  const otp = typeof payload.sms.otp === "string" ? payload.sms.otp.trim() : "";
-  if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\d{6}$/.test(otp)) return null;
+  const rawPhone = typeof payload.user.phone === "string"
+    ? payload.user.phone
+    : typeof payload.user.new_phone === "string"
+      ? payload.user.new_phone
+      : "";
+  const phone = normalizeAuthPhone(rawPhone);
+
+  const rawOtp = typeof payload.sms.otp === "string"
+    ? payload.sms.otp
+    : typeof payload.sms.otp === "number" && Number.isSafeInteger(payload.sms.otp)
+      ? String(payload.sms.otp)
+      : "";
+  const otp = normalizeOtpToken(rawOtp);
+
+  // Supabase supports configurable phone OTP lengths from 6 to 10 digits.
+  if (!phone || !/^\d{6,10}$/.test(otp)) return null;
   return { phone, otp };
 }
