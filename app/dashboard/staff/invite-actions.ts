@@ -35,10 +35,17 @@ type InviteWhatsAppDelivery = {
 };
 
 function atlasSiteUrl() {
+  const metaTestPreview = process.env.ATLAS_WHATSAPP_MODE === ATLAS_WHATSAPP_META_TEST_MODE
+    && process.env.VERCEL_ENV !== "production";
+  if (metaTestPreview) {
+    const previewHost = process.env.VERCEL_BRANCH_URL?.trim() || process.env.VERCEL_URL?.trim();
+    if (previewHost) return `https://${previewHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
+
   const configured = process.env.SITE_URL?.trim();
   if (configured) return configured.replace(/\/$/, "");
   if (process.env.VERCEL_ENV !== "production") {
-    const previewHost = process.env.VERCEL_URL?.trim();
+    const previewHost = process.env.VERCEL_BRANCH_URL?.trim() || process.env.VERCEL_URL?.trim();
     if (previewHost) return `https://${previewHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
   }
   const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
