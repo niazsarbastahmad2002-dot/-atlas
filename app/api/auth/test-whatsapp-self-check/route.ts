@@ -1,5 +1,6 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { readAtlasWhatsAppRuntime, ATLAS_WHATSAPP_META_TEST_MODE } from "@/lib/reminders/whatsapp-runtime";
+import { ATLAS_WHATSAPP_META_TEST_MODE, readAtlasWhatsAppRuntime } from "@/lib/reminders/whatsapp-runtime";
 import { readAtlasSupabasePublicConfig } from "@/lib/supabase/runtime-config";
 
 export const runtime = "nodejs";
@@ -19,11 +20,23 @@ function safeCode(payload: string) {
   }
 }
 
-export async function GET() {
-  // Temporary internal test route. It is impossible to run in production and
-  // can only target a recipient already narrowed by Atlas's Meta test allowlist.
+function authorized(request: Request) {
+  const expected = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim() ?? "";
+  const provided = new URL(request.url).searchParams.get("x-vercel-protection-bypass")?.trim() ?? "";
+  if (expected.length < 24 || provided.length < 24) return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(provided);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export async function GET(request: Request) {
+  // Temporary internal test route. Production is hard-blocked and the route
+  // requires the same Preview automation-bypass secret used by the Supabase hook.
   if (process.env.VERCEL_ENV === "production" || process.env.ATLAS_WHATSAPP_MODE !== ATLAS_WHATSAPP_META_TEST_MODE) {
     return NextResponse.json({ ok: false, code: "not_found" }, { status: 404 });
+  }
+  if (!authorized(request)) {
+    return NextResponse.json({ ok: false, code: "unauthorized" }, { status: 401 });
   }
 
   let runtimeConfig;
@@ -32,8 +45,13 @@ export async function GET() {
   } catch {
     return NextResponse.json({ ok: false, code: "whatsapp_test_not_configured" }, { status: 503 });
   }
-  if (!runtimeConfig || runtimeConfig.mode !== ATLAS_WHATSAPP_META_TEST_MODE || !runtimeConfig.allowedRecipients?.length) {
-    return NextResponse.json({ ok: false, code: "test_recipient_not_configured" }, { status: 503 });
+  if (!runtimeConfig || runtimeConfig.mode !== ATLAS_WHATSAPP_META_TEST_MODE) {
+    return NextResponse.json({ ok: false, code: "whatsapp_test_not_configured" }, { status: 503 });
+  }
+
+  const recipient = new URL(request.url).searchParams.get("recipient")?.trim() ?? "";
+  if (!/^\+[1-9]\d{7,14}$/.test(recipient)) {
+    return NextResponse.json({ ok: false, code: "invalid_test_recipient" }, { status: 400 });
   }
 
   const supabase = readAtlasSupabasePublicConfig();
@@ -41,13 +59,12 @@ export async function GET() {
     return NextResponse.json({ ok: false, code: "test_auth_not_configured" }, { status: 503 });
   }
 
-  const recipient = runtimeConfig.allowedRecipients[0];
   const response = await fetch(`${supabase.url.replace(/\/$/, "")}/auth/v1/otp`, {
     method: "POST",
     headers: {
       apikey: supabase.publishableKey,
       "content-type": "application/json",
-      "x-client-info": "atlas-whatsapp-self-check/1.0",
+      "x-client-info": "atlas-whatsapp-self-check/1.1",
     },
     body: JSON.stringify({ phone: recipient, create_user: true }),
     cache: "no-store",
