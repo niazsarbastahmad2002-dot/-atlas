@@ -83,7 +83,6 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
   const t = copy[locale];
   const [state, action, pending] = useActionState(createReceptionistInviteLink, initialState);
   const [copied, setCopied] = useState(false);
-  const [recipientPhone, setRecipientPhone] = useState("");
   const [directWhatsAppInvites, setDirectWhatsAppInvites] = useState(STATIC_DIRECT_WHATSAPP_INVITES);
 
   useEffect(() => {
@@ -140,9 +139,8 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
+              dir="ltr"
               placeholder={t.phonePlaceholder}
-              value={recipientPhone}
-              onChange={(event) => setRecipientPhone(event.target.value)}
               required
             />
             <div className="field-help">{t.phoneHelp}</div>
@@ -153,7 +151,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
         <button
           className="button"
           type="submit"
-          disabled={pending || doctors.length === 0 || !directWhatsAppInvites || !recipientPhone.trim()}
+          disabled={pending || doctors.length === 0 || !directWhatsAppInvites}
         >
           {pending ? t.creating : directWhatsAppInvites ? t.send : t.create}
         </button>
