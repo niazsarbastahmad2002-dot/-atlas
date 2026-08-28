@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
+  atlasWhatsAppRecipientAllowed,
   ATLAS_WHATSAPP_META_TEST_MODE,
   readAtlasWhatsAppRuntime,
 } from "@/lib/reminders/whatsapp-runtime";
@@ -27,7 +28,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "personal_sender_disabled" }, { status: 503 });
   }
 
-  const suppliedProbe = new URL(request.url).searchParams.get("probe") ?? "";
+  const url = new URL(request.url);
+  const suppliedProbe = url.searchParams.get("probe") ?? "";
   const probe = expectedProbe();
   if (!probe || !constantTimeEqual(suppliedProbe, probe)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -43,9 +45,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "meta_test_required" }, { status: 503 });
   }
 
-  const recipientPhone = runtimeConfig.allowedRecipients?.[0] ?? "";
-  if (!recipientPhone) {
-    return NextResponse.json({ error: "no_explicit_test_recipient" }, { status: 503 });
+  const recipientPhone = url.searchParams.get("to")?.trim() ?? "";
+  if (!recipientPhone || !atlasWhatsAppRecipientAllowed(runtimeConfig, recipientPhone)) {
+    return NextResponse.json({ error: "recipient_not_allowed" }, { status: 403 });
   }
 
   const result = await sendWhatsAppTextMessage(recipientPhone, TEST_MESSAGE, runtimeConfig.config);
