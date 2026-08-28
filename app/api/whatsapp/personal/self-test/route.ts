@@ -49,13 +49,22 @@ export async function GET(request: Request) {
   }
 
   const result = await sendWhatsAppTextMessage(recipientPhone, TEST_MESSAGE, runtimeConfig.config);
+  if (result.accepted) {
+    return NextResponse.json({
+      accepted: true,
+      providerMessageId: result.providerMessageId,
+    }, {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   return NextResponse.json({
-    accepted: result.accepted,
-    providerMessageId: result.providerMessageId,
+    accepted: false,
     errorCode: result.errorCode,
     retryable: result.retryable,
   }, {
-    status: result.accepted ? 200 : (result.retryable ? 503 : 502),
+    status: result.retryable ? 503 : 502,
     headers: { "Cache-Control": "no-store" },
   });
 }
