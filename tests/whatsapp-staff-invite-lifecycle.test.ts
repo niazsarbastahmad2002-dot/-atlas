@@ -12,6 +12,8 @@ test("WhatsApp staff invites are phone-bound and activate only after accepted de
   assert.match(action, /activate_phone_staff_invite_link_service/);
   assert.match(action, /p_provider_message_id: sent\.providerMessageId/);
   assert.match(action, /preview_staff_invite_link_service/);
+  assert.match(action, /VERCEL_BRANCH_URL/);
+  assert.match(action, /metaTestPreview/);
   assert.doesNotMatch(action, /rpc\("create_staff_invite_link_service"/);
 
   const rejectedDelivery = action.indexOf("if (!sent.accepted)");
@@ -25,8 +27,17 @@ test("staff invitation UI requires a recipient phone and fails closed until dire
 
   assert.match(form, /name="recipient_phone"/);
   assert.match(form, /required/);
-  assert.match(form, /!directWhatsAppInvites \|\| !recipientPhone\.trim\(\)/);
+  assert.match(form, /pending \|\| doctors\.length === 0 \|\| !directWhatsAppInvites/);
+  assert.doesNotMatch(form, /recipientPhone\.trim\(\)/);
   assert.doesNotMatch(form, /phoneHelp: "Optional/);
+});
+
+test("staff invite landing and redemption keep the Supabase RPC client bound", () => {
+  const join = source("app/join/[token]/page.tsx");
+  const finish = source("app/join/[token]/finish/route.ts");
+
+  assert.match(join, /\.call\(admin, name, args\)/);
+  assert.match(finish, /\.call\(admin, name, args\)/);
 });
 
 test("staff invite redemption requires the authenticated user's verified invited phone", () => {
