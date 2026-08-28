@@ -39,13 +39,22 @@ export async function GET() {
     runtimeConfig.config,
   );
 
+  if (result.accepted) {
+    return NextResponse.json({
+      accepted: true,
+      providerMessageId: result.providerMessageId,
+    }, {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   return NextResponse.json({
-    accepted: result.accepted,
+    accepted: false,
     retryable: result.retryable,
-    errorCode: result.errorCode ?? null,
-    messageId: result.accepted ? result.messageId ?? null : null,
+    errorCode: result.errorCode,
   }, {
-    status: result.accepted ? 200 : result.retryable ? 503 : 502,
+    status: result.retryable ? 503 : 502,
     headers: { "Cache-Control": "no-store" },
   });
 }
