@@ -262,7 +262,7 @@ export function AppointmentActions({
         .appointment-status-select.is-cancelled { color: #705858; background: #f6f2f2; border-color: #dfd2d2; }
         .appointment-action-feedback { grid-column: 1 / -1; color: var(--danger); font-size: 10.5px; line-height: 1.4; }
 
-        .appointment-remove-action {
+        .row-actions button.appointment-remove-action {
           min-height: 38px;
           border: 1px solid #d76d6d;
           border-radius: 10px;
@@ -275,7 +275,7 @@ export function AppointmentActions({
           white-space: nowrap;
           cursor: pointer;
         }
-        .appointment-remove-action:hover { background: #ffd0d0; border-color: #c95353; color: #8f1515; }
+        .row-actions button.appointment-remove-action:hover { background: #ffd0d0; border-color: #c95353; color: #8f1515; }
 
         @media (max-width: 720px) {
           .polished-appointment .appointment-details { grid-template-columns: 1fr 1fr; }
@@ -286,7 +286,7 @@ export function AppointmentActions({
           .polished-appointment .appointment-details { grid-template-columns: 1fr; }
           .appointment-action-bar { grid-template-columns: minmax(0, 1fr) auto; }
           .appointment-status-control { grid-column: 1 / -1; }
-          .appointment-remove-action { justify-self: end; }
+          .row-actions button.appointment-remove-action { justify-self: end; }
         }
       `}</style>
     </div>
