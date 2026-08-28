@@ -52,6 +52,22 @@ function parseHookPayload(rawBody: string): SupabaseSendSmsHookPayload | null {
   return payload as SupabaseSendSmsHookPayload;
 }
 
+function safePayloadShape(payload: SupabaseSendSmsHookPayload) {
+  const user = payload.user as Record<string, unknown>;
+  const sms = payload.sms as Record<string, unknown>;
+  const phone = user.phone ?? user.new_phone;
+  const otp = sms.otp;
+  return {
+    userKeys: Object.keys(user).sort().slice(0, 30),
+    smsKeys: Object.keys(sms).sort().slice(0, 30),
+    phoneType: typeof phone,
+    phoneLength: typeof phone === "string" ? phone.length : null,
+    phoneStartsWithPlus: typeof phone === "string" ? phone.trim().startsWith("+") : null,
+    otpType: typeof otp,
+    otpLength: typeof otp === "string" ? otp.trim().length : null,
+  };
+}
+
 export async function POST(request: Request) {
   const hookSecret = process.env.SUPABASE_SEND_SMS_HOOK_SECRET?.trim() ?? "";
   if (hookSecret.length < 24) {
@@ -100,7 +116,9 @@ export async function POST(request: Request) {
   if (!values || !atlasWhatsAppRecipientAllowed(runtimeConfig, values.phone)) {
     console.warn("Atlas Send SMS Hook rejected recipient", {
       hasValidPayload: Boolean(values),
+      recipientAllowed: values ? atlasWhatsAppRecipientAllowed(runtimeConfig, values.phone) : null,
       testMode,
+      ...(testMode && process.env.VERCEL_ENV !== "production" ? safePayloadShape(payload) : {}),
     });
     return NextResponse.json({ error: "recipient_not_allowed" }, { status: 403 });
   }
