@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { recipientAllowed, readPersonalWhatsAppConfig, sendPersonalWhatsAppText } from "@/lib/whatsapp";
+import { recipientAllowed, readPersonalWhatsAppConfig, sendPersonalWhatsAppText } from "../../../lib/whatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
