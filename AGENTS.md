@@ -7,8 +7,12 @@ Whenever an Atlas change is deployed to Vercel:
 1. Do not report the deployment as ready merely because a deployment was triggered.
 2. Wait for the deployment to finish and verify the final Vercel status.
 3. Confirm the target deployment is `Ready` and not `Error`, `Canceled`, or otherwise failed.
-4. If the deployment fails, inspect the relevant build/deployment logs and diagnose the failure before reporting success.
-5. Double-check this automatically after every deployment; do not wait for the user to ask whether it succeeded.
-6. Only tell the user that the deployment is ready after the final status has been verified.
+4. Confirm the production alias points to the intended commit/deployment, not an older successful build.
+5. If the deployment fails, inspect the relevant build/deployment logs, diagnose the failure, fix it, and redeploy until the intended production deployment is `Ready` or a genuine external blocker requires user action.
+6. Double-check this automatically after every deployment; do not wait for the user to ask whether it succeeded.
+7. A green deployment is necessary but is not enough to call a user-visible fix complete. Verify the actual effect that was requested. For UI/visual changes, check the rendered behavior or a deterministic regression that proves the real CSS/layout/interaction path, including cascade/specificity and responsive behavior where relevant.
+8. If the requested effect cannot be directly verified, say that the code is deployed but visual/user verification is still pending. Do not say “fixed”, “finished”, or “live and correct” yet.
+9. If the deployed page does not visibly match the promised result, treat that as a failed fix even when Vercel is `Ready`; investigate the real cause, correct it, redeploy, and re-verify instead of repeating the same ineffective change.
+10. Preserve concurrent Atlas work and avoid rolling back unrelated main-branch changes while correcting a failed effect.
 
-This is a standing Atlas project rule for future deployment work.
+This is a standing Atlas project rule for all future deployment and UI-fix work.
