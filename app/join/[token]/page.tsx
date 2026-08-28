@@ -74,7 +74,7 @@ export default async function JoinClinicPage({ params }: PageProps) {
   }
 
   const admin = createAdminClient();
-  const rpc = admin.rpc as unknown as Rpc;
+  const rpc: Rpc = (name, args) => (admin.rpc as unknown as Rpc).call(admin, name, args);
   const { data, error } = await rpc("preview_staff_invite_link_service", { p_token_hash: tokenHash(token) });
   const preview = Array.isArray(data) && data.length > 0 ? data[0] as Preview : null;
 
