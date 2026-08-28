@@ -148,6 +148,29 @@ test("Supabase Send SMS Hook rejects tampering and stale signed requests", () =>
   assert.equal(verifySupabaseSendSmsHook(rawBody, headers, secret, nowMs + 6 * 60 * 1000), null);
 });
 
+test("Supabase Send SMS Hook normalizes Iraq-first phones and configurable OTP lengths", () => {
+  assert.deepEqual(readSupabaseSendSmsHookValues({
+    user: { phone: "0750 123 4567" },
+    sms: { otp: "١٢٣٤٥٦" },
+  }), {
+    phone: "+9647501234567",
+    otp: "123456",
+  });
+
+  assert.deepEqual(readSupabaseSendSmsHookValues({
+    user: { new_phone: "+9647501234567" },
+    sms: { otp: "12345678" },
+  }), {
+    phone: "+9647501234567",
+    otp: "12345678",
+  });
+
+  assert.equal(readSupabaseSendSmsHookValues({
+    user: { phone: "+9647501234567" },
+    sms: { otp: "12345" },
+  }), null);
+});
+
 test("test-only HTTP routes are production-blocked and direct Meta OTP preserves Supabase verification", () => {
   const sendRoute = source("app/api/whatsapp/test/send/route.ts");
   const bootstrapRoute = source("app/api/whatsapp/test/bootstrap/route.ts");
