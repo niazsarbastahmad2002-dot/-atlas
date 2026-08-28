@@ -137,7 +137,7 @@ export async function createReceptionistInviteLink(
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const invitedPhoneHash = createHash("sha256").update(recipientPhone).digest("hex");
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const rpc = admin.rpc as unknown as Rpc;
+  const rpc: Rpc = (name, args) => admin.rpc(name, args) as unknown as Promise<RpcResult>;
   const { data, error } = await rpc("create_phone_staff_invite_link_service", {
     p_clinic_id: clinicId,
     p_assigned_doctor_id: doctorId,
