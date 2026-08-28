@@ -36,7 +36,7 @@ export async function GET(request: Request, { params }: Context) {
   }
 
   const admin = createAdminClient();
-  const rpc = admin.rpc as unknown as Rpc;
+  const rpc: Rpc = (name, args) => (admin.rpc as unknown as Rpc).call(admin, name, args);
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const verifiedPhoneHash = createHash("sha256").update(verifiedPhone).digest("hex");
   const { data, error } = await rpc("redeem_phone_staff_invite_link_service", {
