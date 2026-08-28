@@ -8,21 +8,10 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production",
 };
 
-const META_TEST_WINDOW_KEY = "atlas-meta-test-window-confirmed-until";
-
 function requestUrl(input: RequestInfo | URL) {
   if (typeof input === "string") return input;
   if (input instanceof URL) return input.toString();
   return input.url;
-}
-
-function metaTestWindowConfirmed() {
-  try {
-    const until = Number(window.localStorage.getItem(META_TEST_WINDOW_KEY) ?? "0");
-    return Number.isFinite(until) && until > Date.now();
-  } catch {
-    return false;
-  }
 }
 
 function createIsolatedAuthFetch(supabaseUrl: string): typeof fetch {
@@ -53,9 +42,6 @@ function createIsolatedAuthFetch(supabaseUrl: string): typeof fetch {
       method: "POST",
       headers: {
         "content-type": sourceHeaders.get("content-type") ?? "application/json",
-        ...(authAction === "otp" && metaTestWindowConfirmed()
-          ? { "x-atlas-meta-test-window-confirmed": "true" }
-          : {}),
       },
       body,
       credentials: "same-origin",
