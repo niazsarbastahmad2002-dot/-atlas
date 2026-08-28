@@ -38,24 +38,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Test auth is not configured", code: "test_auth_not_configured" }, { status: 503 });
   }
 
-  // Meta's official test WABA cannot currently create Atlas's proper
-  // AUTHENTICATION template. The Preview therefore uses a free-form OTP only
-  // inside a customer-service window that the tester has just opened by
-  // messaging the Meta test number. Do not let the browser advance to the code
-  // screen unless that Preview-only precondition was explicitly confirmed.
-  if (
-    action === "otp"
-    && process.env.NEXT_PUBLIC_ATLAS_DIRECT_META_OTP_ENABLED === "true"
-    && request.headers.get("x-atlas-meta-test-window-confirmed") !== "true"
-  ) {
-    return NextResponse.json(
-      {
-        message: "Open the Meta test WhatsApp conversation before requesting a code.",
-        code: "meta_test_conversation_window_required",
-      },
-      { status: 409, headers: { "cache-control": "no-store" } },
-    );
-  }
+  // Do not gate the isolated OTP relay on a browser-local confirmation flag.
+  // The Meta test customer-service window is an external WhatsApp state and can
+  // already be open even when this browser has no localStorage marker. Delivery
+  // failures are handled by the Preview-only Send SMS Hook/Meta path instead.
+  // Production remains hard-blocked above and never uses this relay.
 
   const declaredLength = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
