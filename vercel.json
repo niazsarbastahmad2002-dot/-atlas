@@ -7,7 +7,6 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "fix/verified-visual-effects": true,
       "*": false,
       "**": false
     }
