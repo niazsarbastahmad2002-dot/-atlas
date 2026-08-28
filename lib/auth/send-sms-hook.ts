@@ -3,7 +3,7 @@ import { normalizeAuthPhone, normalizeOtpToken } from "../phone-auth.ts";
 
 export type SupabaseSendSmsHookPayload = {
   user: { phone?: unknown; new_phone?: unknown };
-  sms: { otp?: unknown };
+  sms: { otp?: unknown; phone?: unknown };
 };
 
 function signatureSecret(value: string) {
@@ -59,13 +59,21 @@ export function verifySupabaseSendSmsHook(
   return payload as SupabaseSendSmsHookPayload;
 }
 
+function normalizeHookPhone(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  const normal = normalizeAuthPhone(trimmed);
+  if (normal) return normal;
+  // Hosted Supabase currently sends the hook user phone as international digits
+  // without a leading plus. Convert that wire representation back to E.164.
+  if (/^[1-9]\d{7,14}$/.test(trimmed)) return normalizeAuthPhone(`+${trimmed}`);
+  return null;
+}
+
 export function readSupabaseSendSmsHookValues(payload: SupabaseSendSmsHookPayload) {
-  const rawPhone = typeof payload.user.phone === "string"
-    ? payload.user.phone
-    : typeof payload.user.new_phone === "string"
-      ? payload.user.new_phone
-      : "";
-  const phone = normalizeAuthPhone(rawPhone);
+  const phone = normalizeHookPhone(payload.user.phone)
+    ?? normalizeHookPhone(payload.user.new_phone)
+    ?? normalizeHookPhone(payload.sms.phone);
 
   const rawOtp = typeof payload.sms.otp === "string"
     ? payload.sms.otp
