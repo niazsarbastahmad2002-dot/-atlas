@@ -133,13 +133,21 @@ export async function POST(request: Request) {
   // Meta test WABAs may not be eligible to create AUTHENTICATION templates.
   // Inside the official 24-hour test conversation window only, use a plain
   // text transport fallback while Supabase remains the OTP authority. Never
-  // use this fallback for the production sender.
+  // use this fallback for the production sender. Meta API acceptance is logged
+  // as acceptance only; it is not treated as proof of handset delivery.
   if (!result.accepted && testMode) {
+    const templateErrorCode = result.errorCode;
     result = await sendWhatsAppTextMessage(
       values.phone,
       `Atlas test verification code: ${values.otp}. It expires soon.`,
       runtimeConfig.config,
     );
+    console.info("Atlas test OTP fallback result", {
+      templateErrorCode,
+      fallbackAccepted: result.accepted,
+      providerMessageId: result.accepted ? result.providerMessageId : null,
+      fallbackErrorCode: result.accepted ? null : result.errorCode,
+    });
   }
 
   if (!result.accepted) {
