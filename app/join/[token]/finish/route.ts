@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { isUiLocale } from "@/lib/i18n/ui";
+import { uiLocaleCookie } from "@/lib/i18n/ui-server";
 import { normalizeAuthPhone } from "@/lib/phone-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -13,17 +15,34 @@ function validToken(token: string) {
   return /^[A-Za-z0-9_-]{43}$/.test(token);
 }
 
+function redirectWithLocale(destination: URL, locale: string | null) {
+  const response = NextResponse.redirect(destination);
+  if (isUiLocale(locale)) {
+    response.cookies.set(uiLocaleCookie, locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+    });
+  }
+  return response;
+}
+
 export async function GET(request: Request, { params }: Context) {
   const requestUrl = new URL(request.url);
+  const inviteLocale = requestUrl.searchParams.get("lang");
   const { token } = await params;
   if (!validToken(token)) {
-    return NextResponse.redirect(new URL("/login?error=invalid_invite", requestUrl.origin));
+    return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale);
   }
 
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
-    return NextResponse.redirect(new URL(`/join/${encodeURIComponent(token)}`, requestUrl.origin));
+    const destination = new URL(`/join/${encodeURIComponent(token)}`, requestUrl.origin);
+    if (isUiLocale(inviteLocale)) destination.searchParams.set("lang", inviteLocale);
+    return redirectWithLocale(destination, inviteLocale);
   }
 
   const verifiedPhone = userData.user.phone_confirmed_at
@@ -32,7 +51,7 @@ export async function GET(request: Request, { params }: Context) {
   if (!verifiedPhone) {
     const destination = new URL("/dashboard", requestUrl.origin);
     destination.searchParams.set("notice", "verified_phone_required_for_invite");
-    return NextResponse.redirect(destination);
+    return redirectWithLocale(destination, inviteLocale);
   }
 
   const admin = createAdminClient();
@@ -47,11 +66,11 @@ export async function GET(request: Request, { params }: Context) {
 
   if (error || typeof data !== "string") {
     console.error("Atlas receptionist invite redemption failed", { code: error?.code ?? "invalid_invite" });
-    return NextResponse.redirect(new URL("/login?error=invalid_invite", requestUrl.origin));
+    return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale);
   }
 
   const destination = new URL("/dashboard", requestUrl.origin);
   destination.searchParams.set("clinic", data);
   destination.searchParams.set("notice", "joined_clinic");
-  return NextResponse.redirect(destination);
+  return redirectWithLocale(destination, inviteLocale);
 }
