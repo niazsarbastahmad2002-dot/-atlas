@@ -10,6 +10,7 @@ test("normalizes Iraq-first and international authentication phone numbers", () 
   assert.equal(normalizeAuthPhone("7501234567"), "+9647501234567");
   assert.equal(normalizeAuthPhone("00964-750-123-4567"), "+9647501234567");
   assert.equal(normalizeAuthPhone("+964 750 123 4567"), "+9647501234567");
+  assert.equal(normalizeAuthPhone("9647501234567"), "+9647501234567");
   assert.equal(normalizeAuthPhone("٠٧٥٠ ١٢٣ ٤٥٦٧"), "+9647501234567");
   assert.equal(normalizeAuthPhone("+1 (415) 555-2671"), "+14155552671");
 });
