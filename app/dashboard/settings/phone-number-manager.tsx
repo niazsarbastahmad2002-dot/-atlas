@@ -54,7 +54,7 @@ export function PhoneNumberManager({ locale, currentPhone }: { locale: UiLocale;
       </div>
       <div className="settings-readonly-clinic">
         <span>{copy.verified}</span>
-        <strong className="atlas-phone-display" dir="ltr">
+        <strong className="atlas-phone-display" dir="ltr" lang="en">
           {currentPhone ? formatPhoneForDisplay(currentPhone) : copy.pending}
         </strong>
       </div>
