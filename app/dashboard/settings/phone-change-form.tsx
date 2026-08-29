@@ -195,7 +195,6 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
             type="tel"
             inputMode="tel"
             autoComplete="tel"
-            placeholder="New phone number"
             value={phoneInput}
             onChange={(event) => setPhoneInput(event.target.value)}
             dir="ltr"
