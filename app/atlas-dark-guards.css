@@ -50,6 +50,31 @@ html[data-theme="dark"] body .workspace-page .atlas-live-clock-time strong {
   color: #f2f6f4 !important;
 }
 
+/* The live clinic timing strip had an inline light-only background. */
+html[data-theme="dark"] body .live-clinic-flow .live-clinic-timing {
+  background: #11231c !important;
+  background-image: none !important;
+  border-color: #2f4a3e !important;
+  color: #f2f6f4 !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] body .live-clinic-flow .live-clinic-copy > strong {
+  color: #f2f6f4 !important;
+}
+html[data-theme="dark"] body .live-clinic-flow .live-clinic-copy > :is(span,small) {
+  color: #9aaba2 !important;
+}
+html[data-theme="dark"] body .live-clinic-flow .live-clinic-options button {
+  background: #173329 !important;
+  color: #d1ddd7 !important;
+  border-color: #355548 !important;
+}
+html[data-theme="dark"] body .live-clinic-flow .live-clinic-options button.is-selected {
+  background: #20513e !important;
+  color: #f7fffb !important;
+  border-color: #4c9a77 !important;
+}
+
 html[data-theme="dark"] body .workspace-page .schedule-count-box {
   background: #173329 !important;
   background-image: none !important;
@@ -62,6 +87,14 @@ html[data-theme="dark"] body .workspace-page .schedule-count-box span {
 }
 html[data-theme="dark"] body .workspace-page .schedule-count-box strong {
   color: #f2f6f4 !important;
+}
+
+/* The + new-appointment shortcut must be a dark control in dark mode. */
+html[data-theme="dark"] body .workspace-page .composer-shortcut {
+  background: #173329 !important;
+  color: #72ddb0 !important;
+  border: 1px solid #355548 !important;
+  box-shadow: none !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -85,7 +118,8 @@ html[data-theme="dark"] body .workspace-page .schedule-count-box strong {
     opacity: .72;
   }
   html[data-theme="system"] body .workspace-page nav.schedule-date-shortcuts,
-  html[data-theme="system"] body .workspace-page .schedule-count-box {
+  html[data-theme="system"] body .workspace-page .schedule-count-box,
+  html[data-theme="system"] body .live-clinic-flow .live-clinic-timing {
     background: #11231c !important;
     background-image: none !important;
     border-color: #2a4338 !important;
@@ -95,5 +129,11 @@ html[data-theme="dark"] body .workspace-page .schedule-count-box strong {
     background: linear-gradient(145deg,#173329,#10231c) !important;
     border-color: #355548 !important;
     box-shadow: 0 10px 26px rgba(0,0,0,.20) !important;
+  }
+  html[data-theme="system"] body .workspace-page .composer-shortcut {
+    background: #173329 !important;
+    color: #72ddb0 !important;
+    border: 1px solid #355548 !important;
+    box-shadow: none !important;
   }
 }
