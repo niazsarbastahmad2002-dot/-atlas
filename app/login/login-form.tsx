@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { AuthDeliverySelector } from "@/app/components/auth-delivery-selector";
+import { OtpCodeField } from "@/app/components/otp-code-field";
 import { createClient } from "@/lib/supabase/client";
 import { maskPhone, normalizeAuthPhone, normalizeOtpToken, toAsciiPhoneDigits } from "@/lib/phone-auth";
 import type { UiLocale } from "@/lib/i18n/ui";
@@ -37,13 +39,14 @@ const authCopy = {
     codeTitle: "Enter your verification code",
     codeHelp: "We sent a one-time code to",
     codeLabel: "Verification code",
+    paste: "Paste code",
     verify: "Verify and continue",
     verifying: "Verifying…",
     resend: "Resend code",
     another: "Use another number",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "Send code by",
+    delivery: "Choose where to receive the code",
     invalidPhone: "Enter a valid mobile number. Atlas stores verified numbers in international E.164 form, for example +9647501234567.",
     invalidCode: "Enter the verification code you received.",
     incorrectCode: "That code is incorrect or expired. Check the newest code and try again.",
@@ -69,13 +72,14 @@ const authCopy = {
     codeTitle: "کۆدی پشتڕاستکردنەوە بنووسە",
     codeHelp: "کۆدێکی یەکجارەمان نارد بۆ",
     codeLabel: "کۆدی پشتڕاستکردنەوە",
+    paste: "کۆد دابنێ",
     verify: "پشتڕاست بکەوە و بەردەوام بە",
     verifying: "پشتڕاست دەکرێتەوە…",
     resend: "کۆد دووبارە بنێرە",
     another: "ژمارەیەکی تر بەکاربهێنە",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "کۆد بنێرە بە",
+    delivery: "شوێنی وەرگرتنی کۆد هەڵبژێرە",
     invalidPhone: "ژمارەیەکی دروست بنووسە. Atlas ژمارەی پشتڕاستکراو بە شێوەی نێودەوڵەتی E.164 هەڵدەگرێت، وەک +9647501234567.",
     invalidCode: "کۆدی پشتڕاستکردنەوە بنووسە.",
     incorrectCode: "کۆدەکە هەڵەیە یان بەسەرچووە. نوێترین کۆد بەکاربهێنە.",
@@ -99,13 +103,14 @@ const authCopy = {
     codeTitle: "کۆدێ پشتڕاستکرنێ بنڤیسە",
     codeHelp: "مە کۆدەکێ ئێکجارە هنارت بۆ",
     codeLabel: "کۆدێ پشتڕاستکرنێ",
+    paste: "کۆد دابنێ",
     verify: "پشتڕاست بکە و بەردەوام بە",
     verifying: "دهێتە پشتڕاستکرن…",
     resend: "کۆد دووبارە بهنێرە",
     another: "ژمارەکا دی بکاربینە",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "کۆد بهنێرە ب",
+    delivery: "جهێ وەرگرتنا کۆدی هەلبژێرە",
     invalidPhone: "ژمارەکا دروست بنڤیسە. Atlas ژمارا پشتڕاستکری ب فۆرماتا نێودەولەتی E.164 پاراستن دکەت، وەک +9647501234567.",
     invalidCode: "کۆدێ پشتڕاستکرنێ بنڤیسە.",
     incorrectCode: "کۆد خەلەتە یان دەمێ وی بەسەرچووە. نووترین کۆد بکاربینە.",
@@ -129,13 +134,14 @@ const authCopy = {
     codeTitle: "أدخل رمز التحقق",
     codeHelp: "أرسلنا رمزاً لمرة واحدة إلى",
     codeLabel: "رمز التحقق",
+    paste: "لصق الرمز",
     verify: "تحقق واستمر",
     verifying: "جارٍ التحقق…",
     resend: "إعادة إرسال الرمز",
     another: "استخدام رقم آخر",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "إرسال الرمز عبر",
+    delivery: "اختار وين تريد يوصلك الرمز",
     invalidPhone: "أدخل رقم موبايل صحيح. Atlas يحفظ الرقم الموثق بصيغة E.164 الدولية، مثلاً +9647501234567.",
     invalidCode: "أدخل رمز التحقق الذي وصلك.",
     incorrectCode: "الرمز غير صحيح أو منتهي. استخدم أحدث رمز وحاول مرة ثانية.",
@@ -318,19 +324,14 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         <form className="stack-form login-email-form" onSubmit={verifyCode}>
           <div>
             <strong>{copy.codeTitle}</strong>
-            <p className="field-help">{copy.codeHelp} <span dir="ltr">{maskPhone(verifiedPhone)}</span>.</p>
+            <p className="field-help">{copy.codeHelp} <span className="auth-phone-value" dir="ltr" lang="en">{maskPhone(verifiedPhone)}</span>.</p>
           </div>
-          <label htmlFor="phone-otp">{copy.codeLabel}</label>
-          <input
+          <OtpCodeField
             id="phone-otp"
-            name="phone-otp"
-            inputMode="numeric"
-            autoComplete="one-time-code"
+            label={copy.codeLabel}
             value={token}
-            onChange={(event) => setToken(normalizeOtpToken(event.target.value))}
-            placeholder="123456"
-            dir="ltr"
-            required
+            onChange={setToken}
+            pasteLabel={copy.paste}
             autoFocus
           />
           <button className="button login-primary-action" type="submit" disabled={busy}>
@@ -376,14 +377,20 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
           onChange={(event) => setPhoneInput(event.target.value)}
           placeholder={countryMode === "international" ? copy.internationalPlaceholder : copy.phonePlaceholder}
           dir="ltr"
+          lang="en"
           required
         />
         {WHATSAPP_OTP_ENABLED ? (
-          <fieldset className="auth-delivery-options">
-            <legend>{copy.delivery}</legend>
-            <label><input type="radio" name="delivery" value="sms" checked={delivery === "sms"} onChange={() => setDelivery("sms")} /> {copy.sms}</label>
-            <label><input type="radio" name="delivery" value="whatsapp" checked={delivery === "whatsapp"} onChange={() => setDelivery("whatsapp")} /> {copy.whatsapp}</label>
-          </fieldset>
+          <AuthDeliverySelector
+            legend={copy.delivery}
+            value={delivery}
+            onChange={setDelivery}
+            smsLabel={copy.sms}
+            whatsappLabel={copy.whatsapp}
+            showSms
+            showWhatsApp
+            name="login-delivery"
+          />
         ) : null}
         <button className="button login-primary-action" type="submit" disabled={busy || quickBusy || cooldown > 0}>
           {busy ? copy.sending : cooldown > 0 ? `${cooldown}s` : copy.send}
