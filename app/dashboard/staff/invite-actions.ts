@@ -2,6 +2,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { isUuid } from "@/lib/appointments";
+import type { UiLocale } from "@/lib/i18n/ui";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { normalizeAuthPhone } from "@/lib/phone-auth";
 import { readClinicMetaWhatsAppConfig } from "@/lib/reminders/meta-clinic-config";
@@ -34,6 +35,26 @@ type InviteWhatsAppDelivery = {
   templateName: string;
   testMode: boolean;
 };
+
+function inviteSuccessMessage(locale: UiLocale) {
+  if (locale === "ku") return "بانگهێشتی پارێزراوی یەکجارە بە WhatsApp نێردرا. دوای 24 کاتژمێر بەسەر دەچێت.";
+  if (locale === "bd") return "بانگهێشتا پاراستی یا ئێکجارە ب WhatsApp هاتە هنارتن. پشتی 24 دەمژمێران دەمێ وێ بەسەر دچیت.";
+  if (locale === "ar") return "تم إرسال دعوة آمنة تستخدم مرة واحدة عبر WhatsApp. تنتهي بعد 24 ساعة.";
+  return "Secure one-use invitation sent on WhatsApp. It expires in 24 hours.";
+}
+
+function testInviteMessage(locale: UiLocale, clinicName: string, url: string) {
+  if (locale === "ku") {
+    return `بانگهێشتی Atlas بۆ چوونە ناو ${clinicName} وەک ستافی ڕیسێپشن:\n${url}\nئەم بانگهێشتە دوای 24 کاتژمێر بەسەر دەچێت.`;
+  }
+  if (locale === "bd") {
+    return `بانگهێشتا Atlas بۆ چوونە ناڤ ${clinicName} وەک ستافێ ڕیسێپشنێ:\n${url}\nدەمێ ڤێ بانگهێشتێ پشتی 24 دەمژمێران بەسەر دچیت.`;
+  }
+  if (locale === "ar") {
+    return `دعوة Atlas للانضمام إلى ${clinicName} كموظف استقبال:\n${url}\nتنتهي هذه الدعوة بعد 24 ساعة.`;
+  }
+  return `Atlas invitation to join ${clinicName} as reception staff:\n${url}\nThis invitation expires in 24 hours.`;
+}
 
 function atlasSiteUrl() {
   const metaTestPreview = process.env.ATLAS_WHATSAPP_MODE === ATLAS_WHATSAPP_META_TEST_MODE
@@ -176,7 +197,7 @@ export async function createReceptionistInviteLink(
   if (!sent.accepted && delivery.testMode) {
     sent = await sendWhatsAppTextMessage(
       recipientPhone,
-      `Atlas test invitation for ${clinic.name}: ${url}`,
+      testInviteMessage(inviteLocale, clinic.name, url),
       delivery.config,
     );
   }
@@ -213,7 +234,7 @@ export async function createReceptionistInviteLink(
 
   return {
     status: "success",
-    message: "Secure one-use invitation sent on WhatsApp. It expires in 24 hours.",
+    message: inviteSuccessMessage(inviteLocale),
     url,
   };
 }
