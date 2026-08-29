@@ -35,11 +35,12 @@ test("localized mobile digits reach E.164 normalization after country selection"
 });
 
 test("phone change requires provider verification of the new number", () => {
-  const manager = read("app/dashboard/settings/phone-number-manager.tsx");
+  const manager = read("app/dashboard/settings/phone-change-form.tsx");
 
   assert.match(manager, /auth\.updateUser\(\{ phone \}\)/);
   assert.match(manager, /auth\.verifyOtp\(\{/);
   assert.match(manager, /type: "phone_change"/);
+  assert.match(manager, /normalizeAuthPhone\(currentPhone\)/);
   assert.doesNotMatch(manager, /admin\.updateUserById/);
 });
 
