@@ -1,0 +1,31 @@
+name: Atlas Cloudflare Meta Test Preview Build
+
+on:
+  push:
+    branches: [infra/cloudflare-meta-test-preview]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-cloudflare-meta-test-preview
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install app dependencies
+        run: npm ci
+      - name: Run existing checks
+        run: npm run check
+      - name: Install Cloudflare adapter without changing lockfiles
+        run: npm install --no-save --package-lock=false @opennextjs/cloudflare wrangler
+      - name: Build OpenNext worker
+        run: npx opennextjs-cloudflare build
