@@ -1,7 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
+  readSupabaseSendSmsHookLocale,
   readSupabaseSendSmsHookValues,
+  type AtlasAuthLocale,
   type SupabaseSendSmsHookPayload,
   verifySupabaseSendSmsHook,
 } from "@/lib/auth/send-sms-hook";
@@ -66,6 +68,19 @@ function safePayloadShape(payload: SupabaseSendSmsHookPayload) {
     otpType: typeof otp,
     otpLength: typeof otp === "string" ? otp.trim().length : null,
   };
+}
+
+function testOtpMessage(locale: AtlasAuthLocale, otp: string) {
+  if (locale === "ku") {
+    return `کۆدی پشتڕاستکردنەوەی Atlas:\n\n${otp}\n\nئەم کۆدە زوو بەسەر دەچێت. کۆدەکە کۆپی بکە و لە Atlas دایبنێ.`;
+  }
+  if (locale === "bd") {
+    return `کۆدێ پشتڕاستکرنا Atlas:\n\n${otp}\n\nدەمێ ڤی کۆدی زوو بەسەر دچیت. کۆدی کۆپی بکە و د Atlas دا دابنێ.`;
+  }
+  if (locale === "ar") {
+    return `رمز التحقق لـ Atlas:\n\n${otp}\n\nالرمز ينتهي قريباً. انسخه والصقه داخل Atlas.`;
+  }
+  return `Atlas verification code:\n\n${otp}\n\nThis code expires soon. Copy it and paste it into Atlas.`;
 }
 
 export async function POST(request: Request) {
@@ -137,9 +152,10 @@ export async function POST(request: Request) {
   // as acceptance only; it is not treated as proof of handset delivery.
   if (!result.accepted && testMode) {
     const templateErrorCode = result.errorCode;
+    const locale = readSupabaseSendSmsHookLocale(payload);
     result = await sendWhatsAppTextMessage(
       values.phone,
-      `Atlas test verification code: ${values.otp}. It expires soon.`,
+      testOtpMessage(locale, values.otp),
       runtimeConfig.config,
     );
     console.info("Atlas test OTP fallback result", {
@@ -147,6 +163,7 @@ export async function POST(request: Request) {
       fallbackAccepted: result.accepted,
       providerMessageId: result.accepted ? result.providerMessageId : null,
       fallbackErrorCode: result.accepted ? null : result.errorCode,
+      locale,
     });
   }
 
