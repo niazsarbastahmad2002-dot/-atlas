@@ -34,7 +34,7 @@ test("first Atlas screen uses the same persisted language choice as login", () =
   assert.match(home, /text-align:start/);
   assert.match(picker, /fetch\("\/api\/ui-language"/);
   assert.match(picker, /atlas_home_language_changed/);
-  assert.match(layout, /<html lang=\{meta\.language\} dir=\{meta\.direction\}>/);
+  assert.match(layout, /<html lang=\{meta\.language\} dir=\{meta\.direction\}[^>]*>/);
 });
 
 test("Preview CSP includes both normal and isolated test Supabase origins", () => {
