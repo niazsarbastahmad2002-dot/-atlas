@@ -21,7 +21,7 @@
   opacity: .72;
 }
 
-/* Dashboard surfaces that still had their own light-only styling. */
+/* Dashboard surfaces that still had their own light-only styling. Keep these exact overrides last. */
 html[data-theme="dark"] body .workspace-page nav.schedule-date-shortcuts {
   background: #11231c !important;
   background-image: none !important;
