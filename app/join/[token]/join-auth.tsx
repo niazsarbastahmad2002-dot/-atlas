@@ -133,7 +133,7 @@ export function JoinClinicAuth({ token, locale }: {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
-  const finishPath = `/join/${encodeURIComponent(token)}/finish`;
+  const finishPath = `/join/${encodeURIComponent(token)}/finish?lang=${encodeURIComponent(locale)}`;
 
   async function passkey() {
     if (busy) return;
