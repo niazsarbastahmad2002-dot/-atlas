@@ -1,0 +1,321 @@
+:root[data-theme="light"] {
+  color-scheme: only light;
+}
+
+:root[data-theme="dark"] {
+  --ink: #f3faf6;
+  --ink-soft: #d2e0d9;
+  --muted: #a8bbb1;
+  --line: #315247;
+  --line-strong: #45695d;
+  --surface: #102c23;
+  --surface-soft: #16372c;
+  --canvas: #071b15;
+  --accent: #50c78e;
+  --accent-hover: #68d6a3;
+  --accent-soft: #194434;
+  --accent-faint: #123126;
+  --success: #7ee4b1;
+  --success-bg: #123c2c;
+  --danger: #ffaaa8;
+  --danger-bg: #492326;
+  --warning: #f6d685;
+  --warning-bg: #40361f;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.28), 0 8px 24px rgba(0,0,0,.20);
+  --shadow-md: 0 18px 50px rgba(0,0,0,.32);
+  color-scheme: dark;
+}
+
+:root[data-theme="system"] {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --ink: #f3faf6;
+    --ink-soft: #d2e0d9;
+    --muted: #a8bbb1;
+    --line: #315247;
+    --line-strong: #45695d;
+    --surface: #102c23;
+    --surface-soft: #16372c;
+    --canvas: #071b15;
+    --accent: #50c78e;
+    --accent-hover: #68d6a3;
+    --accent-soft: #194434;
+    --accent-faint: #123126;
+    --success: #7ee4b1;
+    --success-bg: #123c2c;
+    --danger: #ffaaa8;
+    --danger-bg: #492326;
+    --warning: #f6d685;
+    --warning-bg: #40361f;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.28), 0 8px 24px rgba(0,0,0,.20);
+    --shadow-md: 0 18px 50px rgba(0,0,0,.32);
+  }
+}
+
+/* Explicit light means Atlas stays light even when a browser tries to auto-darken pages. */
+:root[data-theme="light"] html,
+:root[data-theme="light"] body {
+  background: #f4f7f5;
+}
+
+/* Shared appearance control spacing. */
+.atlas-appearance-control {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* Phone numbers are always LTR internally, but sit at the logical start of the row. */
+.atlas-phone-display,
+.account-email.atlas-phone-display {
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+  direction: ltr;
+  unicode-bidi: isolate;
+  justify-self: start;
+  text-align: left;
+  color: var(--ink) !important;
+  text-decoration: none !important;
+  letter-spacing: .015em;
+  font-variant-numeric: tabular-nums;
+}
+
+.account-email,
+.account-email:link,
+.account-email:any-link {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+/* Safari/browser telephone auto-link cleanup. */
+a[x-apple-data-detectors],
+a[href^="tel:"] {
+  color: inherit;
+  text-decoration: none;
+  font: inherit;
+}
+
+/* -------- Dark theme -------- */
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .app-shell,
+:root[data-theme="dark"] .app-content,
+:root[data-theme="dark"] .workspace-page,
+:root[data-theme="dark"] .settings-page,
+:root[data-theme="dark"] .center-page {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] :is(
+  .app-topbar,
+  .app-bottom-nav,
+  .panel,
+  .stat,
+  .appointment-row,
+  .settings-card,
+  .auth-card,
+  .login-card,
+  .consent-card,
+  .doctor-settings-row,
+  .settings-readonly-clinic,
+  .settings-link,
+  .clinic-switcher,
+  .schedule-card,
+  .settings-disclosure,
+  .appointment-composer
+) {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .app-topbar {
+  background: rgba(16,44,35,.96);
+  border-bottom-color: var(--line);
+}
+
+:root[data-theme="dark"] .app-bottom-nav {
+  background: rgba(16,44,35,.98);
+  border-top-color: var(--line);
+  box-shadow: 0 -10px 30px rgba(0,0,0,.24);
+}
+
+:root[data-theme="dark"] :is(input, select, textarea) {
+  color: var(--ink) !important;
+  background: #0b241b !important;
+  border-color: var(--line-strong) !important;
+  -webkit-text-fill-color: var(--ink);
+}
+
+:root[data-theme="dark"] :is(input, textarea)::placeholder {
+  color: #8fa69b;
+  -webkit-text-fill-color: #8fa69b;
+  opacity: 1;
+}
+
+:root[data-theme="dark"] select option {
+  color: var(--ink);
+  background: #0b241b;
+}
+
+/* Secondary and custom controls must remain dark instead of retaining hard-coded white surfaces. */
+:root[data-theme="dark"] :is(
+  .button-ghost,
+  .inline-mode-button,
+  .count-pill,
+  .reminder-note,
+  .time-choice,
+  .time-option,
+  .slot-button,
+  .date-button,
+  .date-nav-button,
+  .segmented-control button,
+  .appointment-mode button,
+  .calendar-day,
+  .compact-actions button:not(.button),
+  button[aria-pressed]
+) {
+  background: #183b2f !important;
+  color: var(--ink-soft) !important;
+  border-color: var(--line-strong) !important;
+}
+
+:root[data-theme="dark"] :is(
+  .button-ghost:hover,
+  .inline-mode-button:hover,
+  .time-choice:hover,
+  .time-option:hover,
+  .slot-button:hover,
+  .date-button:hover,
+  .date-nav-button:hover,
+  button[aria-pressed="true"]
+) {
+  background: #22513f !important;
+  color: #ffffff !important;
+}
+
+/* Catch remaining native-looking white buttons from older appointment UI without changing Atlas primary buttons. */
+:root[data-theme="dark"] button:not(.button):not(.settings-export-button) {
+  color: var(--ink-soft);
+  border-color: var(--line-strong);
+}
+
+:root[data-theme="dark"] :is(
+  .appointment-row,
+  .settings-link,
+  .doctor-settings-row,
+  .settings-readonly-clinic,
+  .clinic-switcher,
+  .panel,
+  .settings-card
+) {
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme="dark"] :is(
+  h1,h2,h3,h4,strong,label,
+  .app-brand,
+  .patient-cell strong,
+  .appointment-details dd,
+  .settings-card-heading h2,
+  .settings-card-heading h3,
+  .workspace-title-block h1,
+  .panel-heading h1,
+  .panel-heading h2,
+  .settings-disclosure > summary
+) {
+  color: var(--ink) !important;
+}
+
+:root[data-theme="dark"] :is(
+  .quiet,
+  .field-help,
+  .workspace-title-block p,
+  .panel-subtitle,
+  .patient-cell span,
+  .stat span,
+  .settings-card-heading p,
+  .settings-readonly-clinic span,
+  .settings-readonly-clinic small,
+  .settings-export-copy small,
+  .composer-privacy
+) {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] :is(.eyebrow, .app-bottom-nav > a.is-active, .icon-button.is-active) {
+  color: #63d69c !important;
+}
+
+:root[data-theme="dark"] .status-reminder {
+  color: var(--ink-soft);
+  background: #203f34;
+}
+
+:root[data-theme="dark"] .app-bottom-add-circle {
+  border-color: var(--canvas);
+}
+
+:root[data-theme="dark"] hr,
+:root[data-theme="dark"] .settings-disclosure,
+:root[data-theme="dark"] .settings-account-signout {
+  border-color: var(--line) !important;
+}
+
+/* -------- System theme when the device itself is dark -------- */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] body,
+  :root[data-theme="system"] .app-shell,
+  :root[data-theme="system"] .app-content,
+  :root[data-theme="system"] .workspace-page,
+  :root[data-theme="system"] .settings-page,
+  :root[data-theme="system"] .center-page {
+    background: var(--canvas);
+    color: var(--ink);
+  }
+
+  :root[data-theme="system"] :is(
+    .app-topbar,.app-bottom-nav,.panel,.stat,.appointment-row,.settings-card,.auth-card,.login-card,
+    .consent-card,.doctor-settings-row,.settings-readonly-clinic,.settings-link,.clinic-switcher,.schedule-card,
+    .settings-disclosure,.appointment-composer
+  ) {
+    background-color: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+
+  :root[data-theme="system"] :is(input, select, textarea) {
+    color: var(--ink) !important;
+    background: #0b241b !important;
+    border-color: var(--line-strong) !important;
+    -webkit-text-fill-color: var(--ink);
+  }
+
+  :root[data-theme="system"] :is(input, textarea)::placeholder {
+    color: #8fa69b;
+    -webkit-text-fill-color: #8fa69b;
+    opacity: 1;
+  }
+
+  :root[data-theme="system"] :is(
+    .button-ghost,.inline-mode-button,.count-pill,.reminder-note,.time-choice,.time-option,.slot-button,
+    .date-button,.date-nav-button,.segmented-control button,.appointment-mode button,.calendar-day,
+    .compact-actions button:not(.button),button[aria-pressed]
+  ) {
+    background: #183b2f !important;
+    color: var(--ink-soft) !important;
+    border-color: var(--line-strong) !important;
+  }
+
+  :root[data-theme="system"] :is(h1,h2,h3,h4,strong,label,.app-brand,.patient-cell strong,.appointment-details dd,.settings-disclosure > summary) {
+    color: var(--ink) !important;
+  }
+
+  :root[data-theme="system"] :is(.quiet,.field-help,.workspace-title-block p,.panel-subtitle,.patient-cell span,.stat span,.settings-card-heading p) {
+    color: var(--muted) !important;
+  }
+}

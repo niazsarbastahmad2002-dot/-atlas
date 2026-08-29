@@ -35,12 +35,13 @@ test("localized mobile digits reach E.164 normalization after country selection"
 });
 
 test("phone change requires provider verification of the new number", () => {
-  const manager = read("app/dashboard/settings/phone-number-manager.tsx");
+  const form = read("app/dashboard/settings/phone-change-form.tsx");
 
-  assert.match(manager, /auth\.updateUser\(\{ phone \}\)/);
-  assert.match(manager, /auth\.verifyOtp\(\{/);
-  assert.match(manager, /type: "phone_change"/);
-  assert.doesNotMatch(manager, /admin\.updateUserById/);
+  assert.match(form, /auth\.updateUser\(\{ phone \}\)/);
+  assert.match(form, /auth\.verifyOtp\(\{/);
+  assert.match(form, /type: "phone_change"/);
+  assert.match(form, /phone === normalizedCurrentPhone/);
+  assert.doesNotMatch(form, /admin\.updateUserById/);
 });
 
 test("normal staff provisioning cannot create email auth users anymore", () => {
