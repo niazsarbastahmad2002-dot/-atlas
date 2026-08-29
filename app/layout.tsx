@@ -4,6 +4,7 @@ import { AtlasTimePickerPolish } from "@/app/components/atlas-time-picker-polish
 import { ContinuityCacheGuard } from "@/app/components/continuity-cache-guard";
 import { KurdishSecretaryTerminology } from "@/app/components/kurdish-secretary-terminology";
 import { LivePageRefresh } from "@/app/components/live-page-refresh";
+import { PhoneDisplayPolish } from "@/app/components/phone-display-polish";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { getUiTheme } from "@/lib/i18n/ui-theme-server";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
@@ -60,6 +61,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <AtlasAnalytics />
         <AtlasTimePickerPolish locale={locale} />
         <KurdishSecretaryTerminology locale={locale} />
+        <PhoneDisplayPolish />
       </body>
     </html>
   );
