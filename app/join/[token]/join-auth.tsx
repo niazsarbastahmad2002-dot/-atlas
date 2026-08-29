@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { AuthDeliverySelector } from "@/app/components/auth-delivery-selector";
+import { OtpCodeField } from "@/app/components/otp-code-field";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { maskPhone, normalizeAuthPhone, normalizeOtpToken } from "@/lib/phone-auth";
 import { createClient } from "@/lib/supabase/client";
@@ -18,6 +20,7 @@ const copy = {
     send: "Send verification code",
     sending: "Sending code…",
     code: "Verification code",
+    paste: "Paste code",
     sent: "We sent a one-time code to",
     verify: "Verify and join clinic",
     verifying: "Verifying…",
@@ -25,7 +28,7 @@ const copy = {
     another: "Use another number",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "Send code by",
+    delivery: "Choose where to receive the code",
     passkey: "Use saved Face ID / passkey",
     invalidPhone: "Enter a valid mobile number, for example +9647501234567.",
     invalidCode: "Enter the verification code you received.",
@@ -38,6 +41,7 @@ const copy = {
     send: "کۆدی پشتڕاستکردنەوە بنێرە",
     sending: "کۆد دەنێردرێت…",
     code: "کۆدی پشتڕاستکردنەوە",
+    paste: "کۆد دابنێ",
     sent: "کۆدێکی یەکجارەمان نارد بۆ",
     verify: "پشتڕاست بکەوە و بچۆ ناو کلینیک",
     verifying: "پشتڕاست دەکرێتەوە…",
@@ -45,7 +49,7 @@ const copy = {
     another: "ژمارەیەکی تر بەکاربهێنە",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "کۆد بنێرە بە",
+    delivery: "شوێنی وەرگرتنی کۆد هەڵبژێرە",
     passkey: "Face ID / passkey ی پارێزراو بەکاربهێنە",
     invalidPhone: "ژمارەیەکی دروست بنووسە، وەک +9647501234567.",
     invalidCode: "کۆدی پشتڕاستکردنەوە بنووسە.",
@@ -58,6 +62,7 @@ const copy = {
     send: "کۆدێ پشتڕاستکرنێ بهنێرە",
     sending: "کۆد دهێتە هنارتن…",
     code: "کۆدێ پشتڕاستکرنێ",
+    paste: "کۆد دابنێ",
     sent: "مە کۆدەکێ ئێکجارە هنارت بۆ",
     verify: "پشتڕاست بکە و بچۆ ناڤ کلینیکێ",
     verifying: "دهێتە پشتڕاستکرن…",
@@ -65,7 +70,7 @@ const copy = {
     another: "ژمارەکا دی بکاربینە",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "کۆد بهنێرە ب",
+    delivery: "جهێ وەرگرتنا کۆدی هەلبژێرە",
     passkey: "Face ID / passkey یا پاراستی بکاربینە",
     invalidPhone: "ژمارەکا دروست بنڤیسە، وەک +9647501234567.",
     invalidCode: "کۆدێ پشتڕاستکرنێ بنڤیسە.",
@@ -78,6 +83,7 @@ const copy = {
     send: "إرسال رمز التحقق",
     sending: "جارٍ إرسال الرمز…",
     code: "رمز التحقق",
+    paste: "لصق الرمز",
     sent: "أرسلنا رمزاً لمرة واحدة إلى",
     verify: "تحقق وانضم للعيادة",
     verifying: "جارٍ التحقق…",
@@ -85,7 +91,7 @@ const copy = {
     another: "استخدام رقم آخر",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "إرسال الرمز عبر",
+    delivery: "اختار وين تريد يوصلك الرمز",
     passkey: "استخدام Face ID / Passkey محفوظ",
     invalidPhone: "أدخل رقم موبايل صحيح، مثلاً +9647501234567.",
     invalidCode: "أدخل رمز التحقق الذي وصلك.",
@@ -132,7 +138,7 @@ export function JoinClinicAuth({ token, locale }: {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
-  const finishPath = `/join/${encodeURIComponent(token)}/finish`;
+  const finishPath = `/join/${encodeURIComponent(token)}/finish?lang=${encodeURIComponent(locale)}`;
 
   async function passkey() {
     if (busy) return;
@@ -176,6 +182,7 @@ export function JoinClinicAuth({ token, locale }: {
         phone: normalized,
         options: {
           shouldCreateUser: PHONE_SIGNUP_ENABLED,
+          data: { atlas_locale: locale },
           ...(delivery === "whatsapp" ? { channel: "whatsapp" as const } : {}),
         },
       });
@@ -218,6 +225,7 @@ export function JoinClinicAuth({ token, locale }: {
         setError(t.failed);
         return;
       }
+      void supabase.auth.updateUser({ data: { atlas_locale: locale } });
       window.location.replace(finishPath);
     } catch {
       setError(t.failed);
@@ -239,17 +247,23 @@ export function JoinClinicAuth({ token, locale }: {
             inputMode="tel"
             autoComplete="tel"
             dir="ltr"
+            lang="en"
             placeholder="+9647501234567"
             value={phoneInput}
             onChange={(event) => setPhoneInput(event.target.value)}
             required
           />
           {WHATSAPP_OTP_ENABLED ? (
-            <fieldset className="auth-delivery-options">
-              <legend>{t.delivery}</legend>
-              <label><input type="radio" name="delivery" value="sms" checked={delivery === "sms"} onChange={() => setDelivery("sms")} /> {t.sms}</label>
-              <label><input type="radio" name="delivery" value="whatsapp" checked={delivery === "whatsapp"} onChange={() => setDelivery("whatsapp")} /> {t.whatsapp}</label>
-            </fieldset>
+            <AuthDeliverySelector
+              legend={t.delivery}
+              value={delivery}
+              onChange={setDelivery}
+              smsLabel={t.sms}
+              whatsappLabel={t.whatsapp}
+              showSms
+              showWhatsApp
+              name="join-delivery"
+            />
           ) : null}
           <button className="button" type="submit" disabled={busy || cooldown > 0}>
             {busy ? t.sending : cooldown > 0 ? `${cooldown}s` : t.send}
@@ -257,17 +271,13 @@ export function JoinClinicAuth({ token, locale }: {
         </form>
       ) : (
         <form className="settings-form" onSubmit={verifyCode}>
-          <p className="field-help">{t.sent} <span dir="ltr">{maskPhone(phone)}</span>.</p>
-          <label htmlFor="join-otp">{t.code}</label>
-          <input
+          <p className="field-help">{t.sent} <span className="auth-phone-value" dir="ltr" lang="en">{maskPhone(phone)}</span>.</p>
+          <OtpCodeField
             id="join-otp"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            dir="ltr"
-            placeholder="123456"
+            label={t.code}
             value={otp}
-            onChange={(event) => setOtp(normalizeOtpToken(event.target.value))}
-            required
+            onChange={setOtp}
+            pasteLabel={t.paste}
             autoFocus
           />
           <button className="button" type="submit" disabled={busy}>{busy ? t.verifying : t.verify}</button>
