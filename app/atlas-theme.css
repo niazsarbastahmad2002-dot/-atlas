@@ -1,0 +1,215 @@
+:root[data-theme="light"] {
+  color-scheme: only light;
+}
+
+:root[data-theme="dark"] {
+  --ink: #edf7f1;
+  --ink-soft: #c9d8d0;
+  --muted: #95a89e;
+  --line: #29443a;
+  --line-strong: #365448;
+  --surface: #102a22;
+  --surface-soft: #153229;
+  --canvas: #081a15;
+  --accent: #45b982;
+  --accent-hover: #58c993;
+  --accent-soft: #163b2e;
+  --accent-faint: #102d23;
+  --success: #6fdda5;
+  --success-bg: #103728;
+  --danger: #ff9d9d;
+  --danger-bg: #431f22;
+  --warning: #f4ce74;
+  --warning-bg: #3b321d;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18);
+  --shadow-md: 0 18px 50px rgba(0,0,0,.28);
+  color-scheme: dark;
+}
+
+:root[data-theme="system"] {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --ink: #edf7f1;
+    --ink-soft: #c9d8d0;
+    --muted: #95a89e;
+    --line: #29443a;
+    --line-strong: #365448;
+    --surface: #102a22;
+    --surface-soft: #153229;
+    --canvas: #081a15;
+    --accent: #45b982;
+    --accent-hover: #58c993;
+    --accent-soft: #163b2e;
+    --accent-faint: #102d23;
+    --success: #6fdda5;
+    --success-bg: #103728;
+    --danger: #ff9d9d;
+    --danger-bg: #431f22;
+    --warning: #f4ce74;
+    --warning-bg: #3b321d;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18);
+    --shadow-md: 0 18px 50px rgba(0,0,0,.28);
+  }
+}
+
+:root[data-theme="dark"] html,
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .app-shell,
+:root[data-theme="dark"] .app-content {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] html,
+:root[data-theme="light"] body {
+  background: #f4f7f5;
+}
+
+:root[data-theme="dark"] .app-topbar,
+:root[data-theme="dark"] .app-bottom-nav,
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] .stat,
+:root[data-theme="dark"] .appointment-row,
+:root[data-theme="dark"] .settings-card,
+:root[data-theme="dark"] .auth-card,
+:root[data-theme="dark"] .login-card,
+:root[data-theme="dark"] .consent-card,
+:root[data-theme="dark"] .doctor-settings-row,
+:root[data-theme="dark"] .settings-readonly-clinic,
+:root[data-theme="dark"] .settings-link,
+:root[data-theme="dark"] .clinic-switcher,
+:root[data-theme="dark"] .schedule-card {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .app-topbar {
+  background: rgba(16, 42, 34, .92);
+  border-bottom-color: var(--line);
+}
+
+:root[data-theme="dark"] .app-bottom-nav {
+  background: rgba(16, 42, 34, .96);
+  border-top-color: var(--line);
+  box-shadow: 0 -10px 30px rgba(0,0,0,.20);
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  color: var(--ink);
+  background: #0c211a;
+  border-color: #365448;
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: #789086;
+}
+
+:root[data-theme="dark"] .button-ghost,
+:root[data-theme="dark"] .inline-mode-button,
+:root[data-theme="dark"] .count-pill,
+:root[data-theme="dark"] .reminder-note {
+  background: #19372d;
+  color: var(--ink-soft);
+}
+
+:root[data-theme="dark"] .button-ghost:hover,
+:root[data-theme="dark"] .inline-mode-button:hover {
+  background: #21483a;
+}
+
+:root[data-theme="dark"] .appointment-row,
+:root[data-theme="dark"] .settings-link,
+:root[data-theme="dark"] .doctor-settings-row {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .appointment-details dd,
+:root[data-theme="dark"] label,
+:root[data-theme="dark"] .app-brand,
+:root[data-theme="dark"] .patient-cell strong,
+:root[data-theme="dark"] .settings-card h2,
+:root[data-theme="dark"] .settings-card h3 {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .quiet,
+:root[data-theme="dark"] .field-help,
+:root[data-theme="dark"] .workspace-title-block p,
+:root[data-theme="dark"] .panel-subtitle,
+:root[data-theme="dark"] .patient-cell span,
+:root[data-theme="dark"] .stat span {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .status-reminder {
+  color: var(--ink-soft);
+  background: #203a31;
+}
+
+:root[data-theme="dark"] .app-bottom-add-circle {
+  border-color: var(--canvas);
+}
+
+:root[data-theme="dark"] .atlas-appearance-control {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+:root[data-theme="light"] .atlas-appearance-control,
+:root[data-theme="system"] .atlas-appearance-control {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] body,
+  :root[data-theme="system"] .app-shell,
+  :root[data-theme="system"] .app-content {
+    background: var(--canvas);
+    color: var(--ink);
+  }
+
+  :root[data-theme="system"] .app-topbar,
+  :root[data-theme="system"] .app-bottom-nav,
+  :root[data-theme="system"] .panel,
+  :root[data-theme="system"] .stat,
+  :root[data-theme="system"] .appointment-row,
+  :root[data-theme="system"] .settings-card,
+  :root[data-theme="system"] .auth-card,
+  :root[data-theme="system"] .login-card,
+  :root[data-theme="system"] .consent-card,
+  :root[data-theme="system"] .doctor-settings-row,
+  :root[data-theme="system"] .settings-readonly-clinic,
+  :root[data-theme="system"] .settings-link,
+  :root[data-theme="system"] .clinic-switcher,
+  :root[data-theme="system"] .schedule-card {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+
+  :root[data-theme="system"] input,
+  :root[data-theme="system"] select,
+  :root[data-theme="system"] textarea {
+    color: var(--ink);
+    background: #0c211a;
+    border-color: #365448;
+  }
+
+  :root[data-theme="system"] .button-ghost,
+  :root[data-theme="system"] .inline-mode-button,
+  :root[data-theme="system"] .count-pill,
+  :root[data-theme="system"] .reminder-note {
+    background: #19372d;
+    color: var(--ink-soft);
+  }
+}
