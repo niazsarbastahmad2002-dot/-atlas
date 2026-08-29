@@ -25,6 +25,7 @@ import "./atlas-theme.css";
 import "./atlas-account-polish.css";
 import "./atlas-dark-v2.css";
 import "./atlas-dark-guards.css";
+import "./atlas-auth-polish.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
