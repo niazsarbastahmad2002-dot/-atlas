@@ -21,6 +21,7 @@ const copy = {
     send: "Create and send on WhatsApp",
     creating: "Creating…",
     unavailable: "Secure direct WhatsApp invitations are not enabled in this environment yet.",
+    checking: "Checking WhatsApp sender…",
     copy: "Copy link",
     copied: "Copied",
     share: "Share",
@@ -37,6 +38,7 @@ const copy = {
     send: "دروست بکە و بە WhatsApp بنێرە",
     creating: "دروست دەکرێت…",
     unavailable: "بانگهێشتی پارێزراوی ڕاستەوخۆی WhatsApp هێشتا لەم ژینگەیە چالاک نییە.",
+    checking: "نێرەری WhatsApp پشکنین دەکرێت…",
     copy: "بەستەر کۆپی بکە",
     copied: "کۆپی کرا",
     share: "بنێرە",
@@ -53,6 +55,7 @@ const copy = {
     send: "دروست بکە و ب WhatsApp بهنێرە",
     creating: "دهێتە دروستکرن…",
     unavailable: "بانگهێشتا پاراستی یا ڕاستەوخۆ ب WhatsApp هێشتا د ڤێ ژینگەهێ دا چالاک نینە.",
+    checking: "نێرەرێ WhatsApp دهێتە پشکنین…",
     copy: "لینکێ کۆپی بکە",
     copied: "هاتە کۆپیکرن",
     share: "بهنێرە",
@@ -69,6 +72,7 @@ const copy = {
     send: "إنشاء وإرسال عبر WhatsApp",
     creating: "جارٍ الإنشاء…",
     unavailable: "دعوات WhatsApp المباشرة والآمنة غير مفعلة في هذه البيئة بعد.",
+    checking: "جارٍ التحقق من مُرسل WhatsApp…",
     copy: "نسخ الرابط",
     copied: "تم النسخ",
     share: "مشاركة",
@@ -84,6 +88,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
   const [state, action, pending] = useActionState(createReceptionistInviteLink, initialState);
   const [copied, setCopied] = useState(false);
   const [directWhatsAppInvites, setDirectWhatsAppInvites] = useState(STATIC_DIRECT_WHATSAPP_INVITES);
+  const [transportChecked, setTransportChecked] = useState(STATIC_DIRECT_WHATSAPP_INVITES);
 
   useEffect(() => {
     if (STATIC_DIRECT_WHATSAPP_INVITES) return;
@@ -91,9 +96,13 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
     void fetch("/api/whatsapp/test/health", { cache: "no-store" })
       .then(async (response) => response.ok ? response.json() as Promise<{ ok?: unknown }> : null)
       .then((body) => {
-        if (active && body?.ok === true) setDirectWhatsAppInvites(true);
+        if (!active) return;
+        if (body?.ok === true) setDirectWhatsAppInvites(true);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (active) setTransportChecked(true);
+      });
     return () => { active = false; };
   }, []);
 
@@ -130,24 +139,23 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
           <option value="" disabled>{t.choose}</option>
           {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
         </select>
-        {directWhatsAppInvites ? (
-          <>
-            <label htmlFor="invite_recipient_phone">{t.phone}</label>
-            <input
-              id="invite_recipient_phone"
-              name="recipient_phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              dir="ltr"
-              placeholder={t.phonePlaceholder}
-              required
-            />
-            <div className="field-help">{t.phoneHelp}</div>
-          </>
-        ) : (
-          <div className="field-help">{t.unavailable}</div>
-        )}
+
+        <label htmlFor="invite_recipient_phone">{t.phone}</label>
+        <input
+          id="invite_recipient_phone"
+          name="recipient_phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          dir="ltr"
+          placeholder={t.phonePlaceholder}
+          required
+          aria-describedby="invite_recipient_phone_help"
+        />
+        <div id="invite_recipient_phone_help" className="field-help">
+          {!transportChecked ? t.checking : directWhatsAppInvites ? t.phoneHelp : t.unavailable}
+        </div>
+
         <button
           className="button"
           type="submit"
