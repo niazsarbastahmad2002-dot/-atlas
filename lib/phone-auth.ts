@@ -19,6 +19,10 @@ export function normalizeAuthPhone(value: string): string | null {
   // Atlas is Iraq-first: accept the familiar local mobile forms as a convenience.
   if (/^07\d{9}$/.test(normalized)) normalized = `+964${normalized.slice(1)}`;
   else if (/^7\d{9}$/.test(normalized)) normalized = `+964${normalized}`;
+  // Supabase Auth may return a verified phone as digits-only E.164 (for example
+  // 9647501234567). Treat that as the same international number rather than
+  // rejecting a phone that Supabase has already verified.
+  else if (/^[1-9]\d{7,14}$/.test(normalized)) normalized = `+${normalized}`;
 
   if (!/^\+[1-9]\d{7,14}$/.test(normalized)) return null;
   return normalized;
