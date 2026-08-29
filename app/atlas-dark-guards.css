@@ -97,6 +97,22 @@ html[data-theme="dark"] body .workspace-page .composer-shortcut {
   box-shadow: none !important;
 }
 
+/* Doctor-tab count bubbles must remain readable when a doctor is selected. */
+html[data-theme="dark"] body .workspace-page .doctor-schedule-tabs a.is-selected > span {
+  background: #10271f !important;
+  color: #f7fffb !important;
+  -webkit-text-fill-color: #f7fffb !important;
+  border: 1px solid #355548 !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] body .workspace-page .doctor-schedule-tabs a:not(.is-selected) > span {
+  background: #13271f !important;
+  color: #d1ddd7 !important;
+  -webkit-text-fill-color: #d1ddd7 !important;
+  border: 1px solid #2a4338 !important;
+  box-shadow: none !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] :is(.appointment-composer,.schedule-card,.settings-card,.atlas-ai-card) button:not(.button):not(.atlas-ai-send-button):not(.atlas-ai-live-button) {
     background: #173329 !important;
@@ -134,6 +150,20 @@ html[data-theme="dark"] body .workspace-page .composer-shortcut {
     background: #173329 !important;
     color: #72ddb0 !important;
     border: 1px solid #355548 !important;
+    box-shadow: none !important;
+  }
+  html[data-theme="system"] body .workspace-page .doctor-schedule-tabs a.is-selected > span {
+    background: #10271f !important;
+    color: #f7fffb !important;
+    -webkit-text-fill-color: #f7fffb !important;
+    border: 1px solid #355548 !important;
+    box-shadow: none !important;
+  }
+  html[data-theme="system"] body .workspace-page .doctor-schedule-tabs a:not(.is-selected) > span {
+    background: #13271f !important;
+    color: #d1ddd7 !important;
+    -webkit-text-fill-color: #d1ddd7 !important;
+    border: 1px solid #2a4338 !important;
     box-shadow: none !important;
   }
 }
