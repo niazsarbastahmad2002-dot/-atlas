@@ -10,6 +10,7 @@ test("normalizes Iraq-first and international authentication phone numbers", () 
   assert.equal(normalizeAuthPhone("7501234567"), "+9647501234567");
   assert.equal(normalizeAuthPhone("00964-750-123-4567"), "+9647501234567");
   assert.equal(normalizeAuthPhone("+964 750 123 4567"), "+9647501234567");
+  assert.equal(normalizeAuthPhone("9647501234567"), "+9647501234567");
   assert.equal(normalizeAuthPhone("٠٧٥٠ ١٢٣ ٤٥٦٧"), "+9647501234567");
   assert.equal(normalizeAuthPhone("+1 (415) 555-2671"), "+14155552671");
 });
@@ -53,13 +54,13 @@ test("WhatsApp OTP is feature-gated and never presented as a fake default", () =
 test("existing email-era users migrate without creating replacement auth users", () => {
   const legacy = read("app/login/legacy/legacy-login-form.tsx");
   const legacyPage = read("app/login/legacy/page.tsx");
-  const phoneManager = read("app/dashboard/settings/phone-number-manager.tsx");
+  const phoneChange = read("app/dashboard/settings/phone-change-form.tsx");
 
   assert.match(legacy, /shouldCreateUser: false/);
   assert.match(legacyPage, /ATLAS_LEGACY_AUTH_ENABLED/);
-  assert.match(phoneManager, /auth\.updateUser\(\{ phone \}\)/);
-  assert.match(phoneManager, /type: "phone_change"/);
-  assert.doesNotMatch(phoneManager, /admin\.createUser|signUp\(/);
+  assert.match(phoneChange, /auth\.updateUser\(\{ phone \}\)/);
+  assert.match(phoneChange, /type: "phone_change"/);
+  assert.doesNotMatch(phoneChange, /admin\.createUser|signUp\(/);
 });
 
 test("authentication and clinic membership remain separate concepts", () => {

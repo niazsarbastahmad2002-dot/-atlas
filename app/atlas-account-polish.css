@@ -1,0 +1,4 @@
+/* Keep the account card focused: the verified phone is shown once, formatted, in the sign-in-phone control below. */
+.settings-card .account-email {
+  display: none;
+}

@@ -5,6 +5,7 @@ import { ContinuityCacheGuard } from "@/app/components/continuity-cache-guard";
 import { KurdishSecretaryTerminology } from "@/app/components/kurdish-secretary-terminology";
 import { LivePageRefresh } from "@/app/components/live-page-refresh";
 import { getUiLocale } from "@/lib/i18n/ui-server";
+import { getUiTheme } from "@/lib/i18n/ui-theme-server";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
 import "./globals.css";
 import "./polish.css";
@@ -20,6 +21,8 @@ import "./atlas-readability.css";
 import "./patient-clarity.css";
 import "./atlas-quality-design.css";
 import "./atlas-simple-core.css";
+import "./atlas-theme.css";
+import "./atlas-account-polish.css";
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
@@ -46,11 +49,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const locale = await getUiLocale();
+  const [locale, theme] = await Promise.all([getUiLocale(), getUiTheme()]);
   const meta = uiLocaleMeta[locale];
 
   return (
-    <html lang={meta.language} dir={meta.direction}>
+    <html lang={meta.language} dir={meta.direction} data-theme={theme}>
       <body>
         {children}
         <ContinuityCacheGuard />
