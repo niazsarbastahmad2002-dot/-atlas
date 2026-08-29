@@ -14,6 +14,7 @@ export function PhoneDisplayPolish() {
       if (formatted !== value) node.textContent = formatted;
       node.classList.add("atlas-phone-display");
       node.setAttribute("dir", "ltr");
+      node.setAttribute("lang", "en");
     });
   }, []);
 
