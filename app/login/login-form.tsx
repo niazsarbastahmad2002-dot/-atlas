@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { AuthDeliverySelector } from "@/app/components/auth-delivery-selector";
+import { OtpCodeField } from "@/app/components/otp-code-field";
 import { createClient } from "@/lib/supabase/client";
 import { maskPhone, normalizeAuthPhone, normalizeOtpToken, toAsciiPhoneDigits } from "@/lib/phone-auth";
 import type { UiLocale } from "@/lib/i18n/ui";
@@ -38,14 +40,15 @@ const authCopy = {
     codeTitle: "Enter your verification code",
     codeHelp: "We sent a one-time code to",
     codeLabel: "Verification code",
+    paste: "Paste code",
     verify: "Verify and continue",
     verifying: "Verifying…",
     resend: "Resend code",
     another: "Use another number",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "Send code by",
-    deliveryFixed: "Verification code will be sent by WhatsApp",
+    delivery: "Choose where to receive the code",
+    deliveryFixed: "Verification code by WhatsApp",
     invalidPhone: "Enter a valid mobile number. Atlas stores verified numbers in international E.164 form, for example +9647501234567.",
     invalidCode: "Enter the verification code you received.",
     incorrectCode: "That code is incorrect or expired. Check the newest code and try again.",
@@ -71,14 +74,15 @@ const authCopy = {
     codeTitle: "کۆدی پشتڕاستکردنەوە بنووسە",
     codeHelp: "کۆدێکی یەکجارەمان نارد بۆ",
     codeLabel: "کۆدی پشتڕاستکردنەوە",
+    paste: "کۆد دابنێ",
     verify: "پشتڕاست بکەوە و بەردەوام بە",
     verifying: "پشتڕاست دەکرێتەوە…",
     resend: "کۆد دووبارە بنێرە",
     another: "ژمارەیەکی تر بەکاربهێنە",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "کۆد بنێرە بە",
-    deliveryFixed: "کۆدی پشتڕاستکردنەوە بە WhatsApp دەنێردرێت",
+    delivery: "شوێنی وەرگرتنی کۆد هەڵبژێرە",
+    deliveryFixed: "کۆدی پشتڕاستکردنەوە بە WhatsApp",
     invalidPhone: "ژمارەیەکی دروست بنووسە. Atlas ژمارەی پشتڕاستکراو بە شێوەی نێودەوڵەتی E.164 هەڵدەگرێت، وەک +9647501234567.",
     invalidCode: "کۆدی پشتڕاستکردنەوە بنووسە.",
     incorrectCode: "کۆدەکە هەڵەیە یان بەسەرچووە. نوێترین کۆد بەکاربهێنە.",
@@ -102,14 +106,15 @@ const authCopy = {
     codeTitle: "کۆدێ پشتڕاستکرنێ بنڤیسە",
     codeHelp: "مە کۆدەکێ ئێکجارە هنارت بۆ",
     codeLabel: "کۆدێ پشتڕاستکرنێ",
+    paste: "کۆد دابنێ",
     verify: "پشتڕاست بکە و بەردەوام بە",
     verifying: "دهێتە پشتڕاستکرن…",
     resend: "کۆد دووبارە بهنێرە",
     another: "ژمارەکا دی بکاربینە",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "کۆد بهنێرە ب",
-    deliveryFixed: "کۆدێ پشتڕاستکرنێ ب WhatsApp دهێتە هنارتن",
+    delivery: "جهێ وەرگرتنا کۆدی هەلبژێرە",
+    deliveryFixed: "کۆدێ پشتڕاستکرنێ ب WhatsApp",
     invalidPhone: "ژمارەکا دروست بنڤیسە. Atlas ژمارا پشتڕاستکری ب فۆرماتا نێودەولەتی E.164 پاراستن دکەت، وەک +9647501234567.",
     invalidCode: "کۆدێ پشتڕاستکرنێ بنڤیسە.",
     incorrectCode: "کۆد خەلەتە یان دەمێ وی بەسەرچووە. نووترین کۆد بکاربینە.",
@@ -133,14 +138,15 @@ const authCopy = {
     codeTitle: "أدخل رمز التحقق",
     codeHelp: "أرسلنا رمزاً لمرة واحدة إلى",
     codeLabel: "رمز التحقق",
+    paste: "لصق الرمز",
     verify: "تحقق واستمر",
     verifying: "جارٍ التحقق…",
     resend: "إعادة إرسال الرمز",
     another: "استخدام رقم آخر",
     sms: "SMS",
     whatsapp: "WhatsApp",
-    delivery: "إرسال الرمز عبر",
-    deliveryFixed: "رمز التحقق راح يوصلك على WhatsApp",
+    delivery: "اختار وين تريد يوصلك الرمز",
+    deliveryFixed: "رمز التحقق عبر WhatsApp",
     invalidPhone: "أدخل رقم موبايل صحيح. Atlas يحفظ الرقم الموثق بصيغة E.164 الدولية، مثلاً +9647501234567.",
     invalidCode: "أدخل رمز التحقق الذي وصلك.",
     incorrectCode: "الرمز غير صحيح أو منتهي. استخدم أحدث رمز وحاول مرة ثانية.",
@@ -261,6 +267,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         phone,
         options: {
           shouldCreateUser: PHONE_SIGNUP_ENABLED,
+          data: { atlas_locale: locale },
           ...(delivery === "whatsapp" && !DIRECT_META_OTP_ENABLED ? { channel: "whatsapp" as const } : {}),
         },
       });
@@ -309,6 +316,7 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         setError(isRateLimitError(verifyError) ? copy.rateLimited : copy.incorrectCode);
         return;
       }
+      void supabase.auth.updateUser({ data: { atlas_locale: locale } });
       window.location.replace(POST_AUTH_DESTINATION);
     } catch {
       setError(copy.network);
@@ -323,19 +331,14 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
         <form className="stack-form login-email-form" onSubmit={verifyCode}>
           <div>
             <strong>{copy.codeTitle}</strong>
-            <p className="field-help">{copy.codeHelp} <span dir="ltr">{maskPhone(verifiedPhone)}</span>.</p>
+            <p className="field-help">{copy.codeHelp} <span className="auth-phone-value" dir="ltr" lang="en">{maskPhone(verifiedPhone)}</span>.</p>
           </div>
-          <label htmlFor="phone-otp">{copy.codeLabel}</label>
-          <input
+          <OtpCodeField
             id="phone-otp"
-            name="phone-otp"
-            inputMode="numeric"
-            autoComplete="one-time-code"
+            label={copy.codeLabel}
             value={token}
-            onChange={(event) => setToken(normalizeOtpToken(event.target.value))}
-            placeholder="123456"
-            dir="ltr"
-            required
+            onChange={setToken}
+            pasteLabel={copy.paste}
             autoFocus
           />
           <button className="button login-primary-action" type="submit" disabled={busy}>
@@ -381,70 +384,20 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
           onChange={(event) => setPhoneInput(event.target.value)}
           placeholder={countryMode === "international" ? copy.internationalPlaceholder : copy.phonePlaceholder}
           dir="ltr"
+          lang="en"
           required
         />
-        {DIRECT_META_OTP_ENABLED ? (
-          <div
-            role="status"
-            aria-label={copy.deliveryFixed}
-            style={{
-              display: "flex",
-              minHeight: 44,
-              alignItems: "center",
-              gap: 10,
-              border: "1px solid #cfe2d8",
-              borderRadius: 12,
-              padding: "10px 12px",
-              background: "#f1f8f4",
-              color: "#1f5a43",
-              fontSize: 12,
-              fontWeight: 760,
-              lineHeight: 1.35,
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                display: "inline-grid",
-                width: 22,
-                height: 22,
-                flex: "0 0 22px",
-                placeItems: "center",
-                borderRadius: 999,
-                background: "#1f5a43",
-                color: "white",
-                fontSize: 13,
-                fontWeight: 900,
-              }}
-            >✓</span>
-            <span>{copy.deliveryFixed}</span>
-          </div>
-        ) : WHATSAPP_OTP_ENABLED ? (
-          <fieldset className="auth-delivery-options">
-            <legend>{copy.delivery}</legend>
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                type="radio"
-                name="delivery"
-                value="sms"
-                checked={delivery === "sms"}
-                onChange={() => setDelivery("sms")}
-                style={{ width: 18, minHeight: 18, height: 18, margin: 0, padding: 0, flex: "0 0 18px" }}
-              />
-              {copy.sms}
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                type="radio"
-                name="delivery"
-                value="whatsapp"
-                checked={delivery === "whatsapp"}
-                onChange={() => setDelivery("whatsapp")}
-                style={{ width: 18, minHeight: 18, height: 18, margin: 0, padding: 0, flex: "0 0 18px" }}
-              />
-              {copy.whatsapp}
-            </label>
-          </fieldset>
+        {WHATSAPP_OTP_ENABLED ? (
+          <AuthDeliverySelector
+            legend={DIRECT_META_OTP_ENABLED ? copy.deliveryFixed : copy.delivery}
+            value={delivery}
+            onChange={setDelivery}
+            smsLabel={copy.sms}
+            whatsappLabel={copy.whatsapp}
+            showSms={!DIRECT_META_OTP_ENABLED}
+            showWhatsApp
+            name="login-delivery"
+          />
         ) : null}
         <button className="button login-primary-action" type="submit" disabled={busy || quickBusy || cooldown > 0}>
           {busy ? copy.sending : cooldown > 0 ? `${cooldown}s` : copy.send}
