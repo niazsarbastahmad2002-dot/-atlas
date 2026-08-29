@@ -19,14 +19,18 @@ test("login and receptionist verification use the shared touch-friendly delivery
   assert.match(css, /@media \(max-width: 520px\)/);
 });
 
-test("OTP entry is paste-friendly and phone values stay direction-safe", () => {
+test("all phone OTP entry is paste-friendly and phone values stay direction-safe", () => {
   const otp = read("app/components/otp-code-field.tsx");
   const css = read("app/atlas-auth-polish.css");
   const phoneManager = read("app/dashboard/settings/phone-number-manager.tsx");
+  const phoneChange = read("app/dashboard/settings/phone-change-form.tsx");
 
   assert.match(otp, /navigator\.clipboard\.readText/);
   assert.match(otp, /autoComplete="one-time-code"/);
   assert.match(otp, /onFocus=/);
+  assert.match(phoneChange, /<OtpCodeField/);
+  assert.match(phoneChange, /pasteLabel=\{copy\.paste\}/);
+  assert.match(phoneChange, /className="auth-phone-value" dir="ltr" lang="en"/);
   assert.match(css, /unicode-bidi: isolate-override/);
   assert.match(phoneManager, /dir="ltr" lang="en"/);
 });
