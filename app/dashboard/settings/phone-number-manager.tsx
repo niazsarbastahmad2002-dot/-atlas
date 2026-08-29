@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatPhoneForDisplay } from "@/lib/phone-display";
 import { maskPhone, normalizeAuthPhone, normalizeOtpToken } from "@/lib/phone-auth";
 import type { UiLocale } from "@/lib/i18n/ui";
 
@@ -39,7 +40,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verify: "Verify phone",
     verifying: "Verifying…",
     cancel: "Cancel",
-    invalidPhone: "Enter a valid mobile number, for example +9647501234567.",
+    invalidPhone: "Enter a valid mobile number, for example +964 750 123 4567.",
     invalidCode: "Enter the verification code you received.",
     failed: "Atlas could not verify that phone number. Use the newest code and try again.",
     verified: "Phone number verified.",
@@ -57,7 +58,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verify: "ژمارە پشتڕاست بکەرەوە",
     verifying: "پشتڕاست دەکرێتەوە…",
     cancel: "هەڵوەشاندنەوە",
-    invalidPhone: "ژمارەیەکی دروست بنووسە، وەک +9647501234567.",
+    invalidPhone: "ژمارەیەکی دروست بنووسە، وەک +964 750 123 4567.",
     invalidCode: "کۆدی پشتڕاستکردنەوە بنووسە.",
     failed: "Atlas نەیتوانی ژمارەکە پشتڕاست بکاتەوە. نوێترین کۆد بەکاربهێنە.",
     verified: "ژمارەی مۆبایل پشتڕاستکرایەوە.",
@@ -75,7 +76,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verify: "ژمارێ پشتڕاست بکە",
     verifying: "دهێتە پشتڕاستکرن…",
     cancel: "هەلوەشاندن",
-    invalidPhone: "ژمارەکا دروست بنڤیسە، وەک +9647501234567.",
+    invalidPhone: "ژمارەکا دروست بنڤیسە، وەک +964 750 123 4567.",
     invalidCode: "کۆدێ پشتڕاستکرنێ بنڤیسە.",
     failed: "Atlas نەشیا ژمارێ پشتڕاست بکەت. نووترین کۆد بکاربینە.",
     verified: "ژمارا موبایلێ هاتە پشتڕاستکرن.",
@@ -93,7 +94,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     verify: "تحقق من الرقم",
     verifying: "جارٍ التحقق…",
     cancel: "إلغاء",
-    invalidPhone: "أدخل رقم موبايل صحيح، مثلاً +9647501234567.",
+    invalidPhone: "أدخل رقم موبايل صحيح، مثلاً +964 750 123 4567.",
     invalidCode: "أدخل رمز التحقق الذي وصلك.",
     failed: "تعذر التحقق من الرقم. استخدم أحدث رمز وحاول مرة ثانية.",
     verified: "تم توثيق رقم الهاتف.",
@@ -195,7 +196,7 @@ export function PhoneNumberManager({ locale, currentPhone }: { locale: UiLocale;
       {currentPhone ? (
         <div className="settings-readonly-clinic">
           <span>{copy.current}</span>
-          <strong dir="ltr">{currentPhone}</strong>
+          <strong className="atlas-phone-display" dir="ltr">{formatPhoneForDisplay(currentPhone)}</strong>
         </div>
       ) : null}
 
@@ -206,7 +207,7 @@ export function PhoneNumberManager({ locale, currentPhone }: { locale: UiLocale;
       ) : step === "phone" ? (
         <form className="settings-form" onSubmit={requestChange}>
           <label htmlFor="account-phone">{copy.phone}</label>
-          <input id="account-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+9647501234567" value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} dir="ltr" required />
+          <input id="account-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+964 750 123 4567" value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} dir="ltr" required />
           <div className="compact-actions">
             <button className="button button-small" type="submit" disabled={busy}>{busy ? copy.sending : copy.send}</button>
             {currentPhone ? <button className="button button-ghost button-small" type="button" onClick={cancel}>{copy.cancel}</button> : null}
