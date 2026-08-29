@@ -3,26 +3,26 @@
 }
 
 :root[data-theme="dark"] {
-  --ink: #edf7f1;
-  --ink-soft: #c9d8d0;
-  --muted: #95a89e;
-  --line: #29443a;
-  --line-strong: #365448;
-  --surface: #102a22;
-  --surface-soft: #153229;
-  --canvas: #081a15;
-  --accent: #45b982;
-  --accent-hover: #58c993;
-  --accent-soft: #163b2e;
-  --accent-faint: #102d23;
-  --success: #6fdda5;
-  --success-bg: #103728;
-  --danger: #ff9d9d;
-  --danger-bg: #431f22;
-  --warning: #f4ce74;
-  --warning-bg: #3b321d;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18);
-  --shadow-md: 0 18px 50px rgba(0,0,0,.28);
+  --ink: #f3faf6;
+  --ink-soft: #d2e0d9;
+  --muted: #a8bbb1;
+  --line: #315247;
+  --line-strong: #45695d;
+  --surface: #102c23;
+  --surface-soft: #16372c;
+  --canvas: #071b15;
+  --accent: #50c78e;
+  --accent-hover: #68d6a3;
+  --accent-soft: #194434;
+  --accent-faint: #123126;
+  --success: #7ee4b1;
+  --success-bg: #123c2c;
+  --danger: #ffaaa8;
+  --danger-bg: #492326;
+  --warning: #f6d685;
+  --warning-bg: #40361f;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.28), 0 8px 24px rgba(0,0,0,.20);
+  --shadow-md: 0 18px 50px rgba(0,0,0,.32);
   color-scheme: dark;
 }
 
@@ -32,184 +32,290 @@
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
-    --ink: #edf7f1;
-    --ink-soft: #c9d8d0;
-    --muted: #95a89e;
-    --line: #29443a;
-    --line-strong: #365448;
-    --surface: #102a22;
-    --surface-soft: #153229;
-    --canvas: #081a15;
-    --accent: #45b982;
-    --accent-hover: #58c993;
-    --accent-soft: #163b2e;
-    --accent-faint: #102d23;
-    --success: #6fdda5;
-    --success-bg: #103728;
-    --danger: #ff9d9d;
-    --danger-bg: #431f22;
-    --warning: #f4ce74;
-    --warning-bg: #3b321d;
-    --shadow-sm: 0 1px 2px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18);
-    --shadow-md: 0 18px 50px rgba(0,0,0,.28);
+    --ink: #f3faf6;
+    --ink-soft: #d2e0d9;
+    --muted: #a8bbb1;
+    --line: #315247;
+    --line-strong: #45695d;
+    --surface: #102c23;
+    --surface-soft: #16372c;
+    --canvas: #071b15;
+    --accent: #50c78e;
+    --accent-hover: #68d6a3;
+    --accent-soft: #194434;
+    --accent-faint: #123126;
+    --success: #7ee4b1;
+    --success-bg: #123c2c;
+    --danger: #ffaaa8;
+    --danger-bg: #492326;
+    --warning: #f6d685;
+    --warning-bg: #40361f;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.28), 0 8px 24px rgba(0,0,0,.20);
+    --shadow-md: 0 18px 50px rgba(0,0,0,.32);
   }
 }
 
-:root[data-theme="dark"] html,
-:root[data-theme="dark"] body,
-:root[data-theme="dark"] .app-shell,
-:root[data-theme="dark"] .app-content {
-  background: var(--canvas);
-  color: var(--ink);
-}
-
+/* Explicit light means Atlas stays light even when a browser tries to auto-darken pages. */
 :root[data-theme="light"] html,
 :root[data-theme="light"] body {
   background: #f4f7f5;
 }
 
-:root[data-theme="dark"] .app-topbar,
-:root[data-theme="dark"] .app-bottom-nav,
-:root[data-theme="dark"] .panel,
-:root[data-theme="dark"] .stat,
-:root[data-theme="dark"] .appointment-row,
-:root[data-theme="dark"] .settings-card,
-:root[data-theme="dark"] .auth-card,
-:root[data-theme="dark"] .login-card,
-:root[data-theme="dark"] .consent-card,
-:root[data-theme="dark"] .doctor-settings-row,
-:root[data-theme="dark"] .settings-readonly-clinic,
-:root[data-theme="dark"] .settings-link,
-:root[data-theme="dark"] .clinic-switcher,
-:root[data-theme="dark"] .schedule-card {
-  background: var(--surface);
+/* Shared appearance control spacing. */
+.atlas-appearance-control {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* Phone numbers are always LTR internally, but sit at the logical start of the row. */
+.atlas-phone-display,
+.account-email.atlas-phone-display {
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+  direction: ltr;
+  unicode-bidi: isolate;
+  justify-self: start;
+  text-align: left;
+  color: var(--ink) !important;
+  text-decoration: none !important;
+  letter-spacing: .015em;
+  font-variant-numeric: tabular-nums;
+}
+
+.account-email,
+.account-email:link,
+.account-email:any-link {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+/* Safari/browser telephone auto-link cleanup. */
+a[x-apple-data-detectors],
+a[href^="tel:"] {
+  color: inherit;
+  text-decoration: none;
+  font: inherit;
+}
+
+/* -------- Dark theme -------- */
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .app-shell,
+:root[data-theme="dark"] .app-content,
+:root[data-theme="dark"] .workspace-page,
+:root[data-theme="dark"] .settings-page,
+:root[data-theme="dark"] .center-page {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] :is(
+  .app-topbar,
+  .app-bottom-nav,
+  .panel,
+  .stat,
+  .appointment-row,
+  .settings-card,
+  .auth-card,
+  .login-card,
+  .consent-card,
+  .doctor-settings-row,
+  .settings-readonly-clinic,
+  .settings-link,
+  .clinic-switcher,
+  .schedule-card,
+  .settings-disclosure,
+  .appointment-composer
+) {
+  background-color: var(--surface);
   border-color: var(--line);
   color: var(--ink);
 }
 
 :root[data-theme="dark"] .app-topbar {
-  background: rgba(16, 42, 34, .92);
+  background: rgba(16,44,35,.96);
   border-bottom-color: var(--line);
 }
 
 :root[data-theme="dark"] .app-bottom-nav {
-  background: rgba(16, 42, 34, .96);
+  background: rgba(16,44,35,.98);
   border-top-color: var(--line);
-  box-shadow: 0 -10px 30px rgba(0,0,0,.20);
+  box-shadow: 0 -10px 30px rgba(0,0,0,.24);
 }
 
-:root[data-theme="dark"] input,
-:root[data-theme="dark"] select,
-:root[data-theme="dark"] textarea {
+:root[data-theme="dark"] :is(input, select, textarea) {
+  color: var(--ink) !important;
+  background: #0b241b !important;
+  border-color: var(--line-strong) !important;
+  -webkit-text-fill-color: var(--ink);
+}
+
+:root[data-theme="dark"] :is(input, textarea)::placeholder {
+  color: #8fa69b;
+  -webkit-text-fill-color: #8fa69b;
+  opacity: 1;
+}
+
+:root[data-theme="dark"] select option {
   color: var(--ink);
-  background: #0c211a;
-  border-color: #365448;
+  background: #0b241b;
 }
 
-:root[data-theme="dark"] input::placeholder,
-:root[data-theme="dark"] textarea::placeholder {
-  color: #789086;
+/* Secondary and custom controls must remain dark instead of retaining hard-coded white surfaces. */
+:root[data-theme="dark"] :is(
+  .button-ghost,
+  .inline-mode-button,
+  .count-pill,
+  .reminder-note,
+  .time-choice,
+  .time-option,
+  .slot-button,
+  .date-button,
+  .date-nav-button,
+  .segmented-control button,
+  .appointment-mode button,
+  .calendar-day,
+  .compact-actions button:not(.button),
+  button[aria-pressed]
+) {
+  background: #183b2f !important;
+  color: var(--ink-soft) !important;
+  border-color: var(--line-strong) !important;
 }
 
-:root[data-theme="dark"] .button-ghost,
-:root[data-theme="dark"] .inline-mode-button,
-:root[data-theme="dark"] .count-pill,
-:root[data-theme="dark"] .reminder-note {
-  background: #19372d;
+:root[data-theme="dark"] :is(
+  .button-ghost:hover,
+  .inline-mode-button:hover,
+  .time-choice:hover,
+  .time-option:hover,
+  .slot-button:hover,
+  .date-button:hover,
+  .date-nav-button:hover,
+  button[aria-pressed="true"]
+) {
+  background: #22513f !important;
+  color: #ffffff !important;
+}
+
+/* Catch remaining native-looking white buttons from older appointment UI without changing Atlas primary buttons. */
+:root[data-theme="dark"] button:not(.button):not(.settings-export-button) {
   color: var(--ink-soft);
+  border-color: var(--line-strong);
 }
 
-:root[data-theme="dark"] .button-ghost:hover,
-:root[data-theme="dark"] .inline-mode-button:hover {
-  background: #21483a;
+:root[data-theme="dark"] :is(
+  .appointment-row,
+  .settings-link,
+  .doctor-settings-row,
+  .settings-readonly-clinic,
+  .clinic-switcher,
+  .panel,
+  .settings-card
+) {
+  box-shadow: var(--shadow-sm);
 }
 
-:root[data-theme="dark"] .appointment-row,
-:root[data-theme="dark"] .settings-link,
-:root[data-theme="dark"] .doctor-settings-row {
-  border-color: var(--line);
+:root[data-theme="dark"] :is(
+  h1,h2,h3,h4,strong,label,
+  .app-brand,
+  .patient-cell strong,
+  .appointment-details dd,
+  .settings-card-heading h2,
+  .settings-card-heading h3,
+  .workspace-title-block h1,
+  .panel-heading h1,
+  .panel-heading h2,
+  .settings-disclosure > summary
+) {
+  color: var(--ink) !important;
 }
 
-:root[data-theme="dark"] .appointment-details dd,
-:root[data-theme="dark"] label,
-:root[data-theme="dark"] .app-brand,
-:root[data-theme="dark"] .patient-cell strong,
-:root[data-theme="dark"] .settings-card h2,
-:root[data-theme="dark"] .settings-card h3 {
-  color: var(--ink);
+:root[data-theme="dark"] :is(
+  .quiet,
+  .field-help,
+  .workspace-title-block p,
+  .panel-subtitle,
+  .patient-cell span,
+  .stat span,
+  .settings-card-heading p,
+  .settings-readonly-clinic span,
+  .settings-readonly-clinic small,
+  .settings-export-copy small,
+  .composer-privacy
+) {
+  color: var(--muted) !important;
 }
 
-:root[data-theme="dark"] .quiet,
-:root[data-theme="dark"] .field-help,
-:root[data-theme="dark"] .workspace-title-block p,
-:root[data-theme="dark"] .panel-subtitle,
-:root[data-theme="dark"] .patient-cell span,
-:root[data-theme="dark"] .stat span {
-  color: var(--muted);
+:root[data-theme="dark"] :is(.eyebrow, .app-bottom-nav > a.is-active, .icon-button.is-active) {
+  color: #63d69c !important;
 }
 
 :root[data-theme="dark"] .status-reminder {
   color: var(--ink-soft);
-  background: #203a31;
+  background: #203f34;
 }
 
 :root[data-theme="dark"] .app-bottom-add-circle {
   border-color: var(--canvas);
 }
 
-:root[data-theme="dark"] .atlas-appearance-control {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+:root[data-theme="dark"] hr,
+:root[data-theme="dark"] .settings-disclosure,
+:root[data-theme="dark"] .settings-account-signout {
+  border-color: var(--line) !important;
 }
 
-:root[data-theme="light"] .atlas-appearance-control,
-:root[data-theme="system"] .atlas-appearance-control {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-
+/* -------- System theme when the device itself is dark -------- */
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] body,
   :root[data-theme="system"] .app-shell,
-  :root[data-theme="system"] .app-content {
+  :root[data-theme="system"] .app-content,
+  :root[data-theme="system"] .workspace-page,
+  :root[data-theme="system"] .settings-page,
+  :root[data-theme="system"] .center-page {
     background: var(--canvas);
     color: var(--ink);
   }
 
-  :root[data-theme="system"] .app-topbar,
-  :root[data-theme="system"] .app-bottom-nav,
-  :root[data-theme="system"] .panel,
-  :root[data-theme="system"] .stat,
-  :root[data-theme="system"] .appointment-row,
-  :root[data-theme="system"] .settings-card,
-  :root[data-theme="system"] .auth-card,
-  :root[data-theme="system"] .login-card,
-  :root[data-theme="system"] .consent-card,
-  :root[data-theme="system"] .doctor-settings-row,
-  :root[data-theme="system"] .settings-readonly-clinic,
-  :root[data-theme="system"] .settings-link,
-  :root[data-theme="system"] .clinic-switcher,
-  :root[data-theme="system"] .schedule-card {
-    background: var(--surface);
+  :root[data-theme="system"] :is(
+    .app-topbar,.app-bottom-nav,.panel,.stat,.appointment-row,.settings-card,.auth-card,.login-card,
+    .consent-card,.doctor-settings-row,.settings-readonly-clinic,.settings-link,.clinic-switcher,.schedule-card,
+    .settings-disclosure,.appointment-composer
+  ) {
+    background-color: var(--surface);
     border-color: var(--line);
     color: var(--ink);
   }
 
-  :root[data-theme="system"] input,
-  :root[data-theme="system"] select,
-  :root[data-theme="system"] textarea {
-    color: var(--ink);
-    background: #0c211a;
-    border-color: #365448;
+  :root[data-theme="system"] :is(input, select, textarea) {
+    color: var(--ink) !important;
+    background: #0b241b !important;
+    border-color: var(--line-strong) !important;
+    -webkit-text-fill-color: var(--ink);
   }
 
-  :root[data-theme="system"] .button-ghost,
-  :root[data-theme="system"] .inline-mode-button,
-  :root[data-theme="system"] .count-pill,
-  :root[data-theme="system"] .reminder-note {
-    background: #19372d;
-    color: var(--ink-soft);
+  :root[data-theme="system"] :is(input, textarea)::placeholder {
+    color: #8fa69b;
+    -webkit-text-fill-color: #8fa69b;
+    opacity: 1;
+  }
+
+  :root[data-theme="system"] :is(
+    .button-ghost,.inline-mode-button,.count-pill,.reminder-note,.time-choice,.time-option,.slot-button,
+    .date-button,.date-nav-button,.segmented-control button,.appointment-mode button,.calendar-day,
+    .compact-actions button:not(.button),button[aria-pressed]
+  ) {
+    background: #183b2f !important;
+    color: var(--ink-soft) !important;
+    border-color: var(--line-strong) !important;
+  }
+
+  :root[data-theme="system"] :is(h1,h2,h3,h4,strong,label,.app-brand,.patient-cell strong,.appointment-details dd,.settings-disclosure > summary) {
+    color: var(--ink) !important;
+  }
+
+  :root[data-theme="system"] :is(.quiet,.field-help,.workspace-title-block p,.panel-subtitle,.patient-cell span,.stat span,.settings-card-heading p) {
+    color: var(--muted) !important;
   }
 }
