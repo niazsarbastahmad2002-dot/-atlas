@@ -2,9 +2,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { normalizeAuthPhone, normalizeOtpToken } from "../phone-auth.ts";
 
 export type SupabaseSendSmsHookPayload = {
-  user: { phone?: unknown; new_phone?: unknown };
+  user: { phone?: unknown; new_phone?: unknown; user_metadata?: unknown };
   sms: { otp?: unknown; phone?: unknown };
 };
+
+export type AtlasAuthLocale = "en" | "ku" | "bd" | "ar";
 
 function signatureSecret(value: string) {
   const stripped = value.trim().replace(/^v1,whsec_/, "").replace(/^whsec_/, "");
@@ -68,6 +70,13 @@ function normalizeHookPhone(value: unknown) {
   // without a leading plus. Convert that wire representation back to E.164.
   if (/^[1-9]\d{7,14}$/.test(trimmed)) return normalizeAuthPhone(`+${trimmed}`);
   return null;
+}
+
+export function readSupabaseSendSmsHookLocale(payload: SupabaseSendSmsHookPayload): AtlasAuthLocale {
+  const metadata = payload.user.user_metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return "en";
+  const locale = (metadata as { atlas_locale?: unknown }).atlas_locale;
+  return locale === "ku" || locale === "bd" || locale === "ar" || locale === "en" ? locale : "en";
 }
 
 export function readSupabaseSendSmsHookValues(payload: SupabaseSendSmsHookPayload) {
