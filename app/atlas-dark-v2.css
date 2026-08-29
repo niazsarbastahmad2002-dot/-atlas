@@ -1,0 +1,222 @@
+/* Atlas dark theme v2
+   A true dark UI: dark layered surfaces, off-white text, restrained borders,
+   and no light-theme cards leaking through hard-coded gradients/backgrounds. */
+
+:root[data-theme="dark"] {
+  --ink: #f2f6f4;
+  --ink-soft: #d1ddd7;
+  --muted: #9aaba2;
+  --line: #2a4338;
+  --line-strong: #3a594b;
+  --surface: #11231c;
+  --surface-raised: #162d24;
+  --surface-soft: #192f27;
+  --canvas: #081610;
+  --accent: #58cf9b;
+  --accent-hover: #72ddb0;
+  --accent-soft: #193c2f;
+  --accent-faint: #112c22;
+  --success: #7be1ae;
+  --success-bg: #123528;
+  --danger: #ffaaa8;
+  --danger-bg: #3a2022;
+  --warning: #f0d58a;
+  --warning-bg: #352e1c;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.22), 0 10px 28px rgba(0,0,0,.18);
+  --shadow-md: 0 20px 56px rgba(0,0,0,.28);
+  color-scheme: dark;
+}
+
+/* App canvas */
+:root[data-theme="dark"] :is(html, body),
+:root[data-theme="dark"] :is(.app-shell,.app-content,.workspace-page,.settings-page,.center-page,.atlas-ai-page) {
+  background: var(--canvas) !important;
+  color: var(--ink) !important;
+}
+
+:root[data-theme="dark"] .app-topbar,
+:root[data-theme="dark"] .app-bottom-nav {
+  background: rgba(13,32,25,.96) !important;
+  border-color: var(--line) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,.12) !important;
+}
+
+/* Primary surfaces. Use background, not background-color, so old white gradients are removed. */
+:root[data-theme="dark"] :is(
+  .panel,.stat,.settings-card,.auth-card,.login-card,.consent-card,
+  .schedule-card,.appointment-composer,.appointment-row,.polished-appointment,
+  .doctor-settings-row,.settings-readonly-clinic,.settings-disclosure,
+  .atlas-ai-card,.atlas-ai-message.is-assistant,.atlas-ai-table-wrap
+) {
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Slightly raised / nested surfaces */
+:root[data-theme="dark"] :is(
+  .settings-link,.clinic-switcher,.consent-card,.settings-readonly-clinic,
+  .atlas-ai-privacy,.atlas-ai-presets button,.atlas-ai-beta,
+  .workspace-page > .schedule-date-shortcuts,
+  .workspace-page > .day-navigation,
+  .workspace-page .doctor-schedule-tabs,
+  .workspace-page .count-pill,.workspace-page .appointment-order-badge,
+  .status-reminder,.reminder-note
+) {
+  background: var(--surface-soft) !important;
+  color: var(--ink-soft) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+
+/* Explicitly remove the light gradients that were causing white cards in dark mode. */
+:root[data-theme="dark"] .workspace-page .appointment-composer,
+:root[data-theme="dark"] .workspace-page .schedule-card,
+:root[data-theme="dark"] .workspace-page .polished-appointment,
+:root[data-theme="dark"] .polished-appointment.is-next-appointment,
+:root[data-theme="dark"] .workspace-page > .schedule-date-shortcuts,
+:root[data-theme="dark"] .workspace-page > .day-navigation,
+:root[data-theme="dark"] .workspace-page .doctor-schedule-tabs {
+  background-image: none !important;
+  background-color: var(--surface) !important;
+}
+
+:root[data-theme="dark"] .polished-appointment.is-next-appointment {
+  background: linear-gradient(180deg,#173328 0%,#12271f 100%) !important;
+  border-color: #39705a !important;
+}
+
+/* Form controls: dark input surfaces with clear text, never white boxes. */
+:root[data-theme="dark"] :is(input,select,textarea) {
+  background: #0d1f18 !important;
+  color: var(--ink) !important;
+  -webkit-text-fill-color: var(--ink) !important;
+  border-color: var(--line-strong) !important;
+  box-shadow: none;
+}
+:root[data-theme="dark"] :is(input,textarea)::placeholder {
+  color: #82958b !important;
+  -webkit-text-fill-color: #82958b !important;
+  opacity: 1;
+}
+:root[data-theme="dark"] select option { background: #10231b; color: var(--ink); }
+:root[data-theme="dark"] :is(input,select,textarea):focus {
+  border-color: #5bcf9c !important;
+  box-shadow: 0 0 0 3px rgba(91,207,156,.16) !important;
+}
+
+/* Schedule controls and secondary buttons */
+:root[data-theme="dark"] :is(
+  .button-ghost,.inline-mode-button,.time-choice,.time-option,.slot-button,.date-button,
+  .date-nav-button,.calendar-day,.segmented-control button,.appointment-mode button,
+  .compact-actions button:not(.button),button[aria-pressed],
+  .workspace-page > .day-navigation > .button,
+  .workspace-page .doctor-schedule-tabs a
+) {
+  background: #173329 !important;
+  color: var(--ink-soft) !important;
+  border-color: var(--line-strong) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] :is(
+  .button-ghost:hover,.inline-mode-button:hover,.time-choice:hover,.time-option:hover,.slot-button:hover,
+  .date-button:hover,.date-nav-button:hover,.calendar-day:hover,.workspace-page > .day-navigation > .button:hover,
+  .workspace-page .doctor-schedule-tabs a:hover
+) {
+  background: #1d4435 !important;
+  color: #fff !important;
+}
+:root[data-theme="dark"] :is(button[aria-pressed="true"],.workspace-page .doctor-schedule-tabs a.is-selected) {
+  background: #20513e !important;
+  color: #f7fffb !important;
+  border-color: #4c9a77 !important;
+}
+
+/* Date navigation and shortcut rail */
+:root[data-theme="dark"] .workspace-page > .schedule-date-shortcuts a { color: var(--ink-soft) !important; }
+:root[data-theme="dark"] .workspace-page > .schedule-date-shortcuts a:hover { background: #173329 !important; color: #fff !important; border-color: var(--line-strong) !important; }
+:root[data-theme="dark"] .workspace-page > .schedule-date-shortcuts a.is-selected {
+  background: linear-gradient(135deg,#14765a,#1b9b72) !important;
+  color: #fff !important;
+  border-color: #2aa77c !important;
+}
+:root[data-theme="dark"] .workspace-page > .day-navigation .day-current,
+:root[data-theme="dark"] .workspace-page > .day-navigation .day-current.is-today {
+  background: #132c23 !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .workspace-page > .day-navigation .day-current strong,
+:root[data-theme="dark"] .workspace-page .appointment-time-value { color: var(--ink) !important; }
+
+/* Text hierarchy — bright enough to read, not glowing white everywhere. */
+:root[data-theme="dark"] :is(h1,h2,h3,h4,strong,label,.app-brand,.settings-disclosure>summary,.appointment-details dd,.patient-cell strong) {
+  color: var(--ink) !important;
+}
+:root[data-theme="dark"] :is(
+  p,.quiet,.field-help,.panel-subtitle,.workspace-title-block p,.patient-cell span,.stat span,
+  .settings-card-heading p,.settings-readonly-clinic span,.settings-readonly-clinic small,
+  .composer-privacy,.atlas-ai-heading p,.atlas-ai-privacy,.atlas-ai-dictate-hint
+) {
+  color: var(--muted) !important;
+}
+:root[data-theme="dark"] :is(.eyebrow,.next-appointment-label,.atlas-ai-listen-button) { color: #67d9a8 !important; }
+:root[data-theme="dark"] a:not(.button) { color: #87cdb0; }
+
+/* Status/feedback surfaces stay dark too. */
+:root[data-theme="dark"] .notice-success,
+:root[data-theme="dark"] .workspace-page .workspace-notice.notice-success {
+  background: #12372a !important;
+  color: #99ebc2 !important;
+  border-color: #285a46 !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .notice-error { background: #3b2022 !important; color: #ffb4b0 !important; border-color: #704044 !important; }
+:root[data-theme="dark"] .status { background: #352e1c !important; color: #f2d995 !important; }
+:root[data-theme="dark"] :is(.status-confirmed,.status-completed) { background: #12372a !important; color: #98e7bd !important; }
+:root[data-theme="dark"] :is(.status-cancelled,.status-no_show) { background: #3b2022 !important; color: #ffb4b0 !important; }
+
+/* Atlas AI: remove the glaring white composer/table surfaces. */
+:root[data-theme="dark"] .atlas-ai-composer {
+  background: #0d1f18 !important;
+  border-color: var(--line-strong) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .atlas-ai-composer textarea { background: transparent !important; }
+:root[data-theme="dark"] :is(.atlas-ai-mic-button,.atlas-ai-dictate-button,.atlas-ai-presets button) {
+  background: #173329 !important;
+  color: var(--ink-soft) !important;
+  border-color: var(--line) !important;
+}
+:root[data-theme="dark"] .atlas-ai-table th { background: #183128 !important; color: var(--ink-soft) !important; }
+:root[data-theme="dark"] .atlas-ai-table td { background: #11231c !important; color: var(--ink-soft) !important; }
+
+/* Browser autofill can otherwise reintroduce a bright yellow/white box. */
+:root[data-theme="dark"] input:-webkit-autofill,
+:root[data-theme="dark"] input:-webkit-autofill:hover,
+:root[data-theme="dark"] input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink) !important;
+  -webkit-box-shadow: 0 0 0 1000px #0d1f18 inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* System appearance receives the same dark treatment only when the device is dark. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --ink:#f2f6f4;--ink-soft:#d1ddd7;--muted:#9aaba2;--line:#2a4338;--line-strong:#3a594b;
+    --surface:#11231c;--surface-raised:#162d24;--surface-soft:#192f27;--canvas:#081610;
+    --accent:#58cf9b;--accent-hover:#72ddb0;--accent-soft:#193c2f;--accent-faint:#112c22;
+    --success:#7be1ae;--success-bg:#123528;--danger:#ffaaa8;--danger-bg:#3a2022;--warning:#f0d58a;--warning-bg:#352e1c;
+    color-scheme:dark;
+  }
+  :root[data-theme="system"] :is(html,body,.app-shell,.app-content,.workspace-page,.settings-page,.center-page,.atlas-ai-page){background:var(--canvas)!important;color:var(--ink)!important}
+  :root[data-theme="system"] :is(.panel,.stat,.settings-card,.auth-card,.login-card,.consent-card,.schedule-card,.appointment-composer,.appointment-row,.polished-appointment,.doctor-settings-row,.settings-readonly-clinic,.settings-disclosure,.atlas-ai-card,.atlas-ai-message.is-assistant,.atlas-ai-table-wrap){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+  :root[data-theme="system"] :is(.settings-link,.clinic-switcher,.atlas-ai-privacy,.atlas-ai-presets button,.workspace-page>.schedule-date-shortcuts,.workspace-page>.day-navigation,.workspace-page .doctor-schedule-tabs){background:var(--surface-soft)!important;color:var(--ink-soft)!important;border-color:var(--line)!important}
+  :root[data-theme="system"] .workspace-page :is(.appointment-composer,.schedule-card,.polished-appointment),:root[data-theme="system"] .workspace-page>.schedule-date-shortcuts,:root[data-theme="system"] .workspace-page>.day-navigation,:root[data-theme="system"] .workspace-page .doctor-schedule-tabs{background-image:none!important}
+  :root[data-theme="system"] :is(input,select,textarea),:root[data-theme="system"] .atlas-ai-composer{background:#0d1f18!important;color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;border-color:var(--line-strong)!important}
+  :root[data-theme="system"] :is(input,textarea)::placeholder{color:#82958b!important;-webkit-text-fill-color:#82958b!important}
+  :root[data-theme="system"] :is(h1,h2,h3,h4,strong,label,.app-brand){color:var(--ink)!important}
+  :root[data-theme="system"] :is(p,.quiet,.field-help,.panel-subtitle,.workspace-title-block p,.patient-cell span,.stat span,.settings-card-heading p,.composer-privacy){color:var(--muted)!important}
+  :root[data-theme="system"] .atlas-ai-composer textarea{background:transparent!important}
+}
