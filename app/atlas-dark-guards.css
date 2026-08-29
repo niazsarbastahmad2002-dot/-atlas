@@ -1,0 +1,44 @@
+/* Final dark-mode guardrail: secondary controls inside dark surfaces must never fall back to light-theme white. */
+:root[data-theme="dark"] :is(.appointment-composer,.schedule-card,.settings-card,.atlas-ai-card) button:not(.button):not(.atlas-ai-send-button):not(.atlas-ai-live-button) {
+  background: #173329 !important;
+  color: var(--ink-soft) !important;
+  border-color: var(--line-strong) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] :is(.appointment-composer,.schedule-card,.settings-card,.atlas-ai-card) :is(
+  button[aria-pressed="true"],button[aria-selected="true"],button.is-selected,button.is-active,button.is-on
+) {
+  background: #20513e !important;
+  color: #f7fffb !important;
+  border-color: #4c9a77 !important;
+}
+
+:root[data-theme="dark"] :is(.appointment-composer,.schedule-card,.settings-card,.atlas-ai-card) button:disabled {
+  background: #13271f !important;
+  color: #71857a !important;
+  border-color: #294237 !important;
+  opacity: .72;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] :is(.appointment-composer,.schedule-card,.settings-card,.atlas-ai-card) button:not(.button):not(.atlas-ai-send-button):not(.atlas-ai-live-button) {
+    background: #173329 !important;
+    color: var(--ink-soft) !important;
+    border-color: var(--line-strong) !important;
+    box-shadow: none !important;
+  }
+  :root[data-theme="system"] :is(.appointment-composer,.schedule-card,.settings-card,.atlas-ai-card) :is(
+    button[aria-pressed="true"],button[aria-selected="true"],button.is-selected,button.is-active,button.is-on
+  ) {
+    background: #20513e !important;
+    color: #f7fffb !important;
+    border-color: #4c9a77 !important;
+  }
+  :root[data-theme="system"] :is(.appointment-composer,.schedule-card,.settings-card,.atlas-ai-card) button:disabled {
+    background: #13271f !important;
+    color: #71857a !important;
+    border-color: #294237 !important;
+    opacity: .72;
+  }
+}
