@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 
 test("OTP login has incorrect-expired, rate-limit, resend cooldown and loading states", () => {
   const login = read("app/login/login-form.tsx");
+  const otpField = read("app/components/otp-code-field.tsx");
 
   assert.match(login, /incorrect or expired/);
   assert.match(login, /rateLimited/);
@@ -14,7 +15,8 @@ test("OTP login has incorrect-expired, rate-limit, resend cooldown and loading s
   assert.match(login, /copy\.resend/);
   assert.match(login, /copy\.sending/);
   assert.match(login, /copy\.verifying/);
-  assert.match(login, /autoComplete="one-time-code"/);
+  assert.match(login, /<OtpCodeField/);
+  assert.match(otpField, /autoComplete="one-time-code"/);
 });
 
 test("new and returning phone users share the same verified Supabase identity flow", () => {
