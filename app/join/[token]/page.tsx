@@ -2,14 +2,17 @@ import { createHash } from "node:crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { isUiLocale, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { JoinClinicAuth } from "./join-auth";
 
 export const dynamic = "force-dynamic";
 
-type PageProps = { params: Promise<{ token: string }> };
+type PageProps = {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ lang?: string | string[] }>;
+};
 type Preview = { clinic_id: string; clinic_name: string; doctor_name: string; expires_at: string };
 type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
 type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
@@ -57,9 +60,11 @@ function tokenHash(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export default async function JoinClinicPage({ params }: PageProps) {
+export default async function JoinClinicPage({ params, searchParams }: PageProps) {
   const { token } = await params;
-  const locale = await getUiLocale();
+  const query = await searchParams;
+  const requestedLang = Array.isArray(query.lang) ? query.lang[0] : query.lang;
+  const locale = isUiLocale(requestedLang) ? requestedLang : await getUiLocale();
   const t = copy[locale];
 
   if (!validToken(token)) {
@@ -91,7 +96,7 @@ export default async function JoinClinicPage({ params }: PageProps) {
 
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
-  if (userData.user) redirect(`/join/${encodeURIComponent(token)}/finish`);
+  if (userData.user) redirect(`/join/${encodeURIComponent(token)}/finish?lang=${encodeURIComponent(locale)}`);
 
   return (
     <main className="center-page">
