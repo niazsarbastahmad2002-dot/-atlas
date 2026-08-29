@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { isUiLocale, type UiLocale } from "@/lib/i18n/ui";
+import { isUiLocale, uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { JoinClinicAuth } from "./join-auth";
@@ -65,11 +65,12 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
   const query = await searchParams;
   const requestedLang = Array.isArray(query.lang) ? query.lang[0] : query.lang;
   const locale = isUiLocale(requestedLang) ? requestedLang : await getUiLocale();
+  const localeMeta = uiLocaleMeta[locale];
   const t = copy[locale];
 
   if (!validToken(token)) {
     return (
-      <main className="center-page">
+      <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
         <section className="auth-card">
           <h1>{t.invalid}</h1>
           <Link className="button" href="/login">{t.back}</Link>
@@ -85,7 +86,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
 
   if (error || !preview) {
     return (
-      <main className="center-page">
+      <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
         <section className="auth-card">
           <h1>{t.invalid}</h1>
           <Link className="button" href="/login">{t.back}</Link>
@@ -99,7 +100,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
   if (userData.user) redirect(`/join/${encodeURIComponent(token)}/finish?lang=${encodeURIComponent(locale)}`);
 
   return (
-    <main className="center-page">
+    <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
       <section className="auth-card">
         <div className="eyebrow">{t.eyebrow}</div>
         <h1>{t.title}</h1>
