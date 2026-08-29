@@ -2,6 +2,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { isUuid } from "@/lib/appointments";
+import { getUiLocale } from "@/lib/i18n/ui-server";
 import { normalizeAuthPhone } from "@/lib/phone-auth";
 import { readClinicMetaWhatsAppConfig } from "@/lib/reminders/meta-clinic-config";
 import {
@@ -97,6 +98,7 @@ export async function createReceptionistInviteLink(
   const doctorId = String(formData.get("assigned_doctor_id") ?? "");
   const rawRecipientPhone = String(formData.get("recipient_phone") ?? "").trim();
   const recipientPhone = rawRecipientPhone ? normalizeAuthPhone(rawRecipientPhone) : null;
+  const inviteLocale = await getUiLocale();
 
   if (!isUuid(clinicId) || !isUuid(doctorId)) {
     return { status: "error", message: "Choose the receptionist's doctor first." };
@@ -159,7 +161,7 @@ export async function createReceptionistInviteLink(
     return { status: "error", message: "Atlas could not create the invitation. Try again." };
   }
 
-  const url = `${atlasSiteUrl()}/join/${token}`;
+  const url = `${atlasSiteUrl()}/join/${token}?lang=${encodeURIComponent(inviteLocale)}`;
   let sent = await sendWhatsAppStaffInviteTemplate(
     recipientPhone,
     clinic.name,
