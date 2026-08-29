@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { OtpCodeField } from "@/app/components/otp-code-field";
 import { createClient } from "@/lib/supabase/client";
 import { formatPhoneForDisplay } from "@/lib/phone-display";
 import { maskPhone, normalizeAuthPhone, normalizeOtpToken } from "@/lib/phone-auth";
@@ -15,6 +16,7 @@ type Copy = {
   send: string;
   sending: string;
   code: string;
+  paste: string;
   verify: string;
   verifying: string;
   samePhone: string;
@@ -33,6 +35,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     send: "Send verification code",
     sending: "Sending…",
     code: "Verification code",
+    paste: "Paste code",
     verify: "Verify and change phone",
     verifying: "Verifying…",
     samePhone: "This is already your current Atlas phone. Enter a new phone number.",
@@ -49,6 +52,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     send: "کۆدی پشتڕاستکردنەوە بنێرە",
     sending: "دەنێردرێت…",
     code: "کۆدی پشتڕاستکردنەوە",
+    paste: "کۆد دابنێ",
     verify: "پشتڕاست بکەرەوە و ژمارەکە بگۆڕە",
     verifying: "پشتڕاست دەکرێتەوە…",
     samePhone: "ئەمە هەر ژمارەی ئێستای تۆیە. ژمارەیەکی نوێ بنووسە.",
@@ -65,6 +69,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     send: "کۆدێ پشتڕاستکرنێ بهنێرە",
     sending: "دهێتە هنارتن…",
     code: "کۆدێ پشتڕاستکرنێ",
+    paste: "کۆد دابنێ",
     verify: "پشتڕاست بکە و ژمارێ بگوهەرە",
     verifying: "دهێتە پشتڕاستکرن…",
     samePhone: "ئەڤە هەر ژمارا نوکە یا تەیە. ژمارەکا نوو بنڤیسە.",
@@ -81,6 +86,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     send: "إرسال رمز التحقق",
     sending: "جارٍ الإرسال…",
     code: "رمز التحقق",
+    paste: "لصق الرمز",
     verify: "تحقق وغيّر الرقم",
     verifying: "جارٍ التحقق…",
     samePhone: "هذا هو رقمك الحالي بالفعل. أدخل رقم هاتف جديداً.",
@@ -183,7 +189,7 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
       {currentPhone ? (
         <div className="settings-readonly-clinic">
           <span>{copy.current}</span>
-          <strong className="atlas-phone-display" dir="ltr">{formatPhoneForDisplay(currentPhone)}</strong>
+          <strong className="atlas-phone-display" dir="ltr" lang="en">{formatPhoneForDisplay(currentPhone)}</strong>
         </div>
       ) : null}
 
@@ -198,23 +204,20 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
             value={phoneInput}
             onChange={(event) => setPhoneInput(event.target.value)}
             dir="ltr"
+            lang="en"
             required
           />
           <button className="button" type="submit" disabled={busy}>{busy ? copy.sending : copy.send}</button>
         </form>
       ) : (
         <form className="settings-form" onSubmit={verifyChange}>
-          <p className="field-help">{copy.code} · <span dir="ltr">{maskPhone(pendingPhone)}</span></p>
-          <label htmlFor="sign-in-phone-code">{copy.code}</label>
-          <input
+          <p className="field-help">{copy.code} · <span className="auth-phone-value" dir="ltr" lang="en">{maskPhone(pendingPhone)}</span></p>
+          <OtpCodeField
             id="sign-in-phone-code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
+            label={copy.code}
             value={token}
-            onChange={(event) => setToken(normalizeOtpToken(event.target.value))}
-            placeholder="123456"
-            dir="ltr"
-            required
+            onChange={setToken}
+            pasteLabel={copy.paste}
             autoFocus
           />
           <button className="button" type="submit" disabled={busy}>{busy ? copy.verifying : copy.verify}</button>
