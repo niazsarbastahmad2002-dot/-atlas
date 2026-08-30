@@ -1,0 +1,30 @@
+name: Cloudflare backup compatibility
+
+on:
+  push:
+    branches:
+      - infra/cloudflare-backup
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vinext-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Atlas dependencies
+        run: npm ci
+
+      - name: Check Cloudflare Workers compatibility
+        run: npx --yes vinext@latest check
