@@ -15,6 +15,7 @@ const copyByLocale = {
     network: "Atlas could not start email sign-in. Check your connection and try again.",
     sentBefore: "Open the newest Atlas email for",
     sentAfter: "The link will sign you in to the fresh Atlas account.",
+    openEmail: "Open email",
     another: "Use another email",
     label: "Email",
     sending: "Sending…",
@@ -30,6 +31,7 @@ const copyByLocale = {
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
     sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
     sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
+    openEmail: "ئیمەیڵ بکەرەوە",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
     sending: "دەنێردرێت…",
@@ -45,6 +47,7 @@ const copyByLocale = {
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
     sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
     sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
+    openEmail: "ئیمەیل ڤەکە",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
     sending: "دهێتە هنارتن…",
@@ -60,6 +63,7 @@ const copyByLocale = {
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
     sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
     sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
+    openEmail: "فتح البريد",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
     sending: "جارٍ الإرسال…",
@@ -69,6 +73,48 @@ const copyByLocale = {
 
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
+
+function emailWebInbox(email: string) {
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  if (domain === "gmail.com" || domain === "googlemail.com") return "https://mail.google.com/mail/u/0/#inbox";
+  if (["outlook.com", "hotmail.com", "live.com", "msn.com"].includes(domain)) return "https://outlook.live.com/mail/0/inbox";
+  if (domain === "yahoo.com" || domain.endsWith(".yahoo.com")) return "https://mail.yahoo.com/d/folders/1";
+  if (["icloud.com", "me.com", "mac.com"].includes(domain)) return "https://www.icloud.com/mail/";
+  return "mailto:";
+}
+
+function openEmailInbox(email: string) {
+  const fallback = emailWebInbox(email);
+  const userAgent = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  if (isIOS) {
+    let timer = 0;
+    const cancelFallback = () => {
+      if (document.hidden && timer) window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", cancelFallback);
+    };
+
+    document.addEventListener("visibilitychange", cancelFallback);
+    timer = window.setTimeout(() => {
+      document.removeEventListener("visibilitychange", cancelFallback);
+      if (!document.hidden) window.location.assign(fallback);
+    }, 1200);
+
+    window.location.assign("message://");
+    return;
+  }
+
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  if (/Android/i.test(userAgent) && (domain === "gmail.com" || domain === "googlemail.com")) {
+    const browserFallback = encodeURIComponent(fallback);
+    window.location.assign(`intent://mail.google.com/mail/u/0/#inbox#Intent;scheme=https;package=com.google.android.gm;S.browser_fallback_url=${browserFallback};end`);
+    return;
+  }
+
+  window.location.assign(fallback);
+}
 
 export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const copy = copyByLocale[locale];
@@ -136,6 +182,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         <p className="notice notice-success" role="status">
           {copy.sentBefore} <span dir="ltr">{email}</span>. {copy.sentAfter}
         </p>
+        <button className="button" type="button" onClick={() => openEmailInbox(email)}>{copy.openEmail}</button>
         <button className="button button-ghost" type="button" onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
         {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       </div>
