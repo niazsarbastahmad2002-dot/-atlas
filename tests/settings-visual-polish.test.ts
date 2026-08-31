@@ -29,11 +29,13 @@ test("account settings nested controls have distinct spacing and boundaries", as
   assert.match(css, /\.settings-card:has\(\.account-email\) > \.settings-disclosure/);
 });
 
-test("Settings cards use a consistent surface instead of a one-off language gradient", async () => {
+test("Settings cards share one restrained Atlas mint glow in light and dark modes", async () => {
   const css = await readFile(finishCssPath, "utf8");
 
-  assert.match(css, /\.settings-card-accent\s*\{/);
-  assert.match(css, /background:\s*var\(--surface\)\s*!important/);
+  assert.match(css, /\.settings-card,\s*\n\.settings-card-accent\s*\{/);
+  assert.match(css, /radial-gradient\(circle at 100% 0/);
+  assert.match(css, /:root\[data-theme="dark"\] \.settings-card/);
+  assert.match(css, /:root\[data-theme="system"\] \.settings-card/);
   assert.match(css, /border-color:\s*var\(--line\)\s*!important/);
 });
 
