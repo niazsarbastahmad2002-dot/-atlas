@@ -124,7 +124,7 @@ export default async function HomePage() {
       <section className="hero shell atlas-simple-hero">
         <div className="atlas-home-language">
           <div className="eyebrow">{copy.languageLabel}</div>
-          <LoginLanguagePicker locale={locale} source="home" />
+          <LoginLanguagePicker locale={locale} />
         </div>
 
         <div className="eyebrow">{copy.eyebrow}</div>
