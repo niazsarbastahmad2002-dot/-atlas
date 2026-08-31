@@ -7,6 +7,7 @@ const UI_LOCALES = new Set(["en", "ku", "bd", "ar"]);
 
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AtlasEmailLocale = "en" | "ku" | "bd" | "ar";
+type AdminClient = ReturnType<typeof createAdminClient>;
 
 function isAlreadyRegistered(error: { code?: string; message?: string } | null) {
   const text = `${error?.code ?? ""} ${error?.message ?? ""}`.toLowerCase();
@@ -28,6 +29,50 @@ function failureResponse(reason: TemporaryEmailFailure, status = 503) {
     { ok: false, reason },
     { status, headers: { "Cache-Control": "no-store" } },
   );
+}
+
+async function syncExistingUserLocale(
+  admin: AdminClient,
+  email: string,
+  locale: AtlasEmailLocale,
+) {
+  const perPage = 1000;
+
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      console.error("atlas_temporary_email_locale_lookup_failed", {
+        code: error.code ?? null,
+        status: error.status ?? null,
+      });
+      return false;
+    }
+
+    const user = data.users.find((candidate) => candidate.email?.toLowerCase() === email);
+    if (user) {
+      const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...(user.user_metadata ?? {}),
+          atlas_ui_language: locale,
+        },
+      });
+
+      if (updateError) {
+        console.error("atlas_temporary_email_locale_update_failed", {
+          code: updateError.code ?? null,
+          status: updateError.status ?? null,
+        });
+        return false;
+      }
+
+      return true;
+    }
+
+    if (data.users.length < perPage) break;
+  }
+
+  console.error("atlas_temporary_email_locale_user_not_found");
+  return false;
 }
 
 export async function POST(request: Request) {
@@ -61,12 +106,18 @@ export async function POST(request: Request) {
       app_metadata: { atlas_temporary_email_bootstrap: true },
     });
 
-    if (createError && !isAlreadyRegistered(createError)) {
-      console.error("atlas_temporary_email_bootstrap_failed", {
-        code: createError.code ?? null,
-        status: createError.status ?? null,
-      });
-      return failureResponse("delivery");
+    if (createError) {
+      if (!isAlreadyRegistered(createError)) {
+        console.error("atlas_temporary_email_bootstrap_failed", {
+          code: createError.code ?? null,
+          status: createError.status ?? null,
+        });
+        return failureResponse("delivery");
+      }
+
+      if (!await syncExistingUserLocale(admin, email, locale)) {
+        return failureResponse("delivery");
+      }
     }
 
     const redirectTo = new URL("/auth/callback", request.url);

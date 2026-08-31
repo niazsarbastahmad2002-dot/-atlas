@@ -1,4 +1,4 @@
-const safeAuthDestinations = new Set(["/dashboard"]);
+const safeAuthDestinations = new Set(["/dashboard", "/dashboard/select-clinic"]);
 const staffInviteFinish = /^\/join\/[A-Za-z0-9_-]{43}\/finish$/;
 
 export function safeAuthDestination(value: string | null | undefined) {

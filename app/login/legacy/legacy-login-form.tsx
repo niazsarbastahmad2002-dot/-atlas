@@ -15,7 +15,8 @@ const copyByLocale = {
     network: "Atlas could not start email sign-in. Check your connection and try again.",
     sentBefore: "Open the newest Atlas email for",
     sentAfter: "The link will sign you in to the fresh Atlas account.",
-    openEmail: "Open email",
+    emailArriving: "Your new Atlas email is arriving…",
+    openEmail: "Open newest email",
     another: "Use another email",
     label: "Email",
     sending: "Sending…",
@@ -31,7 +32,8 @@ const copyByLocale = {
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
     sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
     sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
-    openEmail: "ئیمەیڵ بکەرەوە",
+    emailArriving: "ئیمەیڵە نوێیەکەی Atlas دەگات…",
+    openEmail: "نوێترین ئیمەیڵ بکەرەوە",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
     sending: "دەنێردرێت…",
@@ -47,7 +49,8 @@ const copyByLocale = {
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
     sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
     sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
-    openEmail: "ئیمەیل ڤەکە",
+    emailArriving: "ئیمەیلا نوو یا Atlas دهێتە گەهاندن…",
+    openEmail: "نووترین ئیمەیل ڤەکە",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
     sending: "دهێتە هنارتن…",
@@ -63,7 +66,8 @@ const copyByLocale = {
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
     sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
     sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
-    openEmail: "فتح البريد",
+    emailArriving: "رسالة Atlas الجديدة توصل الآن…",
+    openEmail: "فتح أحدث رسالة",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
     sending: "جارٍ الإرسال…",
@@ -76,7 +80,10 @@ type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean
 
 function emailWebInbox(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  if (domain === "gmail.com" || domain === "googlemail.com") return "https://mail.google.com/mail/u/0/#inbox";
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    const query = encodeURIComponent('subject:"Atlas — Sign in" newer_than:1d');
+    return `https://mail.google.com/mail/u/0/#search/${query}`;
+  }
   if (["outlook.com", "hotmail.com", "live.com", "msn.com"].includes(domain)) return "https://outlook.live.com/mail/0/inbox";
   if (domain === "yahoo.com" || domain.endsWith(".yahoo.com")) return "https://mail.yahoo.com/d/folders/1";
   if (["icloud.com", "me.com", "mac.com"].includes(domain)) return "https://www.icloud.com/mail/";
@@ -121,6 +128,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [emailReady, setEmailReady] = useState(false);
   const [error, setError] = useState("");
   const [readiness, setReadiness] = useState<AuthReadiness | null>(null);
 
@@ -132,6 +140,16 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
       .catch(() => undefined);
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!sent) {
+      setEmailReady(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setEmailReady(true), 2500);
+    return () => window.clearTimeout(timer);
+  }, [sent]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -182,8 +200,10 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         <p className="notice notice-success" role="status">
           {copy.sentBefore} <span dir="ltr">{email}</span>. {copy.sentAfter}
         </p>
-        <button className="button" type="button" onClick={() => openEmailInbox(email)}>{copy.openEmail}</button>
-        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
+        <button className="button" type="button" disabled={!emailReady} onClick={() => openEmailInbox(email)}>
+          {emailReady ? copy.openEmail : copy.emailArriving}
+        </button>
+        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setEmailReady(false); setError(""); }}>{copy.another}</button>
         {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       </div>
     );
