@@ -54,19 +54,22 @@ test("WhatsApp OTP is feature-gated and never presented as a fake default", () =
 test("temporary email access can recreate a deleted user only while phone auth is unavailable", () => {
   const page = read("app/login/page.tsx");
   const legacy = read("app/login/legacy/legacy-login-form.tsx");
-  const bootstrap = read("app/api/auth/temporary-email/route.ts");
+  const route = read("app/api/auth/temporary-email/route.ts");
   const legacyPage = read("app/login/legacy/page.tsx");
   const phoneChange = read("app/dashboard/settings/phone-change-form.tsx");
 
   assert.match(page, /legacyFallbackEnabled = !phoneFlowEnabled && readiness\?\.supabaseEmailEnabled === true/);
   assert.match(legacy, /fetch\("\/api\/auth\/temporary-email"/);
-  assert.match(legacy, /shouldCreateUser: false/);
-  assert.match(legacy, /\/auth\/callback\?next=\/dashboard\/select-clinic/);
-  assert.match(bootstrap, /createAdminClient\(\)/);
-  assert.match(bootstrap, /auth\.admin\.createUser\(\{/);
-  assert.match(bootstrap, /email_confirm: false/);
-  assert.match(bootstrap, /readiness\.supabasePhoneEnabled/);
-  assert.match(bootstrap, /!readiness\.supabaseEmailEnabled/);
+  assert.doesNotMatch(legacy, /signInWithOtp/);
+  assert.match(route, /createAdminClient\(\)/);
+  assert.match(route, /auth\.admin\.createUser\(\{/);
+  assert.match(route, /email_confirm: false/);
+  assert.match(route, /admin\.auth\.signInWithOtp/);
+  assert.match(route, /shouldCreateUser: false/);
+  assert.match(route, /over_email_send_rate_limit/);
+  assert.match(route, /email_address_not_authorized/);
+  assert.match(route, /readiness\.supabasePhoneEnabled/);
+  assert.match(route, /!readiness\.supabaseEmailEnabled/);
   assert.match(legacyPage, /ATLAS_LEGACY_AUTH_ENABLED/);
   assert.match(phoneChange, /auth\.updateUser\(\{ phone \}\)/);
   assert.match(phoneChange, /type: "phone_change"/);

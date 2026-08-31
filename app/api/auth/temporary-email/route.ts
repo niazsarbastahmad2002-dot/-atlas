@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
+
 function isAlreadyRegistered(error: { code?: string; message?: string } | null) {
   const text = `${error?.code ?? ""} ${error?.message ?? ""}`.toLowerCase();
   return text.includes("already registered")
@@ -12,10 +14,24 @@ function isAlreadyRegistered(error: { code?: string; message?: string } | null) 
     || text.includes("user_already_exists");
 }
 
+function deliveryFailure(code?: string): TemporaryEmailFailure {
+  if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit") return "rate_limited";
+  if (code === "email_address_not_authorized") return "not_authorized";
+  if (code === "otp_disabled" || code === "email_provider_disabled" || code === "provider_disabled") return "provider";
+  return "delivery";
+}
+
+function failureResponse(reason: TemporaryEmailFailure, status = 503) {
+  return NextResponse.json(
+    { ok: false, reason },
+    { status, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
 export async function POST(request: Request) {
   const readiness = await getAtlasAuthReadiness();
   if (!readiness.reachable || readiness.supabasePhoneEnabled || !readiness.supabaseEmailEnabled) {
-    return NextResponse.json({ ok: false }, { status: 403, headers: { "Cache-Control": "no-store" } });
+    return failureResponse("provider", 403);
   }
 
   let email = "";
@@ -32,18 +48,37 @@ export async function POST(request: Request) {
 
   try {
     const admin = createAdminClient();
-    const { error } = await admin.auth.admin.createUser({
+    const { error: createError } = await admin.auth.admin.createUser({
       email,
       email_confirm: false,
       app_metadata: { atlas_temporary_email_bootstrap: true },
     });
 
-    if (error && !isAlreadyRegistered(error)) {
+    if (createError && !isAlreadyRegistered(createError)) {
       console.error("atlas_temporary_email_bootstrap_failed", {
-        code: error.code ?? null,
-        status: error.status ?? null,
+        code: createError.code ?? null,
+        status: createError.status ?? null,
       });
-      return NextResponse.json({ ok: false }, { status: 500, headers: { "Cache-Control": "no-store" } });
+      return failureResponse("delivery");
+    }
+
+    const redirectTo = new URL("/auth/callback?next=/dashboard/select-clinic", request.url).toString();
+    const { error: sendError } = await admin.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: redirectTo,
+      },
+    });
+
+    if (sendError) {
+      const reason = deliveryFailure(sendError.code);
+      console.error("atlas_temporary_email_send_failed", {
+        code: sendError.code ?? null,
+        status: sendError.status ?? null,
+        reason,
+      });
+      return failureResponse(reason, reason === "rate_limited" ? 429 : 503);
     }
 
     return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
@@ -51,6 +86,6 @@ export async function POST(request: Request) {
     console.error("atlas_temporary_email_bootstrap_exception", {
       message: error instanceof Error ? error.message : "unknown",
     });
-    return NextResponse.json({ ok: false }, { status: 500, headers: { "Cache-Control": "no-store" } });
+    return failureResponse("delivery");
   }
 }
