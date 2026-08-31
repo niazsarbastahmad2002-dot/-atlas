@@ -15,7 +15,6 @@ const copyByLocale = {
     network: "Atlas could not start email sign-in. Check your connection and try again.",
     sentBefore: "Open the newest Atlas email for",
     sentAfter: "The link will sign you in to the fresh Atlas account.",
-    emailArriving: "Your new Atlas email is arriving…",
     openEmail: "Open newest email",
     another: "Use another email",
     label: "Email",
@@ -32,7 +31,6 @@ const copyByLocale = {
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
     sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
     sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
-    emailArriving: "ئیمەیڵە نوێیەکەی Atlas دەگات…",
     openEmail: "نوێترین ئیمەیڵ بکەرەوە",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
@@ -49,7 +47,6 @@ const copyByLocale = {
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
     sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
     sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
-    emailArriving: "ئیمەیلا نوو یا Atlas دهێتە گەهاندن…",
     openEmail: "نووترین ئیمەیل ڤەکە",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
@@ -66,7 +63,6 @@ const copyByLocale = {
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
     sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
     sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
-    emailArriving: "رسالة Atlas الجديدة توصل الآن…",
     openEmail: "فتح أحدث رسالة",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
@@ -78,12 +74,16 @@ const copyByLocale = {
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
 
-const EMAIL_SYNC_GRACE_MS = 8000;
+const ATLAS_GMAIL_QUERY = 'is:unread subject:"Atlas — Sign in" newer_than:1d';
+
+function isGmailDomain(domain: string) {
+  return domain === "gmail.com" || domain === "googlemail.com";
+}
 
 function emailWebInbox(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  if (domain === "gmail.com" || domain === "googlemail.com") {
-    const query = encodeURIComponent('subject:"Atlas — Sign in" newer_than:1d');
+  if (isGmailDomain(domain)) {
+    const query = encodeURIComponent(ATLAS_GMAIL_QUERY);
     return `https://mail.google.com/mail/u/0/#search/${query}`;
   }
   if (["outlook.com", "hotmail.com", "live.com", "msn.com"].includes(domain)) return "https://outlook.live.com/mail/0/inbox";
@@ -94,29 +94,46 @@ function emailWebInbox(email: string) {
 
 function openEmailInbox(email: string) {
   const fallback = emailWebInbox(email);
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
   const userAgent = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(userAgent)
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
   if (isIOS) {
-    let timer = 0;
-    const cancelFallback = () => {
-      if (document.hidden && timer) window.clearTimeout(timer);
-      document.removeEventListener("visibilitychange", cancelFallback);
+    let nativeFallbackTimer = 0;
+    let webFallbackTimer = 0;
+
+    const cancelFallbacks = () => {
+      if (document.hidden) {
+        if (nativeFallbackTimer) window.clearTimeout(nativeFallbackTimer);
+        if (webFallbackTimer) window.clearTimeout(webFallbackTimer);
+      }
+      if (document.hidden) document.removeEventListener("visibilitychange", cancelFallbacks);
     };
 
-    document.addEventListener("visibilitychange", cancelFallback);
-    timer = window.setTimeout(() => {
-      document.removeEventListener("visibilitychange", cancelFallback);
-      if (!document.hidden) window.location.assign(fallback);
-    }, 1200);
+    const openAppleMail = () => {
+      if (document.hidden) return;
+      window.location.assign("message://0");
+      webFallbackTimer = window.setTimeout(() => {
+        document.removeEventListener("visibilitychange", cancelFallbacks);
+        if (!document.hidden) window.location.assign(fallback);
+      }, 1200);
+    };
 
-    window.location.assign("message://");
+    document.addEventListener("visibilitychange", cancelFallbacks);
+
+    if (isGmailDomain(domain)) {
+      const query = encodeURIComponent(ATLAS_GMAIL_QUERY);
+      nativeFallbackTimer = window.setTimeout(openAppleMail, 900);
+      window.location.assign(`googlegmail:///search?query=${query}`);
+      return;
+    }
+
+    openAppleMail();
     return;
   }
 
-  const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  if (/Android/i.test(userAgent) && (domain === "gmail.com" || domain === "googlemail.com")) {
+  if (/Android/i.test(userAgent) && isGmailDomain(domain)) {
     const browserFallback = encodeURIComponent(fallback);
     window.location.assign(`intent://mail.google.com/mail/u/0/#inbox#Intent;scheme=https;package=com.google.android.gm;S.browser_fallback_url=${browserFallback};end`);
     return;
@@ -130,7 +147,6 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-  const [emailReady, setEmailReady] = useState(false);
   const [error, setError] = useState("");
   const [readiness, setReadiness] = useState<AuthReadiness | null>(null);
 
@@ -142,19 +158,6 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
       .catch(() => undefined);
     return () => { active = false; };
   }, []);
-
-  useEffect(() => {
-    if (!sent) {
-      setEmailReady(false);
-      return;
-    }
-
-    // Native mail apps do not expose inbox-sync state to Atlas. Give the just-sent
-    // message enough time to arrive before handing off, so an older Atlas email is
-    // much less likely to still be the first item selected when Mail opens.
-    const timer = window.setTimeout(() => setEmailReady(true), EMAIL_SYNC_GRACE_MS);
-    return () => window.clearTimeout(timer);
-  }, [sent]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -205,10 +208,10 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         <p className="notice notice-success" role="status">
           {copy.sentBefore} <span dir="ltr">{email}</span>. {copy.sentAfter}
         </p>
-        <button className="button" type="button" disabled={!emailReady} onClick={() => openEmailInbox(email)}>
-          {emailReady ? copy.openEmail : copy.emailArriving}
+        <button className="button" type="button" onClick={() => openEmailInbox(email)}>
+          {copy.openEmail}
         </button>
-        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setEmailReady(false); setError(""); }}>{copy.another}</button>
+        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
         {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       </div>
     );
