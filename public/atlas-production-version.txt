@@ -1,2 +1,2 @@
-Atlas production refresh: 2026-08-19 doctor workflow release
-Commit source: PR #61
+Atlas production refresh: 2026-08-31 dark-mode doctor-count deployment
+Commit source: 39cf528a85efd13b07f8befeb02c8514ea2aa976
