@@ -102,7 +102,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
       const response = await fetch("/api/auth/temporary-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalized }),
+        body: JSON.stringify({ email: normalized, locale }),
       });
       const result = await response.json().catch(() => null) as { ok?: boolean; reason?: TemporaryEmailFailure } | null;
       if (!response.ok || result?.ok !== true) {
