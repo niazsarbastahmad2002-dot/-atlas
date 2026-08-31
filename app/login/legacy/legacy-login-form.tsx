@@ -78,6 +78,8 @@ const copyByLocale = {
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
 
+const EMAIL_SYNC_GRACE_MS = 8000;
+
 function emailWebInbox(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
   if (domain === "gmail.com" || domain === "googlemail.com") {
@@ -147,7 +149,10 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
       return;
     }
 
-    const timer = window.setTimeout(() => setEmailReady(true), 2500);
+    // Native mail apps do not expose inbox-sync state to Atlas. Give the just-sent
+    // message enough time to arrive before handing off, so an older Atlas email is
+    // much less likely to still be the first item selected when Mail opens.
+    const timer = window.setTimeout(() => setEmailReady(true), EMAIL_SYNC_GRACE_MS);
     return () => window.clearTimeout(timer);
   }, [sent]);
 

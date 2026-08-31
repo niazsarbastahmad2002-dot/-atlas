@@ -9,7 +9,8 @@ test("temporary email success state waits for fresh mail and offers a native-fir
 
   assert.match(source, /openEmail: "Open newest email"/);
   assert.match(source, /emailArriving: "Your new Atlas email is arriving…"/);
-  assert.match(source, /setTimeout\(\(\) => setEmailReady\(true\), 2500\)/);
+  assert.match(source, /const EMAIL_SYNC_GRACE_MS = 8000/);
+  assert.match(source, /setTimeout\(\(\) => setEmailReady\(true\), EMAIL_SYNC_GRACE_MS\)/);
   assert.match(source, /disabled=\{!emailReady\}/);
   assert.match(source, /onClick=\{\(\) => openEmailInbox\(email\)\}/);
   assert.match(source, /window\.location\.assign\("message:\/\/"\)/);
