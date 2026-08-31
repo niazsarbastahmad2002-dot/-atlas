@@ -1,0 +1,32 @@
+/* Low-glare identity tiles for Atlas dark mode.
+   Keep the symbols recognizable while removing bright mint/white blocks from dark surfaces. */
+
+:root[data-theme="dark"] .settings-card-icon {
+  background: #173329 !important;
+  color: #72ddb0 !important;
+  border: 1px solid #355548 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+:root[data-theme="dark"] .atlas-ai-orb {
+  background: linear-gradient(145deg,#193b30,#10271f) !important;
+  color: #dffff5 !important;
+  border: 1px solid #355548 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.16) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .settings-card-icon {
+    background: #173329 !important;
+    color: #72ddb0 !important;
+    border: 1px solid #355548 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+  }
+
+  :root[data-theme="system"] .atlas-ai-orb {
+    background: linear-gradient(145deg,#193b30,#10271f) !important;
+    color: #dffff5 !important;
+    border: 1px solid #355548 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.16) !important;
+  }
+}

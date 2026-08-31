@@ -5,11 +5,12 @@ import test from "node:test";
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("account deletion remains explicit and cannot cascade an owned clinic", async () => {
-  const [action, page, ownershipGuard, nativeApp] = await Promise.all([
+  const [action, page, ownershipGuard, nativeApp, appleServer] = await Promise.all([
     read("app/dashboard/settings/account/actions.ts"),
     read("app/dashboard/settings/account/page.tsx"),
     read("supabase/migrations/20260824124500_restore_account_delete_clinic_ownership_guard.sql"),
     read("ios/Atlas/AtlasApp.swift"),
+    read("lib/apple-server.ts"),
   ]);
 
   assert.match(action, /\.from\("clinics"\)[\s\S]*\.eq\("owner_id", userData\.user\.id\)/);
@@ -18,6 +19,13 @@ test("account deletion remains explicit and cannot cascade an owned clinic", asy
     action.indexOf("ownedClinics?.length") < action.indexOf("auth.admin.deleteUser"),
     "owned-clinic guard must run before auth deletion",
   );
+
+  assert.match(action, /if \(hasAppleIdentity\) \{[\s\S]*getStoredAppleRevocationCredential/);
+  assert.ok(
+    action.indexOf("if (hasAppleIdentity)") < action.indexOf("getStoredAppleRevocationCredential"),
+    "Apple credential lookup must be guarded by an Apple identity check",
+  );
+  assert.match(appleServer, /admin\.rpc\.bind\(admin\)/);
 
   assert.match(page, /Type DELETE to confirm/);
   assert.match(page, /Permanently delete my Atlas account/);

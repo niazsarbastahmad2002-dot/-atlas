@@ -4,6 +4,7 @@ import test from "node:test";
 
 const layoutPath = new URL("../app/layout.tsx", import.meta.url);
 const finishCssPath = new URL("../app/atlas-settings-finish.css", import.meta.url);
+const darkIconCssPath = new URL("../app/atlas-dark-icon-polish.css", import.meta.url);
 const phoneManagerPath = new URL("../app/dashboard/settings/phone-number-manager.tsx", import.meta.url);
 
 test("Kurdish UI uses the dedicated Arabic-script font", async () => {
@@ -37,6 +38,20 @@ test("Settings cards share one restrained Atlas mint glow in light and dark mode
   assert.match(css, /:root\[data-theme="dark"\] \.settings-card/);
   assert.match(css, /:root\[data-theme="system"\] \.settings-card/);
   assert.match(css, /border-color:\s*var\(--line\)\s*!important/);
+});
+
+test("dark mode uses low-glare Settings icon tiles and Atlas AI identity orb", async () => {
+  const [layout, css] = await Promise.all([
+    readFile(layoutPath, "utf8"),
+    readFile(darkIconCssPath, "utf8"),
+  ]);
+
+  assert.match(layout, /atlas-dark-icon-polish\.css/);
+  assert.match(css, /:root\[data-theme="dark"\] \.settings-card-icon/);
+  assert.match(css, /background:\s*#173329\s*!important/);
+  assert.match(css, /:root\[data-theme="dark"\] \.atlas-ai-orb/);
+  assert.match(css, /#10271f/);
+  assert.match(css, /:root\[data-theme="system"\] \.settings-card-icon/);
 });
 
 test("pending Kurdish phone text is not forced into left-to-right English rendering", async () => {
