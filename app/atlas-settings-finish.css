@@ -1,0 +1,74 @@
+/* Final Settings polish: clearer nested account controls and a purpose-built Kurdish UI type stack. */
+
+/* Sorani and Badini use an Arabic-script UI font instead of falling through from Inter to an arbitrary system font. */
+html[lang="ckb"] body,
+html[lang="ku"] body {
+  font-family: var(--font-atlas-kurdish), "Noto Sans Arabic", "Geeza Pro", Tahoma, sans-serif;
+}
+
+/* Arabic-script headings should not inherit the negative tracking used by Atlas Latin headings. */
+html[lang="ckb"] :is(h1, h2, h3, h4, .page-heading h1, .workspace-title-block h1, .settings-card-heading h2),
+html[lang="ku"] :is(h1, h2, h3, h4, .page-heading h1, .workspace-title-block h1, .settings-card-heading h2) {
+  letter-spacing: 0 !important;
+}
+
+/* Keep the small mint Settings icon tiles as intentional Atlas accents. Their existing styling is deliberately untouched. */
+
+/* Account settings contain several controls inside one card. Give every nested unit its own breathing room and boundary. */
+.settings-card:has(.account-email) > .settings-form {
+  margin-top: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--surface-soft);
+}
+
+.settings-card:has(.account-email) > .settings-form > .settings-readonly-clinic {
+  margin: 2px 0;
+  border: 1px solid var(--line);
+}
+
+.settings-card:has(.account-email) > .settings-form > .button {
+  width: 100%;
+}
+
+.settings-card:has(.account-email) > .settings-link,
+.settings-card:has(.account-email) > .settings-disclosure,
+.settings-card:has(.account-email) > .settings-account-signout {
+  margin-top: 12px;
+}
+
+.settings-card:has(.account-email) > .settings-link {
+  border: 1px solid var(--line);
+}
+
+.settings-card:has(.account-email) > .settings-disclosure {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--surface-soft);
+}
+
+.settings-card:has(.account-email) > .settings-disclosure > summary {
+  min-height: 44px;
+  padding: 0;
+}
+
+.settings-card:has(.account-email) > .settings-account-signout {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+:root[data-theme="dark"] .settings-card:has(.account-email) > :is(.settings-form, .settings-link, .settings-disclosure) {
+  background: var(--surface-soft);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .settings-card:has(.account-email) > :is(.settings-form, .settings-link, .settings-disclosure) {
+    background: var(--surface-soft);
+    border-color: var(--line);
+    box-shadow: none;
+  }
+}
