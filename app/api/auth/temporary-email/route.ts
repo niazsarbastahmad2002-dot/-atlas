@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UI_LOCALES = new Set(["en", "ku", "bd", "ar"]);
+const AUTH_USER_PAGE_SIZE = 1000;
+const AUTH_USER_PAGE_LIMIT = 100;
 
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AtlasEmailLocale = "en" | "ku" | "bd" | "ar";
@@ -28,6 +30,36 @@ function failureResponse(reason: TemporaryEmailFailure, status = 503) {
     { ok: false, reason },
     { status, headers: { "Cache-Control": "no-store" } },
   );
+}
+
+async function syncExistingUserLocale(
+  admin: ReturnType<typeof createAdminClient>,
+  email: string,
+  locale: AtlasEmailLocale,
+) {
+  for (let page = 1; page <= AUTH_USER_PAGE_LIMIT; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page,
+      perPage: AUTH_USER_PAGE_SIZE,
+    });
+
+    if (error) return error;
+
+    const user = data.users.find((candidate) => candidate.email?.toLowerCase() === email);
+    if (user) {
+      const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...(user.user_metadata ?? {}),
+          atlas_ui_language: locale,
+        },
+      });
+      return updateError;
+    }
+
+    if (data.users.length < AUTH_USER_PAGE_SIZE) break;
+  }
+
+  return new Error("Atlas auth user could not be resolved for locale sync.");
 }
 
 export async function POST(request: Request) {
@@ -69,7 +101,17 @@ export async function POST(request: Request) {
       return failureResponse("delivery");
     }
 
-    const redirectTo = new URL("/auth/callback", request.url);
+    if (createError && isAlreadyRegistered(createError)) {
+      const localeError = await syncExistingUserLocale(admin, email, locale);
+      if (localeError) {
+        console.error("atlas_temporary_email_locale_sync_failed", {
+          code: "code" in localeError ? localeError.code ?? null : null,
+        });
+        return failureResponse("delivery");
+      }
+    }
+
+    const redirectTo = new URL("/auth/email-callback", request.url);
     redirectTo.searchParams.set("next", "/dashboard/select-clinic");
     redirectTo.searchParams.set("atlas_email_locale", locale);
 
