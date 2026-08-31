@@ -34,7 +34,7 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     localDescription: "Works on this device without internet",
     modeNote: "Choose the version that fits the clinic. Online and Local stay separate so offline appointments never silently overwrite cloud data.",
     demo: "Try a sample clinic",
-    scope: "Scheduling and patient communication only — keep medical notes in the clinic's approved record system.",
+    scope: "Scheduling and patient communication only — keep medical notes in the clinic's approved record system.", // keep medical notes in the clinic&apos;s approved record system
     essentials: [
       { title: "Schedule", text: "See the clinic day and add the next patient fast." },
       { title: "Follow-up", text: "Confirm, cancel, complete, or mark no-show without leaving the schedule." },
