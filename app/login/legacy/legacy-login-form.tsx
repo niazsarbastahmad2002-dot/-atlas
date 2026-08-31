@@ -2,15 +2,17 @@
 
 import { useState, type FormEvent } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
-import { createClient } from "@/lib/supabase/client";
 
 const copyByLocale = {
   en: {
     invalid: "Enter a valid email address.",
-    failed: "Atlas could not send the sign-in link. Check the email and try again.",
+    failed: "Atlas could not send the sign-in link. Try again later.",
+    rateLimited: "Atlas email is temporarily rate-limited. Wait a little, then try once.",
+    notAuthorized: "This email cannot receive Atlas sign-in mail from the current Supabase mail service. Atlas needs custom SMTP for this address.",
+    provider: "Atlas email sign-in is temporarily unavailable.",
     network: "Atlas could not start email sign-in. Check your connection and try again.",
     sentBefore: "Open the newest Atlas email for",
-    sentAfter: "The link will sign you in, or create a fresh Atlas account if this email was deleted before.",
+    sentAfter: "The link will sign you in to the fresh Atlas account.",
     another: "Use another email",
     label: "Email",
     sending: "Sending…",
@@ -18,10 +20,13 @@ const copyByLocale = {
   },
   ku: {
     invalid: "ئیمەیڵێکی دروست بنووسە.",
-    failed: "Atlas نەیتوانی لینکی چوونەژوورەوە بنێرێت. ئیمەیڵەکە بپشکنە و دووبارە هەوڵ بدە.",
+    failed: "Atlas نەیتوانی لینکی چوونەژوورەوە بنێرێت. دواتر دووبارە هەوڵ بدە.",
+    rateLimited: "ناردنی ئیمەیڵی Atlas کاتێکی کورت سنووردار کراوە. کەمێک چاوەڕێ بکە و تەنها جارێکی تر هەوڵ بدە.",
+    notAuthorized: "ئەم ئیمەیڵە لە خزمەتگوزاری ئیمەیڵی ئێستای Supabase ناتوانێت ئیمەیڵی چوونەژوورەوە وەربگرێت. Atlas پێویستی بە SMTP تایبەت هەیە.",
+    provider: "چوونەژوورەوە بە ئیمەیڵی Atlas کاتێکی کورت بەردەست نییە.",
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
     sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
-    sentAfter: "لینکەکە دەچێتە ژوورەوە، یان ئەگەر پێشتر ئەم هەژمارەت سڕیوەتەوە هەژمارێکی نوێی Atlas دروست دەکات.",
+    sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
     sending: "دەنێردرێت…",
@@ -29,10 +34,13 @@ const copyByLocale = {
   },
   bd: {
     invalid: "ئیمەیلەکا دروست بنڤیسە.",
-    failed: "Atlas نەشیا لینکا چوونەژوورێ بهنێریت. ئیمەیلێ بپشکنە و دیسان هەول بدە.",
+    failed: "Atlas نەشیا لینکا چوونەژوورێ بهنێریت. پاشتر دیسان هەول بدە.",
+    rateLimited: "هنارتنا ئیمەیلا Atlas بۆ دەمەکێ کورت سنووردار بوویە. هندەک راوەستە و تەنێ جارەکا دی هەول بدە.",
+    notAuthorized: "ئەم ئیمەیلە ل سەر خزمەتا ئیمەیلا هەنووکە یا Supabase ناتوانیت ئیمەیلا چوونەژوورێ وەربگریت. Atlas پێدڤی ب SMTP یا تایبەت هەیە.",
+    provider: "چوونەژوور ب ئیمەیلا Atlas بۆ دەمەکێ کورت بەردەست نینە.",
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
     sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
-    sentAfter: "لینک دێ تە بخەتە ژوور، یان ئەگەر تە پێشتر هەژمار ژێبری هەژمارەکا نوو یا Atlas دروست دکەت.",
+    sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
     sending: "دهێتە هنارتن…",
@@ -40,16 +48,21 @@ const copyByLocale = {
   },
   ar: {
     invalid: "اكتب بريد إلكتروني صحيح.",
-    failed: "Atlas ما قدر يرسل رابط تسجيل الدخول. تأكد من البريد وحاول مرة ثانية.",
+    failed: "Atlas ما قدر يرسل رابط تسجيل الدخول. حاول مرة ثانية بعدين.",
+    rateLimited: "إرسال إيميلات Atlas محدود مؤقتاً. انتظر شوي وحاول مرة وحدة بعدين.",
+    notAuthorized: "هذا البريد ما يقدر يستلم رسالة دخول Atlas من خدمة Supabase الحالية. Atlas يحتاج SMTP مخصص لهذا البريد.",
+    provider: "تسجيل الدخول بالبريد في Atlas غير متاح مؤقتاً.",
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
     sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
-    sentAfter: "الرابط يسجل دخولك، أو ينشئ حساب Atlas جديد إذا كنت حاذف هذا الحساب من قبل.",
+    sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
     sending: "جارٍ الإرسال…",
     send: "المتابعة بالبريد الإلكتروني",
   },
 } as const satisfies Record<UiLocale, Record<string, string>>;
+
+type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 
 export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const copy = copyByLocale[locale];
@@ -70,28 +83,20 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     setBusy(true);
     setError("");
     try {
-      const bootstrapResponse = await fetch("/api/auth/temporary-email", {
+      const response = await fetch("/api/auth/temporary-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalized }),
       });
-      if (!bootstrapResponse.ok) {
-        setError(copy.failed);
+      const result = await response.json().catch(() => null) as { ok?: boolean; reason?: TemporaryEmailFailure } | null;
+      if (!response.ok || result?.ok !== true) {
+        if (result?.reason === "rate_limited") setError(copy.rateLimited);
+        else if (result?.reason === "not_authorized") setError(copy.notAuthorized);
+        else if (result?.reason === "provider") setError(copy.provider);
+        else setError(copy.failed);
         return;
       }
 
-      const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email: normalized,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard/select-clinic`,
-        },
-      });
-      if (authError) {
-        setError(copy.failed);
-        return;
-      }
       setEmail(normalized);
       setSent(true);
     } catch {
