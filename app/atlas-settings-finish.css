@@ -14,10 +14,29 @@ html[lang="ku"] :is(h1, h2, h3, h4, .page-heading h1, .workspace-title-block h1,
 
 /* Keep the small mint Settings icon tiles as intentional Atlas accents. */
 
-/* Settings cards should share one surface. The former language-card gradient created a one-off half-green panel. */
+/* Give every Settings card the same subtle Atlas mint atmosphere instead of a one-off half-green panel. */
+.settings-card,
 .settings-card-accent {
-  background: var(--surface) !important;
+  background:
+    radial-gradient(circle at 100% 0, rgba(46, 184, 132, 0.10), rgba(46, 184, 132, 0.035) 28%, transparent 52%),
+    var(--surface) !important;
   border-color: var(--line) !important;
+}
+
+:root[data-theme="dark"] .settings-card,
+:root[data-theme="dark"] .settings-card-accent {
+  background:
+    radial-gradient(circle at 100% 0, rgba(88, 207, 155, 0.075), rgba(88, 207, 155, 0.025) 30%, transparent 55%),
+    var(--surface) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .settings-card,
+  :root[data-theme="system"] .settings-card-accent {
+    background:
+      radial-gradient(circle at 100% 0, rgba(88, 207, 155, 0.075), rgba(88, 207, 155, 0.025) 30%, transparent 55%),
+      var(--surface) !important;
+  }
 }
 
 /* Account settings contain several controls inside one card. Give every nested unit its own breathing room and boundary. */
