@@ -4,6 +4,7 @@ import test from "node:test";
 
 const layoutPath = new URL("../app/layout.tsx", import.meta.url);
 const finishCssPath = new URL("../app/atlas-settings-finish.css", import.meta.url);
+const phoneManagerPath = new URL("../app/dashboard/settings/phone-number-manager.tsx", import.meta.url);
 
 test("Kurdish UI uses the dedicated Arabic-script font", async () => {
   const [layout, css] = await Promise.all([
@@ -26,4 +27,21 @@ test("account settings nested controls have distinct spacing and boundaries", as
   assert.match(css, /margin-top:\s*12px/);
   assert.match(css, /border:\s*1px solid var\(--line\)/);
   assert.match(css, /\.settings-card:has\(\.account-email\) > \.settings-disclosure/);
+});
+
+test("Settings cards use a consistent surface instead of a one-off language gradient", async () => {
+  const css = await readFile(finishCssPath, "utf8");
+
+  assert.match(css, /\.settings-card-accent\s*\{/);
+  assert.match(css, /background:\s*var\(--surface\)\s*!important/);
+  assert.match(css, /border-color:\s*var\(--line\)\s*!important/);
+});
+
+test("pending Kurdish phone text is not forced into left-to-right English rendering", async () => {
+  const manager = await readFile(phoneManagerPath, "utf8");
+
+  assert.match(manager, /currentPhone\s*\?\s*\(/);
+  assert.match(manager, /className="atlas-phone-display" dir="ltr" lang="en"/);
+  assert.match(manager, /<strong>\{copy\.pending\}<\/strong>/);
+  assert.doesNotMatch(manager, /\{currentPhone \? formatPhoneForDisplay\(currentPhone\) : copy\.pending\}/);
 });
