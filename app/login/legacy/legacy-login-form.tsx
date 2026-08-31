@@ -70,11 +70,21 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     setBusy(true);
     setError("");
     try {
+      const bootstrapResponse = await fetch("/api/auth/temporary-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalized }),
+      });
+      if (!bootstrapResponse.ok) {
+        setError(copy.failed);
+        return;
+      }
+
       const supabase = createClient();
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: normalized,
         options: {
-          shouldCreateUser: true,
+          shouldCreateUser: false,
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard/select-clinic`,
         },
       });
