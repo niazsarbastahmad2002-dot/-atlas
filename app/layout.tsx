@@ -28,6 +28,7 @@ import "./atlas-dark-v2.css";
 import "./atlas-dark-guards.css";
 import "./atlas-auth-polish.css";
 import "./atlas-settings-finish.css";
+import "./atlas-dark-icon-polish.css";
 
 const atlasKurdishFont = Noto_Sans_Arabic({
   subsets: ["arabic"],

@@ -78,7 +78,8 @@ function decodeJwtSubject(idToken: string | undefined) {
 
 function adminRpc() {
   const admin = createAdminClient();
-  return { admin, rpc: admin.rpc as unknown as Rpc };
+  const rpc = admin.rpc.bind(admin) as unknown as Rpc;
+  return { admin, rpc };
 }
 
 export function atlasAppleNativeClientId() {

@@ -35,14 +35,18 @@ export async function deleteAtlasAccount(formData: FormData) {
   const hasAppleIdentity = userData.user.identities?.some((identity) => identity.provider === "apple") ?? false;
   let appleCredential: AppleRevocationCredential | null = null;
 
-  try {
-    appleCredential = await getStoredAppleRevocationCredential(userData.user.id);
-  } catch (error) {
-    // Keep deletion retryable while an Apple credential may be unreadable.
-    console.error("Atlas Apple revocation credential read failed", {
-      error: error instanceof Error ? error.name : "unknown",
-    });
-    redirect(accountUrl("failed"));
+  // Apple token cleanup is relevant only to accounts that actually have an Apple identity.
+  // Do not let an unrelated Apple credential read block phone/email accounts from deletion.
+  if (hasAppleIdentity) {
+    try {
+      appleCredential = await getStoredAppleRevocationCredential(userData.user.id);
+    } catch (error) {
+      // Keep deletion retryable while an Apple credential may be unreadable.
+      console.error("Atlas Apple revocation credential read failed", {
+        error: error instanceof Error ? error.name : "unknown",
+      });
+      redirect(accountUrl("failed"));
+    }
   }
 
   try {
