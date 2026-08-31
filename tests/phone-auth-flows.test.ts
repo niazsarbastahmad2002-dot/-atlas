@@ -70,17 +70,16 @@ test("last-clinic deletion preserves the auth account and keeps the session for 
   assert.doesNotMatch(deletion, /auth\.admin\.deleteUser/);
 });
 
-test("deleted accounts do not fall through to temporary legacy email sign-in", () => {
+test("temporary email fallback can recreate a deleted account while SMS is unavailable", () => {
   const page = read("app/login/page.tsx");
   const legacy = read("app/login/legacy/legacy-login-form.tsx");
 
-  assert.match(page, /const accountDeleted = notice === "account_deleted" \|\| notice === "account_deleted_apple_revoke_needed"/);
-  assert.match(page, /: accountDeleted \? \(/);
+  assert.match(page, /legacyFallbackEnabled = !phoneFlowEnabled && readiness\?\.supabaseEmailEnabled === true/);
   assert.match(page, /<LegacyLoginForm locale=\{locale\} \/>/);
-  assert.match(page, /deletedAuthWait/);
-  assert.match(page, /legacyFallback/);
-  assert.match(legacy, /shouldCreateUser: false/);
-  assert.match(legacy, /otp_disabled/);
-  assert.match(legacy, /isMissingLegacyAccount/);
+  assert.doesNotMatch(page, /: accountDeleted \? \(/);
+  assert.match(legacy, /shouldCreateUser: true/);
+  assert.match(legacy, /\/auth\/callback\?next=\/dashboard\/select-clinic/);
   assert.match(legacy, /ku:\s*\{/);
+  assert.match(legacy, /bd:\s*\{/);
+  assert.match(legacy, /ar:\s*\{/);
 });
