@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("temporary email success state opens immediately and uses a native-first newest-message handoff", async () => {
+test("temporary email success state opens immediately and uses a native-first inbox handoff", async () => {
   const source = await read("app/login/legacy/legacy-login-form.tsx");
 
   assert.match(source, /openEmail: "Open newest email"/);
@@ -12,8 +12,9 @@ test("temporary email success state opens immediately and uses a native-first ne
   assert.doesNotMatch(source, /emailReady/);
   assert.doesNotMatch(source, /emailArriving/);
   assert.match(source, /onClick=\{\(\) => openEmailInbox\(email\)\}/);
-  assert.match(source, /googlegmail:\/\/\/search\?query=\$\{query\}/);
-  assert.match(source, /window\.location\.assign\("message:\/\/0"\)/);
+  assert.match(source, /window\.location\.assign\("googlegmail:\/\/"\)/);
+  assert.doesNotMatch(source, /googlegmail:\/\/\/search\?query=/);
+  assert.match(source, /window\.location\.assign\("message:\/\/"\)/);
   assert.match(source, /package=com\.google\.android\.gm/);
   assert.match(source, /is:unread subject:\"Atlas — Sign in\" newer_than:1d/);
   assert.match(source, /#search\/\$\{query\}/);

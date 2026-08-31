@@ -100,36 +100,32 @@ function openEmailInbox(email: string) {
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
   if (isIOS) {
-    let nativeFallbackTimer = 0;
-    let webFallbackTimer = 0;
-
-    const cancelFallbacks = () => {
-      if (document.hidden) {
-        if (nativeFallbackTimer) window.clearTimeout(nativeFallbackTimer);
-        if (webFallbackTimer) window.clearTimeout(webFallbackTimer);
-      }
-      if (document.hidden) document.removeEventListener("visibilitychange", cancelFallbacks);
+    let fallbackTimer = 0;
+    const cancelFallback = () => {
+      if (document.hidden && fallbackTimer) window.clearTimeout(fallbackTimer);
+      if (document.hidden) document.removeEventListener("visibilitychange", cancelFallback);
     };
 
-    const openAppleMail = () => {
-      if (document.hidden) return;
-      window.location.assign("message://0");
-      webFallbackTimer = window.setTimeout(() => {
-        document.removeEventListener("visibilitychange", cancelFallbacks);
-        if (!document.hidden) window.location.assign(fallback);
-      }, 1200);
-    };
-
-    document.addEventListener("visibilitychange", cancelFallbacks);
+    document.addEventListener("visibilitychange", cancelFallback);
 
     if (isGmailDomain(domain)) {
-      const query = encodeURIComponent(ATLAS_GMAIL_QUERY);
-      nativeFallbackTimer = window.setTimeout(openAppleMail, 900);
-      window.location.assign(`googlegmail:///search?query=${query}`);
+      // Gmail's iOS launch scheme can open the app, but its search deep-link format is
+      // not a stable public API. Open Gmail itself and let the app finish inbox sync.
+      fallbackTimer = window.setTimeout(() => {
+        document.removeEventListener("visibilitychange", cancelFallback);
+        if (!document.hidden) window.location.assign(fallback);
+      }, 1000);
+      window.location.assign("googlegmail://");
       return;
     }
 
-    openAppleMail();
+    // For non-Gmail addresses, prefer the system mail client. If no app accepts the
+    // handoff, fall back to that provider's web inbox.
+    fallbackTimer = window.setTimeout(() => {
+      document.removeEventListener("visibilitychange", cancelFallback);
+      if (!document.hidden) window.location.assign(fallback);
+    }, 1200);
+    window.location.assign("message://");
     return;
   }
 
