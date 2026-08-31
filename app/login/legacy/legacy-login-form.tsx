@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
+import { GoogleLoginButton } from "../google-login-button";
 
 const copyByLocale = {
   en: {
@@ -10,6 +11,7 @@ const copyByLocale = {
     rateLimited: "Atlas email is temporarily rate-limited. Wait a little, then try once.",
     notAuthorized: "This email cannot receive Atlas sign-in mail from the current Supabase mail service. Atlas needs custom SMTP for this address.",
     provider: "Atlas email sign-in is temporarily unavailable.",
+    signupDisabled: "Public Atlas sign-up is currently disabled in Supabase. Email retries cannot fix this setting.",
     network: "Atlas could not start email sign-in. Check your connection and try again.",
     sentBefore: "Open the newest Atlas email for",
     sentAfter: "The link will sign you in to the fresh Atlas account.",
@@ -24,6 +26,7 @@ const copyByLocale = {
     rateLimited: "ناردنی ئیمەیڵی Atlas کاتێکی کورت سنووردار کراوە. کەمێک چاوەڕێ بکە و تەنها جارێکی تر هەوڵ بدە.",
     notAuthorized: "ئەم ئیمەیڵە لە خزمەتگوزاری ئیمەیڵی ئێستای Supabase ناتوانێت ئیمەیڵی چوونەژوورەوە وەربگرێت. Atlas پێویستی بە SMTP تایبەت هەیە.",
     provider: "چوونەژوورەوە بە ئیمەیڵی Atlas کاتێکی کورت بەردەست نییە.",
+    signupDisabled: "دروستکردنی هەژماری گشتی Atlas لە Supabase داخراوە. دووبارە هەوڵدان بە ئیمەیڵ ئەم ڕێکخستنە چارەسەر ناکات.",
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
     sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
     sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
@@ -38,6 +41,7 @@ const copyByLocale = {
     rateLimited: "هنارتنا ئیمەیلا Atlas بۆ دەمەکێ کورت سنووردار بوویە. هندەک راوەستە و تەنێ جارەکا دی هەول بدە.",
     notAuthorized: "ئەم ئیمەیلە ل سەر خزمەتا ئیمەیلا هەنووکە یا Supabase ناتوانیت ئیمەیلا چوونەژوورێ وەربگریت. Atlas پێدڤی ب SMTP یا تایبەت هەیە.",
     provider: "چوونەژوور ب ئیمەیلا Atlas بۆ دەمەکێ کورت بەردەست نینە.",
+    signupDisabled: "دروستکرنا هەژمارێ گشتی یێ Atlas ل Supabase هاتیە داخستن. دیسان هەولدان ب ئیمەیلێ ئەڤ ڕێکخستنە چارەسەر ناکەت.",
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
     sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
     sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
@@ -52,6 +56,7 @@ const copyByLocale = {
     rateLimited: "إرسال إيميلات Atlas محدود مؤقتاً. انتظر شوي وحاول مرة وحدة بعدين.",
     notAuthorized: "هذا البريد ما يقدر يستلم رسالة دخول Atlas من خدمة Supabase الحالية. Atlas يحتاج SMTP مخصص لهذا البريد.",
     provider: "تسجيل الدخول بالبريد في Atlas غير متاح مؤقتاً.",
+    signupDisabled: "إنشاء حسابات Atlas العامة متوقف حالياً في Supabase. إعادة محاولة الإيميل ما راح تصلح هذا الإعداد.",
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
     sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
     sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
@@ -63,6 +68,7 @@ const copyByLocale = {
 } as const satisfies Record<UiLocale, Record<string, string>>;
 
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
+type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
 
 export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const copy = copyByLocale[locale];
@@ -70,10 +76,20 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [readiness, setReadiness] = useState<AuthReadiness | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/readiness", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((result) => { if (active && result) setReadiness(result as AuthReadiness); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || readiness?.signupDisabled === true) return;
     const normalized = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
       setError(copy.invalid);
@@ -104,6 +120,14 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (readiness?.signupDisabled === true) {
+    return <p className="notice notice-error" role="alert">{copy.signupDisabled}</p>;
+  }
+
+  if (readiness?.supabaseGoogleEnabled === true) {
+    return <GoogleLoginButton locale={locale} />;
   }
 
   if (sent) {
