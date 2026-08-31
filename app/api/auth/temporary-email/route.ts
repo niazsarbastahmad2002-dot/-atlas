@@ -3,8 +3,10 @@ import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UI_LOCALES = new Set(["en", "ku", "bd", "ar"]);
 
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
+type AtlasEmailLocale = "en" | "ku" | "bd" | "ar";
 
 function isAlreadyRegistered(error: { code?: string; message?: string } | null) {
   const text = `${error?.code ?? ""} ${error?.message ?? ""}`.toLowerCase();
@@ -35,9 +37,13 @@ export async function POST(request: Request) {
   }
 
   let email = "";
+  let locale: AtlasEmailLocale = "en";
   try {
-    const body = await request.json() as { email?: unknown };
+    const body = await request.json() as { email?: unknown; locale?: unknown };
     email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    if (typeof body.locale === "string" && UI_LOCALES.has(body.locale)) {
+      locale = body.locale as AtlasEmailLocale;
+    }
   } catch {
     return NextResponse.json({ ok: false }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
@@ -51,6 +57,7 @@ export async function POST(request: Request) {
     const { error: createError } = await admin.auth.admin.createUser({
       email,
       email_confirm: false,
+      user_metadata: { atlas_ui_language: locale },
       app_metadata: { atlas_temporary_email_bootstrap: true },
     });
 
@@ -62,12 +69,15 @@ export async function POST(request: Request) {
       return failureResponse("delivery");
     }
 
-    const redirectTo = new URL("/auth/callback?next=/dashboard/select-clinic", request.url).toString();
+    const redirectTo = new URL("/auth/callback", request.url);
+    redirectTo.searchParams.set("next", "/dashboard/select-clinic");
+    redirectTo.searchParams.set("atlas_email_locale", locale);
+
     const { error: sendError } = await admin.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: redirectTo,
+        emailRedirectTo: redirectTo.toString(),
       },
     });
 
