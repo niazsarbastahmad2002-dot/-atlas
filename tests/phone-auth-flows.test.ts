@@ -73,19 +73,23 @@ test("last-clinic deletion preserves the auth account and keeps the session for 
 test("temporary email fallback safely recreates a deleted account while SMS is unavailable", () => {
   const page = read("app/login/page.tsx");
   const legacy = read("app/login/legacy/legacy-login-form.tsx");
-  const bootstrap = read("app/api/auth/temporary-email/route.ts");
+  const route = read("app/api/auth/temporary-email/route.ts");
 
   assert.match(page, /legacyFallbackEnabled = !phoneFlowEnabled && readiness\?\.supabaseEmailEnabled === true/);
   assert.match(page, /<LegacyLoginForm locale=\{locale\} \/>/);
   assert.doesNotMatch(page, /: accountDeleted \? \(/);
   assert.match(legacy, /fetch\("\/api\/auth\/temporary-email"/);
-  assert.match(legacy, /shouldCreateUser: false/);
-  assert.match(legacy, /\/auth\/callback\?next=\/dashboard\/select-clinic/);
-  assert.match(bootstrap, /createAdminClient\(\)/);
-  assert.match(bootstrap, /auth\.admin\.createUser\(\{/);
-  assert.match(bootstrap, /email_confirm: false/);
-  assert.match(bootstrap, /readiness\.supabasePhoneEnabled/);
-  assert.match(bootstrap, /!readiness\.supabaseEmailEnabled/);
+  assert.doesNotMatch(legacy, /signInWithOtp/);
+  assert.match(legacy, /rate_limited/);
+  assert.match(legacy, /not_authorized/);
+  assert.match(route, /admin\.auth\.admin\.createUser/);
+  assert.match(route, /admin\.auth\.signInWithOtp/);
+  assert.match(route, /shouldCreateUser: false/);
+  assert.match(route, /over_email_send_rate_limit/);
+  assert.match(route, /email_address_not_authorized/);
+  assert.match(route, /\/auth\/callback\?next=\/dashboard\/select-clinic/);
+  assert.match(route, /readiness\.supabasePhoneEnabled/);
+  assert.match(route, /!readiness\.supabaseEmailEnabled/);
   assert.match(legacy, /ku:\s*\{/);
   assert.match(legacy, /bd:\s*\{/);
   assert.match(legacy, /ar:\s*\{/);
