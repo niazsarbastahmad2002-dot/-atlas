@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getUiLocale } from "@/lib/i18n/ui-server";
 import { createClient } from "@/lib/supabase/server";
 import { LegacyLoginForm } from "./legacy-login-form";
 
@@ -11,6 +12,7 @@ export default async function LegacyLoginPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (data.user) redirect("/dashboard/settings");
+  const locale = await getUiLocale();
 
   return (
     <main className="center-page">
@@ -21,7 +23,7 @@ export default async function LegacyLoginPage() {
         <p className="quiet">
           This temporary route is only for accounts created before Atlas moved to phone sign-in. It never creates a new account.
         </p>
-        <LegacyLoginForm />
+        <LegacyLoginForm locale={locale} />
         <Link className="button button-ghost" href="/login">Back to phone sign-in</Link>
       </section>
     </main>
