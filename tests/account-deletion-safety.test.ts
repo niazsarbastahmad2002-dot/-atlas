@@ -20,9 +20,9 @@ test("account deletion remains explicit and cannot cascade an owned clinic", asy
     "owned-clinic guard must run before auth deletion",
   );
 
-  assert.match(action, /if \(hasAppleIdentity\) \{[\s\S]*getStoredAppleRevocationCredential/);
+  assert.match(action, /if \(hasAppleIdentity\) \{[\s\S]*appleCredential = await getStoredAppleRevocationCredential/);
   assert.ok(
-    action.indexOf("if (hasAppleIdentity)") < action.indexOf("getStoredAppleRevocationCredential"),
+    action.indexOf("if (hasAppleIdentity)") < action.indexOf("appleCredential = await getStoredAppleRevocationCredential"),
     "Apple credential lookup must be guarded by an Apple identity check",
   );
   assert.match(appleServer, /admin\.rpc\.bind\(admin\)/);
