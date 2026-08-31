@@ -15,7 +15,8 @@ const copyByLocale = {
     network: "Atlas could not start email sign-in. Check your connection and try again.",
     sentBefore: "Open the newest Atlas email for",
     sentAfter: "The link will sign you in to the fresh Atlas account.",
-    openEmail: "Open email",
+    openEmail: "Open newest email",
+    openingEmail: "Waiting for the newest email…",
     another: "Use another email",
     label: "Email",
     sending: "Sending…",
@@ -31,7 +32,8 @@ const copyByLocale = {
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
     sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
     sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
-    openEmail: "ئیمەیڵ بکەرەوە",
+    openEmail: "نوێترین ئیمەیڵ بکەرەوە",
+    openingEmail: "چاوەڕێی نوێترین ئیمەیڵ دەکرێت…",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
     sending: "دەنێردرێت…",
@@ -47,7 +49,8 @@ const copyByLocale = {
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
     sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
     sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
-    openEmail: "ئیمەیل ڤەکە",
+    openEmail: "نووترین ئیمەیل ڤەکە",
+    openingEmail: "چاڤەڕێیا نووترین ئیمەیلێ دهێتە کرن…",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
     sending: "دهێتە هنارتن…",
@@ -63,7 +66,8 @@ const copyByLocale = {
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
     sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
     sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
-    openEmail: "فتح البريد",
+    openEmail: "فتح أحدث رسالة",
+    openingEmail: "جارٍ انتظار أحدث رسالة…",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
     sending: "جارٍ الإرسال…",
@@ -74,9 +78,14 @@ const copyByLocale = {
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
 
+const ATLAS_SIGN_IN_SEARCH = 'subject:"Atlas — Sign in" newer_than:1d';
+const MAIL_SYNC_SETTLE_MS = 2500;
+
 function emailWebInbox(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  if (domain === "gmail.com" || domain === "googlemail.com") return "https://mail.google.com/mail/u/0/#inbox";
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    return `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(ATLAS_SIGN_IN_SEARCH)}`;
+  }
   if (["outlook.com", "hotmail.com", "live.com", "msn.com"].includes(domain)) return "https://outlook.live.com/mail/0/inbox";
   if (domain === "yahoo.com" || domain.endsWith(".yahoo.com")) return "https://mail.yahoo.com/d/folders/1";
   if (["icloud.com", "me.com", "mac.com"].includes(domain)) return "https://www.icloud.com/mail/";
@@ -109,7 +118,8 @@ function openEmailInbox(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
   if (/Android/i.test(userAgent) && (domain === "gmail.com" || domain === "googlemail.com")) {
     const browserFallback = encodeURIComponent(fallback);
-    window.location.assign(`intent://mail.google.com/mail/u/0/#inbox#Intent;scheme=https;package=com.google.android.gm;S.browser_fallback_url=${browserFallback};end`);
+    const searchPath = encodeURIComponent(ATLAS_SIGN_IN_SEARCH);
+    window.location.assign(`intent://mail.google.com/mail/u/0/#search/${searchPath}#Intent;scheme=https;package=com.google.android.gm;S.browser_fallback_url=${browserFallback};end`);
     return;
   }
 
@@ -121,6 +131,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [openingEmail, setOpeningEmail] = useState(false);
   const [error, setError] = useState("");
   const [readiness, setReadiness] = useState<AuthReadiness | null>(null);
 
@@ -168,6 +179,13 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     }
   }
 
+  async function openNewestEmail() {
+    if (openingEmail) return;
+    setOpeningEmail(true);
+    await new Promise((resolve) => window.setTimeout(resolve, MAIL_SYNC_SETTLE_MS));
+    openEmailInbox(email);
+  }
+
   if (readiness?.signupDisabled === true) {
     return <p className="notice notice-error" role="alert">{copy.signupDisabled}</p>;
   }
@@ -182,8 +200,10 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         <p className="notice notice-success" role="status">
           {copy.sentBefore} <span dir="ltr">{email}</span>. {copy.sentAfter}
         </p>
-        <button className="button" type="button" onClick={() => openEmailInbox(email)}>{copy.openEmail}</button>
-        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
+        <button className="button" type="button" disabled={openingEmail} onClick={() => void openNewestEmail()}>
+          {openingEmail ? copy.openingEmail : copy.openEmail}
+        </button>
+        <button className="button button-ghost" type="button" disabled={openingEmail} onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
         {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       </div>
     );
