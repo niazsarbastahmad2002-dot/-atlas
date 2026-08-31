@@ -7,6 +7,8 @@ export type AtlasAuthReadiness = {
   reachable: boolean;
   supabasePhoneEnabled: boolean;
   supabaseEmailEnabled: boolean;
+  supabaseGoogleEnabled: boolean;
+  signupDisabled: boolean;
   openPhoneSignupEnabled: boolean;
   whatsappOtpEnabled: boolean;
 };
@@ -18,6 +20,8 @@ export async function getAtlasAuthReadiness(): Promise<AtlasAuthReadiness> {
     reachable: false,
     supabasePhoneEnabled: false,
     supabaseEmailEnabled: false,
+    supabaseGoogleEnabled: false,
+    signupDisabled: true,
     openPhoneSignupEnabled: process.env.NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED === "true",
     whatsappOtpEnabled: process.env.NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED === "true",
   };
@@ -36,6 +40,8 @@ export async function getAtlasAuthReadiness(): Promise<AtlasAuthReadiness> {
       reachable: true,
       supabasePhoneEnabled: settings.external?.phone === true,
       supabaseEmailEnabled: settings.external?.email === true,
+      supabaseGoogleEnabled: settings.external?.google === true,
+      signupDisabled: settings.disable_signup === true,
     };
   } catch {
     return base;
