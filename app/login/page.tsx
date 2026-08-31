@@ -18,6 +18,9 @@ type LoginPageCopy = {
   clinicDeleted: string;
   accountDeleted: string;
   appleRevokeNeeded: string;
+  legacyFallback: string;
+  deletedAuthWait: string;
+  authUnavailable: string;
   stageSignal: string;
   stagePulse: string;
   language: string;
@@ -33,6 +36,9 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     clinicDeleted: "Your clinic was deleted. Your Atlas account is still safe — verify your phone whenever you want to create a clinic again.",
     accountDeleted: "Your Atlas account was permanently deleted.",
     appleRevokeNeeded: "Your Atlas account was deleted. Apple access could not be revoked automatically. On iPhone, open Settings → your name → Sign in with Apple → Atlas, then tap Delete / Stop Using.",
+    legacyFallback: "Phone sign-in is ready, but SMS verification is not active yet. Existing Atlas accounts can temporarily sign in by email until the SMS provider is enabled.",
+    deletedAuthWait: "The deleted account can no longer sign in with its old email. To create a new Atlas account, use phone verification once SMS activation is available.",
+    authUnavailable: "Atlas sign-in is temporarily unavailable because the phone verification provider is not active yet.",
     stageSignal: "One number. Your clinic workspace.",
     stagePulse: "Secure phone verification",
     language: "Choose your language",
@@ -46,6 +52,9 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     clinicDeleted: "کلینیکەکەت سڕایەوە، بەڵام هەژماری Atlas ـەکەت پارێزراوە. هەر کات دەتەوێت ژمارەکەت پشتڕاست بکەرەوە و کلینیکێکی نوێ دروست بکە.",
     accountDeleted: "هەژماری Atlas ـەکەت بە هەمیشەیی سڕایەوە.",
     appleRevokeNeeded: "هەژماری Atlas ـەکەت سڕایەوە، بەڵام دەسەڵاتی Apple خۆکارانە هەڵنەوەشایەوە. لە iPhone: Settings → ناوت → Sign in with Apple → Atlas، پاشان Delete / Stop Using دابگرە.",
+    legacyFallback: "چوونەژوورەوە بە ژمارەی مۆبایل ئامادەیە، بەڵام پشتڕاستکردنەوە بە SMS هێشتا چالاک نییە. هەژمارەکانی Atlas کە پێشتر هەبوون دەتوانن کاتییانە بە ئیمەیڵ بچنە ژوورەوە تا SMS چالاک دەکرێت.",
+    deletedAuthWait: "هەژمارە سڕاوەکەت چیتر بە ئیمەیڵی کۆنەکە ناچێتە ژوورەوە. بۆ دروستکردنی هەژمارێکی نوێی Atlas، کاتێک SMS چالاک بوو پشتڕاستکردنەوەی مۆبایل بەکاربهێنە.",
+    authUnavailable: "چوونەژوورەوەی Atlas کاتییانە بەردەست نییە، چونکە خزمەتگوزاری پشتڕاستکردنەوەی مۆبایل هێشتا چالاک نییە.",
     stageSignal: "یەک ژمارە، شوێنی کاری کلینیکەکەت.",
     stagePulse: "پشتڕاستکردنەوەی پارێزراوی مۆبایل",
     language: "زمانەکەت هەڵبژێرە",
@@ -59,6 +68,9 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     clinicDeleted: "کلینیکا تە هاتە ژێبرن، لێ هەژمارا Atlas یا تە پاراستییە. هەر دەم بخوازیت ژمارا خۆ پشتڕاست بکە و کلینیکەکا نوو دروست بکە.",
     accountDeleted: "هەژمارا Atlas یا تە بۆ هەردەم هاتە ژێبرن.",
     appleRevokeNeeded: "هەژمارا Atlas یا تە هاتە ژێبرن، لێ دەستهەلاتا Apple خودکار نەهاتە هەلوەشاندن. ل iPhone: Settings → ناڤێ تە → Sign in with Apple → Atlas، پاشی Delete / Stop Using بکە.",
+    legacyFallback: "چوونەژوور ب ژمارا موبایلێ ئامادەیە، لێ پشتڕاستکرن ب SMS هێشتا چالاک نینە. هەژمارێن Atlas یێن پێشتر هەی دکارن بۆ دەمەکێ ب ئیمەیلێ بچنە ژوور هەتا SMS چالاک دبیت.",
+    deletedAuthWait: "هەژمارا ژێبری دیگر ب ئیمەیلا کەڤن ناچیتە ژوور. بۆ دروستکرنا هەژمارەکا نوو یا Atlas، دەمێ SMS چالاک بوو پشتڕاستکرنا موبایلێ بکاربینە.",
+    authUnavailable: "چوونەژوورا Atlas بۆ دەمەکێ بەردەست نینە، چونکی خزمەتا پشتڕاستکرنا موبایلێ هێشتا چالاک نینە.",
     stageSignal: "ئێک ژمارە، شوێنێ کارێ کلینیکا تە.",
     stagePulse: "پشتڕاستکرنا پاراستی یا موبایلێ",
     language: "زمانێ خۆ هەلبژێرە",
@@ -72,6 +84,9 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     clinicDeleted: "تم حذف العيادة، لكن حساب Atlas ما زال محفوظاً. تحقق من رقمك عندما تريد إنشاء عيادة جديدة.",
     accountDeleted: "تم حذف حسابك في Atlas نهائياً.",
     appleRevokeNeeded: "تم حذف حساب Atlas، لكن تعذر إلغاء صلاحية Apple تلقائياً. على iPhone افتح Settings → اسمك → Sign in with Apple → Atlas، وبعدها اضغط Delete / Stop Using.",
+    legacyFallback: "تسجيل الدخول برقم الموبايل جاهز، لكن التحقق بـ SMS ما زال غير مفعّل. حسابات Atlas الموجودة سابقاً تقدر تدخل مؤقتاً بالبريد الإلكتروني إلى أن يتم تفعيل SMS.",
+    deletedAuthWait: "الحساب المحذوف ما يقدر يدخل بالبريد القديم بعد الآن. لإنشاء حساب Atlas جديد، استخدم التحقق برقم الموبايل بعد تفعيل SMS.",
+    authUnavailable: "تسجيل الدخول إلى Atlas غير متاح مؤقتاً لأن مزود التحقق برقم الموبايل لم يتم تفعيله بعد.",
     stageSignal: "رقم واحد، مساحة عيادتك.",
     stagePulse: "تحقق آمن برقم الهاتف",
     language: "اختار لغتك",
@@ -99,6 +114,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const readiness = e2eMode ? null : await getAtlasAuthReadiness();
   const phoneFlowEnabled = e2eMode || readiness?.supabasePhoneEnabled === true;
   const legacyFallbackEnabled = !phoneFlowEnabled && readiness?.supabaseEmailEnabled === true;
+  const accountDeleted = notice === "account_deleted" || notice === "account_deleted_apple_revoke_needed";
 
   const locale = await getUiLocale();
   const copy = pageCopy[locale];
@@ -135,17 +151,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {noticeMessage ? <p className="notice notice-success login-notice" role="status">{noticeMessage}</p> : null}
         {phoneFlowEnabled ? (
           <LoginForm locale={locale} />
+        ) : accountDeleted ? (
+          <p className="notice login-notice" role="status">{copy.deletedAuthWait}</p>
         ) : legacyFallbackEnabled ? (
           <>
-            <p className="notice login-notice" role="status">
-              Phone sign-in is deployed, but SMS verification is not active yet. Existing Atlas accounts can use this temporary sign-in until the SMS provider is enabled.
-            </p>
-            <LegacyLoginForm />
+            <p className="notice login-notice" role="status">{copy.legacyFallback}</p>
+            <LegacyLoginForm locale={locale} />
           </>
         ) : (
-          <p className="notice notice-error login-notice" role="alert">
-            Atlas authentication is temporarily unavailable because the phone verification provider is not active.
-          </p>
+          <p className="notice notice-error login-notice" role="alert">{copy.authUnavailable}</p>
         )}
       </section>
     </main>

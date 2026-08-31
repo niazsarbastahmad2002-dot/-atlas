@@ -69,3 +69,18 @@ test("last-clinic deletion preserves the auth account and keeps the session for 
   assert.match(account, /Delete my Atlas account too/);
   assert.doesNotMatch(deletion, /auth\.admin\.deleteUser/);
 });
+
+test("deleted accounts do not fall through to temporary legacy email sign-in", () => {
+  const page = read("app/login/page.tsx");
+  const legacy = read("app/login/legacy/legacy-login-form.tsx");
+
+  assert.match(page, /const accountDeleted = notice === "account_deleted" \|\| notice === "account_deleted_apple_revoke_needed"/);
+  assert.match(page, /: accountDeleted \? \(/);
+  assert.match(page, /<LegacyLoginForm locale=\{locale\} \/>/);
+  assert.match(page, /deletedAuthWait/);
+  assert.match(page, /legacyFallback/);
+  assert.match(legacy, /shouldCreateUser: false/);
+  assert.match(legacy, /otp_disabled/);
+  assert.match(legacy, /isMissingLegacyAccount/);
+  assert.match(legacy, /ku:\s*\{/);
+});
