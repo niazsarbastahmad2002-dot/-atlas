@@ -54,9 +54,13 @@ export function PhoneNumberManager({ locale, currentPhone }: { locale: UiLocale;
       </div>
       <div className="settings-readonly-clinic">
         <span>{copy.verified}</span>
-        <strong className="atlas-phone-display" dir="ltr" lang="en">
-          {currentPhone ? formatPhoneForDisplay(currentPhone) : copy.pending}
-        </strong>
+        {currentPhone ? (
+          <strong className="atlas-phone-display" dir="ltr" lang="en">
+            {formatPhoneForDisplay(currentPhone)}
+          </strong>
+        ) : (
+          <strong>{copy.pending}</strong>
+        )}
       </div>
       <Link className="button button-ghost button-small" href="/dashboard/settings/phone">
         {copy.change}
