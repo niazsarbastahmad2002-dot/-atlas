@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Noto_Sans_Arabic } from "next/font/google";
 import { AtlasAnalytics } from "@/app/components/atlas-analytics";
 import { AtlasTimePickerPolish } from "@/app/components/atlas-time-picker-polish";
 import { ContinuityCacheGuard } from "@/app/components/continuity-cache-guard";
@@ -26,6 +27,14 @@ import "./atlas-account-polish.css";
 import "./atlas-dark-v2.css";
 import "./atlas-dark-guards.css";
 import "./atlas-auth-polish.css";
+import "./atlas-settings-finish.css";
+
+const atlasKurdishFont = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  display: "swap",
+  preload: false,
+  variable: "--font-atlas-kurdish",
+});
 
 export const metadata: Metadata = {
   title: "Atlas — Clinic Appointments",
@@ -56,7 +65,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const meta = uiLocaleMeta[locale];
 
   return (
-    <html lang={meta.language} dir={meta.direction} data-theme={theme}>
+    <html lang={meta.language} dir={meta.direction} data-theme={theme} className={atlasKurdishFont.variable}>
       <body>
         {children}
         <ContinuityCacheGuard />
