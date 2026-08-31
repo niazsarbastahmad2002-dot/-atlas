@@ -51,12 +51,15 @@ test("WhatsApp OTP is feature-gated and never presented as a fake default", () =
   assert.match(envExample, /NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED=false/);
 });
 
-test("existing email-era users migrate without creating replacement auth users", () => {
+test("temporary email access can recreate a deleted user only while phone auth is unavailable", () => {
+  const page = read("app/login/page.tsx");
   const legacy = read("app/login/legacy/legacy-login-form.tsx");
   const legacyPage = read("app/login/legacy/page.tsx");
   const phoneChange = read("app/dashboard/settings/phone-change-form.tsx");
 
-  assert.match(legacy, /shouldCreateUser: false/);
+  assert.match(page, /legacyFallbackEnabled = !phoneFlowEnabled && readiness\?\.supabaseEmailEnabled === true/);
+  assert.match(legacy, /shouldCreateUser: true/);
+  assert.match(legacy, /\/auth\/callback\?next=\/dashboard\/select-clinic/);
   assert.match(legacyPage, /ATLAS_LEGACY_AUTH_ENABLED/);
   assert.match(phoneChange, /auth\.updateUser\(\{ phone \}\)/);
   assert.match(phoneChange, /type: "phone_change"/);
