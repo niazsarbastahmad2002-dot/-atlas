@@ -79,7 +79,10 @@ test("temporary email fallback safely recreates a deleted account while SMS is u
   assert.match(page, /<LegacyLoginForm locale=\{locale\} \/>/);
   assert.doesNotMatch(page, /: accountDeleted \? \(/);
   assert.match(legacy, /fetch\("\/api\/auth\/temporary-email"/);
-  assert.match(legacy, /JSON\.stringify\(\{ email: normalized, locale \}\)/);
+  assert.match(legacy, /JSON\.stringify\(\{ email, locale \}\)/);
+  assert.match(legacy, /confirmTitle: "Is this email correct\?"/);
+  assert.match(legacy, /setConfirming\(true\)/);
+  assert.match(legacy, /sendConfirmedEmail/);
   assert.doesNotMatch(legacy, /signInWithOtp/);
   assert.match(legacy, /rate_limited/);
   assert.match(legacy, /not_authorized/);
