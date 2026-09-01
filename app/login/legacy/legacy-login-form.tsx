@@ -16,12 +16,6 @@ const copyByLocale = {
     sentBefore: "Open the newest Atlas email for",
     sentAfter: "The link will sign you in to the fresh Atlas account.",
     openEmail: "Open newest email",
-    chooseApp: "Where do you read this email?",
-    gmailApp: "Gmail app",
-    appleMail: "Apple Mail",
-    browserMail: "Web browser",
-    rememberChoice: "Atlas will remember this choice on this device.",
-    changeApp: "Change email app",
     another: "Use another email",
     label: "Email",
     sending: "Sending…",
@@ -38,12 +32,6 @@ const copyByLocale = {
     sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
     sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
     openEmail: "نوێترین ئیمەیڵ بکەرەوە",
-    chooseApp: "ئەم ئیمەیڵە لە کام ئەپ دەکەیتەوە؟",
-    gmailApp: "Gmail",
-    appleMail: "Apple Mail",
-    browserMail: "وێبگەڕ",
-    rememberChoice: "Atlas ئەم هەڵبژاردنە لەم ئامێرەدا لەبیر دەگرێت.",
-    changeApp: "گۆڕینی ئەپی ئیمەیڵ",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
     sending: "دەنێردرێت…",
@@ -60,12 +48,6 @@ const copyByLocale = {
     sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
     sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
     openEmail: "نووترین ئیمەیل ڤەکە",
-    chooseApp: "ئەم ئیمەیلە ب کام ئەپێ ڤەدکەی؟",
-    gmailApp: "Gmail",
-    appleMail: "Apple Mail",
-    browserMail: "وێبگەڕ",
-    rememberChoice: "Atlas دێ ئەڤ هەلبژارتنە ل سەر ڤی ئامێری بینیت بیرێ.",
-    changeApp: "ئەپا ئیمەیلێ بگۆڕە",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
     sending: "دهێتە هنارتن…",
@@ -82,12 +64,6 @@ const copyByLocale = {
     sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
     sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
     openEmail: "فتح أحدث رسالة",
-    chooseApp: "بأي تطبيق تفتح هذا البريد؟",
-    gmailApp: "Gmail",
-    appleMail: "Apple Mail",
-    browserMail: "المتصفح",
-    rememberChoice: "Atlas راح يتذكر هذا الاختيار على هذا الجهاز.",
-    changeApp: "تغيير تطبيق البريد",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
     sending: "جارٍ الإرسال…",
@@ -97,10 +73,8 @@ const copyByLocale = {
 
 type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
-type EmailOpenChoice = "gmail" | "apple" | "browser";
 
 const ATLAS_GMAIL_QUERY = 'in:anywhere {subject:"Atlas — Sign in" subject:"Atlas — Confirm your email"} newer_than:1d';
-const EMAIL_OPEN_PREFERENCE_PREFIX = "atlas-email-open-preference:";
 
 function isGmailDomain(domain: string) {
   return domain === "gmail.com" || domain === "googlemail.com";
@@ -115,15 +89,6 @@ function isAndroidDevice() {
   return /Android/i.test(navigator.userAgent);
 }
 
-function emailProviderKey(email: string) {
-  const domain = email.split("@")[1]?.toLowerCase() ?? "other";
-  if (isGmailDomain(domain)) return "gmail";
-  if (["icloud.com", "me.com", "mac.com"].includes(domain)) return "icloud";
-  if (["outlook.com", "hotmail.com", "live.com", "msn.com"].includes(domain)) return "outlook";
-  if (domain === "yahoo.com" || domain.endsWith(".yahoo.com")) return "yahoo";
-  return domain || "other";
-}
-
 function emailWebInbox(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
   if (isGmailDomain(domain)) {
@@ -136,91 +101,45 @@ function emailWebInbox(email: string) {
   return "mailto:";
 }
 
-function availableEmailChoices(email: string): EmailOpenChoice[] {
-  const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  const choices: EmailOpenChoice[] = [];
-  if (isGmailDomain(domain)) choices.push("gmail");
-  if (isIOSDevice()) choices.push("apple");
-  choices.push("browser");
-  return choices;
+function openExternalApp(url: string, onFailure: () => void, delay = 1100) {
+  let timer = 0;
+  const cancelFallback = () => {
+    if (!document.hidden) return;
+    if (timer) window.clearTimeout(timer);
+    document.removeEventListener("visibilitychange", cancelFallback);
+  };
+
+  document.addEventListener("visibilitychange", cancelFallback);
+  timer = window.setTimeout(() => {
+    document.removeEventListener("visibilitychange", cancelFallback);
+    if (!document.hidden) onFailure();
+  }, delay);
+  window.location.assign(url);
 }
 
-function readEmailPreference(email: string): EmailOpenChoice | null {
-  try {
-    const saved = window.localStorage.getItem(`${EMAIL_OPEN_PREFERENCE_PREFIX}${emailProviderKey(email)}`);
-    if (saved !== "gmail" && saved !== "apple" && saved !== "browser") return null;
-    return availableEmailChoices(email).includes(saved) ? saved : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveEmailPreference(email: string, choice: EmailOpenChoice) {
-  try {
-    window.localStorage.setItem(`${EMAIL_OPEN_PREFERENCE_PREFIX}${emailProviderKey(email)}`, choice);
-  } catch {
-    // Private browsing and storage restrictions should never block the mail handoff.
-  }
-}
-
-function clearEmailPreference(email: string) {
-  try {
-    window.localStorage.removeItem(`${EMAIL_OPEN_PREFERENCE_PREFIX}${emailProviderKey(email)}`);
-  } catch {
-    // Keep the chooser usable even when storage is unavailable.
-  }
-}
-
-function openEmailInbox(email: string, choice: EmailOpenChoice) {
-  const fallback = emailWebInbox(email);
+function openEmailInbox(email: string) {
+  const fallback = () => window.location.assign(emailWebInbox(email));
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
 
-  if (choice === "browser") {
-    window.location.assign(fallback);
-    return;
-  }
-
-  if (choice === "gmail" && isGmailDomain(domain)) {
-    if (isIOSDevice()) {
-      let fallbackTimer = 0;
-      const cancelFallback = () => {
-        if (document.hidden && fallbackTimer) window.clearTimeout(fallbackTimer);
-        if (document.hidden) document.removeEventListener("visibilitychange", cancelFallback);
-      };
-      document.addEventListener("visibilitychange", cancelFallback);
-      fallbackTimer = window.setTimeout(() => {
-        document.removeEventListener("visibilitychange", cancelFallback);
-        if (!document.hidden) window.location.assign(fallback);
-      }, 1000);
-      window.location.assign("googlegmail://");
-      return;
-    }
-
-    if (isAndroidDevice()) {
-      window.location.assign("intent://mail.google.com/mail/u/0/#inbox#Intent;scheme=https;package=com.google.android.gm;end");
-      return;
-    }
-
-    window.location.assign(fallback);
-    return;
-  }
-
-  if (choice === "apple" && isIOSDevice()) {
-    let fallbackTimer = 0;
-    const cancelFallback = () => {
-      if (document.hidden && fallbackTimer) window.clearTimeout(fallbackTimer);
-      if (document.hidden) document.removeEventListener("visibilitychange", cancelFallback);
+  if (isIOSDevice()) {
+    const afterAppleMail = () => {
+      if (isGmailDomain(domain)) {
+        openExternalApp("googlegmail://", fallback, 1000);
+        return;
+      }
+      fallback();
     };
-    document.addEventListener("visibilitychange", cancelFallback);
-    fallbackTimer = window.setTimeout(() => {
-      document.removeEventListener("visibilitychange", cancelFallback);
-      if (!document.hidden) window.location.assign(fallback);
-    }, 1200);
-    window.location.assign("message://");
+    openExternalApp("message://", afterAppleMail, 1200);
     return;
   }
 
-  window.location.assign(fallback);
+  if (isAndroidDevice() && isGmailDomain(domain)) {
+    const browserFallback = encodeURIComponent(emailWebInbox(email));
+    window.location.assign(`intent://mail.google.com/mail/u/0/#inbox#Intent;scheme=https;package=com.google.android.gm;S.browser_fallback_url=${browserFallback};end`);
+    return;
+  }
+
+  fallback();
 }
 
 export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
@@ -230,9 +149,6 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [readiness, setReadiness] = useState<AuthReadiness | null>(null);
-  const [showEmailChoices, setShowEmailChoices] = useState(false);
-  const [emailChoices, setEmailChoices] = useState<EmailOpenChoice[]>([]);
-  const [savedEmailChoice, setSavedEmailChoice] = useState<EmailOpenChoice | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -243,37 +159,8 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    if (!sent || !email) {
-      setSavedEmailChoice(null);
-      return;
-    }
-    setSavedEmailChoice(readEmailPreference(email));
-  }, [sent, email]);
-
   function handleOpenEmail() {
-    const saved = readEmailPreference(email);
-    if (saved) {
-      setSavedEmailChoice(saved);
-      openEmailInbox(email, saved);
-      return;
-    }
-    setEmailChoices(availableEmailChoices(email));
-    setShowEmailChoices(true);
-  }
-
-  function handleEmailChoice(choice: EmailOpenChoice) {
-    saveEmailPreference(email, choice);
-    setSavedEmailChoice(choice);
-    setShowEmailChoices(false);
-    openEmailInbox(email, choice);
-  }
-
-  function handleChangeEmailApp() {
-    clearEmailPreference(email);
-    setSavedEmailChoice(null);
-    setEmailChoices(availableEmailChoices(email));
-    setShowEmailChoices(true);
+    openEmailInbox(email);
   }
 
   async function submit(event: FormEvent) {
@@ -304,7 +191,6 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
 
       setEmail(normalized);
       setSent(true);
-      setShowEmailChoices(false);
     } catch {
       setError(copy.network);
     } finally {
@@ -326,29 +212,8 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         <p className="notice notice-success" role="status">
           {copy.sentBefore} <span dir="ltr">{email}</span>. {copy.sentAfter}
         </p>
-
-        {showEmailChoices ? (
-          <>
-            <p className="notice" role="status">{copy.chooseApp}</p>
-            {emailChoices.includes("gmail") ? (
-              <button className="button" type="button" onClick={() => handleEmailChoice("gmail")}>{copy.gmailApp}</button>
-            ) : null}
-            {emailChoices.includes("apple") ? (
-              <button className="button button-ghost" type="button" onClick={() => handleEmailChoice("apple")}>{copy.appleMail}</button>
-            ) : null}
-            <button className="button button-ghost" type="button" onClick={() => handleEmailChoice("browser")}>{copy.browserMail}</button>
-            <p className="notice">{copy.rememberChoice}</p>
-          </>
-        ) : (
-          <>
-            <button className="button" type="button" onClick={handleOpenEmail}>{copy.openEmail}</button>
-            {savedEmailChoice ? (
-              <button className="button button-ghost" type="button" onClick={handleChangeEmailApp}>{copy.changeApp}</button>
-            ) : null}
-          </>
-        )}
-
-        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setShowEmailChoices(false); setError(""); }}>{copy.another}</button>
+        <button className="button" type="button" onClick={handleOpenEmail}>{copy.openEmail}</button>
+        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
         {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       </div>
     );
