@@ -13,8 +13,12 @@ const copyByLocale = {
     provider: "Atlas email sign-in is temporarily unavailable.",
     signupDisabled: "Public Atlas sign-up is currently disabled in Supabase. Email retries cannot fix this setting.",
     network: "Atlas could not start email sign-in. Check your connection and try again.",
+    confirmTitle: "Is this email correct?",
+    confirmHelp: "Check every letter before Atlas sends the sign-in link.",
+    confirmSend: "Yes, send email",
+    editEmail: "Edit email",
     sentBefore: "Atlas sent a verification link to",
-    sentAfter: "Check that the address is correct, then open your mail app.",
+    sentAfter: "If this mailbox exists, the message should arrive shortly.",
     openEmail: "Open newest email",
     another: "Use another email",
     label: "Email",
@@ -29,8 +33,12 @@ const copyByLocale = {
     provider: "چوونەژوورەوە بە ئیمەیڵی Atlas کاتێکی کورت بەردەست نییە.",
     signupDisabled: "دروستکردنی هەژماری گشتی Atlas لە Supabase داخراوە. دووبارە هەوڵدان بە ئیمەیڵ ئەم ڕێکخستنە چارەسەر ناکات.",
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
+    confirmTitle: "ئەم ئیمەیڵە دروستە؟",
+    confirmHelp: "پێش ناردنی لینکەکە، هەموو پیتەکانی ئیمەیڵەکە بپشکنە.",
+    confirmSend: "بەڵێ، ئیمەیڵ بنێرە",
+    editEmail: "ئیمەیڵەکە بگۆڕە",
     sentBefore: "Atlas لینکی پشتڕاستکردنەوەی نارد بۆ",
-    sentAfter: "دڵنیابە لەوەی ئیمەیڵەکە دروستە، پاشان ئەپی ئیمەیڵەکەت بکەرەوە.",
+    sentAfter: "ئەگەر ئەم سندوقەی ئیمەیڵە بوونی هەبێت، نامەکە دەبێت بە زوویی بگات.",
     openEmail: "نوێترین ئیمەیڵ بکەرەوە",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
@@ -45,8 +53,12 @@ const copyByLocale = {
     provider: "چوونەژوور ب ئیمەیلا Atlas بۆ دەمەکێ کورت بەردەست نینە.",
     signupDisabled: "دروستکرنا هەژمارێ گشتی یێ Atlas ل Supabase هاتیە داخستن. دیسان هەولدان ب ئیمەیلێ ئەڤ ڕێکخستنە چارەسەر ناکەت.",
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
+    confirmTitle: "ئەم ئیمەیلە دروستە؟",
+    confirmHelp: "بەری هنارتنا لینکێ، هەمی پیتێن ئیمەیلێ بپشکنە.",
+    confirmSend: "بەلێ، ئیمەیلێ بهنێرە",
+    editEmail: "ئیمەیلێ بگۆڕە",
     sentBefore: "Atlas لینکەکا پشتڕاستکرنێ هنارت بۆ",
-    sentAfter: "پشتڕاست بکە ئیمەیل دروستە، پاشی ئەپا ئیمەیلێ ڤەکە.",
+    sentAfter: "ئەگەر ئەڤ سندوقا ئیمەیلێ هەبیت، نامە دێ ب زوویی بگەهیت.",
     openEmail: "نووترین ئیمەیل ڤەکە",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
@@ -61,8 +73,12 @@ const copyByLocale = {
     provider: "تسجيل الدخول بالبريد في Atlas غير متاح مؤقتاً.",
     signupDisabled: "إنشاء حسابات Atlas العامة متوقف حالياً في Supabase. إعادة محاولة الإيميل ما راح تصلح هذا الإعداد.",
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
+    confirmTitle: "هل هذا البريد صحيح؟",
+    confirmHelp: "راجع كل حرف قبل ما يرسل Atlas رابط الدخول.",
+    confirmSend: "نعم، أرسل الإيميل",
+    editEmail: "تعديل البريد",
     sentBefore: "أرسل Atlas رابط التحقق إلى",
-    sentAfter: "تأكد أن البريد صحيح، وبعدها افتح تطبيق البريد.",
+    sentAfter: "إذا كان صندوق البريد موجوداً، المفروض توصل الرسالة قريباً.",
     openEmail: "فتح أحدث رسالة",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
@@ -160,6 +176,7 @@ function openEmailInbox(email: string) {
 export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   const copy = copyByLocale[locale];
   const [email, setEmail] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -178,7 +195,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     openEmailInbox(email);
   }
 
-  async function submit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault();
     if (busy || readiness?.signupDisabled === true) return;
     const normalized = email.trim().toLowerCase();
@@ -186,14 +203,20 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
       setError(copy.invalid);
       return;
     }
+    setEmail(normalized);
+    setError("");
+    setConfirming(true);
+  }
 
+  async function sendConfirmedEmail() {
+    if (busy || readiness?.signupDisabled === true) return;
     setBusy(true);
     setError("");
     try {
       const response = await fetch("/api/auth/temporary-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalized, locale }),
+        body: JSON.stringify({ email, locale }),
       });
       const result = await response.json().catch(() => null) as { ok?: boolean; reason?: TemporaryEmailFailure } | null;
       if (!response.ok || result?.ok !== true) {
@@ -204,8 +227,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         else setError(copy.failed);
         return;
       }
-
-      setEmail(normalized);
+      setConfirming(false);
       setSent(true);
     } catch {
       setError(copy.network);
@@ -229,7 +251,19 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
           {copy.sentBefore} <strong dir="ltr">{email}</strong>. {copy.sentAfter}
         </p>
         <button className="button" type="button" onClick={handleOpenEmail}>{copy.openEmail}</button>
-        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
+        <button className="button button-ghost" type="button" onClick={() => { setSent(false); setConfirming(false); setError(""); }}>{copy.another}</button>
+        {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
+      </div>
+    );
+  }
+
+  if (confirming) {
+    return (
+      <div className="stack-form atlas-email-confirm">
+        <p className="notice" role="status"><strong>{copy.confirmTitle}</strong><br />{copy.confirmHelp}</p>
+        <div className="atlas-email-confirm-address" dir="ltr">{email}</div>
+        <button className="button" type="button" disabled={busy} onClick={sendConfirmedEmail}>{busy ? copy.sending : copy.confirmSend}</button>
+        <button className="button button-ghost" type="button" disabled={busy} onClick={() => { setConfirming(false); setError(""); }}>{copy.editEmail}</button>
         {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       </div>
     );
@@ -255,7 +289,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         aria-invalid={error === copy.invalid}
         required
       />
-      <button className="button" type="submit" disabled={busy}>{busy ? copy.sending : copy.send}</button>
+      <button className="button" type="submit" disabled={busy}>{copy.send}</button>
       {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
     </form>
   );
