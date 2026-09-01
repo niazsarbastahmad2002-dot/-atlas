@@ -4,14 +4,19 @@ import test from "node:test";
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("temporary email success state opens immediately and uses a native-first inbox handoff", async () => {
+test("temporary email success state offers and remembers a provider-aware mail app choice", async () => {
   const source = await read("app/login/legacy/legacy-login-form.tsx");
 
   assert.match(source, /openEmail: "Open newest email"/);
-  assert.doesNotMatch(source, /EMAIL_SYNC_GRACE_MS/);
-  assert.doesNotMatch(source, /emailReady/);
-  assert.doesNotMatch(source, /emailArriving/);
-  assert.match(source, /onClick=\{\(\) => openEmailInbox\(email\)\}/);
+  assert.match(source, /chooseApp: "Where do you read this email\?"/);
+  assert.match(source, /changeApp: "Change email app"/);
+  assert.match(source, /EMAIL_OPEN_PREFERENCE_PREFIX/);
+  assert.match(source, /window\.localStorage\.setItem/);
+  assert.match(source, /window\.localStorage\.getItem/);
+  assert.match(source, /availableEmailChoices\(email\)/);
+  assert.match(source, /handleEmailChoice\("gmail"\)/);
+  assert.match(source, /handleEmailChoice\("apple"\)/);
+  assert.match(source, /handleEmailChoice\("browser"\)/);
   assert.match(source, /window\.location\.assign\("googlegmail:\/\/"\)/);
   assert.doesNotMatch(source, /googlegmail:\/\/\/search\?query=/);
   assert.match(source, /window\.location\.assign\("message:\/\/"\)/);
@@ -20,4 +25,7 @@ test("temporary email success state opens immediately and uses a native-first in
   assert.match(source, /#search\/\$\{query\}/);
   assert.match(source, /https:\/\/outlook\.live\.com\/mail\/0\/inbox/);
   assert.match(source, /https:\/\/www\.icloud\.com\/mail\//);
+  assert.doesNotMatch(source, /EMAIL_SYNC_GRACE_MS/);
+  assert.doesNotMatch(source, /emailReady/);
+  assert.doesNotMatch(source, /emailArriving/);
 });
