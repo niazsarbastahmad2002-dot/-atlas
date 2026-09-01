@@ -99,7 +99,7 @@ type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "d
 type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
 type EmailOpenChoice = "gmail" | "apple" | "browser";
 
-const ATLAS_GMAIL_QUERY = 'is:unread subject:"Atlas — Sign in" newer_than:1d';
+const ATLAS_GMAIL_QUERY = 'in:anywhere {subject:"Atlas — Sign in" subject:"Atlas — Confirm your email"} newer_than:1d';
 const EMAIL_OPEN_PREFERENCE_PREFIX = "atlas-email-open-preference:";
 
 function isGmailDomain(domain: string) {
@@ -197,8 +197,7 @@ function openEmailInbox(email: string, choice: EmailOpenChoice) {
     }
 
     if (isAndroidDevice()) {
-      const browserFallback = encodeURIComponent(fallback);
-      window.location.assign(`intent://mail.google.com/mail/u/0/#inbox#Intent;scheme=https;package=com.google.android.gm;S.browser_fallback_url=${browserFallback};end`);
+      window.location.assign("intent://mail.google.com/mail/u/0/#inbox#Intent;scheme=https;package=com.google.android.gm;end");
       return;
     }
 

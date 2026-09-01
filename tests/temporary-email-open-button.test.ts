@@ -21,7 +21,10 @@ test("temporary email success state offers and remembers a provider-aware mail a
   assert.doesNotMatch(source, /googlegmail:\/\/\/search\?query=/);
   assert.match(source, /window\.location\.assign\("message:\/\/"\)/);
   assert.match(source, /package=com\.google\.android\.gm/);
-  assert.match(source, /is:unread subject:\"Atlas — Sign in\" newer_than:1d/);
+  assert.doesNotMatch(source, /S\.browser_fallback_url/);
+  assert.match(source, /in:anywhere/);
+  assert.match(source, /Atlas — Sign in/);
+  assert.match(source, /Atlas — Confirm your email/);
   assert.match(source, /#search\/\$\{query\}/);
   assert.match(source, /https:\/\/outlook\.live\.com\/mail\/0\/inbox/);
   assert.match(source, /https:\/\/www\.icloud\.com\/mail\//);
