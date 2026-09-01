@@ -6,15 +6,15 @@ import { GoogleLoginButton } from "../google-login-button";
 
 const copyByLocale = {
   en: {
-    invalid: "Enter a valid email address.",
+    invalid: "Check the email address. It does not look valid or reachable.",
     failed: "Atlas could not send the sign-in link. Try again later.",
     rateLimited: "Atlas email is temporarily rate-limited. Wait a little, then try once.",
     notAuthorized: "This email cannot receive Atlas sign-in mail from the current Supabase mail service. Atlas needs custom SMTP for this address.",
     provider: "Atlas email sign-in is temporarily unavailable.",
     signupDisabled: "Public Atlas sign-up is currently disabled in Supabase. Email retries cannot fix this setting.",
     network: "Atlas could not start email sign-in. Check your connection and try again.",
-    sentBefore: "Open the newest Atlas email for",
-    sentAfter: "The link will sign you in to the fresh Atlas account.",
+    sentBefore: "Atlas sent a verification link to",
+    sentAfter: "Check that the address is correct, then open your mail app.",
     openEmail: "Open newest email",
     another: "Use another email",
     label: "Email",
@@ -22,15 +22,15 @@ const copyByLocale = {
     send: "Continue with email",
   },
   ku: {
-    invalid: "ئیمەیڵێکی دروست بنووسە.",
+    invalid: "ئیمەیڵەکە بپشکنە. وا دیارە دروست نییە یان ناتوانێت ئیمەیڵ وەربگرێت.",
     failed: "Atlas نەیتوانی لینکی چوونەژوورەوە بنێرێت. دواتر دووبارە هەوڵ بدە.",
     rateLimited: "ناردنی ئیمەیڵی Atlas کاتێکی کورت سنووردار کراوە. کەمێک چاوەڕێ بکە و تەنها جارێکی تر هەوڵ بدە.",
     notAuthorized: "ئەم ئیمەیڵە لە خزمەتگوزاری ئیمەیڵی ئێستای Supabase ناتوانێت ئیمەیڵی چوونەژوورەوە وەربگرێت. Atlas پێویستی بە SMTP تایبەت هەیە.",
     provider: "چوونەژوورەوە بە ئیمەیڵی Atlas کاتێکی کورت بەردەست نییە.",
     signupDisabled: "دروستکردنی هەژماری گشتی Atlas لە Supabase داخراوە. دووبارە هەوڵدان بە ئیمەیڵ ئەم ڕێکخستنە چارەسەر ناکات.",
     network: "Atlas نەیتوانی چوونەژوورەوە بە ئیمەیڵ دەست پێ بکات. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدە.",
-    sentBefore: "نوێترین ئیمەیڵی Atlas بکەرەوە بۆ",
-    sentAfter: "لینکەکە تۆ دەخاتە ناو هەژمارە تازەکەی Atlas.",
+    sentBefore: "Atlas لینکی پشتڕاستکردنەوەی نارد بۆ",
+    sentAfter: "دڵنیابە لەوەی ئیمەیڵەکە دروستە، پاشان ئەپی ئیمەیڵەکەت بکەرەوە.",
     openEmail: "نوێترین ئیمەیڵ بکەرەوە",
     another: "ئیمەیڵێکی تر بەکاربهێنە",
     label: "ئیمەیڵ",
@@ -38,15 +38,15 @@ const copyByLocale = {
     send: "بە ئیمەیڵ بەردەوام بە",
   },
   bd: {
-    invalid: "ئیمەیلەکا دروست بنڤیسە.",
+    invalid: "ئیمەیلێ بپشکنە. دیارە نە دروستە یان ناتوانیت ئیمەیلێ وەربگریت.",
     failed: "Atlas نەشیا لینکا چوونەژوورێ بهنێریت. پاشتر دیسان هەول بدە.",
     rateLimited: "هنارتنا ئیمەیلا Atlas بۆ دەمەکێ کورت سنووردار بوویە. هندەک راوەستە و تەنێ جارەکا دی هەول بدە.",
     notAuthorized: "ئەم ئیمەیلە ل سەر خزمەتا ئیمەیلا هەنووکە یا Supabase ناتوانیت ئیمەیلا چوونەژوورێ وەربگریت. Atlas پێدڤی ب SMTP یا تایبەت هەیە.",
     provider: "چوونەژوور ب ئیمەیلا Atlas بۆ دەمەکێ کورت بەردەست نینە.",
     signupDisabled: "دروستکرنا هەژمارێ گشتی یێ Atlas ل Supabase هاتیە داخستن. دیسان هەولدان ب ئیمەیلێ ئەڤ ڕێکخستنە چارەسەر ناکەت.",
     network: "Atlas نەشیا چوونەژوور ب ئیمەیلێ دەست پێ بکەت. ئینتەرنێتا خۆ بپشکنە و دیسان هەول بدە.",
-    sentBefore: "نووترین ئیمەیلا Atlas ڤەکە بۆ",
-    sentAfter: "لینک دێ تە بخەتە ژوور هەژمارا نوو یا Atlas.",
+    sentBefore: "Atlas لینکەکا پشتڕاستکرنێ هنارت بۆ",
+    sentAfter: "پشتڕاست بکە ئیمەیل دروستە، پاشی ئەپا ئیمەیلێ ڤەکە.",
     openEmail: "نووترین ئیمەیل ڤەکە",
     another: "ئیمەیلەکا دی بکاربینە",
     label: "ئیمەیل",
@@ -54,15 +54,15 @@ const copyByLocale = {
     send: "ب ئیمەیلێ بەردەوام بە",
   },
   ar: {
-    invalid: "اكتب بريد إلكتروني صحيح.",
+    invalid: "تأكد من البريد الإلكتروني. يبدو غير صحيح أو غير قادر على استقبال الرسائل.",
     failed: "Atlas ما قدر يرسل رابط تسجيل الدخول. حاول مرة ثانية بعدين.",
     rateLimited: "إرسال إيميلات Atlas محدود مؤقتاً. انتظر شوي وحاول مرة وحدة بعدين.",
     notAuthorized: "هذا البريد ما يقدر يستلم رسالة دخول Atlas من خدمة Supabase الحالية. Atlas يحتاج SMTP مخصص لهذا البريد.",
     provider: "تسجيل الدخول بالبريد في Atlas غير متاح مؤقتاً.",
     signupDisabled: "إنشاء حسابات Atlas العامة متوقف حالياً في Supabase. إعادة محاولة الإيميل ما راح تصلح هذا الإعداد.",
     network: "Atlas ما قدر يبدأ تسجيل الدخول بالبريد. تأكد من الإنترنت وحاول مرة ثانية.",
-    sentBefore: "افتح أحدث رسالة من Atlas المرسلة إلى",
-    sentAfter: "الرابط يدخلك إلى حساب Atlas الجديد.",
+    sentBefore: "أرسل Atlas رابط التحقق إلى",
+    sentAfter: "تأكد أن البريد صحيح، وبعدها افتح تطبيق البريد.",
     openEmail: "فتح أحدث رسالة",
     another: "استخدام بريد آخر",
     label: "البريد الإلكتروني",
@@ -71,7 +71,7 @@ const copyByLocale = {
   },
 } as const satisfies Record<UiLocale, Record<string, string>>;
 
-type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
+type TemporaryEmailFailure = "invalid_email" | "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AuthReadiness = { supabaseGoogleEnabled?: boolean; signupDisabled?: boolean };
 
 const ATLAS_GMAIL_QUERY = 'in:anywhere {subject:"Atlas — Sign in" subject:"Atlas — Confirm your email"} newer_than:1d';
@@ -87,6 +87,21 @@ function isIOSDevice() {
 
 function isAndroidDevice() {
   return /Android/i.test(navigator.userAgent);
+}
+
+function isPlausibleEmail(email: string) {
+  if (email.length > 320) return false;
+  const separator = email.lastIndexOf("@");
+  if (separator <= 0 || separator !== email.indexOf("@")) return false;
+
+  const local = email.slice(0, separator);
+  const domain = email.slice(separator + 1).toLowerCase();
+  if (!local || local.length > 64 || local.startsWith(".") || local.endsWith(".") || local.includes("..")) return false;
+  if (!domain || domain.length > 253 || domain.startsWith(".") || domain.endsWith(".") || domain.includes("..")) return false;
+
+  const labels = domain.split(".");
+  if (labels.length < 2 || labels.at(-1)!.length < 2) return false;
+  return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label));
 }
 
 function emailWebInbox(email: string) {
@@ -167,7 +182,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     event.preventDefault();
     if (busy || readiness?.signupDisabled === true) return;
     const normalized = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    if (!isPlausibleEmail(normalized)) {
       setError(copy.invalid);
       return;
     }
@@ -182,7 +197,8 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
       });
       const result = await response.json().catch(() => null) as { ok?: boolean; reason?: TemporaryEmailFailure } | null;
       if (!response.ok || result?.ok !== true) {
-        if (result?.reason === "rate_limited") setError(copy.rateLimited);
+        if (result?.reason === "invalid_email") setError(copy.invalid);
+        else if (result?.reason === "rate_limited") setError(copy.rateLimited);
         else if (result?.reason === "not_authorized") setError(copy.notAuthorized);
         else if (result?.reason === "provider") setError(copy.provider);
         else setError(copy.failed);
@@ -210,7 +226,7 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
     return (
       <div className="stack-form">
         <p className="notice notice-success" role="status">
-          {copy.sentBefore} <span dir="ltr">{email}</span>. {copy.sentAfter}
+          {copy.sentBefore} <strong dir="ltr">{email}</strong>. {copy.sentAfter}
         </p>
         <button className="button" type="button" onClick={handleOpenEmail}>{copy.openEmail}</button>
         <button className="button button-ghost" type="button" onClick={() => { setSent(false); setError(""); }}>{copy.another}</button>
@@ -222,7 +238,23 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
   return (
     <form className="stack-form" onSubmit={submit}>
       <label htmlFor="legacy-email">{copy.label}</label>
-      <input id="legacy-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+      <input
+        id="legacy-email"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        enterKeyHint="go"
+        value={email}
+        onChange={(event) => {
+          setEmail(event.target.value);
+          if (error) setError("");
+        }}
+        aria-invalid={error === copy.invalid}
+        required
+      />
       <button className="button" type="submit" disabled={busy}>{busy ? copy.sending : copy.send}</button>
       {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
     </form>

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "A focused appointment and reminder workspace for private clinics.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#eef4f1",
-    theme_color: "#071f19",
+    background_color: "#f4f7f5",
+    theme_color: "#f4f7f5",
     orientation: "any",
     icons: [
       {

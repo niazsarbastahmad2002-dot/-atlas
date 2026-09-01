@@ -1,0 +1,113 @@
+/* Mobile-first tap clarity. Primary actions should look important, and every tap should visibly respond. */
+
+.login-card .stack-form > .button:not(.button-ghost) {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(31, 90, 67, .20);
+}
+
+.login-card .stack-form > .button-ghost {
+  border: 1px solid var(--line-strong);
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+}
+
+.login-language-picker button.is-active {
+  border-width: 2px;
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+
+@media (hover: none), (pointer: coarse) {
+  :where(
+    button,
+    [role="button"],
+    summary,
+    a.button,
+    a.icon-button,
+    a.settings-link,
+    .app-bottom-nav > a,
+    .login-language-picker button
+  ) {
+    -webkit-tap-highlight-color: rgba(31, 90, 67, .22);
+    touch-action: manipulation;
+  }
+
+  :where(
+    button,
+    [role="button"],
+    summary,
+    a.button,
+    a.icon-button,
+    a.settings-link,
+    .app-bottom-nav > a
+  ):not(:disabled) {
+    min-height: 48px;
+  }
+
+  :where(
+    button,
+    [role="button"],
+    summary,
+    a.button,
+    a.icon-button,
+    a.settings-link,
+    .app-bottom-nav > a,
+    .login-language-picker button
+  ):active {
+    transform: scale(.97) !important;
+    outline: 3px solid rgba(31, 90, 67, .22);
+    outline-offset: 1px;
+    box-shadow: 0 0 0 2px rgba(31, 90, 67, .10), inset 0 0 0 999px rgba(31, 90, 67, .06) !important;
+  }
+
+  .button:not(.button-ghost):not(:disabled):active {
+    background: var(--accent-hover) !important;
+    color: #fff !important;
+  }
+
+  :where(
+    .button-ghost,
+    .icon-button,
+    .settings-link,
+    .app-bottom-nav > a,
+    summary,
+    button[aria-pressed]
+  ):active {
+    border-color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+    color: var(--accent) !important;
+  }
+
+  :where(
+    button.is-selected,
+    button.is-active,
+    button[aria-pressed="true"],
+    [role="button"][aria-pressed="true"],
+    a[aria-current="page"],
+    .icon-button.is-active,
+    .app-bottom-nav > a.is-active
+  ) {
+    border-color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 0 0 2px rgba(31, 90, 67, .16), 0 6px 16px rgba(31, 90, 67, .08) !important;
+  }
+
+  .login-card .stack-form > .button {
+    width: 100%;
+    min-height: 52px;
+    font-size: 16px;
+  }
+
+  .login-card .stack-form > .button:not(.button-ghost) {
+    box-shadow: 0 9px 24px rgba(31, 90, 67, .24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(button, [role="button"], summary, a.button, a.icon-button, a.settings-link, .app-bottom-nav > a) {
+    transition: none !important;
+  }
+}

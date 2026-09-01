@@ -1,11 +1,14 @@
+import { resolve4, resolve6, resolveMx } from "node:dns/promises";
 import { NextResponse } from "next/server";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const runtime = "nodejs";
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UI_LOCALES = new Set(["en", "ku", "bd", "ar"]);
 
-type TemporaryEmailFailure = "rate_limited" | "not_authorized" | "provider" | "delivery";
+type TemporaryEmailFailure = "invalid_email" | "rate_limited" | "not_authorized" | "provider" | "delivery";
 type AtlasEmailLocale = "en" | "ku" | "bd" | "ar";
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -29,6 +32,53 @@ function failureResponse(reason: TemporaryEmailFailure, status = 503) {
     { ok: false, reason },
     { status, headers: { "Cache-Control": "no-store" } },
   );
+}
+
+function dnsErrorCode(error: unknown) {
+  if (!error || typeof error !== "object" || !("code" in error)) return "";
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : "";
+}
+
+function isPlausibleEmailAddress(email: string) {
+  if (!EMAIL_PATTERN.test(email) || email.length > 320) return false;
+  const separator = email.lastIndexOf("@");
+  if (separator <= 0 || separator !== email.indexOf("@")) return false;
+
+  const local = email.slice(0, separator);
+  const domain = email.slice(separator + 1).toLowerCase();
+  if (local.length > 64 || local.startsWith(".") || local.endsWith(".") || local.includes("..")) return false;
+  if (domain.length > 253 || domain.startsWith(".") || domain.endsWith(".") || domain.includes("..")) return false;
+
+  const labels = domain.split(".");
+  if (labels.length < 2 || labels.at(-1)!.length < 2) return false;
+  return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label));
+}
+
+async function domainCanReceiveMail(email: string) {
+  const domain = email.slice(email.lastIndexOf("@") + 1).toLowerCase();
+
+  try {
+    const records = await resolveMx(domain);
+    if (records.length > 0) return true;
+  } catch (error) {
+    const code = dnsErrorCode(error);
+    if (code === "ENOTFOUND") return false;
+    if (code !== "ENODATA") return true;
+  }
+
+  let conclusiveNoAddress = true;
+  for (const resolver of [resolve4, resolve6] as const) {
+    try {
+      const addresses = await resolver(domain);
+      if (addresses.length > 0) return true;
+    } catch (error) {
+      const code = dnsErrorCode(error);
+      if (code !== "ENODATA" && code !== "ENOTFOUND") conclusiveNoAddress = false;
+    }
+  }
+
+  return !conclusiveNoAddress;
 }
 
 async function syncExistingUserLocale(
@@ -93,8 +143,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
-  if (!EMAIL_PATTERN.test(email) || email.length > 320) {
-    return NextResponse.json({ ok: false }, { status: 400, headers: { "Cache-Control": "no-store" } });
+  if (!isPlausibleEmailAddress(email)) {
+    return failureResponse("invalid_email", 400);
+  }
+
+  if (!await domainCanReceiveMail(email)) {
+    return failureResponse("invalid_email", 400);
   }
 
   try {

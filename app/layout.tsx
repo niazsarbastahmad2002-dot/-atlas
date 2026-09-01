@@ -29,6 +29,7 @@ import "./atlas-dark-guards.css";
 import "./atlas-auth-polish.css";
 import "./atlas-settings-finish.css";
 import "./atlas-dark-icon-polish.css";
+import "./atlas-mobile-tap.css";
 
 const atlasKurdishFont = Noto_Sans_Arabic({
   subsets: ["arabic"],
@@ -54,12 +55,24 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: "#071f19",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const theme = await getUiTheme();
+  const themeColor: Viewport["themeColor"] = theme === "dark"
+    ? "#071b15"
+    : theme === "light"
+      ? "#f4f7f5"
+      : [
+          { media: "(prefers-color-scheme: light)", color: "#f4f7f5" },
+          { media: "(prefers-color-scheme: dark)", color: "#071b15" },
+        ];
+
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor,
+  };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const [locale, theme] = await Promise.all([getUiLocale(), getUiTheme()]);
