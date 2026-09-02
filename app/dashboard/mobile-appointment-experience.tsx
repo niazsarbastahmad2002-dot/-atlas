@@ -77,6 +77,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
     };
 
     const prepareRow = (row: HTMLElement, list: HTMLElement) => {
+      row.classList.add("is-atlas-phone-managed");
       if (!row.querySelector(".atlas-phone-appointment-summary")) {
         const summary = document.createElement("button");
         summary.type = "button";
