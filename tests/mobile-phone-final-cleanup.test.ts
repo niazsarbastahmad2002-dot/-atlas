@@ -6,13 +6,14 @@ const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.
 
 test("phone schedule stretches across the available width instead of leaving an RTL gutter", () => {
   const css = source("app/atlas-phone-final.css");
-  assert.match(css, /\.workspace-grid[\s\S]*align-items: stretch !important/);
+  assert.match(css, /@media \(max-width: 560px\)[\s\S]*\.workspace-grid[\s\S]*align-items: stretch !important/);
   assert.match(css, /\.workspace-grid > \.appointments-panel[\s\S]*width: 100% !important/);
   assert.match(css, /\.workspace-grid > \.appointment-composer[\s\S]*align-self: stretch !important/);
 });
 
-test("phone settings icons stand alone without circular or square containers", () => {
+test("handheld settings icons stand alone without circular or square containers", () => {
   const css = source("app/atlas-phone-final.css");
+  assert.match(css, /@media \(max-width: 900px\)/);
   assert.match(css, /\.settings-card-icon[\s\S]*border: 0 !important/);
   assert.match(css, /\.settings-card-icon[\s\S]*border-radius: 0 !important/);
   assert.match(css, /\.settings-card-icon[\s\S]*background: transparent !important/);
@@ -27,7 +28,15 @@ test("phone settings icons stand alone without circular or square containers", (
   assert.doesNotMatch(css, /\.settings-card-icon[\s\S]{0,500}border-radius: 50% !important/);
 });
 
-test("phone search has a strong focus state and a visibly focused single match", () => {
+test("appointment finder is shared with iPad while compact disclosure cards stay phone-only", () => {
+  const finalCss = source("app/atlas-phone-final.css");
+  const phoneCss = source("app/atlas-phone.css");
+  assert.match(finalCss, /@media \(max-width: 900px\)[\s\S]*\.atlas-phone-appointment-search[\s\S]*display: grid !important/);
+  assert.match(finalCss, /@media \(max-width: 900px\)[\s\S]*is-atlas-phone-search-hidden[\s\S]*display: none !important/);
+  assert.match(phoneCss, /@media \(max-width: 560px\)[\s\S]*\.atlas-phone-appointment-summary[\s\S]*display: grid !important/);
+});
+
+test("appointment search has a strong focus state and a visibly focused single match", () => {
   const css = source("app/atlas-phone-final.css");
   assert.match(css, /\.atlas-phone-appointment-search:focus-within/);
   assert.match(css, /\.atlas-phone-search-clear\[hidden\]/);

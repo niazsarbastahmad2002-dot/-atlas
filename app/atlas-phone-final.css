@@ -1,6 +1,6 @@
-/* Atlas phone final cleanup.
-   Phone panels use the full width, iconography stays visually strong without
-   decorative containers, and search/selected states remain readable. */
+/* Atlas phone/tablet cleanup.
+   Search and iconography are shared where they improve handheld use; compact
+   appointment disclosure rows remain phone-only in atlas-phone.css. */
 
 :root {
   --atlas-phone-selected-bg: #176148;
@@ -28,30 +28,10 @@
   }
 }
 
-@media (max-width: 560px) {
-  /* Phone schedule must always stretch in both LTR and RTL. */
-  .workspace-grid {
-    width: 100% !important;
-    min-width: 0 !important;
-    align-items: stretch !important;
-  }
-  .workspace-grid > .appointments-panel,
-  .workspace-grid > .appointment-composer {
-    width: 100% !important;
-    max-width: none !important;
-    margin-inline: 0 !important;
-    align-self: stretch !important;
-  }
-  .appointments-panel .polished-appointment-list,
-  .appointments-panel .atlas-phone-appointment-search,
-  .appointments-panel .atlas-phone-search-meta,
-  .appointments-panel .atlas-phone-search-empty {
-    width: 100% !important;
-    max-width: none !important;
-  }
-
-  /* Settings icon system: the symbol itself is the visual control. There is
-     deliberately no surrounding circle, square, border, or badge. */
+/* These two improvements are useful on both phones and iPads: standalone
+   section icons and a reliable appointment finder. Do not turn iPad cards
+   into phone disclosure rows here. */
+@media (max-width: 900px) {
   .settings-card-heading {
     align-items: center !important;
     gap: 13px !important;
@@ -115,15 +95,19 @@
     --atlas-phone-icon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='2.5' width='10' height='19' rx='2.5'/%3E%3Cpath d='M10 5h4M10 18.5h4M9.5 13l1.7 1.7 3.5-3.7'/%3E%3C/svg%3E");
   }
 
-  /* Appointment search: names filter immediately. Phone numbers only begin
-     filtering at three digits so a single digit cannot make the schedule
-     appear to randomly disappear. */
+  .appointments-panel .atlas-phone-appointment-search,
+  .appointments-panel .atlas-phone-search-meta,
+  .appointments-panel .atlas-phone-search-empty {
+    width: 100% !important;
+    max-width: none !important;
+  }
   .atlas-phone-appointment-search {
     display: grid !important;
     grid-template-columns: 28px minmax(0, 1fr) 34px !important;
     align-items: center !important;
     gap: 7px !important;
     min-height: 52px !important;
+    margin: 0 0 9px !important;
     border: 1.5px solid var(--line-strong) !important;
     border-radius: 16px !important;
     padding: 0 8px 0 11px !important;
@@ -158,6 +142,8 @@
     stroke-linejoin: round;
   }
   .atlas-phone-appointment-search input {
+    width: 100% !important;
+    min-width: 0 !important;
     min-height: 48px !important;
     direction: inherit;
     border: 0 !important;
@@ -198,7 +184,6 @@
     transform: scale(.94) !important;
     outline: 0 !important;
   }
-
   .atlas-phone-search-meta {
     display: flex;
     align-items: center;
@@ -224,14 +209,28 @@
     overflow-wrap: anywhere;
     text-align: end;
   }
+  .atlas-phone-search-empty {
+    display: block !important;
+    margin: 4px 0 10px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+    padding: 11px 12px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
+  }
+  .atlas-phone-search-empty[hidden] { display: none !important; }
 
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-hidden {
+    display: none !important;
+  }
   .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-match {
     border-color: rgba(34, 137, 101, .42) !important;
   }
   .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-match > .atlas-phone-appointment-summary {
     background: var(--accent-faint) !important;
   }
-  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-match .atlas-phone-appointment-name {
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-match :is(.atlas-phone-appointment-name, .patient-cell strong) {
     color: var(--accent) !important;
   }
   .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-focus {
@@ -240,6 +239,68 @@
   }
   .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-focus > .atlas-phone-appointment-summary {
     background: var(--accent-soft) !important;
+  }
+
+  .settings-page :is(button, summary, a.settings-link):active {
+    border-color: var(--atlas-phone-selected-border) !important;
+    background: var(--atlas-phone-press-bg) !important;
+    color: var(--atlas-phone-press-ink) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  .settings-page :is(
+    button.is-selected,
+    button.is-active,
+    button[aria-pressed="true"],
+    a[aria-current="page"]
+  ) {
+    border-color: var(--atlas-phone-selected-border) !important;
+    background: var(--atlas-phone-selected-bg) !important;
+    color: var(--atlas-phone-selected-ink) !important;
+    -webkit-text-fill-color: currentColor !important;
+    box-shadow: 0 6px 16px rgba(9, 67, 48, .12) !important;
+  }
+  html body .appointment-composer :is(
+    .atlas-period-tabs button.is-selected,
+    .atlas-hour-grid button.is-selected,
+    .atlas-minute-grid button.is-selected
+  ) {
+    border-color: var(--atlas-phone-selected-border) !important;
+    background: var(--atlas-phone-selected-bg) !important;
+    color: var(--atlas-phone-selected-ink) !important;
+    -webkit-text-fill-color: currentColor !important;
+    box-shadow: 0 5px 14px rgba(9, 67, 48, .12), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+  .settings-page .settings-card {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .settings-page .settings-card-heading h2,
+  .settings-page .settings-card-heading p {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .settings-page .settings-card {
+    border-color: var(--line-strong) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Phone schedule must always stretch in both LTR and RTL. */
+  .workspace-grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    align-items: stretch !important;
+  }
+  .workspace-grid > .appointments-panel,
+  .workspace-grid > .appointment-composer {
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    align-self: stretch !important;
+  }
+  .appointments-panel .polished-appointment-list {
+    width: 100% !important;
+    max-width: none !important;
   }
 
   /* Bottom navigation stays clearly selected rather than bleaching white. */
@@ -277,48 +338,7 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.06) !important;
   }
 
-  .settings-page :is(button, summary, a.settings-link):active {
-    border-color: var(--atlas-phone-selected-border) !important;
-    background: var(--atlas-phone-press-bg) !important;
-    color: var(--atlas-phone-press-ink) !important;
-    -webkit-text-fill-color: currentColor !important;
-  }
-  .settings-page :is(
-    button.is-selected,
-    button.is-active,
-    button[aria-pressed="true"],
-    a[aria-current="page"]
-  ) {
-    border-color: var(--atlas-phone-selected-border) !important;
-    background: var(--atlas-phone-selected-bg) !important;
-    color: var(--atlas-phone-selected-ink) !important;
-    -webkit-text-fill-color: currentColor !important;
-    box-shadow: 0 6px 16px rgba(9, 67, 48, .12) !important;
-  }
-
-  html body .appointment-composer :is(
-    .atlas-period-tabs button.is-selected,
-    .atlas-hour-grid button.is-selected,
-    .atlas-minute-grid button.is-selected
-  ) {
-    border-color: var(--atlas-phone-selected-border) !important;
-    background: var(--atlas-phone-selected-bg) !important;
-    color: var(--atlas-phone-selected-ink) !important;
-    -webkit-text-fill-color: currentColor !important;
-    box-shadow: 0 5px 14px rgba(9, 67, 48, .12), inset 0 1px 0 rgba(255,255,255,.08) !important;
-  }
-
-  .settings-page .settings-card {
-    min-width: 0;
-    overflow: hidden;
-  }
-  .settings-page .settings-card-heading h2,
-  .settings-page .settings-card-heading p {
-    max-width: 100%;
-    overflow-wrap: anywhere;
-  }
-  .appointments-panel.schedule-card,
-  .settings-page .settings-card {
+  .appointments-panel.schedule-card {
     border-color: var(--line-strong) !important;
   }
 }

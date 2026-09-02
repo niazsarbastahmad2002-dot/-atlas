@@ -44,14 +44,13 @@ test("phone appointment search and disclosure copy exists for all Atlas locales"
   ]) assert.match(enhancer, new RegExp(phrase));
 });
 
-test("phone search separates patient names from phone numbers and avoids one-digit false focus", () => {
+test("appointment finder uses ranked name matching and guarded phone matching", () => {
   const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
-  assert.match(enhancer, /function normalizeName/);
-  assert.match(enhancer, /function normalizePhone/);
-  assert.match(enhancer, /dataset\.atlasPhoneName/);
-  assert.match(enhancer, /dataset\.atlasPhonePhone/);
-  assert.match(enhancer, /phoneDigits\.length < 3/);
-  assert.match(enhancer, /nameTokens\.every/);
+  assert.match(enhancer, /nameMatchScore/);
+  assert.match(enhancer, /normalizePhone/);
+  assert.match(enhancer, /MIN_PHONE_SEARCH_DIGITS/);
+  assert.match(enhancer, /bestNameScore/);
+  assert.match(enhancer, /score > 0 && score === bestNameScore/);
   assert.match(enhancer, /is-atlas-phone-search-match/);
   assert.match(enhancer, /is-atlas-phone-search-focus/);
   assert.match(enhancer, /matches\.length === 1/);
@@ -59,11 +58,27 @@ test("phone search separates patient names from phone numbers and avoids one-dig
   assert.match(enhancer, /atlas-phone-search-meta/);
 });
 
-test("phone search always filters the current appointment list after navigation or refresh", () => {
+test("mobile keyboards finish composition before appointment filtering runs", () => {
   const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
-  assert.match(enhancer, /const currentList = \(\) => panel\.querySelector<HTMLElement>\("\.polished-appointment-list"\)/);
-  assert.match(enhancer, /const activeList = currentList\(\)/);
-  assert.match(enhancer, /if \(activeList\) applyFilter\(activeList\)/);
+  assert.match(enhancer, /compositionstart/);
+  assert.match(enhancer, /compositionend/);
+  assert.match(enhancer, /if \(!composing\) commitInput\(\)/);
+});
+
+test("appointment search resets only when the schedule context changes", () => {
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+  assert.match(enhancer, /function currentScheduleKey/);
+  assert.match(enhancer, /resetSearchForScheduleChange/);
+  assert.match(enhancer, /url\.searchParams\.get\("day"\)/);
+  assert.match(enhancer, /url\.searchParams\.get\("doctor"\)/);
+});
+
+test("appointment-list observation is scoped and coalesced instead of watching all body text mutations", () => {
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+  assert.match(enhancer, /new MutationObserver\(schedulePrepare\)/);
+  assert.match(enhancer, /document\.querySelector\("\.app-content"\) \?\? document\.body/);
+  assert.match(enhancer, /requestAnimationFrame/);
+  assert.doesNotMatch(enhancer, /characterData: true/);
 });
 
 test("saved appointment time advances from the just-booked slot using the active interval", () => {
