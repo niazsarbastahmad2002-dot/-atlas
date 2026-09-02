@@ -24,6 +24,10 @@ function statusClass(value: string | undefined) {
   return ["pending", "confirmed", "completed", "no_show", "cancelled"].includes(value ?? "") ? value! : "pending";
 }
 
+function setText(node: HTMLElement | null, value: string) {
+  if (node && node.textContent !== value) node.textContent = value;
+}
+
 export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
   useEffect(() => {
     const text = copy[locale];
@@ -40,22 +44,22 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       const select = row.querySelector<HTMLSelectElement>(".appointment-status-select");
       const status = statusClass(select?.value);
       const statusLabel = select?.selectedOptions[0]?.textContent?.trim() ?? "";
+      const searchText = normalizeSearch(`${name} ${phone}`);
 
-      row.dataset.atlasPhoneSearch = normalizeSearch(`${name} ${phone}`);
-      row.dataset.atlasPhoneStatus = status;
+      if (row.dataset.atlasPhoneSearch !== searchText) row.dataset.atlasPhoneSearch = searchText;
+      if (row.dataset.atlasPhoneStatus !== status) row.dataset.atlasPhoneStatus = status;
 
-      const time = summary.querySelector<HTMLElement>(".atlas-phone-appointment-time");
-      const patient = summary.querySelector<HTMLElement>(".atlas-phone-appointment-name");
+      setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-time"), compactTime(timeText));
+      setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-name"), name);
       const statusNode = summary.querySelector<HTMLElement>(".atlas-phone-appointment-status");
-      const orderNode = summary.querySelector<HTMLElement>(".atlas-phone-appointment-order");
-      if (time) time.textContent = compactTime(timeText);
-      if (patient) patient.textContent = name;
       if (statusNode) {
-        statusNode.textContent = statusLabel;
-        statusNode.className = `atlas-phone-appointment-status is-${status}`;
+        setText(statusNode, statusLabel);
+        const nextClass = `atlas-phone-appointment-status is-${status}`;
+        if (statusNode.className !== nextClass) statusNode.className = nextClass;
       }
+      const orderNode = summary.querySelector<HTMLElement>(".atlas-phone-appointment-order");
       if (orderNode) {
-        orderNode.textContent = order;
+        setText(orderNode, order);
         orderNode.hidden = !order;
       }
     };
