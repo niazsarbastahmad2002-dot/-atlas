@@ -19,7 +19,15 @@ test("phone appointments use compact searchable disclosure rows without replacin
   assert.match(enhancer, /appointment-status-select/);
   assert.match(css, /@media \(max-width: 560px\)/);
   assert.match(css, /grid-template-columns: minmax\(52px, auto\) minmax\(0,1fr\) minmax\(0,auto\) 18px/);
-  assert.match(css, /polished-appointment:not\(\.is-atlas-phone-expanded\) > :not\(\.atlas-phone-appointment-summary\)/);
+  assert.match(css, /polished-appointment\.is-atlas-phone-managed:not\(\.is-atlas-phone-expanded\) > :not\(\.atlas-phone-appointment-summary\)/);
+});
+
+test("phone collapsing is explicitly scoped to dashboard-managed appointments", () => {
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+  const css = source("app/atlas-phone.css");
+  assert.match(enhancer, /row\.classList\.add\("is-atlas-phone-managed"\)/);
+  assert.match(css, /appointments-panel \.polished-appointment\.is-atlas-phone-managed/);
+  assert.doesNotMatch(css, /\n  \.polished-appointment:not\(\.is-atlas-phone-expanded\)/);
 });
 
 test("phone appointment search and disclosure copy exists for all Atlas locales", () => {
@@ -51,6 +59,7 @@ test("phone theme layer removes bright selected controls and preserves status me
   assert.match(css, /atlas-ai-launcher > a[\s\S]*background: var\(--surface\) !important/);
   assert.match(css, /atlas-period-tabs button\.is-selected/);
   assert.match(css, /background: var\(--accent-soft\) !important/);
+  assert.doesNotMatch(css, /color-mix\(/);
   for (const status of ["pending", "confirmed", "completed", "no_show", "cancelled"]) {
     assert.match(css, new RegExp(`appointment-status-select\\.is-${status}`));
     assert.match(css, new RegExp(`atlas-phone-appointment-status\\.is-${status}`));
