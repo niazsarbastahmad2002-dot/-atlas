@@ -44,6 +44,28 @@ test("phone appointment search and disclosure copy exists for all Atlas locales"
   ]) assert.match(enhancer, new RegExp(phrase));
 });
 
+test("phone search separates patient names from phone numbers and avoids one-digit false focus", () => {
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+  assert.match(enhancer, /function normalizeName/);
+  assert.match(enhancer, /function normalizePhone/);
+  assert.match(enhancer, /dataset\.atlasPhoneName/);
+  assert.match(enhancer, /dataset\.atlasPhonePhone/);
+  assert.match(enhancer, /phoneDigits\.length < 3/);
+  assert.match(enhancer, /nameTokens\.every/);
+  assert.match(enhancer, /is-atlas-phone-search-match/);
+  assert.match(enhancer, /is-atlas-phone-search-focus/);
+  assert.match(enhancer, /matches\.length === 1/);
+  assert.match(enhancer, /atlas-phone-search-clear/);
+  assert.match(enhancer, /atlas-phone-search-meta/);
+});
+
+test("phone search always filters the current appointment list after navigation or refresh", () => {
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+  assert.match(enhancer, /const currentList = \(\) => panel\.querySelector<HTMLElement>\("\.polished-appointment-list"\)/);
+  assert.match(enhancer, /const activeList = currentList\(\)/);
+  assert.match(enhancer, /if \(activeList\) applyFilter\(activeList\)/);
+});
+
 test("saved appointment time advances from the just-booked slot using the active interval", () => {
   const field = source("app/dashboard/appointment-time-field-v2.tsx");
   assert.match(field, /const \[savedAdvance, setSavedAdvance\] = useState\(false\)/);

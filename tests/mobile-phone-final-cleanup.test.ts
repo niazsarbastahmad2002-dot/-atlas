@@ -11,17 +11,30 @@ test("phone schedule stretches across the available width instead of leaving an 
   assert.match(css, /\.workspace-grid > \.appointment-composer[\s\S]*align-self: stretch !important/);
 });
 
-test("phone settings use deliberate SVG icon badges rather than exposed Unicode tiles", () => {
+test("phone settings icons stand alone without circular or square containers", () => {
   const css = source("app/atlas-phone-final.css");
-  assert.match(css, /\.settings-card-icon[\s\S]*border-radius: 50% !important/);
-  assert.match(css, /font-size: 0 !important/);
-  assert.match(css, /settings-card-accent \.settings-card-icon::before/);
-  assert.match(css, /settings-card:has\(#clinic_name\) \.settings-card-icon::before/);
-  assert.match(css, /atlas-workflow-card \.settings-card-icon::before/);
-  assert.match(css, /settings-card-wide:not\(\.atlas-workflow-card\) \.settings-card-icon::before/);
-  assert.match(css, /settings-link-card \.settings-card-icon::before/);
-  assert.match(css, /settings-card:has\(\.account-email\) \.settings-card-icon::before/);
+  assert.match(css, /\.settings-card-icon[\s\S]*border: 0 !important/);
+  assert.match(css, /\.settings-card-icon[\s\S]*border-radius: 0 !important/);
+  assert.match(css, /\.settings-card-icon[\s\S]*background: transparent !important/);
+  assert.match(css, /\.settings-card-icon::before[\s\S]*mask-image: var\(--atlas-phone-icon-mask\)/);
+  assert.match(css, /settings-card-accent \.settings-card-icon/);
+  assert.match(css, /settings-card:has\(#clinic_name\) \.settings-card-icon/);
+  assert.match(css, /atlas-workflow-card \.settings-card-icon/);
+  assert.match(css, /settings-card-wide:not\(\.atlas-workflow-card\) \.settings-card-icon/);
+  assert.match(css, /settings-link-card \.settings-card-icon/);
+  assert.match(css, /settings-card:has\(\.account-email\) \.settings-card-icon/);
   assert.ok((css.match(/data:image\/svg\+xml/g) ?? []).length >= 6);
+  assert.doesNotMatch(css, /\.settings-card-icon[\s\S]{0,500}border-radius: 50% !important/);
+});
+
+test("phone search has a strong focus state and a visibly focused single match", () => {
+  const css = source("app/atlas-phone-final.css");
+  assert.match(css, /\.atlas-phone-appointment-search:focus-within/);
+  assert.match(css, /\.atlas-phone-search-clear\[hidden\]/);
+  assert.match(css, /\.atlas-phone-search-meta\[hidden\]/);
+  assert.match(css, /is-atlas-phone-search-match/);
+  assert.match(css, /is-atlas-phone-search-focus/);
+  assert.match(css, /is-atlas-phone-search-focus[\s\S]*box-shadow:/);
 });
 
 test("mobile selected and pressed states stay readable instead of bleaching white", () => {
