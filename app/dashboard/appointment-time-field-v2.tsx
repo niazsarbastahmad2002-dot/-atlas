@@ -85,6 +85,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const [minute, setMinute] = useState(0);
   const [custom, setCustom] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [savedAdvance, setSavedAdvance] = useState(false);
 
   useEffect(() => {
     const form = rootRef.current?.closest("form");
@@ -97,6 +98,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       const nextDoctor = doctor.value;
       setDoctorId(nextDoctor);
       setTouched(false);
+      setSavedAdvance(false);
       controller?.abort();
       if (!clinic?.value || !nextDoctor) return;
       controller = new AbortController();
@@ -182,9 +184,9 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   }, [date, doctorId, interval, max, min, minDate, occupied]);
 
   useEffect(() => {
-    if (custom || touched || !nextDefault) return;
+    if (custom || touched || savedAdvance || !nextDefault) return;
     chooseParts(nextDefault);
-  }, [custom, nextDefault, touched]);
+  }, [custom, nextDefault, savedAdvance, touched]);
 
   const time = to24(hour, minute, period);
   const value = `${date}T${time}`;
@@ -192,10 +194,26 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const outOfRange = value < min || value > max;
   const usable = Boolean(doctorId) && !exactBooked && !outOfRange;
 
+  useEffect(() => {
+    if (!doctorId || !occupied.has(value)) return;
+    let candidate = addLocalMinutes(value, interval);
+    for (let attempt = 0; attempt < 288; attempt += 1) {
+      if (!candidate.startsWith(`${date}T`)) return;
+      if (candidate >= min && candidate <= max && !occupied.has(candidate)) {
+        chooseParts(candidate);
+        setCustom(false);
+        setSavedAdvance(true);
+        return;
+      }
+      candidate = addLocalMinutes(candidate, interval);
+    }
+  }, [date, doctorId, interval, max, min, occupied, value]);
+
   const select = (nextHour: number, nextMinute: number, nextPeriod: Period) => {
     setHour(nextHour);
     setMinute(nextMinute);
     setPeriod(nextPeriod);
+    setSavedAdvance(false);
     setTouched(true);
   };
 
@@ -203,6 +221,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     setDate(nextDate);
     setMonth(monthFromValue(nextDate));
     setDateOpen(false);
+    setSavedAdvance(false);
     setTouched(false);
   };
 
@@ -247,7 +266,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
         ) : null}
       </div>
 
-      <div className="atlas-time-heading"><strong>{text.time} · {interval} min</strong><button type="button" onClick={() => { setCustom((current) => !current); setTouched(true); }}>{custom ? text.quick : text.custom}</button></div>
+      <div className="atlas-time-heading"><strong>{text.time} · {interval} min</strong><button type="button" onClick={() => { setCustom((current) => !current); setSavedAdvance(false); setTouched(true); }}>{custom ? text.quick : text.custom}</button></div>
       <div className="atlas-period-tabs" role="group" aria-label={text.time}>
         <button className={period === "am" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "am")}>{text.am}</button>
         <button className={period === "pm" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "pm")}>{text.pm}</button>
