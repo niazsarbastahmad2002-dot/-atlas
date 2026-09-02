@@ -1,0 +1,337 @@
+/* Final responsive handheld layer.
+   Shared search/icon/navigation polish reaches touch iPads; phone-only compact
+   appointment disclosures remain owned by atlas-phone.css. */
+
+@media (max-width: 1400px) and (any-pointer: coarse) {
+  /* The decorative plus beside "New appointment" looked tappable on iPad.
+     The real create action is the form button, so remove the fake affordance. */
+  .appointment-composer .composer-shortcut {
+    display: none !important;
+  }
+
+  .appointment-composer,
+  .appointments-panel {
+    scroll-margin-top: 92px;
+  }
+
+  /* One icon language on phone + iPad, light + dark: the symbol itself is the
+     visual object. Never allow an old square/circle tile to leak through. */
+  .settings-page .settings-card-heading {
+    align-items: center !important;
+    gap: 13px !important;
+  }
+  .settings-page .settings-card-heading > div {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .settings-page .settings-card-icon {
+    --atlas-responsive-icon-mask: none;
+    position: relative !important;
+    display: grid !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    flex: 0 0 42px !important;
+    place-items: center !important;
+    overflow: visible !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    box-shadow: none !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+  }
+  .settings-page .settings-card-icon::before {
+    content: "" !important;
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: var(--accent) !important;
+    box-shadow: none !important;
+    -webkit-mask-image: var(--atlas-responsive-icon-mask) !important;
+    mask-image: var(--atlas-responsive-icon-mask) !important;
+    -webkit-mask-position: center !important;
+    mask-position: center !important;
+    -webkit-mask-repeat: no-repeat !important;
+    mask-repeat: no-repeat !important;
+    -webkit-mask-size: contain !important;
+    mask-size: contain !important;
+    filter: drop-shadow(0 3px 8px rgba(8, 87, 62, .16));
+  }
+  .settings-page .settings-card-icon::after {
+    content: none !important;
+    display: none !important;
+  }
+  .settings-page .settings-card-icon svg {
+    display: none !important;
+  }
+
+  .settings-page .settings-card-accent .settings-card-icon {
+    --atlas-responsive-icon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M3.8 9h16.4M3.8 15h16.4M12 3.5c2.2 2.4 3.2 5.2 3.2 8.5S14.2 18.1 12 20.5M12 3.5C9.8 5.9 8.8 8.7 8.8 12s1 6.1 3.2 8.5'/%3E%3C/svg%3E");
+  }
+  .settings-page .settings-card:has(#clinic_name) .settings-card-icon {
+    --atlas-responsive-icon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20V9l8-5 8 5v11H4Z'/%3E%3Cpath d='M9 20v-5h6v5M12 7v5M9.5 9.5h5'/%3E%3C/svg%3E");
+  }
+  .settings-page .atlas-workflow-card .settings-card-icon {
+    --atlas-responsive-icon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6h10M18 6h2M14 3v6M4 12h3M11 12h9M7 9v6M4 18h11M19 18h1M15 15v6'/%3E%3C/svg%3E");
+  }
+  .settings-page .settings-card-wide:not(.atlas-workflow-card) .settings-card-icon {
+    --atlas-responsive-icon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8.5' cy='8' r='3'/%3E%3Cpath d='M3.5 19c.7-3.2 2.4-5 5-5s4.3 1.8 5 5M17 8v6M14 11h6'/%3E%3C/svg%3E");
+  }
+  .settings-page .settings-link-card .settings-card-icon {
+    --atlas-responsive-icon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E");
+  }
+  .settings-page .settings-card:has(.account-email) .settings-card-icon {
+    --atlas-responsive-icon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='2.5' width='10' height='19' rx='2.5'/%3E%3Cpath d='M10 5h4M10 18.5h4M9.5 13l1.7 1.7 3.5-3.7'/%3E%3C/svg%3E");
+  }
+
+  /* Search is useful on both phone and iPad. Large iPads were outside the old
+     900px breakpoint, which is why the control existed in the DOM but vanished. */
+  .appointments-panel .atlas-phone-appointment-search {
+    display: grid !important;
+    grid-template-columns: 30px minmax(0, 1fr) 36px !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 54px !important;
+    margin: 0 0 10px !important;
+    border: 1.5px solid var(--line-strong) !important;
+    border-radius: 16px !important;
+    padding: 0 9px 0 12px !important;
+    background: var(--surface-soft) !important;
+    color: var(--muted) !important;
+    box-shadow: none !important;
+    transition: border-color .14s ease, box-shadow .14s ease, background .14s ease !important;
+  }
+  html[dir="rtl"] .appointments-panel .atlas-phone-appointment-search {
+    padding: 0 12px 0 9px !important;
+  }
+  .appointments-panel .atlas-phone-appointment-search:focus-within {
+    border-color: var(--accent) !important;
+    background: var(--surface) !important;
+    box-shadow: 0 0 0 3px rgba(31,145,104,.14), 0 8px 24px rgba(8,69,50,.08) !important;
+  }
+  .appointments-panel .atlas-phone-search-icon {
+    display: grid !important;
+    width: 30px !important;
+    height: 30px !important;
+    place-items: center !important;
+    color: var(--accent) !important;
+  }
+  .appointments-panel :is(.atlas-phone-search-icon, .atlas-phone-search-clear) svg {
+    width: 21px !important;
+    height: 21px !important;
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
+  .appointments-panel .atlas-phone-appointment-search input {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 50px !important;
+    border: 0 !important;
+    outline: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    -webkit-text-fill-color: var(--ink) !important;
+    box-shadow: none !important;
+    font-size: 15px !important;
+    font-weight: 650 !important;
+  }
+  .appointments-panel .atlas-phone-appointment-search input::placeholder {
+    color: var(--muted) !important;
+    -webkit-text-fill-color: var(--muted) !important;
+    opacity: .9 !important;
+  }
+  .appointments-panel .atlas-phone-search-clear {
+    display: grid !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    place-items: center !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: var(--muted) !important;
+    box-shadow: none !important;
+  }
+  .appointments-panel .atlas-phone-search-clear[hidden] {
+    display: none !important;
+  }
+  .appointments-panel .atlas-phone-search-clear:active {
+    background: var(--accent-faint) !important;
+    color: var(--accent) !important;
+    transform: scale(.94) !important;
+  }
+  .appointments-panel .atlas-phone-search-meta {
+    display: flex !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    min-height: 28px !important;
+    margin: -2px 2px 8px !important;
+    color: var(--muted) !important;
+    font-size: 10.5px !important;
+    font-weight: 720 !important;
+  }
+  .appointments-panel .atlas-phone-search-meta[hidden],
+  .appointments-panel .atlas-phone-search-empty[hidden] {
+    display: none !important;
+  }
+  .appointments-panel .atlas-phone-search-mode {
+    flex: 0 0 auto !important;
+    border-radius: 999px !important;
+    padding: 4px 8px !important;
+    background: var(--accent-faint) !important;
+    color: var(--accent) !important;
+    font-weight: 850 !important;
+  }
+  .appointments-panel .atlas-phone-search-count {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+    text-align: end !important;
+  }
+  .appointments-panel .atlas-phone-search-empty {
+    display: block !important;
+    width: 100% !important;
+    margin: 4px 0 10px !important;
+    border: 1px dashed var(--line-strong) !important;
+    border-radius: 12px !important;
+    padding: 11px 12px !important;
+    color: var(--muted) !important;
+    text-align: center !important;
+    font-size: 12px !important;
+  }
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-hidden {
+    display: none !important;
+  }
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-match {
+    border-color: rgba(34,137,101,.46) !important;
+  }
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-match :is(.atlas-phone-appointment-name,.patient-cell strong) {
+    color: var(--accent) !important;
+  }
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px rgba(31,145,104,.14), 0 10px 24px rgba(8,69,50,.10) !important;
+  }
+
+  /* Newly saved appointment gets one strong, temporary visual destination. */
+  .appointments-panel .appointment-row.is-atlas-post-save-focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(31,145,104,.18), 0 14px 32px rgba(8,69,50,.12) !important;
+    animation: atlas-post-save-focus 1.1s ease-out 1;
+  }
+
+  /* Selected/pressed controls remain Atlas-green instead of bleaching white. */
+  .settings-page :is(button,summary,a.settings-link):active {
+    border-color: var(--atlas-phone-selected-border) !important;
+    background: var(--atlas-phone-press-bg) !important;
+    color: var(--atlas-phone-press-ink) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+}
+
+/* Six information cards are an iPad/tablet use of space, not a phone burden. */
+@media (min-width: 1025px) and (max-width: 1400px) and (any-pointer: coarse) {
+  .schedule-summary.atlas-tablet-six-stats {
+    display: grid !important;
+    width: 100% !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+    margin-inline: 0 !important;
+  }
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat {
+    min-width: 0 !important;
+    min-height: 82px !important;
+    padding: 13px 12px !important;
+  }
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat span {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+@media (min-width: 561px) and (max-width: 1024px) and (any-pointer: coarse) {
+  .schedule-summary.atlas-tablet-six-stats {
+    display: grid !important;
+    width: 100% !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+}
+
+.schedule-summary .schedule-stat-no-show {
+  background: #fff4f2 !important;
+  border-color: #eccdc7 !important;
+}
+.schedule-summary .schedule-stat-no-show::before {
+  background: #c85e52 !important;
+}
+.schedule-summary .schedule-stat-cancelled {
+  background: #f6f2f4 !important;
+  border-color: #ded1d8 !important;
+}
+.schedule-summary .schedule-stat-cancelled::before {
+  background: #8d6d7d !important;
+}
+
+:root[data-theme="dark"] .schedule-summary .schedule-stat,
+:root[data-theme="dark"] .schedule-summary .schedule-stat-total {
+  background: #0e2b22 !important;
+  border-color: #2d5043 !important;
+}
+:root[data-theme="dark"] .schedule-summary .schedule-stat-pending {
+  background: #352f1d !important;
+  border-color: #65582d !important;
+}
+:root[data-theme="dark"] .schedule-summary .schedule-stat-confirmed {
+  background: #123a2b !important;
+  border-color: #2d684e !important;
+}
+:root[data-theme="dark"] .schedule-summary .schedule-stat-completed {
+  background: #1b3129 !important;
+  border-color: #3c5d4f !important;
+}
+:root[data-theme="dark"] .schedule-summary .schedule-stat-no-show {
+  background: #3c2223 !important;
+  border-color: #734143 !important;
+}
+:root[data-theme="dark"] .schedule-summary .schedule-stat-cancelled {
+  background: #302728 !important;
+  border-color: #594344 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .schedule-summary .schedule-stat,
+  :root[data-theme="system"] .schedule-summary .schedule-stat-total { background:#0e2b22!important;border-color:#2d5043!important; }
+  :root[data-theme="system"] .schedule-summary .schedule-stat-pending { background:#352f1d!important;border-color:#65582d!important; }
+  :root[data-theme="system"] .schedule-summary .schedule-stat-confirmed { background:#123a2b!important;border-color:#2d684e!important; }
+  :root[data-theme="system"] .schedule-summary .schedule-stat-completed { background:#1b3129!important;border-color:#3c5d4f!important; }
+  :root[data-theme="system"] .schedule-summary .schedule-stat-no-show { background:#3c2223!important;border-color:#734143!important; }
+  :root[data-theme="system"] .schedule-summary .schedule-stat-cancelled { background:#302728!important;border-color:#594344!important; }
+}
+
+@keyframes atlas-post-save-focus {
+  0% { transform: scale(.995); }
+  45% { transform: scale(1.004); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appointments-panel .appointment-row.is-atlas-post-save-focus {
+    animation: none !important;
+  }
+}
