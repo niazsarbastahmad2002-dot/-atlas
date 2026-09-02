@@ -18,7 +18,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <AppointmentContactRelationshipEnhancer locale={locale} />
       <DashboardClientPolish locale={locale} />
       <MobileAppointmentExperience locale={locale} />
-      <ResponsiveDashboardExperience locale={locale} />
+      <Suspense fallback={null}>
+        <ResponsiveDashboardExperience locale={locale} />
+      </Suspense>
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
