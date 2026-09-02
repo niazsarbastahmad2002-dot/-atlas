@@ -21,8 +21,8 @@ html body .appointment-composer :is(
 ) {
   background: var(--accent-soft) !important;
   color: var(--accent) !important;
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--line-strong)) !important;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+  border-color: rgba(8, 119, 90, .42) !important;
+  box-shadow: inset 0 0 0 1px rgba(8, 119, 90, .12) !important;
 }
 
 :root[data-theme="dark"] .appointment-composer .atlas-calendar-popover {
@@ -186,22 +186,22 @@ html body .appointment-composer :is(
   }
   .atlas-phone-search-empty[hidden] { display: none !important; }
 
-  .polished-appointment-list {
+  .appointments-panel .polished-appointment-list {
     display: grid !important;
     gap: 6px !important;
   }
-  .polished-appointment.is-atlas-phone-search-hidden {
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-hidden {
     display: none !important;
   }
 
-  .polished-appointment {
+  .appointments-panel .polished-appointment.is-atlas-phone-managed {
     min-width: 0 !important;
     overflow: hidden !important;
     border-radius: 14px !important;
     padding: 0 !important;
     box-shadow: none !important;
   }
-  .polished-appointment:not(.is-atlas-phone-expanded) > :not(.atlas-phone-appointment-summary) {
+  .appointments-panel .polished-appointment.is-atlas-phone-managed:not(.is-atlas-phone-expanded) > :not(.atlas-phone-appointment-summary) {
     display: none !important;
   }
 
@@ -227,7 +227,7 @@ html body .appointment-composer :is(
     transform: scale(.992);
   }
   .is-next-appointment .atlas-phone-appointment-summary {
-    background: color-mix(in srgb, var(--accent-faint) 72%, var(--surface)) !important;
+    background: var(--accent-faint) !important;
   }
   .atlas-phone-appointment-time {
     direction: ltr;
