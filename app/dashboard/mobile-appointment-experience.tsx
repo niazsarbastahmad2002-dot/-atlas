@@ -60,6 +60,7 @@ const copy = {
 } as const;
 
 type SearchMode = "idle" | "name" | "phone";
+type NameMatchScore = 0 | 1 | 2 | 3;
 
 function normalizeName(value: string) {
   return value
@@ -84,6 +85,29 @@ function searchMode(value: string): SearchMode {
   return normalizePhone(trimmed) ? "phone" : "name";
 }
 
+function nameMatchScore(name: string, query: string): NameMatchScore {
+  const searchableName = normalizeName(name);
+  const searchableQuery = normalizeName(query);
+  if (!searchableName || !searchableQuery) return 0;
+  if (searchableName === searchableQuery) return 3;
+
+  const nameTokens = searchableName.split(/\s+/).filter(Boolean);
+  const queryTokens = searchableQuery.split(/\s+/).filter(Boolean);
+  if (!queryTokens.length) return 0;
+
+  const everyTokenStartsAWord = queryTokens.every((queryToken) =>
+    nameTokens.some((nameToken) => nameToken.startsWith(queryToken)),
+  );
+  if (everyTokenStartsAWord) return 2;
+
+  // A single character should not match the middle of many names. That was
+  // the main reason one-letter searches looked random on a small schedule.
+  const everyTokenAppearsInsideAWord = queryTokens.every((queryToken) =>
+    queryToken.length >= 2 && nameTokens.some((nameToken) => nameToken.includes(queryToken)),
+  );
+  return everyTokenAppearsInsideAWord ? 1 : 0;
+}
+
 function compactTime(value: string) {
   const match = value.match(/[0-9٠-٩۰-۹]{1,2}:[0-9٠-٩۰-۹]{2}/);
   return match?.[0] ?? value.trim();
@@ -105,10 +129,18 @@ function clearIcon() {
   return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"></path></svg>`;
 }
 
+function currentScheduleKey() {
+  const url = new URL(window.location.href);
+  return [url.pathname, url.searchParams.get("clinic") ?? "", url.searchParams.get("day") ?? "", url.searchParams.get("doctor") ?? ""].join("|");
+}
+
 export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
   useEffect(() => {
     const text = copy[locale];
     let query = "";
+    let composing = false;
+    let lastScheduleKey = currentScheduleKey();
+    let prepareFrame = 0;
 
     const updateSummary = (row: HTMLElement) => {
       const summary = row.querySelector<HTMLButtonElement>(".atlas-phone-appointment-summary");
@@ -173,28 +205,31 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       if (!panel) return;
 
       const mode = searchMode(query);
-      const nameTokens = normalizeName(query).split(/\s+/).filter(Boolean);
+      const nameQuery = normalizeName(query);
       const phoneDigits = normalizePhone(query);
       const phoneTooShort = mode === "phone" && phoneDigits.length < 3;
-      const activeFilter = mode === "name" ? nameTokens.length > 0 : mode === "phone" && !phoneTooShort;
+      const activeFilter = mode === "name" ? Boolean(nameQuery) : mode === "phone" && !phoneTooShort;
+      const rows = Array.from(list.querySelectorAll<HTMLElement>(".appointment-row"));
+
+      const scored = rows.map((row) => {
+        if (!activeFilter) return { row, score: 1 };
+        if (mode === "phone") {
+          return { row, score: (row.dataset.atlasPhonePhone ?? "").includes(phoneDigits) ? 1 : 0 };
+        }
+        return { row, score: nameMatchScore(row.dataset.atlasPhoneName ?? "", nameQuery) };
+      });
+      const bestNameScore = mode === "name" && activeFilter
+        ? scored.reduce((best, item) => Math.max(best, item.score), 0)
+        : 1;
       const matches: HTMLElement[] = [];
 
-      list.querySelectorAll<HTMLElement>(".appointment-row").forEach((row) => {
+      for (const { row, score } of scored) {
         row.classList.remove("is-atlas-phone-search-focus");
-
-        let isMatch = true;
-        if (mode === "name" && nameTokens.length) {
-          const searchableName = row.dataset.atlasPhoneName ?? "";
-          isMatch = nameTokens.every((token) => searchableName.includes(token));
-        } else if (mode === "phone" && !phoneTooShort) {
-          isMatch = (row.dataset.atlasPhonePhone ?? "").includes(phoneDigits);
-        }
-
-        const hide = activeFilter && !isMatch;
-        row.classList.toggle("is-atlas-phone-search-hidden", hide);
+        const isMatch = !activeFilter || (mode === "name" ? score > 0 && score === bestNameScore : score > 0);
+        row.classList.toggle("is-atlas-phone-search-hidden", activeFilter && !isMatch);
         row.classList.toggle("is-atlas-phone-search-match", activeFilter && isMatch);
-        if (!hide) matches.push(row);
-      });
+        if (isMatch) matches.push(row);
+      }
 
       if (activeFilter && matches.length === 1) matches[0]?.classList.add("is-atlas-phone-search-focus");
 
@@ -276,6 +311,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         input.inputMode = "search";
         input.autocomplete = "off";
         input.enterKeyHint = "search";
+        input.spellcheck = false;
         input.placeholder = text.placeholder;
         input.value = query;
 
@@ -287,10 +323,20 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         clear.hidden = true;
 
         const currentList = () => panel.querySelector<HTMLElement>(".polished-appointment-list");
-        input.addEventListener("input", () => {
+        const commitInput = () => {
           query = input.value;
           const activeList = currentList();
           if (activeList) applyFilter(activeList);
+        };
+        input.addEventListener("compositionstart", () => {
+          composing = true;
+        });
+        input.addEventListener("compositionend", () => {
+          composing = false;
+          commitInput();
+        });
+        input.addEventListener("input", () => {
+          if (!composing) commitInput();
         });
         clear.addEventListener("click", () => {
           query = "";
@@ -306,6 +352,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         const meta = document.createElement("div");
         meta.className = "atlas-phone-search-meta";
         meta.hidden = true;
+        meta.setAttribute("aria-live", "polite");
         const mode = document.createElement("span");
         mode.className = "atlas-phone-search-mode";
         const count = document.createElement("span");
@@ -317,6 +364,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         empty.className = "atlas-phone-search-empty";
         empty.textContent = text.noResults;
         empty.hidden = true;
+        empty.setAttribute("aria-live", "polite");
         meta.after(empty);
       }
 
@@ -324,8 +372,28 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       applyFilter(list);
     };
 
+    const resetSearchForScheduleChange = () => {
+      const nextKey = currentScheduleKey();
+      if (nextKey === lastScheduleKey) return;
+      lastScheduleKey = nextKey;
+      query = "";
+      composing = false;
+      document.querySelectorAll<HTMLInputElement>(".atlas-phone-appointment-search input").forEach((input) => {
+        input.value = "";
+      });
+    };
+
     const prepare = () => {
+      resetSearchForScheduleChange();
       document.querySelectorAll<HTMLElement>(".polished-appointment-list").forEach(prepareList);
+    };
+
+    const schedulePrepare = () => {
+      if (prepareFrame) return;
+      prepareFrame = window.requestAnimationFrame(() => {
+        prepareFrame = 0;
+        prepare();
+      });
     };
 
     const onChange = (event: Event) => {
@@ -337,10 +405,11 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
 
     prepare();
     document.addEventListener("change", onChange);
-    const observer = new MutationObserver(prepare);
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    const observer = new MutationObserver(schedulePrepare);
+    observer.observe(document.querySelector(".app-content") ?? document.body, { childList: true, subtree: true });
     return () => {
       observer.disconnect();
+      if (prepareFrame) window.cancelAnimationFrame(prepareFrame);
       document.removeEventListener("change", onChange);
     };
   }, [locale]);
