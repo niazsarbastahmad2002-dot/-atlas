@@ -5,13 +5,16 @@ function dashboardAppointmentUrl({
   doctorId,
   day,
   notice,
+  after,
 }: {
   clinicId: string;
   doctorId: string;
   day: string;
   notice: string;
+  after?: string;
 }) {
   const params = new URLSearchParams({ notice, clinic: clinicId, day, doctor: doctorId });
+  if (after) params.set("after", after);
   return `/dashboard?${params.toString()}`;
 }
 
@@ -53,5 +56,6 @@ export function appointmentFormDestination({
     doctorId,
     day: match[1],
     notice,
+    after: appointmentAt,
   });
 }

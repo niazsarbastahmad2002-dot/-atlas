@@ -1,0 +1,332 @@
+/* Atlas phone-first dashboard layer.
+   Keep desktop/tablet structure intact; phones get compact scan-first appointments and calmer touch states. */
+
+/* Ask Atlas must belong to the active theme instead of leaking a white pill into dark mode. */
+html body .atlas-ai-launcher > a {
+  background: var(--surface) !important;
+  color: var(--accent) !important;
+  border-color: var(--line-strong) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+html body .atlas-ai-launcher > a small {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+
+/* Time selection should read as selected, not as a white flash. */
+html body .appointment-composer :is(
+  .atlas-period-tabs button.is-selected,
+  .atlas-hour-grid button.is-selected,
+  .atlas-minute-grid button.is-selected
+) {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  border-color: rgba(8, 119, 90, .42) !important;
+  box-shadow: inset 0 0 0 1px rgba(8, 119, 90, .12) !important;
+}
+
+:root[data-theme="dark"] .appointment-composer .atlas-calendar-popover {
+  background: var(--surface-raised) !important;
+  color: var(--ink) !important;
+  border-color: var(--line-strong) !important;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .appointment-composer .atlas-calendar-popover {
+    background: var(--surface-raised) !important;
+    color: var(--ink) !important;
+    border-color: var(--line-strong) !important;
+  }
+}
+
+/* Preserve useful status semantics in dark mode. */
+:root[data-theme="dark"] .appointment-status-select.is-pending,
+:root[data-theme="dark"] .atlas-phone-appointment-status.is-pending {
+  background: #352f1d !important;
+  color: #f1d583 !important;
+  border-color: #65582d !important;
+}
+:root[data-theme="dark"] .appointment-status-select.is-confirmed,
+:root[data-theme="dark"] .atlas-phone-appointment-status.is-confirmed {
+  background: #123a2b !important;
+  color: #91e5bb !important;
+  border-color: #2d684e !important;
+}
+:root[data-theme="dark"] .appointment-status-select.is-completed,
+:root[data-theme="dark"] .atlas-phone-appointment-status.is-completed {
+  background: #1b3129 !important;
+  color: #b8d6c8 !important;
+  border-color: #3c5d4f !important;
+}
+:root[data-theme="dark"] .appointment-status-select.is-no_show,
+:root[data-theme="dark"] .atlas-phone-appointment-status.is-no_show {
+  background: #3c2223 !important;
+  color: #ffb4af !important;
+  border-color: #734143 !important;
+}
+:root[data-theme="dark"] .appointment-status-select.is-cancelled,
+:root[data-theme="dark"] .atlas-phone-appointment-status.is-cancelled {
+  background: #302728 !important;
+  color: #dcbfc0 !important;
+  border-color: #594344 !important;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .appointment-status-select.is-pending,
+  :root[data-theme="system"] .atlas-phone-appointment-status.is-pending { background:#352f1d!important;color:#f1d583!important;border-color:#65582d!important; }
+  :root[data-theme="system"] .appointment-status-select.is-confirmed,
+  :root[data-theme="system"] .atlas-phone-appointment-status.is-confirmed { background:#123a2b!important;color:#91e5bb!important;border-color:#2d684e!important; }
+  :root[data-theme="system"] .appointment-status-select.is-completed,
+  :root[data-theme="system"] .atlas-phone-appointment-status.is-completed { background:#1b3129!important;color:#b8d6c8!important;border-color:#3c5d4f!important; }
+  :root[data-theme="system"] .appointment-status-select.is-no_show,
+  :root[data-theme="system"] .atlas-phone-appointment-status.is-no_show { background:#3c2223!important;color:#ffb4af!important;border-color:#734143!important; }
+  :root[data-theme="system"] .appointment-status-select.is-cancelled,
+  :root[data-theme="system"] .atlas-phone-appointment-status.is-cancelled { background:#302728!important;color:#dcbfc0!important;border-color:#594344!important; }
+}
+
+.atlas-phone-appointment-summary,
+.atlas-phone-appointment-search,
+.atlas-phone-search-empty {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .workspace-page {
+    padding-inline: 10px !important;
+  }
+
+  .workspace-header {
+    gap: 8px !important;
+  }
+
+  .workspace-stats.schedule-summary {
+    gap: 6px !important;
+  }
+  .workspace-stats.schedule-summary .schedule-stat {
+    min-height: 62px !important;
+    padding: 10px 11px !important;
+  }
+  .workspace-stats.schedule-summary .schedule-stat span {
+    font-size: 9.5px !important;
+    line-height: 1.25 !important;
+  }
+  .workspace-stats.schedule-summary .schedule-stat strong {
+    margin-top: 3px !important;
+    font-size: 21px !important;
+  }
+
+  .appointments-panel.schedule-card {
+    min-width: 0 !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
+  }
+  .appointments-panel .schedule-heading {
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+  }
+  .appointments-panel .schedule-heading h2 {
+    font-size: clamp(16px, 5vw, 20px) !important;
+    overflow-wrap: anywhere;
+  }
+  .appointments-panel .schedule-count-box {
+    min-width: 74px !important;
+    min-height: 54px !important;
+    padding: 7px 9px !important;
+    border-radius: 13px !important;
+  }
+  .appointments-panel .schedule-count-box strong {
+    font-size: 22px !important;
+  }
+
+  .atlas-phone-appointment-search {
+    display: grid;
+    grid-template-columns: 24px minmax(0,1fr);
+    align-items: center;
+    gap: 7px;
+    min-height: 46px;
+    margin: 0 0 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    padding: 0 11px;
+    background: var(--surface-soft);
+    color: var(--muted);
+  }
+  .atlas-phone-search-icon {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    color: var(--accent);
+    font-size: 22px;
+    line-height: 1;
+  }
+  .atlas-phone-appointment-search input {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    -webkit-text-fill-color: var(--ink) !important;
+    box-shadow: none !important;
+    font-size: 14px;
+  }
+  .atlas-phone-appointment-search input:focus {
+    outline: 0;
+    box-shadow: none !important;
+  }
+  .atlas-phone-search-empty {
+    display: block;
+    margin: 4px 0 10px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+    padding: 11px 12px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
+  }
+  .atlas-phone-search-empty[hidden] { display: none !important; }
+
+  .appointments-panel .polished-appointment-list {
+    display: grid !important;
+    gap: 6px !important;
+  }
+  .appointments-panel .polished-appointment.is-atlas-phone-managed.is-atlas-phone-search-hidden {
+    display: none !important;
+  }
+
+  .appointments-panel .polished-appointment.is-atlas-phone-managed {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    border-radius: 14px !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .appointments-panel .polished-appointment.is-atlas-phone-managed:not(.is-atlas-phone-expanded) > :not(.atlas-phone-appointment-summary) {
+    display: none !important;
+  }
+
+  .atlas-phone-appointment-summary {
+    display: grid !important;
+    grid-template-columns: minmax(52px, auto) minmax(0,1fr) minmax(0,auto) 18px;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 58px;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 8px 10px !important;
+    background: var(--surface) !important;
+    color: var(--ink) !important;
+    text-align: start;
+    box-shadow: none !important;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .atlas-phone-appointment-summary:active {
+    background: var(--accent-faint) !important;
+    transform: scale(.992);
+  }
+  .is-next-appointment .atlas-phone-appointment-summary {
+    background: var(--accent-faint) !important;
+  }
+  .atlas-phone-appointment-time {
+    direction: ltr;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .atlas-phone-appointment-identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+  }
+  .atlas-phone-appointment-name {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 850;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .atlas-phone-appointment-order {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 850;
+  }
+  .atlas-phone-appointment-status {
+    display: inline-flex;
+    max-width: 104px;
+    min-height: 25px;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 4px 7px;
+    background: var(--surface-soft);
+    color: var(--ink-soft);
+    font-size: 9px;
+    font-weight: 820;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .atlas-phone-appointment-status.is-pending { background:#fff7e5;color:#6d5615;border-color:#ead7a0; }
+  .atlas-phone-appointment-status.is-confirmed { background:#eaf7f2;color:#176f56;border-color:#b9ddcf; }
+  .atlas-phone-appointment-status.is-completed { background:#f1f4f3;color:#53655f;border-color:#d8e0dd; }
+  .atlas-phone-appointment-status.is-no_show { background:#fff0f0;color:#8b3434;border-color:#eccaca; }
+  .atlas-phone-appointment-status.is-cancelled { background:#f6f2f2;color:#705858;border-color:#dfd2d2; }
+  .atlas-phone-appointment-chevron {
+    color: var(--muted);
+    font-size: 16px;
+    font-weight: 900;
+    transition: transform .16s ease;
+  }
+  .is-atlas-phone-expanded .atlas-phone-appointment-chevron {
+    transform: rotate(180deg);
+  }
+  .is-atlas-phone-expanded .atlas-phone-appointment-summary {
+    border-bottom: 1px solid var(--line) !important;
+  }
+
+  .is-atlas-phone-expanded > :not(.atlas-phone-appointment-summary) {
+    margin-inline: 11px !important;
+  }
+  .is-atlas-phone-expanded > .appointment-primary {
+    margin-top: 10px !important;
+  }
+  .is-atlas-phone-expanded > .appointment-action-bar,
+  .is-atlas-phone-expanded > .appointment-editor {
+    margin-bottom: 10px !important;
+  }
+  .is-atlas-phone-expanded .appointment-primary {
+    gap: 8px !important;
+  }
+  .is-atlas-phone-expanded .patient-cell strong {
+    font-size: 14px !important;
+  }
+  .is-atlas-phone-expanded .appointment-details {
+    gap: 7px !important;
+  }
+
+  /* Remove decorative icon tiles on phone; the symbol itself carries the visual weight. */
+  .settings-card-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--accent) !important;
+    box-shadow: none !important;
+    font-size: 22px !important;
+  }
+  .settings-card-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
