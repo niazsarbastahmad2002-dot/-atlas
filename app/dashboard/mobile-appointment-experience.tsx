@@ -5,14 +5,83 @@ import { toAsciiDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 const copy = {
-  en: { search: "Search appointments", placeholder: "Patient name or phone number", noResults: "No matching appointments", expand: "Open appointment", collapse: "Close appointment" },
-  ku: { search: "گەڕان لە وادەکان", placeholder: "ناوی نەخۆش یان ژمارەی مۆبایل", noResults: "هیچ وادەیەک نەدۆزرایەوە", expand: "وادەکە بکەرەوە", collapse: "وادەکە دابخە" },
-  bd: { search: "لێگەڕین ل وادەیان", placeholder: "ناڤێ نەخۆشی یان ژمارا موبایلێ", noResults: "چ وادە نەهاتە دیتن", expand: "وادەیێ ڤەکە", collapse: "وادەیێ داخە" },
-  ar: { search: "بحث بالمواعيد", placeholder: "اسم المريض أو رقم الهاتف", noResults: "لا توجد مواعيد مطابقة", expand: "فتح الموعد", collapse: "إغلاق الموعد" },
+  en: {
+    search: "Search appointments",
+    placeholder: "Patient name or phone number",
+    noResults: "No matching appointments",
+    expand: "Open appointment",
+    collapse: "Close appointment",
+    clear: "Clear search",
+    nameMode: "Name",
+    phoneMode: "Phone",
+    phoneHint: "Enter at least 3 digits to search by phone",
+    appointment: "appointment",
+    appointments: "appointments",
+  },
+  ku: {
+    search: "گەڕان لە وادەکان",
+    placeholder: "ناوی نەخۆش یان ژمارەی مۆبایل",
+    noResults: "هیچ وادەیەک نەدۆزرایەوە",
+    expand: "وادەکە بکەرەوە",
+    collapse: "وادەکە دابخە",
+    clear: "گەڕان پاک بکەرەوە",
+    nameMode: "ناو",
+    phoneMode: "ژمارە",
+    phoneHint: "بۆ گەڕان بە ژمارە لانیکەم ٣ ژمارە بنووسە",
+    appointment: "وادە",
+    appointments: "وادە",
+  },
+  bd: {
+    search: "لێگەڕین ل وادەیان",
+    placeholder: "ناڤێ نەخۆشی یان ژمارا موبایلێ",
+    noResults: "چ وادە نەهاتە دیتن",
+    expand: "وادەیێ ڤەکە",
+    collapse: "وادەیێ داخە",
+    clear: "لێگەڕینێ پاک بکە",
+    nameMode: "ناڤ",
+    phoneMode: "ژمارە",
+    phoneHint: "بۆ لێگەڕینا ب ژمارەیێ کێمترین ٣ ژمارە بنڤیسە",
+    appointment: "وادە",
+    appointments: "وادە",
+  },
+  ar: {
+    search: "بحث بالمواعيد",
+    placeholder: "اسم المريض أو رقم الهاتف",
+    noResults: "لا توجد مواعيد مطابقة",
+    expand: "فتح الموعد",
+    collapse: "إغلاق الموعد",
+    clear: "مسح البحث",
+    nameMode: "الاسم",
+    phoneMode: "الهاتف",
+    phoneHint: "اكتب 3 أرقام على الأقل للبحث بالهاتف",
+    appointment: "موعد",
+    appointments: "مواعيد",
+  },
 } as const;
 
-function normalizeSearch(value: string) {
-  return toAsciiDigits(value).toLocaleLowerCase().replace(/[\s()+\-]/g, "");
+type SearchMode = "idle" | "name" | "phone";
+
+function normalizeName(value: string) {
+  return value
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/[ىي]/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[ۀة]/g, "ە")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function normalizePhone(value: string) {
+  return toAsciiDigits(value).replace(/\D/g, "");
+}
+
+function searchMode(value: string): SearchMode {
+  const trimmed = value.trim();
+  if (!trimmed) return "idle";
+  if (/\p{L}/u.test(trimmed)) return "name";
+  return normalizePhone(trimmed) ? "phone" : "name";
 }
 
 function compactTime(value: string) {
@@ -26,6 +95,14 @@ function statusClass(value: string | undefined) {
 
 function setText(node: HTMLElement | null, value: string) {
   if (node && node.textContent !== value) node.textContent = value;
+}
+
+function searchIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4.2 4.2"></path></svg>`;
+}
+
+function clearIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"></path></svg>`;
 }
 
 export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
@@ -44,9 +121,11 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       const select = row.querySelector<HTMLSelectElement>(".appointment-status-select");
       const status = statusClass(select?.value);
       const statusLabel = select?.selectedOptions[0]?.textContent?.trim() ?? "";
-      const searchText = normalizeSearch(`${name} ${phone}`);
+      const nameSearch = normalizeName(name);
+      const phoneSearch = normalizePhone(phone);
 
-      if (row.dataset.atlasPhoneSearch !== searchText) row.dataset.atlasPhoneSearch = searchText;
+      if (row.dataset.atlasPhoneName !== nameSearch) row.dataset.atlasPhoneName = nameSearch;
+      if (row.dataset.atlasPhonePhone !== phoneSearch) row.dataset.atlasPhonePhone = phoneSearch;
       if (row.dataset.atlasPhoneStatus !== status) row.dataset.atlasPhoneStatus = status;
 
       setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-time"), compactTime(timeText));
@@ -64,16 +143,64 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       }
     };
 
+    const updateSearchChrome = (panel: HTMLElement, mode: SearchMode, visible: number, isActive: boolean, phoneTooShort: boolean) => {
+      const input = panel.querySelector<HTMLInputElement>(".atlas-phone-appointment-search input");
+      const clear = panel.querySelector<HTMLButtonElement>(".atlas-phone-search-clear");
+      const meta = panel.querySelector<HTMLElement>(".atlas-phone-search-meta");
+      const modeNode = panel.querySelector<HTMLElement>(".atlas-phone-search-mode");
+      const countNode = panel.querySelector<HTMLElement>(".atlas-phone-search-count");
+
+      if (clear) clear.hidden = !input?.value;
+      if (!meta || !modeNode || !countNode) return;
+
+      if (!isActive) {
+        meta.hidden = true;
+        return;
+      }
+
+      meta.hidden = false;
+      setText(modeNode, mode === "phone" ? text.phoneMode : text.nameMode);
+      if (phoneTooShort) {
+        setText(countNode, text.phoneHint);
+      } else {
+        const noun = visible === 1 ? text.appointment : text.appointments;
+        setText(countNode, `${visible} ${noun}`);
+      }
+    };
+
     const applyFilter = (list: HTMLElement) => {
-      const needle = normalizeSearch(query);
-      let visible = 0;
+      const panel = list.closest<HTMLElement>(".appointments-panel");
+      if (!panel) return;
+
+      const mode = searchMode(query);
+      const nameTokens = normalizeName(query).split(/\s+/).filter(Boolean);
+      const phoneDigits = normalizePhone(query);
+      const phoneTooShort = mode === "phone" && phoneDigits.length < 3;
+      const activeFilter = mode === "name" ? nameTokens.length > 0 : mode === "phone" && !phoneTooShort;
+      const matches: HTMLElement[] = [];
+
       list.querySelectorAll<HTMLElement>(".appointment-row").forEach((row) => {
-        const matches = !needle || (row.dataset.atlasPhoneSearch ?? "").includes(needle);
-        row.classList.toggle("is-atlas-phone-search-hidden", !matches);
-        if (matches) visible += 1;
+        row.classList.remove("is-atlas-phone-search-focus");
+
+        let isMatch = true;
+        if (mode === "name" && nameTokens.length) {
+          const searchableName = row.dataset.atlasPhoneName ?? "";
+          isMatch = nameTokens.every((token) => searchableName.includes(token));
+        } else if (mode === "phone" && !phoneTooShort) {
+          isMatch = (row.dataset.atlasPhonePhone ?? "").includes(phoneDigits);
+        }
+
+        const hide = activeFilter && !isMatch;
+        row.classList.toggle("is-atlas-phone-search-hidden", hide);
+        row.classList.toggle("is-atlas-phone-search-match", activeFilter && isMatch);
+        if (!hide) matches.push(row);
       });
-      const empty = list.parentElement?.querySelector<HTMLElement>(".atlas-phone-search-empty");
-      if (empty) empty.hidden = visible > 0 || !needle;
+
+      if (activeFilter && matches.length === 1) matches[0]?.classList.add("is-atlas-phone-search-focus");
+
+      const empty = panel.querySelector<HTMLElement>(".atlas-phone-search-empty");
+      if (empty) empty.hidden = !activeFilter || matches.length > 0;
+      updateSearchChrome(panel, mode, matches.length, mode !== "idle", phoneTooShort);
     };
 
     const prepareRow = (row: HTMLElement, list: HTMLElement) => {
@@ -128,33 +255,69 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       if (!panel) return;
 
       if (!panel.querySelector(".atlas-phone-appointment-search")) {
-        const search = document.createElement("label");
+        const search = document.createElement("div");
         search.className = "atlas-phone-appointment-search";
-        const label = document.createElement("span");
+        search.setAttribute("role", "search");
+
+        const label = document.createElement("label");
         label.className = "sr-only";
+        const inputId = `atlas-phone-appointment-search-${Math.random().toString(36).slice(2)}`;
+        label.htmlFor = inputId;
         label.textContent = text.search;
+
         const icon = document.createElement("span");
         icon.className = "atlas-phone-search-icon";
         icon.setAttribute("aria-hidden", "true");
-        icon.textContent = "⌕";
+        icon.innerHTML = searchIcon();
+
         const input = document.createElement("input");
+        input.id = inputId;
         input.type = "search";
         input.inputMode = "search";
         input.autocomplete = "off";
+        input.enterKeyHint = "search";
         input.placeholder = text.placeholder;
         input.value = query;
+
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "atlas-phone-search-clear";
+        clear.setAttribute("aria-label", text.clear);
+        clear.innerHTML = clearIcon();
+        clear.hidden = true;
+
+        const currentList = () => panel.querySelector<HTMLElement>(".polished-appointment-list");
         input.addEventListener("input", () => {
           query = input.value;
-          applyFilter(list);
+          const activeList = currentList();
+          if (activeList) applyFilter(activeList);
         });
-        search.append(label, icon, input);
+        clear.addEventListener("click", () => {
+          query = "";
+          input.value = "";
+          const activeList = currentList();
+          if (activeList) applyFilter(activeList);
+          input.focus();
+        });
+
+        search.append(label, icon, input, clear);
         list.before(search);
+
+        const meta = document.createElement("div");
+        meta.className = "atlas-phone-search-meta";
+        meta.hidden = true;
+        const mode = document.createElement("span");
+        mode.className = "atlas-phone-search-mode";
+        const count = document.createElement("span");
+        count.className = "atlas-phone-search-count";
+        meta.append(mode, count);
+        search.after(meta);
 
         const empty = document.createElement("p");
         empty.className = "atlas-phone-search-empty";
         empty.textContent = text.noResults;
         empty.hidden = true;
-        search.after(empty);
+        meta.after(empty);
       }
 
       list.querySelectorAll<HTMLElement>(".appointment-row").forEach((row) => prepareRow(row, list));
