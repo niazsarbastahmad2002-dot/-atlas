@@ -71,6 +71,7 @@ function shiftMonth(date: Date, amount: number) {
 
 export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, occupiedByDoctor, timeZoneLabel, locale }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const appliedAfterRef = useRef("");
   const text = copy[locale];
   const minDate = min.slice(0, 10);
   const maxDate = max.slice(0, 10);
@@ -208,6 +209,28 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       candidate = addLocalMinutes(candidate, interval);
     }
   }, [date, doctorId, interval, max, min, occupied, value]);
+
+  useEffect(() => {
+    if (!doctorId || touched || custom || typeof window === "undefined") return;
+    const after = new URLSearchParams(window.location.search).get("after");
+    if (!after || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(after) || !after.startsWith(`${date}T`)) return;
+    const applicationKey = `${doctorId}:${after}:${interval}`;
+    if (appliedAfterRef.current === applicationKey) return;
+
+    let candidate = addLocalMinutes(after, interval);
+    for (let attempt = 0; attempt < 288; attempt += 1) {
+      if (!candidate.startsWith(`${date}T`)) break;
+      if (candidate >= min && candidate <= max && !occupied.has(candidate)) {
+        chooseParts(candidate);
+        setCustom(false);
+        setSavedAdvance(true);
+        appliedAfterRef.current = applicationKey;
+        return;
+      }
+      candidate = addLocalMinutes(candidate, interval);
+    }
+    appliedAfterRef.current = applicationKey;
+  }, [custom, date, doctorId, interval, max, min, occupied, touched]);
 
   const select = (nextHour: number, nextMinute: number, nextPeriod: Period) => {
     setHour(nextHour);
