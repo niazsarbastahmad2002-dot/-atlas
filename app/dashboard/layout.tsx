@@ -5,6 +5,7 @@ import { AppNavigation } from "./app-navigation";
 import { AppointmentContactRelationshipEnhancer } from "./appointment-contact-relationship";
 import { AtlasContinuityMode } from "./continuity-mode";
 import { DashboardClientPolish } from "./dashboard-client-polish";
+import { MobileAppointmentExperience } from "./mobile-appointment-experience";
 import { DashboardPreferenceMemory } from "./preference-memory";
 import { DashboardScrollContinuity } from "./scroll-continuity";
 
@@ -15,6 +16,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     <div className="app-shell">
       <AppointmentContactRelationshipEnhancer locale={locale} />
       <DashboardClientPolish locale={locale} />
+      <MobileAppointmentExperience locale={locale} />
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
