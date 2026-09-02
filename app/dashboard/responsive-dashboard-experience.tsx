@@ -22,7 +22,7 @@ function requestScroll(element: HTMLElement, block: ScrollLogicalPosition = "cen
 }
 
 function isTabletSummaryViewport() {
-  return window.matchMedia("(min-width: 561px) and (max-width: 1400px)").matches;
+  return window.matchMedia("(min-width: 561px) and (max-width: 1400px) and (any-pointer: coarse)").matches;
 }
 
 function appointmentStatusCount(status: string) {
