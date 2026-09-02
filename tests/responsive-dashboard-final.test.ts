@@ -31,7 +31,7 @@ test("responsive dashboard enhancement fills iPad stats and focuses the appointm
   assert.match(experience, /atlas-tablet-six-stats/);
   assert.match(experience, /appointmentStatusCount\("no_show"\)/);
   assert.match(experience, /appointmentStatusCount\("cancelled"\)/);
-  assert.match(experience, /searchParams\.get\("after"\)/);
+  assert.match(experience, /params\.get\("after"\)/);
   assert.match(experience, /is-atlas-post-save-focus/);
   assert.match(experience, /scrollIntoView/);
   assert.match(experience, /is-atlas-phone-expanded/);
