@@ -7,11 +7,42 @@ import { localizeDashboardMessageText, localizedDashboardMessage } from "@/lib/d
 import type { UiLocale } from "@/lib/i18n/ui";
 
 const tabletStatsCopy = {
-  en: { noShow: "No-show", cancelled: "Cancelled" },
-  ku: { noShow: "نەهاتن", cancelled: "هەڵوەشاوە" },
-  bd: { noShow: "نەهاتن", cancelled: "هەلوەشاندی" },
-  ar: { noShow: "عدم الحضور", cancelled: "ملغي" },
+  en: {
+    total: "All appointments",
+    pending: "Attendance not confirmed",
+    confirmed: "Attendance confirmed",
+    completed: "Visit completed",
+    noShow: "No-show",
+    cancelled: "Cancelled",
+  },
+  ku: {
+    total: "هەموو مەوعیدەکان",
+    pending: "هاتن پشتڕاست نەکراوە",
+    confirmed: "هاتن پشتڕاستکراوە",
+    completed: "سەردان تەواوبوو",
+    noShow: "نەهاتن",
+    cancelled: "هەڵوەشاوە",
+  },
+  bd: {
+    total: "هەمی مەوعید",
+    pending: "هاتن نەهاتیە پشتڕاستکرن",
+    confirmed: "هاتن پشتڕاستکریە",
+    completed: "سەردان تەمام بوو",
+    noShow: "نەهاتن",
+    cancelled: "هەلوەشاندی",
+  },
+  ar: {
+    total: "كل المواعيد",
+    pending: "الحضور غير مؤكد",
+    confirmed: "الحضور مؤكد",
+    completed: "انتهت الزيارة",
+    noShow: "عدم الحضور",
+    cancelled: "ملغي",
+  },
 } as const;
+
+type SummaryTone = "total" | "pending" | "confirmed" | "completed" | "no-show" | "cancelled";
+type AppointmentStatus = "pending" | "confirmed" | "completed" | "no_show" | "cancelled";
 
 function requestScroll(element: HTMLElement, block: ScrollLogicalPosition = "center") {
   window.requestAnimationFrame(() => {
@@ -21,22 +52,44 @@ function requestScroll(element: HTMLElement, block: ScrollLogicalPosition = "cen
   });
 }
 
-function isTabletSummaryViewport() {
-  return window.matchMedia("(min-width: 561px) and (max-width: 1400px) and (any-pointer: coarse)").matches;
+function isExpandedSummaryViewport() {
+  // Size the summary by available layout width, not by pointer type. iPads can
+  // report a fine pointer when a trackpad/keyboard is attached, which made the
+  // previous client-injected cards disappear even though the layout had room.
+  return window.matchMedia("(min-width: 700px)").matches;
 }
 
-function appointmentStatusCount(status: string) {
-  let count = 0;
-  document.querySelectorAll<HTMLElement>(".polished-appointment-list .appointment-row").forEach((row) => {
-    const select = row.querySelector<HTMLSelectElement>(".appointment-status-select");
-    const selectedStatus = select?.value;
-    const hasStatusBadge = Boolean(row.querySelector(`.status-${status}`));
-    if (selectedStatus === status || (!selectedStatus && hasStatusBadge)) count += 1;
+function statusFromRow(row: HTMLElement): AppointmentStatus {
+  const selected = row.querySelector<HTMLSelectElement>(".appointment-status-select")?.value;
+  if (selected === "pending" || selected === "confirmed" || selected === "completed" || selected === "no_show" || selected === "cancelled") {
+    return selected;
+  }
+
+  if (row.querySelector(".status-confirmed")) return "confirmed";
+  if (row.querySelector(".status-completed")) return "completed";
+  if (row.querySelector(".status-no_show")) return "no_show";
+  if (row.querySelector(".status-cancelled")) return "cancelled";
+  return "pending";
+}
+
+function appointmentStatusCounts() {
+  const rows = Array.from(document.querySelectorAll<HTMLElement>(".polished-appointment-list .appointment-row"));
+  const counts: Record<AppointmentStatus, number> = {
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+    no_show: 0,
+    cancelled: 0,
+  };
+
+  rows.forEach((row) => {
+    counts[statusFromRow(row)] += 1;
   });
-  return count;
+
+  return { total: rows.length, ...counts };
 }
 
-function upsertTabletStat(summary: HTMLElement, tone: "no-show" | "cancelled", label: string, value: number) {
+function upsertTabletStat(summary: HTMLElement, tone: SummaryTone, label: string, value: number) {
   const selector = `.schedule-stat-${tone}`;
   let card = summary.querySelector<HTMLElement>(selector);
   if (!card) {
@@ -47,6 +100,7 @@ function upsertTabletStat(summary: HTMLElement, tone: "no-show" | "cancelled", l
     card.append(labelNode, valueNode);
     summary.append(card);
   }
+
   const labelNode = card.querySelector<HTMLElement>("span");
   const valueNode = card.querySelector<HTMLElement>("strong");
   if (labelNode && labelNode.textContent !== label) labelNode.textContent = label;
@@ -57,16 +111,25 @@ function syncTabletStats(locale: UiLocale) {
   const summary = document.querySelector<HTMLElement>(".schedule-summary");
   if (!summary) return;
 
-  if (!isTabletSummaryViewport()) {
+  if (!isExpandedSummaryViewport()) {
     summary.classList.remove("atlas-tablet-six-stats");
     summary.querySelectorAll(".atlas-tablet-extra-stat").forEach((node) => node.remove());
     return;
   }
 
-  summary.classList.add("atlas-tablet-six-stats");
   const copy = tabletStatsCopy[locale];
-  upsertTabletStat(summary, "no-show", copy.noShow, appointmentStatusCount("no_show"));
-  upsertTabletStat(summary, "cancelled", copy.cancelled, appointmentStatusCount("cancelled"));
+  const counts = appointmentStatusCounts();
+  summary.classList.add("atlas-tablet-six-stats");
+
+  // Keep all six metrics deterministic. Four are server-rendered already; the
+  // final two are inserted here from the same appointment rows. Upserting all
+  // six also repairs older CSS that could hide the total card on some iPads.
+  upsertTabletStat(summary, "total", copy.total, counts.total);
+  upsertTabletStat(summary, "pending", copy.pending, counts.pending);
+  upsertTabletStat(summary, "confirmed", copy.confirmed, counts.confirmed);
+  upsertTabletStat(summary, "completed", copy.completed, counts.completed);
+  upsertTabletStat(summary, "no-show", copy.noShow, counts.no_show);
+  upsertTabletStat(summary, "cancelled", copy.cancelled, counts.cancelled);
 }
 
 function localizeWorkspaceNotices(locale: UiLocale, searchParams: URLSearchParams) {
