@@ -8,6 +8,7 @@ import { DashboardClientPolish } from "./dashboard-client-polish";
 import { MobileAppointmentExperience } from "./mobile-appointment-experience";
 import { ResponsiveDashboardExperience } from "./responsive-dashboard-experience";
 import { DashboardPreferenceMemory } from "./preference-memory";
+import { ScheduleNavigationReset } from "./schedule-navigation-reset";
 import { DashboardScrollContinuity } from "./scroll-continuity";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
@@ -21,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <Suspense fallback={null}>
         <ResponsiveDashboardExperience locale={locale} />
       </Suspense>
+      <ScheduleNavigationReset />
       <DashboardPreferenceMemory />
       <Suspense fallback={null}>
         <DashboardScrollContinuity />
