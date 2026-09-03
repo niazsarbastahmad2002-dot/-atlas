@@ -11,6 +11,7 @@ export type AtlasPcmCapture = {
 };
 
 const TARGET_SAMPLE_RATE = 16_000;
+const RECORDER_STOP_TIMEOUT_MS = 3_000;
 
 function audioContextConstructor() {
   if (typeof window === "undefined") return null;
@@ -40,6 +41,71 @@ function preferredRecorderMimeType() {
   return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
 }
 
+async function startMediaLevelMonitor(stream: MediaStream, onLevel?: (level: number) => void) {
+  if (!onLevel) return async () => {};
+  const Context = audioContextConstructor();
+  if (!Context) return async () => { onLevel(0); };
+
+  let context: AudioContext | null = null;
+  let source: MediaStreamAudioSourceNode | null = null;
+  let analyser: AnalyserNode | null = null;
+  let frame = 0;
+  let closed = false;
+
+  try {
+    context = new Context();
+    if (context.state === "suspended") await context.resume();
+    if (context.state !== "running") {
+      await context.close();
+      return async () => { onLevel(0); };
+    }
+
+    source = context.createMediaStreamSource(stream);
+    analyser = context.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.18;
+    source.connect(analyser);
+    const samples = new Uint8Array(analyser.fftSize);
+    let lastSampleAt = 0;
+
+    const tick = (now: number) => {
+      if (closed || !analyser) return;
+      if (now - lastSampleAt >= 80) {
+        analyser.getByteTimeDomainData(samples);
+        let sum = 0;
+        for (let index = 0; index < samples.length; index += 1) {
+          const centered = ((samples[index] ?? 128) - 128) / 128;
+          sum += centered * centered;
+        }
+        const rms = Math.sqrt(sum / Math.max(1, samples.length));
+        onLevel(Math.min(1, rms * 8));
+        lastSampleAt = now;
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+  } catch {
+    if (context && context.state !== "closed") {
+      try { await context.close(); } catch {}
+    }
+    context = null;
+    source = null;
+    analyser = null;
+  }
+
+  return async () => {
+    if (closed) return;
+    closed = true;
+    if (frame) window.cancelAnimationFrame(frame);
+    try { source?.disconnect(); } catch {}
+    try { analyser?.disconnect(); } catch {}
+    if (context && context.state !== "closed") {
+      try { await context.close(); } catch {}
+    }
+    onLevel(0);
+  };
+}
+
 async function startMediaRecorderCapture(
   stream: MediaStream,
   onLevel?: (level: number) => void,
@@ -48,49 +114,70 @@ async function startMediaRecorderCapture(
   const mimeType = preferredRecorderMimeType();
   const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
   const chunks: BlobPart[] = [];
+  const stopLevelMonitor = await startMediaLevelMonitor(stream, onLevel);
   let settled = false;
   let resolveStop: ((blob: Blob | null) => void) | null = null;
   let discardOnStop = false;
+  let stopTimer: number | null = null;
+  let recorderFailed = false;
+
+  const finishBlob = () => new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" });
+  const settle = (blob: Blob | null) => {
+    if (settled) return;
+    settled = true;
+    if (stopTimer !== null) {
+      window.clearTimeout(stopTimer);
+      stopTimer = null;
+    }
+    void stopLevelMonitor();
+    const resolve = resolveStop;
+    resolveStop = null;
+    resolve?.(blob);
+  };
 
   recorder.ondataavailable = (event) => {
-    if (event.data.size > 0) {
-      chunks.push(event.data);
-      onLevel?.(0.2);
-    }
+    if (event.data.size > 0) chunks.push(event.data);
   };
   recorder.onerror = () => {
-    if (resolveStop && !settled) {
-      settled = true;
-      resolveStop(null);
-      resolveStop = null;
-    }
+    recorderFailed = true;
+    if (resolveStop) settle(null);
+    else void stopLevelMonitor();
   };
   recorder.onstop = () => {
-    if (!resolveStop || settled) return;
-    settled = true;
-    onLevel?.(0);
-    const blob = discardOnStop
-      ? null
-      : new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" });
-    resolveStop(blob);
-    resolveStop = null;
+    const blob = discardOnStop || recorderFailed ? null : finishBlob();
+    settle(blob);
   };
 
-  recorder.start(250);
+  try {
+    recorder.start(250);
+  } catch (error) {
+    await stopLevelMonitor();
+    throw error;
+  }
 
   async function finish(discard: boolean) {
     if (recorder.state === "inactive") {
-      if (discard) return null;
-      return new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" });
+      await stopLevelMonitor();
+      if (discard || recorderFailed) return null;
+      return finishBlob();
     }
     discardOnStop = discard;
     settled = false;
     return await new Promise<Blob | null>((resolve) => {
       resolveStop = resolve;
-      try {
-        recorder.requestData();
-      } catch {}
-      recorder.stop();
+      stopTimer = window.setTimeout(() => {
+        recorderFailed = true;
+        try {
+          if (recorder.state !== "inactive") recorder.stop();
+        } catch {}
+        settle(null);
+      }, RECORDER_STOP_TIMEOUT_MS);
+      try { recorder.requestData(); } catch {}
+      try { recorder.stop(); }
+      catch {
+        recorderFailed = true;
+        settle(null);
+      }
     });
   }
 
