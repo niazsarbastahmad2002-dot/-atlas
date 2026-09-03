@@ -26,15 +26,30 @@ test("dashboard success and error messages localize with the selected Atlas lang
   assert.match(localizedDashboardMessage("appointment_create_failed", "ku") ?? "", /وادەکە/);
 });
 
-test("responsive dashboard enhancement fills iPad stats and focuses the appointment just saved", () => {
+test("responsive dashboard enhancement renders six real status metrics and focuses the appointment just saved", () => {
   const experience = source("app/dashboard/responsive-dashboard-experience.tsx");
   assert.match(experience, /atlas-tablet-six-stats/);
-  assert.match(experience, /appointmentStatusCount\("no_show"\)/);
-  assert.match(experience, /appointmentStatusCount\("cancelled"\)/);
+  assert.match(experience, /appointmentStatusCounts/);
+  assert.match(experience, /statusFromRow/);
+  assert.match(experience, /upsertTabletStat\(summary, "total"/);
+  assert.match(experience, /upsertTabletStat\(summary, "pending"/);
+  assert.match(experience, /upsertTabletStat\(summary, "confirmed"/);
+  assert.match(experience, /upsertTabletStat\(summary, "completed"/);
+  assert.match(experience, /upsertTabletStat\(summary, "no-show"/);
+  assert.match(experience, /upsertTabletStat\(summary, "cancelled"/);
+  assert.match(experience, /min-width: 700px/);
+  assert.doesNotMatch(experience, /any-pointer: coarse/);
   assert.match(experience, /params\.get\("after"\)/);
   assert.match(experience, /is-atlas-post-save-focus/);
   assert.match(experience, /scrollIntoView/);
   assert.match(experience, /is-atlas-phone-expanded/);
+});
+
+test("six summary labels exist in every Atlas interface language", () => {
+  const experience = source("app/dashboard/responsive-dashboard-experience.tsx");
+  for (const locale of ["en", "ku", "bd", "ar"]) {
+    assert.match(experience, new RegExp(`${locale}: \\{[\\s\\S]*total:[\\s\\S]*pending:[\\s\\S]*confirmed:[\\s\\S]*completed:[\\s\\S]*noShow:[\\s\\S]*cancelled:`));
+  }
 });
 
 test("same-document bottom navigation explicitly scrolls instead of depending on repeated Next navigation", () => {
@@ -49,12 +64,23 @@ test("touch iPads receive search and standalone icons while compact appointment 
   const css = source("app/atlas-responsive-final.css");
   const phoneCss = source("app/atlas-phone.css");
   assert.match(css, /max-width: 1400px/);
-  assert.match(css, /any-pointer: coarse/);
   assert.match(css, /atlas-phone-appointment-search[\s\S]*display: grid !important/);
   assert.match(css, /settings-page \.settings-card-icon[\s\S]*background: transparent !important/);
   assert.match(css, /composer-shortcut[\s\S]*display: none !important/);
-  assert.match(css, /grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/);
   assert.match(phoneCss, /@media \(max-width: 560px\)/);
+});
+
+test("iPad summary layout uses available width instead of pointer capability", () => {
+  const css = source("app/atlas-ipad-summary-final.css");
+  assert.match(css, /@media \(min-width: 700px\)/);
+  assert.match(css, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(min-width: 1024px\)/);
+  assert.match(css, /grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.match(css, /schedule-stat[\s\S]*display: grid !important/);
+  assert.match(css, /schedule-stat-total/);
+  assert.match(css, /schedule-stat-no-show/);
+  assert.match(css, /schedule-stat-cancelled/);
+  assert.doesNotMatch(css, /any-pointer/);
 });
 
 test("Atlas refreshes valid Supabase sessions when the user reopens the home page", () => {
@@ -62,10 +88,12 @@ test("Atlas refreshes valid Supabase sessions when the user reopens the home pag
   assert.match(proxy, /matcher: \["\/", "\/dashboard\/:path\*", "\/login", "\/auth\/:path\*"\]/);
 });
 
-test("final responsive stylesheet loads after previous phone layers", () => {
+test("final iPad summary stylesheet loads after previous responsive layers", () => {
   const layout = source("app/layout.tsx");
   const phoneFinal = layout.indexOf('import "./atlas-phone-final.css";');
   const responsiveFinal = layout.indexOf('import "./atlas-responsive-final.css";');
+  const ipadSummaryFinal = layout.indexOf('import "./atlas-ipad-summary-final.css";');
   assert.ok(phoneFinal >= 0);
   assert.ok(responsiveFinal > phoneFinal);
+  assert.ok(ipadSummaryFinal > responsiveFinal);
 });

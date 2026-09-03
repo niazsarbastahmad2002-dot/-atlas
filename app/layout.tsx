@@ -33,6 +33,7 @@ import "./atlas-mobile-tap.css";
 import "./atlas-phone.css";
 import "./atlas-phone-final.css";
 import "./atlas-responsive-final.css";
+import "./atlas-ipad-summary-final.css";
 
 const atlasKurdishFont = Noto_Sans_Arabic({
   subsets: ["arabic"],
