@@ -1,0 +1,26 @@
+/* Everyday appointment removal is intentionally neutral in both themes.
+   The browser confirmation remains the destructive safety gate. */
+.row-actions button.appointment-remove-action {
+  border: 1px solid var(--line-strong) !important;
+  background: var(--surface-soft) !important;
+  color: var(--ink-soft) !important;
+  box-shadow: none !important;
+}
+
+.row-actions button.appointment-remove-action:hover {
+  border-color: var(--line-strong) !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+}
+
+.row-actions button.appointment-remove-action:active {
+  border-color: rgba(31,145,104,.36) !important;
+  background: var(--accent-faint) !important;
+  color: var(--accent) !important;
+  transform: scale(.97);
+}
+
+.row-actions button.appointment-remove-action:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
