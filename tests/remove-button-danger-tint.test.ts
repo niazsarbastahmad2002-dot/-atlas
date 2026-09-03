@@ -3,14 +3,16 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
-const globals = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+const policy = readFileSync(new URL("../app/atlas-action-consistency.css", import.meta.url), "utf8");
+const layout = readFileSync(new URL("../app/dashboard/layout.tsx", import.meta.url), "utf8");
 
-test("Atlas Online remove action is clearly destructive and beats the shared row-action styling", () => {
-  assert.match(globals, /\.row-actions button \{[\s\S]*background: #edf2ef;/);
-  assert.match(source, /\.row-actions button\.appointment-remove-action \{[\s\S]*background: #ffe1e1;/);
-  assert.match(source, /border: 1px solid #d76d6d;/);
-  assert.match(source, /color: #a61b1b;/);
-  assert.match(source, /font-weight: 820;/);
-  assert.match(source, /\.row-actions button\.appointment-remove-action:hover \{ background: #ffd0d0; border-color: #c95353; color: #8f1515; \}/);
-  assert.doesNotMatch(source, /\n        \.appointment-remove-action \{/);
+test("appointment Remove stays neutral in light and dark while confirmation remains the destructive safety gate", () => {
+  assert.match(source, /className="appointment-remove-action"/);
+  assert.match(source, /window\.confirm\(workflow\.removeQuestion\)/);
+  assert.match(policy, /\.row-actions button\.appointment-remove-action \{/);
+  assert.match(policy, /background: var\(--surface-soft\) !important;/);
+  assert.match(policy, /color: var\(--ink-soft\) !important;/);
+  assert.match(policy, /border: 1px solid var\(--line-strong\) !important;/);
+  assert.doesNotMatch(policy, /#ffe1e1|#a61b1b|#d76d6d/);
+  assert.match(layout, /import "\.\.\/atlas-action-consistency\.css";/);
 });
