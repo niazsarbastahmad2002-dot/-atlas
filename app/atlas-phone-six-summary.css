@@ -1,0 +1,48 @@
+/* Phone appointment summary: keep the same six real metrics as iPad without
+   squeezing them into one row. The phone uses a compact 2 x 3 grid. */
+
+@media (max-width: 699px) {
+  .schedule-summary.atlas-tablet-six-stats {
+    display: grid !important;
+    width: 100% !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-inline: 0 !important;
+  }
+
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat {
+    display: grid !important;
+    min-width: 0 !important;
+    min-height: 72px !important;
+    align-content: center !important;
+    padding: 10px 11px !important;
+    border-radius: 13px !important;
+  }
+
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat span {
+    min-width: 0 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    line-height: 1.22 !important;
+    font-size: 9.5px !important;
+  }
+
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat strong {
+    margin-top: 5px !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat {
+    min-height: 68px !important;
+    padding: 9px 10px !important;
+  }
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat span {
+    font-size: 9px !important;
+  }
+  .schedule-summary.atlas-tablet-six-stats .schedule-stat strong {
+    font-size: 22px !important;
+  }
+}
