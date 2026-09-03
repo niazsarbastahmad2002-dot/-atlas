@@ -53,9 +53,6 @@ function requestScroll(element: HTMLElement, block: ScrollLogicalPosition = "cen
 }
 
 function isExpandedSummaryViewport() {
-  // Size the summary by available layout width, not by pointer type. iPads can
-  // report a fine pointer when a trackpad/keyboard is attached, which made the
-  // previous client-injected cards disappear even though the layout had room.
   return window.matchMedia("(min-width: 700px)").matches;
 }
 
@@ -111,19 +108,14 @@ function syncTabletStats(locale: UiLocale) {
   const summary = document.querySelector<HTMLElement>(".schedule-summary");
   if (!summary) return;
 
-  if (!isExpandedSummaryViewport()) {
-    summary.classList.remove("atlas-tablet-six-stats");
-    summary.querySelectorAll(".atlas-tablet-extra-stat").forEach((node) => node.remove());
-    return;
-  }
-
   const copy = tabletStatsCopy[locale];
   const counts = appointmentStatusCounts();
-  summary.classList.add("atlas-tablet-six-stats");
+  const expanded = isExpandedSummaryViewport();
+  summary.classList.toggle("atlas-tablet-six-stats", expanded);
+  summary.classList.toggle("atlas-phone-six-stats", !expanded);
 
-  // Keep all six metrics deterministic. Four are server-rendered already; the
-  // final two are inserted here from the same appointment rows. Upserting all
-  // six also repairs older CSS that could hide the total card on some iPads.
+  // Phone and tablet now share the same six receptionist signals. The phone
+  // uses a compact 2x3 layout in CSS rather than hiding half the information.
   upsertTabletStat(summary, "total", copy.total, counts.total);
   upsertTabletStat(summary, "pending", copy.pending, counts.pending);
   upsertTabletStat(summary, "confirmed", copy.confirmed, counts.confirmed);
