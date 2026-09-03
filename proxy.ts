@@ -6,5 +6,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"],
+  // The home page also checks the Supabase session and redirects signed-in
+  // users to the dashboard. Run the refresh proxy there too so reopening Atlas
+  // can renew a valid refresh-token session instead of presenting sign-in.
+  matcher: ["/", "/dashboard/:path*", "/login", "/auth/:path*"],
 };

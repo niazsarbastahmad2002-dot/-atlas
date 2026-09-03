@@ -1,3 +1,4 @@
+import { toBaghdadInputValue } from "./appointments.ts";
 import { baghdadDate } from "./i18n/config.ts";
 
 function dashboardAppointmentUrl({
@@ -34,6 +35,7 @@ export function appointmentDestination({
     doctorId,
     day: baghdadDate.format(appointmentAt),
     notice,
+    after: toBaghdadInputValue(appointmentAt),
   });
 }
 
