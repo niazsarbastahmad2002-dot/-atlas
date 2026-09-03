@@ -37,7 +37,7 @@ test("responsive dashboard enhancement renders six real status metrics and focus
   assert.match(experience, /upsertTabletStat\(summary, "completed"/);
   assert.match(experience, /upsertTabletStat\(summary, "no-show"/);
   assert.match(experience, /upsertTabletStat\(summary, "cancelled"/);
-  assert.match(experience, /min-width: 700px/);
+  assert.match(experience, /max-width: 1400px/);
   assert.doesNotMatch(experience, /any-pointer: coarse/);
   assert.match(experience, /params\.get\("after"\)/);
   assert.match(experience, /is-atlas-post-save-focus/);
@@ -83,17 +83,26 @@ test("iPad summary layout uses available width instead of pointer capability", (
   assert.doesNotMatch(css, /any-pointer/);
 });
 
+test("phone summary uses the same six metrics in a compact two-column grid", () => {
+  const css = source("app/atlas-phone-six-summary.css");
+  assert.match(css, /@media \(max-width: 699px\)/);
+  assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /schedule-stat strong/);
+});
+
 test("Atlas refreshes valid Supabase sessions when the user reopens the home page", () => {
   const proxy = source("proxy.ts");
   assert.match(proxy, /matcher: \["\/", "\/dashboard\/:path\*", "\/login", "\/auth\/:path\*"\]/);
 });
 
-test("final iPad summary stylesheet loads after previous responsive layers", () => {
+test("final phone six-summary stylesheet loads after previous responsive layers", () => {
   const layout = source("app/layout.tsx");
   const phoneFinal = layout.indexOf('import "./atlas-phone-final.css";');
   const responsiveFinal = layout.indexOf('import "./atlas-responsive-final.css";');
   const ipadSummaryFinal = layout.indexOf('import "./atlas-ipad-summary-final.css";');
+  const phoneSixSummary = layout.indexOf('import "./atlas-phone-six-summary.css";');
   assert.ok(phoneFinal >= 0);
   assert.ok(responsiveFinal > phoneFinal);
   assert.ok(ipadSummaryFinal > responsiveFinal);
+  assert.ok(phoneSixSummary > ipadSummaryFinal);
 });
