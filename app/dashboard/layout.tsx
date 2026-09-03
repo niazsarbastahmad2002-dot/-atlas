@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { getUiLocale } from "@/lib/i18n/ui-server";
+import "../atlas-action-consistency.css";
 import { AppNavigation } from "./app-navigation";
 import { AppointmentContactRelationshipEnhancer } from "./appointment-contact-relationship";
 import { AtlasContinuityMode } from "./continuity-mode";
