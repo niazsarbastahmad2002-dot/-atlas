@@ -53,10 +53,10 @@ function requestScroll(element: HTMLElement, block: ScrollLogicalPosition = "cen
 }
 
 function isExpandedSummaryViewport() {
-  // Size the summary by available layout width, not by pointer type. iPads can
-  // report a fine pointer when a trackpad/keyboard is attached, which made the
-  // previous client-injected cards disappear even though the layout had room.
-  return window.matchMedia("(min-width: 700px)").matches;
+  // Phone and iPad share the same six real appointment metrics. Desktop keeps
+  // its existing denser server-rendered summary unless it is inside the
+  // responsive app-width range.
+  return window.matchMedia("(max-width: 1400px)").matches;
 }
 
 function statusFromRow(row: HTMLElement): AppointmentStatus {
@@ -121,9 +121,8 @@ function syncTabletStats(locale: UiLocale) {
   const counts = appointmentStatusCounts();
   summary.classList.add("atlas-tablet-six-stats");
 
-  // Keep all six metrics deterministic. Four are server-rendered already; the
-  // final two are inserted here from the same appointment rows. Upserting all
-  // six also repairs older CSS that could hide the total card on some iPads.
+  // Keep all six metrics deterministic and sourced from the actual appointment
+  // rows/status controls. The same data drives phone and tablet presentation.
   upsertTabletStat(summary, "total", copy.total, counts.total);
   upsertTabletStat(summary, "pending", copy.pending, counts.pending);
   upsertTabletStat(summary, "confirmed", copy.confirmed, counts.confirmed);
