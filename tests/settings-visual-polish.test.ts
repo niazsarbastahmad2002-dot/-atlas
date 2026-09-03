@@ -40,7 +40,7 @@ test("Settings cards share one restrained Atlas mint glow in light and dark mode
   assert.match(css, /border-color:\s*var\(--line\)\s*!important/);
 });
 
-test("dark mode uses low-glare Settings icon tiles and Atlas AI identity orb", async () => {
+test("dark mode keeps Settings icons standalone while preserving the Atlas AI identity orb", async () => {
   const [layout, css] = await Promise.all([
     readFile(layoutPath, "utf8"),
     readFile(darkIconCssPath, "utf8"),
@@ -48,7 +48,9 @@ test("dark mode uses low-glare Settings icon tiles and Atlas AI identity orb", a
 
   assert.match(layout, /atlas-dark-icon-polish\.css/);
   assert.match(css, /:root\[data-theme="dark"\] \.settings-card-icon/);
-  assert.match(css, /background:\s*#173329\s*!important/);
+  assert.match(css, /background:\s*transparent\s*!important/);
+  assert.match(css, /border:\s*0\s*!important/);
+  assert.match(css, /box-shadow:\s*none\s*!important/);
   assert.match(css, /:root\[data-theme="dark"\] \.atlas-ai-orb/);
   assert.match(css, /#10271f/);
   assert.match(css, /:root\[data-theme="system"\] \.settings-card-icon/);
