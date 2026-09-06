@@ -19,14 +19,28 @@ function inventsAtlasUi(text: string) {
     || /\bAppointments\s+(?:page|tab|screen|menu)\b/i.test(text);
 }
 
+const allowedLatinTerms = new Set([
+  "atlas", "ai", "whatsapp", "online", "local", "schedule", "smart", "fill", "no", "show", "am", "pm",
+]);
+
+function excessiveLatinProse(text: string) {
+  const words = text.toLowerCase().match(/[a-z]{3,}/g) ?? [];
+  return words.filter((word) => !allowedLatinTerms.has(word)).length >= 3;
+}
+
 export function atlasAnswerNeedsKurdishRefinement(answer: string, locale: AtlasResponseLocale) {
   if (locale !== "ku" && locale !== "bd") return false;
   const clean = answer.trim();
-  if (!clean) return false;
-  // Every Sorani/Badini model answer gets the dedicated multilingual language pass.
-  // The first model is responsible for facts and reasoning; this final pass is
-  // responsible for natural Iraqi-Kurdistan wording and dialect consistency.
-  return true;
+  if (!clean || !hasArabicScript(clean)) return false;
+
+  if (excessiveLatinProse(clean)) return true;
+  if (/\b(?:پزیشک|وادە)\b/u.test(clean)) return true;
+
+  if (locale === "ku") {
+    return /(?:ئەڤرۆ|پێدڤی|دکار|دبێ|\bژ\s|\bل\sسەر)/u.test(clean);
+  }
+
+  return /(?:ئەمڕۆ|پێویستە|دەتوان|\bلە\s|\bبۆ\s)/u.test(clean);
 }
 
 export function isAcceptableAtlasModelAnswer(answer: string, locale: AtlasResponseLocale) {
