@@ -8,8 +8,8 @@ test("Atlas AI production entry avoids the DOM-rewriting V5 wrapper", () => {
   const entry = source("app/dashboard/assistant/atlas-ai-client.tsx");
   const v5 = source("app/dashboard/assistant/atlas-ai-client-v5.tsx");
 
-  assert.match(entry, /atlas-ai-client-v4/);
-  assert.doesNotMatch(entry, /atlas-ai-client-v5/);
+  assert.match(entry, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v4"/);
+  assert.doesNotMatch(entry, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v5"/);
   assert.match(v5, /replaceChildren\(\)/);
   assert.match(v5, /requestSubmit\(\)/);
 });
