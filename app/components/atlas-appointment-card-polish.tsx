@@ -33,7 +33,7 @@ function ensureDateAndTime(row: HTMLElement, locale: UiLocale, day: string) {
   if (!details) return;
 
   const timeValue = details.querySelector<HTMLElement>(".appointment-time-value");
-  const timeDetail = timeValue?.closest<HTMLElement>(":scope > div");
+  const timeDetail = timeValue?.parentElement instanceof HTMLElement ? timeValue.parentElement : null;
   if (!timeValue || !timeDetail) return;
 
   const scheduleDate = numericScheduleDate(day, locale);
@@ -104,11 +104,10 @@ export function AtlasAppointmentCardPolish({ locale }: { locale: UiLocale }) {
     };
 
     run();
-    const workspace = document.querySelector<HTMLElement>(".workspace-page");
     const observer = new MutationObserver(run);
-    if (workspace) observer.observe(workspace, { childList: true, subtree: true });
-
+    observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("popstate", run);
+
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
