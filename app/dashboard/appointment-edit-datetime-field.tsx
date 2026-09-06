@@ -24,10 +24,10 @@ type Props = {
 };
 
 const copy = {
-  en: { hour: "Hour", minute: "Minute", am: "AM", pm: "PM", close: "Done", previous: "Previous month", next: "Next month", custom: "Custom time" },
-  ku: { hour: "کاتژمێر", minute: "خولەک", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", close: "تەواو", previous: "مانگی پێشوو", next: "مانگی داهاتوو", custom: "کاتی دیاریکراو" },
-  bd: { hour: "دەمژمێر", minute: "خولەک", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", close: "تەمام", previous: "مەها بەرێ", next: "مەها پاش", custom: "دەمێ تایبەت" },
-  ar: { hour: "الساعة", minute: "الدقيقة", am: "صباحاً", pm: "مساءً", close: "تم", previous: "الشهر السابق", next: "الشهر التالي", custom: "وقت مخصص" },
+  en: { date: "Appointment date", time: "Appointment time", hour: "Hour", minute: "Minute", am: "AM", pm: "PM", close: "Done", previous: "Previous month", next: "Next month", custom: "Custom time" },
+  ku: { date: "بەرواری وادە", time: "کاتی وادە", hour: "کاتژمێر", minute: "خولەک", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", close: "تەواو", previous: "مانگی پێشوو", next: "مانگی داهاتوو", custom: "کاتی دیاریکراو" },
+  bd: { date: "ڕێکەفتا وادەیێ", time: "دەمێ وادەیێ", hour: "دەمژمێر", minute: "خولەک", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", close: "تەمام", previous: "مەها بەرێ", next: "مەها پاش", custom: "دەمێ تایبەت" },
+  ar: { date: "تاريخ الموعد", time: "وقت الموعد", hour: "الساعة", minute: "الدقيقة", am: "صباحاً", pm: "مساءً", close: "تم", previous: "الشهر السابق", next: "الشهر التالي", custom: "وقت مخصص" },
 } as const;
 
 function pad(value: number) {
@@ -92,7 +92,8 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
   const clock = to24Hour(validHour ? numericHour : 1, validMinute ? numericMinute : 0, period);
   const candidate = `${date}T${clock}`;
   const valid = validHour && validMinute && candidate >= min && candidate <= max;
-  const display = `${formatLocalDateValue(date, locale)} · ${formatTimeValue(clock, locale)}`;
+  const displayDate = formatLocalDateValue(date, locale);
+  const displayTime = formatTimeValue(clock, locale);
 
   const calendarCells = useMemo(() => {
     const year = month.getUTCFullYear();
@@ -129,18 +130,33 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
 
   return (
     <div className="edit-datetime-field">
-      <label htmlFor={`${id}-trigger`}>{label} <span className="label-muted">· {timeZoneLabel}</span></label>
-      <button
-        id={`${id}-trigger`}
-        className="edit-datetime-trigger"
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span>{display}</span>
-        <span aria-hidden="true">⌄</span>
-      </button>
+      <div className="edit-datetime-zone">{timeZoneLabel}</div>
+      <div className="edit-datetime-fields">
+        <button
+          id={`${id}-date-trigger`}
+          className="edit-datetime-trigger"
+          type="button"
+          aria-label={`${t.date}: ${displayDate}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <small>{t.date}</small>
+          <strong dir="ltr">{displayDate}</strong>
+        </button>
+        <button
+          id={`${id}-time-trigger`}
+          className="edit-datetime-trigger"
+          type="button"
+          aria-label={`${t.time}: ${displayTime}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <small>{t.time}</small>
+          <strong dir="ltr">{displayTime}</strong>
+        </button>
+      </div>
 
       {open ? (
         <div className="edit-datetime-popover" role="dialog" aria-label={label} dir={locale === "en" ? "ltr" : "rtl"}>
@@ -197,7 +213,7 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
               />
             </label>
           </div>
-          <div className="edit-time-preview" dir="ltr">{formatTimeValue(clock, locale)}</div>
+          <div className="edit-time-preview" dir="ltr">{displayTime}</div>
           <button className="edit-datetime-done" type="button" disabled={!valid} onClick={() => setOpen(false)}>{t.close}</button>
         </div>
       ) : null}
@@ -206,25 +222,24 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
 
       <style jsx>{`
         .edit-datetime-field { position: relative; display: grid; gap: 7px; min-width: 0; }
-        .edit-datetime-field > label { margin-top: 2px; font-size: 12px; font-weight: 760; }
+        .edit-datetime-zone { margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 760; }
+        .edit-datetime-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
         .edit-datetime-trigger {
-          display: flex;
+          display: grid;
           width: 100%;
-          min-height: 52px;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
+          min-height: 64px;
+          align-content: center;
+          gap: 5px;
           border: 1px solid #cbd4ce;
           border-radius: 13px;
-          padding: 11px 15px;
+          padding: 10px 12px;
           background: #fff;
           color: var(--ink);
-          text-align: ${locale === "en" ? "left" : "right"};
-          font-size: 15px;
-          font-weight: 760;
+          text-align: start;
           cursor: pointer;
         }
-        .edit-datetime-trigger > span:first-child { min-width: 0; direction: ${locale === "en" ? "ltr" : "rtl"}; }
+        .edit-datetime-trigger small { color: var(--muted); font-size: 10px; font-weight: 800; line-height: 1.2; }
+        .edit-datetime-trigger strong { justify-self: start; color: var(--ink); font-size: 15px; font-weight: 850; line-height: 1.25; white-space: nowrap; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
         .edit-datetime-popover {
           position: relative;
           z-index: 20;
@@ -282,6 +297,9 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
         .edit-time-preview { margin-top: 10px; border-radius: 11px; padding: 10px 12px; background: var(--accent-faint); color: var(--accent); text-align: center; font-size: 14px; font-weight: 850; font-variant-numeric: tabular-nums; }
         .edit-datetime-done { width: 100%; min-height: 43px; margin-top: 10px; border-radius: 11px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 800; }
         .edit-datetime-done:disabled { opacity: .42; cursor: not-allowed; }
+        @media (max-width: 420px) {
+          .edit-datetime-fields { grid-template-columns: 1fr; }
+        }
       `}</style>
     </div>
   );
