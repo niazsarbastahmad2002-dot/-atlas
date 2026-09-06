@@ -1,7 +1,7 @@
 /* Apple-mobile voice safety layer.
-   Inline voice-to-text is allowed because it stays inside the composer and can
-   fail without taking over the page. The full-screen auto-listening Live Voice
-   mode remains paused on iPhone/iPad until it is proven safe on real WebKit. */
+   Inline voice-to-text uses an isolated, timeout-bounded WebKit path. The
+   full-screen auto-listening Live Voice mode remains paused on iPhone/iPad
+   until it is proven safe on real hardware. */
 
 .atlas-ai-mic-button {
   flex: 0 0 42px !important;
@@ -32,9 +32,9 @@
 }
 
 :root[data-atlas-apple-voice-paused="true"] .atlas-ai-mic-button,
-:root[data-atlas-apple-voice-paused="true"] .atlas-ai-dictate-button,
-:root[data-atlas-apple-voice-paused="true"] .atlas-ai-inline-voice-progress {
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-dictate-button {
   visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 :root[data-atlas-apple-voice-paused="true"] .atlas-ai-composer {
@@ -44,4 +44,57 @@
 :root[data-atlas-apple-voice-paused="true"] .atlas-ai-composer-actions {
   align-self: center !important;
   align-items: center !important;
+}
+
+:root[data-atlas-apple-dictation-state="starting"] .atlas-ai-mic-button,
+:root[data-atlas-apple-dictation-state="transcribing"] .atlas-ai-mic-button,
+:root[data-atlas-apple-dictation-state="starting"] .atlas-ai-dictate-button,
+:root[data-atlas-apple-dictation-state="transcribing"] .atlas-ai-dictate-button {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  opacity: .78 !important;
+}
+
+:root[data-atlas-apple-dictation-state="recording"] .atlas-ai-mic-button,
+:root[data-atlas-apple-dictation-state="recording"] .atlas-ai-dictate-button {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 0 4px rgba(18, 165, 111, .10) !important;
+}
+
+:root[data-atlas-apple-dictation-state="recording"] .atlas-ai-mic-button {
+  animation: atlasAppleMicPulse 1.05s ease-in-out infinite alternate;
+}
+
+@keyframes atlasAppleMicPulse {
+  to { transform: scale(.94); }
+}
+
+.atlas-ai-apple-dictation-status {
+  margin: 7px 4px 0 !important;
+  min-height: 18px;
+  color: var(--accent) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  font-weight: 760 !important;
+}
+
+.atlas-ai-apple-dictation-status[hidden] {
+  display: none !important;
+}
+
+.atlas-ai-apple-dictation-status.is-error {
+  color: var(--danger) !important;
+}
+
+html[data-theme="dark"] body .atlas-ai-apple-dictation-status.is-error {
+  color: #ffb9bf !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] body .atlas-ai-apple-dictation-status.is-error {
+    color: #ffb9bf !important;
+  }
 }
