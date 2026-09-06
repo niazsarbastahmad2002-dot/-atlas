@@ -4,23 +4,41 @@ import test from "node:test";
 
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("Apple mobile keeps safe inline dictation but blocks full-screen live voice", () => {
+test("Apple mobile uses an isolated dictation path while full-screen live voice stays blocked", () => {
   const guard = source("app/components/atlas-apple-voice-safety.tsx");
   assert.match(guard, /iPad\|iPhone\|iPod/);
   assert.match(guard, /navigator\.platform === "MacIntel" && navigator\.maxTouchPoints > 1/);
-  assert.match(guard, /atlasAppleVoicePaused/);
-  assert.match(guard, /\.atlas-ai-live-button/);
-  assert.doesNotMatch(guard, /\.atlas-ai-mic-button/);
-  assert.doesNotMatch(guard, /\.atlas-ai-dictate-button/);
-  assert.match(guard, /pointerdown/);
-  assert.match(guard, /touchstart/);
-  assert.match(guard, /click/);
-  assert.match(guard, /preventDefault\(\)/);
-  assert.match(guard, /stopImmediatePropagation\(\)/);
-  assert.doesNotMatch(guard, /getUserMedia|MediaRecorder|AudioContext/);
+  assert.match(guard, /LIVE_VOICE_SELECTOR = "\.atlas-ai-live-button"/);
+  assert.match(guard, /DICTATION_SELECTOR = "\.atlas-ai-mic-button, \.atlas-ai-dictate-button"/);
+  assert.match(guard, /event\.stopImmediatePropagation\(\)/);
+  assert.match(guard, /document\.addEventListener\("click", handleClick, true\)/);
+  assert.match(guard, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(guard, /new MediaRecorder/);
+  assert.match(guard, /\/api\/atlas-ai\/transcribe/);
 });
 
-test("Apple mobile keeps microphone and dictation UI visible while live voice stays hidden", () => {
+test("Apple dictation has bounded start, stop, and transcription operations", () => {
+  const guard = source("app/components/atlas-apple-voice-safety.tsx");
+  assert.match(guard, /START_TIMEOUT_MS = 7_000/);
+  assert.match(guard, /STOP_TIMEOUT_MS = 3_500/);
+  assert.match(guard, /TRANSCRIBE_TIMEOUT_MS = 22_000/);
+  assert.match(guard, /Promise\.race\(\[request, timeout\]\)/);
+  assert.match(guard, /new AbortController\(\)/);
+  assert.match(guard, /controller\.abort\(\)/);
+  assert.match(guard, /request\.then\(stopTracks\)/);
+  assert.match(guard, /stopTracks\(stream\)/);
+  assert.match(guard, /restore\(/);
+});
+
+test("Apple dictation inserts transcript through the React textarea input path", () => {
+  const guard = source("app/components/atlas-apple-voice-safety.tsx");
+  assert.match(guard, /HTMLTextAreaElement\.prototype/);
+  assert.match(guard, /textarea\.dispatchEvent\(new Event\("input", \{ bubbles: true \}\)\)/);
+  assert.match(guard, /textarea\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
+  assert.match(guard, /textarea\.focus\(\{ preventScroll: true \}\)/);
+});
+
+test("Apple mobile keeps microphone visible while hiding only unsafe live voice", () => {
   const css = source("app/atlas-apple-voice-safety.css");
   assert.match(css, /data-atlas-apple-voice-paused="true"/);
   assert.match(css, /\.atlas-ai-live-button/);
@@ -28,9 +46,9 @@ test("Apple mobile keeps microphone and dictation UI visible while live voice st
   assert.match(css, /\.atlas-ai-mic-button/);
   assert.match(css, /\.atlas-ai-dictate-button/);
   assert.match(css, /visibility: visible !important/);
-  assert.doesNotMatch(css, /data-atlas-apple-voice-paused="true"\] \.atlas-ai-mic-button[\s\S]*?display:\s*none/i);
-  assert.doesNotMatch(css, /\.atlas-ai-composer\s*\{[^}]*display:\s*none/i);
-  assert.doesNotMatch(css, /\.atlas-ai-send-button\s*\{[^}]*display:\s*none/i);
+  assert.match(css, /data-atlas-apple-dictation-state="recording"/);
+  assert.match(css, /atlas-ai-apple-dictation-status/);
+  assert.doesNotMatch(css, /data-atlas-apple-voice-paused="true"\] \.atlas-ai-mic-button[\s\S]{0,180}display:\s*none/i);
 });
 
 test("Atlas microphone control has a durable circular geometry", () => {
@@ -46,7 +64,7 @@ test("Atlas microphone control has a durable circular geometry", () => {
   assert.match(css, /padding: 0 !important/);
 });
 
-test("Apple MediaRecorder stop is bounded so WebKit cannot wedge the page indefinitely", () => {
+test("shared MediaRecorder stop is also bounded so WebKit cannot wedge indefinitely", () => {
   const recorder = source("app/dashboard/assistant/atlas-pcm-recorder.ts");
   assert.match(recorder, /RECORDER_STOP_TIMEOUT_MS = 3_500/);
   assert.match(recorder, /window\.setTimeout/);
@@ -54,10 +72,9 @@ test("Apple MediaRecorder stop is bounded so WebKit cannot wedge the page indefi
   assert.match(recorder, /recorder\.stop\(\)/);
 });
 
-test("Apple voice safety is mounted globally and final readability CSS loads after it", () => {
+test("Apple voice safety is mounted with locale and final readability CSS loads last", () => {
   const layout = source("app/layout.tsx");
-  assert.match(layout, /AtlasAppleVoiceSafety/);
-  assert.match(layout, /<AtlasAppleVoiceSafety \/>/);
+  assert.match(layout, /<AtlasAppleVoiceSafety locale=\{locale\} \/>/);
   const ipad = layout.indexOf('import "./atlas-ipad-summary-final.css";');
   const safety = layout.indexOf('import "./atlas-apple-voice-safety.css";');
   const finalReadability = layout.indexOf('import "./atlas-final-readability.css";');
