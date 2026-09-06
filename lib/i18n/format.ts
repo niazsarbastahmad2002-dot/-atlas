@@ -49,12 +49,12 @@ function dateLocale(locale: UiLocale) {
   return locale === "en" ? `${base}-u-ca-gregory-nu-latn` : `${base}-u-ca-gregory-nu-arab`;
 }
 
-function badiniNumericParts(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
+function numericParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA-u-ca-gregory-nu-latn", {
     timeZone,
     year: "numeric",
-    month: "numeric",
-    day: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).formatToParts(date);
   return Object.fromEntries(parts.map((part) => [part.type, part.value]));
 }
@@ -62,21 +62,13 @@ function badiniNumericParts(date: Date, timeZone: string) {
 export function formatLocalDateValue(value: string, locale: UiLocale) {
   const date = new Date(`${value}T12:00:00+03:00`);
   if (Number.isNaN(date.getTime())) return value;
-  if (locale === "bd") {
-    const parts = badiniNumericParts(date, "Asia/Baghdad");
-    return localizeDigits(`${parts.day}/${parts.month}/${parts.year}`, locale);
-  }
-  return new Intl.DateTimeFormat(dateLocale(locale), {
-    timeZone: "Asia/Baghdad",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(date);
+  const parts = numericParts(date, "Asia/Baghdad");
+  return localizeDigits(`${parts.day}/${parts.month}/${parts.year}`, locale);
 }
 
 export function formatMonthYear(date: Date, locale: UiLocale) {
   if (locale === "bd") {
-    const parts = badiniNumericParts(date, "UTC");
+    const parts = numericParts(date, "UTC");
     return localizeDigits(`${parts.month}/${parts.year}`, locale);
   }
   return new Intl.DateTimeFormat(dateLocale(locale), {
