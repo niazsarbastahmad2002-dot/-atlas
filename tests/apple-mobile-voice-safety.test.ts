@@ -47,7 +47,8 @@ test("Apple voice safety is mounted globally and its CSS loads last", () => {
   const layout = source("app/layout.tsx");
   assert.match(layout, /AtlasAppleVoiceSafety/);
   assert.match(layout, /<AtlasAppleVoiceSafety \/>/);
-  const ipad = layout.indexOf('import "\.\/atlas-ipad-summary-final\.css";'.replace(/\\/g, ""));
+  const ipad = layout.indexOf('import "./atlas-ipad-summary-final.css";');
   const safety = layout.indexOf('import "./atlas-apple-voice-safety.css";');
+  assert.ok(ipad >= 0);
   assert.ok(safety > ipad);
 });
