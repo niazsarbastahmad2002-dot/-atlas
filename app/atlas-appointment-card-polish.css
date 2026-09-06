@@ -2,6 +2,15 @@
    Loaded after older responsive/readability layers so cards grow only with
    their content and date/time remain separate, numeric, direction-safe facts. */
 
+html body .atlas-date-trigger > span:first-child,
+html body .edit-datetime-trigger strong {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
 html body .appointments-panel .polished-appointment {
   height: auto !important;
   min-height: 0 !important;
