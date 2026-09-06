@@ -1,0 +1,153 @@
+/* Final appointment-card information architecture.
+   Loaded after older responsive/readability layers so cards grow only with
+   their content and date/time remain separate, numeric, direction-safe facts. */
+
+html body .appointments-panel .polished-appointment {
+  height: auto !important;
+  min-height: 0 !important;
+  align-content: start !important;
+}
+
+html body .appointments-panel .polished-details {
+  grid-template-columns: repeat(auto-fit, minmax(138px, 1fr)) !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+  align-items: stretch !important;
+}
+
+html body .appointments-panel .polished-details > div {
+  min-height: 0 !important;
+  height: auto !important;
+  align-content: start !important;
+  gap: 5px !important;
+  padding: 9px 11px !important;
+}
+
+html body .appointments-panel .polished-details dt {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}
+
+html body .appointments-panel .polished-details dd {
+  font-size: clamp(14px, 1.25vw, 16px) !important;
+  line-height: 1.35 !important;
+}
+
+html body .appointments-panel :is(.appointment-date-value, .appointment-time-value) {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: clamp(16px, 1.45vw, 19px) !important;
+  font-weight: 900 !important;
+  letter-spacing: .025em !important;
+  word-spacing: .08em !important;
+}
+
+html body .appointments-panel .appointment-date-detail,
+html body .appointments-panel .appointment-time-detail {
+  background: color-mix(in srgb, var(--surface-soft) 88%, var(--accent-soft)) !important;
+  border-color: color-mix(in srgb, var(--line-strong) 78%, var(--accent)) !important;
+}
+
+html body .appointments-panel .appointment-primary,
+html body .appointments-panel .appointment-editor,
+html body .appointments-panel .polished-actions,
+html body .appointments-panel .appointment-action-bar {
+  min-height: 0 !important;
+}
+
+html body .appointments-panel .appointment-editor + .polished-actions {
+  margin-top: 9px !important;
+}
+
+/* Phone disclosure row: show time + patient + phone + status without opening. */
+@media (max-width: 760px) {
+  html body .appointments-panel .polished-appointment.is-atlas-phone-managed {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  html body .atlas-phone-appointment-summary {
+    grid-template-columns: minmax(50px, auto) minmax(0, 1fr) minmax(0, auto) 18px !important;
+    min-height: 62px !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+  }
+
+  html body .atlas-phone-appointment-identity {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    column-gap: 6px !important;
+    row-gap: 2px !important;
+  }
+
+  html body .atlas-phone-appointment-name {
+    grid-column: 1 !important;
+    font-size: 14px !important;
+  }
+
+  html body .atlas-phone-appointment-order {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  html body .atlas-phone-appointment-phone {
+    grid-column: 1 / -1 !important;
+    direction: ltr !important;
+    unicode-bidi: isolate !important;
+    justify-self: start !important;
+    color: var(--muted) !important;
+    font-size: 11px !important;
+    font-weight: 760 !important;
+    line-height: 1.25 !important;
+    letter-spacing: .045em !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  html body .is-atlas-phone-expanded > :not(.atlas-phone-appointment-summary) {
+    margin-inline: 9px !important;
+  }
+
+  html body .is-atlas-phone-expanded > .appointment-primary {
+    margin-top: 9px !important;
+  }
+
+  html body .is-atlas-phone-expanded .polished-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  html body .is-atlas-phone-expanded .polished-details > div {
+    min-height: 0 !important;
+    padding: 8px 9px !important;
+  }
+
+  html body .is-atlas-phone-expanded :is(.appointment-date-value, .appointment-time-value) {
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  html body .is-atlas-phone-expanded .polished-details {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+html[data-theme="dark"] body .appointments-panel .appointment-date-detail,
+html[data-theme="dark"] body .appointments-panel .appointment-time-detail {
+  background: #142b23 !important;
+  border-color: #355b4c !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] body .appointments-panel .appointment-date-detail,
+  html[data-theme="system"] body .appointments-panel .appointment-time-detail {
+    background: #142b23 !important;
+    border-color: #355b4c !important;
+  }
+}
