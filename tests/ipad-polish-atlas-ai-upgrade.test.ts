@@ -31,8 +31,8 @@ test("active Schedule taps reset the same schedule to the top on topbar and bott
 test("Atlas AI production entry uses the React-owned stable core rather than the DOM-rewriting wrapper", () => {
   const active = source("app/dashboard/assistant/atlas-ai-client.tsx");
   const v5 = source("app/dashboard/assistant/atlas-ai-client-v5.tsx");
-  assert.match(active, /atlas-ai-client-v4/);
-  assert.doesNotMatch(active, /atlas-ai-client-v5/);
+  assert.match(active, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v4"/);
+  assert.doesNotMatch(active, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v5"/);
   assert.match(v5, /replaceChildren\(\)/);
   assert.match(v5, /requestSubmit\(\)/);
 });
