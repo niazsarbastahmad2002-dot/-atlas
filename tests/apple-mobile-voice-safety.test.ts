@@ -28,7 +28,7 @@ test("Apple mobile keeps microphone and dictation UI visible while live voice st
   assert.match(css, /\.atlas-ai-mic-button/);
   assert.match(css, /\.atlas-ai-dictate-button/);
   assert.match(css, /visibility: visible !important/);
-  assert.doesNotMatch(css, /data-atlas-apple-voice-paused="true"\] \.atlas-ai-mic-button[^}]*display:\s*none/is);
+  assert.doesNotMatch(css, /data-atlas-apple-voice-paused="true"\] \.atlas-ai-mic-button[\s\S]*?display:\s*none/i);
   assert.doesNotMatch(css, /\.atlas-ai-composer\s*\{[^}]*display:\s*none/i);
   assert.doesNotMatch(css, /\.atlas-ai-send-button\s*\{[^}]*display:\s*none/i);
 });
