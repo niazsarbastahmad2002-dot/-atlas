@@ -11,6 +11,7 @@ export type AtlasPcmCapture = {
 };
 
 const TARGET_SAMPLE_RATE = 16_000;
+const RECORDER_STOP_TIMEOUT_MS = 3_500;
 
 function audioContextConstructor() {
   if (typeof window === "undefined") return null;
@@ -51,6 +52,24 @@ async function startMediaRecorderCapture(
   let settled = false;
   let resolveStop: ((blob: Blob | null) => void) | null = null;
   let discardOnStop = false;
+  let stopTimer: number | null = null;
+
+  const clearStopTimer = () => {
+    if (stopTimer !== null) {
+      window.clearTimeout(stopTimer);
+      stopTimer = null;
+    }
+  };
+
+  const settleStop = (blob: Blob | null) => {
+    if (!resolveStop || settled) return;
+    settled = true;
+    clearStopTimer();
+    onLevel?.(0);
+    const resolve = resolveStop;
+    resolveStop = null;
+    resolve(blob);
+  };
 
   recorder.ondataavailable = (event) => {
     if (event.data.size > 0) {
@@ -58,22 +77,12 @@ async function startMediaRecorderCapture(
       onLevel?.(0.2);
     }
   };
-  recorder.onerror = () => {
-    if (resolveStop && !settled) {
-      settled = true;
-      resolveStop(null);
-      resolveStop = null;
-    }
-  };
+  recorder.onerror = () => settleStop(null);
   recorder.onstop = () => {
-    if (!resolveStop || settled) return;
-    settled = true;
-    onLevel?.(0);
     const blob = discardOnStop
       ? null
       : new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" });
-    resolveStop(blob);
-    resolveStop = null;
+    settleStop(blob);
   };
 
   recorder.start(250);
@@ -87,10 +96,20 @@ async function startMediaRecorderCapture(
     settled = false;
     return await new Promise<Blob | null>((resolve) => {
       resolveStop = resolve;
+      stopTimer = window.setTimeout(() => {
+        const fallback = discardOnStop
+          ? null
+          : new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" });
+        settleStop(fallback);
+      }, RECORDER_STOP_TIMEOUT_MS);
       try {
         recorder.requestData();
       } catch {}
-      recorder.stop();
+      try {
+        recorder.stop();
+      } catch {
+        settleStop(discardOnStop ? null : new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/mp4" }));
+      }
     });
   }
 
