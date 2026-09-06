@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Arabic } from "next/font/google";
 import { AtlasAnalytics } from "@/app/components/atlas-analytics";
 import { AtlasAppleVoiceSafety } from "@/app/components/atlas-apple-voice-safety";
+import { AtlasAppointmentCardPolish } from "@/app/components/atlas-appointment-card-polish";
 import { AtlasTimePickerPolish } from "@/app/components/atlas-time-picker-polish";
 import { ContinuityCacheGuard } from "@/app/components/continuity-cache-guard";
 import { KurdishSecretaryTerminology } from "@/app/components/kurdish-secretary-terminology";
@@ -38,6 +39,7 @@ import "./atlas-ipad-summary-final.css";
 import "./atlas-apple-voice-safety.css";
 import "./atlas-real-device-safety-final.css";
 import "./atlas-final-readability.css";
+import "./atlas-appointment-card-polish.css";
 
 const atlasKurdishFont = Noto_Sans_Arabic({
   subsets: ["arabic"],
@@ -91,6 +93,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         {children}
         <AtlasAppleVoiceSafety locale={locale} />
+        <AtlasAppointmentCardPolish locale={locale} />
         <ContinuityCacheGuard />
         <LivePageRefresh />
         <AtlasAnalytics />
