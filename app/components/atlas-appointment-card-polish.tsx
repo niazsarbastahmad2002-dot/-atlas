@@ -65,11 +65,12 @@ function ensureDateAndTime(row: HTMLElement, locale: UiLocale, day: string) {
   if (dateValue && dateValue.textContent !== scheduleDate) dateValue.textContent = scheduleDate;
 }
 
-function ensureCollapsedPhone(row: HTMLElement) {
+function ensureCollapsedSummary(row: HTMLElement) {
   const summary = row.querySelector<HTMLButtonElement>(".atlas-phone-appointment-summary");
   const identity = summary?.querySelector<HTMLElement>(".atlas-phone-appointment-identity");
-  const source = row.querySelector<HTMLElement>(".patient-cell bdi[dir=\"ltr\"]");
-  if (!summary || !identity || !source) return;
+  const sourcePhone = row.querySelector<HTMLElement>(".patient-cell bdi[dir=\"ltr\"]");
+  const sourceTime = row.querySelector<HTMLElement>(".appointment-time-value");
+  if (!summary || !identity || !sourcePhone) return;
 
   let phone = identity.querySelector<HTMLElement>(".atlas-phone-appointment-phone");
   if (!phone) {
@@ -79,8 +80,15 @@ function ensureCollapsedPhone(row: HTMLElement) {
     phone.setAttribute("role", "text");
     identity.append(phone);
   }
-  const value = source.textContent?.trim() ?? "";
-  if (phone.textContent !== value) phone.textContent = value;
+  const phoneValue = sourcePhone.textContent?.trim() ?? "";
+  if (phone.textContent !== phoneValue) phone.textContent = phoneValue;
+
+  const summaryTime = summary.querySelector<HTMLElement>(".atlas-phone-appointment-time");
+  const timeValue = sourceTime?.textContent?.trim() ?? "";
+  if (summaryTime && timeValue && summaryTime.textContent !== timeValue) {
+    summaryTime.textContent = timeValue;
+    summaryTime.setAttribute("dir", "ltr");
+  }
 }
 
 function polishDashboard(locale: UiLocale) {
@@ -90,7 +98,7 @@ function polishDashboard(locale: UiLocale) {
 
   workspace.querySelectorAll<HTMLElement>(".appointments-panel .appointment-row").forEach((row) => {
     ensureDateAndTime(row, locale, day);
-    ensureCollapsedPhone(row);
+    ensureCollapsedSummary(row);
     row.dataset.atlasCardPolish = "1";
   });
 }
