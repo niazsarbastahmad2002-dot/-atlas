@@ -4,8 +4,9 @@ import test from "node:test";
 
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("appointment cards separate numeric date from time and preserve LTR phone scanning", () => {
+test("appointment cards and editors separate numeric date from time and preserve LTR phone scanning", () => {
   const component = source("app/components/atlas-appointment-card-polish.tsx");
+  const editField = source("app/dashboard/appointment-edit-datetime-field.tsx");
   const css = source("app/atlas-appointment-card-polish.css");
   const layout = source("app/layout.tsx");
 
@@ -16,6 +17,13 @@ test("appointment cards separate numeric date from time and preserve LTR phone s
   assert.match(component, /atlasSeparatedClock/);
   assert.match(component, /atlas-phone-appointment-phone/);
   assert.match(component, /setAttribute\("dir", "ltr"\)/);
+
+  assert.match(editField, /edit-datetime-fields/);
+  assert.match(editField, /\$\{id\}-date-trigger/);
+  assert.match(editField, /\$\{id\}-time-trigger/);
+  assert.match(editField, /displayDate = formatLocalDateValue/);
+  assert.match(editField, /displayTime = formatTimeValue/);
+  assert.doesNotMatch(editField, /\$\{formatLocalDateValue\(date, locale\)\} · \$\{formatTimeValue/);
 
   assert.match(css, /\.appointment-date-value, \.appointment-time-value/);
   assert.match(css, /direction: ltr !important/);
