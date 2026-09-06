@@ -28,18 +28,16 @@ test("active Schedule taps reset the same schedule to the top on topbar and bott
   assert.match(layout, /<ScheduleNavigationReset \/>/);
 });
 
-test("Atlas AI uses the stable voice core with one consolidated enhancement observer", () => {
+test("Atlas AI production entry uses the React-owned stable core rather than the DOM-rewriting wrapper", () => {
   const active = source("app/dashboard/assistant/atlas-ai-client.tsx");
-  const client = source("app/dashboard/assistant/atlas-ai-client-v5.tsx");
-  assert.match(active, /atlas-ai-client-v5/);
-  assert.match(client, /AtlasAiClientV4/);
-  assert.equal((client.match(/new MutationObserver/g) ?? []).length, 1);
-  assert.match(client, /queueMicrotask\(run\)/);
-  assert.match(client, /queueMicrotask\(\(\) =>/);
-  assert.doesNotMatch(client, /window\.setTimeout\(\(\) => textarea/);
+  const v5 = source("app/dashboard/assistant/atlas-ai-client-v5.tsx");
+  assert.match(active, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v4"/);
+  assert.doesNotMatch(active, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v5"/);
+  assert.match(v5, /replaceChildren\(\)/);
+  assert.match(v5, /requestSubmit\(\)/);
 });
 
-test("Atlas AI table and responsive polish are theme-safe and work on phone and iPad", () => {
+test("Atlas AI dormant table and responsive polish remain theme-safe", () => {
   const client = source("app/dashboard/assistant/atlas-ai-client-v5.tsx");
   assert.match(client, /background:var\(--surface\)/);
   assert.match(client, /background:var\(--surface-soft\)/);
