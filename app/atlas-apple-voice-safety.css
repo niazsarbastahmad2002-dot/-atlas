@@ -1,0 +1,39 @@
+/* Emergency Apple-mobile voice safety layer.
+   Real-device iPad testing showed that starting Atlas Voice can wedge the page.
+   Keep text Atlas AI fully usable while voice is paused on iPhone/iPad until the
+   capture path is rebuilt and proven on real WebKit hardware. */
+
+.atlas-ai-mic-button {
+  flex: 0 0 38px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  max-width: 38px !important;
+  max-height: 38px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  align-self: center !important;
+  line-height: 1 !important;
+}
+
+.atlas-ai-mic-button > svg {
+  display: block !important;
+  margin: 0 !important;
+}
+
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-voice-tools,
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-mic-button,
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-inline-voice-progress {
+  display: none !important;
+}
+
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-composer {
+  align-items: center !important;
+}
+
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-composer-actions {
+  align-self: center !important;
+  align-items: center !important;
+}
