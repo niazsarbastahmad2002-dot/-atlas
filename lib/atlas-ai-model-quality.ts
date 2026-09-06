@@ -31,7 +31,8 @@ function excessiveLatinProse(text: string) {
 export function atlasAnswerNeedsKurdishRefinement(answer: string, locale: AtlasResponseLocale) {
   if (locale !== "ku" && locale !== "bd") return false;
   const clean = answer.trim();
-  if (!clean || !hasArabicScript(clean)) return false;
+  if (!clean) return false;
+  if (!hasArabicScript(clean)) return true;
 
   if (excessiveLatinProse(clean)) return true;
   if (/\b(?:پزیشک|وادە)\b/u.test(clean)) return true;
