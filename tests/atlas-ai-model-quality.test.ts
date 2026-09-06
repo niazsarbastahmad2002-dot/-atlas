@@ -26,10 +26,12 @@ test("model order never calls the same model twice", () => {
   assert.deepEqual(atlasCloudflareModelOrder("ku", ATLAS_AI_MULTILINGUAL_MODEL), [ATLAS_AI_MULTILINGUAL_MODEL]);
 });
 
-test("RTL Atlas responses accept clean markdown tables for the table-capable client", () => {
+test("clean Kurdish answers still receive the dedicated final language pass", () => {
   const table = "| کات | ناوی نەخۆش | دۆخ |\n|---|---|---|\n| 09:30 | Ari | چاوەڕێ |";
   assert.equal(isAcceptableAtlasModelAnswer(table, "ku"), true);
-  assert.equal(atlasAnswerNeedsKurdishRefinement(table, "ku"), false);
+  assert.equal(atlasAnswerNeedsKurdishRefinement(table, "ku"), true);
+  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەمڕۆ سێ مەوعید هەیە.", "ku"), true);
+  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەڤرۆ سێ مەوعید هەن.", "bd"), true);
 });
 
 test("Atlas rejects invented Appointments UI instructions without rejecting ordinary appointment wording", () => {

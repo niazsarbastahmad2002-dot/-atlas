@@ -37,6 +37,7 @@ import "./atlas-responsive-final.css";
 import "./atlas-ipad-summary-final.css";
 import "./atlas-apple-voice-safety.css";
 import "./atlas-real-device-safety-final.css";
+import "./atlas-final-readability.css";
 
 const atlasKurdishFont = Noto_Sans_Arabic({
   subsets: ["arabic"],
@@ -89,7 +90,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={meta.language} dir={meta.direction} data-theme={theme} className={atlasKurdishFont.variable}>
       <body>
         {children}
-        <AtlasAppleVoiceSafety />
+        <AtlasAppleVoiceSafety locale={locale} />
         <ContinuityCacheGuard />
         <LivePageRefresh />
         <AtlasAnalytics />

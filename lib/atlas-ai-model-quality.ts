@@ -22,10 +22,11 @@ function inventsAtlasUi(text: string) {
 export function atlasAnswerNeedsKurdishRefinement(answer: string, locale: AtlasResponseLocale) {
   if (locale !== "ku" && locale !== "bd") return false;
   const clean = answer.trim();
-  if (!hasArabicScript(clean)) return true;
-  if (inventsAtlasUi(clean) || /\bworkflow guidance\b/i.test(clean)) return true;
-  if (/```/.test(clean)) return true;
-  return false;
+  if (!clean) return false;
+  // Every Sorani/Badini model answer gets the dedicated multilingual language pass.
+  // The first model is responsible for facts and reasoning; this final pass is
+  // responsible for natural Iraqi-Kurdistan wording and dialect consistency.
+  return true;
 }
 
 export function isAcceptableAtlasModelAnswer(answer: string, locale: AtlasResponseLocale) {

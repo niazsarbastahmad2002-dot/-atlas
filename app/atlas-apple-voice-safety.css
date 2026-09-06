@@ -1,16 +1,16 @@
-/* Emergency Apple-mobile voice safety layer.
-   Real-device iPad testing showed that starting Atlas Voice can wedge the page.
-   Keep text Atlas AI fully usable while voice is paused on iPhone/iPad until the
-   capture path is rebuilt and proven on real WebKit hardware. */
+/* Apple-mobile voice safety layer.
+   Inline voice-to-text uses an isolated, timeout-bounded WebKit path. The
+   full-screen auto-listening Live Voice mode remains paused on iPhone/iPad
+   until it is proven safe on real hardware. */
 
 .atlas-ai-mic-button {
-  flex: 0 0 38px !important;
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
-  min-height: 38px !important;
-  max-width: 38px !important;
-  max-height: 38px !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  max-width: 42px !important;
+  max-height: 42px !important;
   aspect-ratio: 1 / 1 !important;
   border-radius: 50% !important;
   padding: 0 !important;
@@ -23,10 +23,18 @@
   margin: 0 !important;
 }
 
-:root[data-atlas-apple-voice-paused="true"] .atlas-ai-voice-tools,
-:root[data-atlas-apple-voice-paused="true"] .atlas-ai-mic-button,
-:root[data-atlas-apple-voice-paused="true"] .atlas-ai-inline-voice-progress {
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-live-button {
   display: none !important;
+}
+
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-voice-tools {
+  display: flex !important;
+}
+
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-mic-button,
+:root[data-atlas-apple-voice-paused="true"] .atlas-ai-dictate-button {
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 :root[data-atlas-apple-voice-paused="true"] .atlas-ai-composer {
@@ -36,4 +44,57 @@
 :root[data-atlas-apple-voice-paused="true"] .atlas-ai-composer-actions {
   align-self: center !important;
   align-items: center !important;
+}
+
+:root[data-atlas-apple-dictation-state="starting"] .atlas-ai-mic-button,
+:root[data-atlas-apple-dictation-state="transcribing"] .atlas-ai-mic-button,
+:root[data-atlas-apple-dictation-state="starting"] .atlas-ai-dictate-button,
+:root[data-atlas-apple-dictation-state="transcribing"] .atlas-ai-dictate-button {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  opacity: .78 !important;
+}
+
+:root[data-atlas-apple-dictation-state="recording"] .atlas-ai-mic-button,
+:root[data-atlas-apple-dictation-state="recording"] .atlas-ai-dictate-button {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 0 4px rgba(18, 165, 111, .10) !important;
+}
+
+:root[data-atlas-apple-dictation-state="recording"] .atlas-ai-mic-button {
+  animation: atlasAppleMicPulse 1.05s ease-in-out infinite alternate;
+}
+
+@keyframes atlasAppleMicPulse {
+  to { transform: scale(.94); }
+}
+
+.atlas-ai-apple-dictation-status {
+  margin: 7px 4px 0 !important;
+  min-height: 18px;
+  color: var(--accent) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  font-weight: 760 !important;
+}
+
+.atlas-ai-apple-dictation-status[hidden] {
+  display: none !important;
+}
+
+.atlas-ai-apple-dictation-status.is-error {
+  color: var(--danger) !important;
+}
+
+html[data-theme="dark"] body .atlas-ai-apple-dictation-status.is-error {
+  color: #ffb9bf !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] body .atlas-ai-apple-dictation-status.is-error {
+    color: #ffb9bf !important;
+  }
 }

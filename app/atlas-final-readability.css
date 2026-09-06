@@ -1,0 +1,287 @@
+/* Final readability layer for real clinic use.
+   Loaded last so appointment details and Atlas AI remain legible on iPad/phone
+   in both explicit dark mode and system dark mode. */
+
+/* ---------- Appointment cards ---------- */
+html body .appointments-panel .polished-appointment {
+  border-radius: 18px !important;
+  padding: 16px !important;
+  border-color: var(--line-strong) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 10px 28px rgba(6, 43, 32, .07) !important;
+}
+
+html body .appointments-panel .polished-appointment .appointment-primary {
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+html body .appointments-panel .polished-appointment .patient-cell {
+  display: grid !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+html body .appointments-panel .polished-appointment .patient-cell strong {
+  font-size: clamp(18px, 1.7vw, 22px) !important;
+  line-height: 1.25 !important;
+  letter-spacing: -.015em !important;
+}
+
+html body .appointments-panel .polished-appointment .patient-cell span {
+  color: var(--ink-soft) !important;
+  font-size: clamp(14px, 1.3vw, 17px) !important;
+  line-height: 1.45 !important;
+}
+
+html body .appointments-panel .polished-appointment .patient-cell bdi[dir="ltr"] {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: .055em !important;
+  word-spacing: .08em !important;
+  font-weight: 760 !important;
+}
+
+html body .appointments-panel .polished-details {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin-top: 12px !important;
+}
+
+html body .appointments-panel .polished-details > div {
+  display: grid !important;
+  align-content: center !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+  min-height: 78px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  padding: 11px 13px !important;
+  background: var(--surface-soft) !important;
+}
+
+html body .appointments-panel .polished-details dt {
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+  font-weight: 820 !important;
+}
+
+html body .appointments-panel .polished-details dd {
+  margin: 0 !important;
+  color: var(--ink) !important;
+  font-size: clamp(14px, 1.3vw, 17px) !important;
+  line-height: 1.55 !important;
+  font-weight: 760 !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body .appointments-panel .appointment-time-value {
+  font-size: clamp(16px, 1.55vw, 19px) !important;
+  font-weight: 900 !important;
+  line-height: 1.55 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: .015em !important;
+  word-spacing: .16em !important;
+  unicode-bidi: plaintext !important;
+}
+
+html[dir="rtl"] body .appointments-panel .appointment-time-value {
+  text-align: start !important;
+}
+
+@media (max-width: 760px) {
+  html body .appointments-panel .polished-details {
+    grid-template-columns: 1fr !important;
+  }
+  html body .appointments-panel .polished-details > div {
+    min-height: 66px !important;
+  }
+}
+
+/* ---------- Atlas AI contrast and spacing ---------- */
+html body .atlas-ai-card {
+  color: var(--ink) !important;
+}
+
+html body .atlas-ai-message {
+  line-height: 1.7 !important;
+}
+
+html body .atlas-ai-message.is-user {
+  background: #167a59 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+}
+
+html body .atlas-ai-message.is-user :is(p, span, strong) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+html body .atlas-ai-message.is-assistant {
+  background: var(--surface-soft) !important;
+  color: var(--ink) !important;
+  border-color: var(--line-strong) !important;
+}
+
+html body .atlas-ai-message.is-assistant :is(p, span, strong, h3) {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html body .atlas-ai-rich-text {
+  gap: 9px !important;
+}
+
+html body .atlas-ai-rich-text p,
+html body .atlas-ai-message > p,
+html body .atlas-ai-bullet p {
+  font-size: clamp(14px, 1.2vw, 16px) !important;
+  line-height: 1.8 !important;
+}
+
+html body .atlas-ai-bullet {
+  gap: 9px !important;
+}
+
+html body .atlas-ai-privacy {
+  background: var(--surface-soft) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--line) !important;
+}
+
+html body .atlas-ai-composer {
+  background: var(--surface) !important;
+  border-color: var(--line-strong) !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+html body .atlas-ai-composer textarea {
+  color: var(--ink) !important;
+  -webkit-text-fill-color: var(--ink) !important;
+  caret-color: var(--accent) !important;
+}
+
+html body .atlas-ai-composer textarea::placeholder {
+  color: var(--muted) !important;
+  -webkit-text-fill-color: var(--muted) !important;
+  opacity: .9 !important;
+}
+
+html body .atlas-ai-mic-button,
+html body .atlas-ai-dictate-button {
+  color: var(--ink) !important;
+  background: var(--surface-soft) !important;
+  border-color: var(--line-strong) !important;
+}
+
+html body .atlas-ai-mic-button {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  flex: 0 0 42px !important;
+  display: grid !important;
+  place-items: center !important;
+  opacity: 1 !important;
+}
+
+html body .atlas-ai-mic-button svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+html body .atlas-ai-send-button {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+}
+
+html[data-theme="dark"] body .atlas-ai-message.is-user {
+  background: #176b50 !important;
+  color: #f7fffb !important;
+  -webkit-text-fill-color: #f7fffb !important;
+}
+
+html[data-theme="dark"] body .atlas-ai-composer,
+html[data-theme="dark"] body .atlas-ai-message.is-assistant,
+html[data-theme="dark"] body .atlas-ai-privacy {
+  background: #10261f !important;
+  color: #edf7f2 !important;
+  border-color: #33594a !important;
+}
+
+html[data-theme="dark"] body .atlas-ai-composer textarea {
+  color: #edf7f2 !important;
+  -webkit-text-fill-color: #edf7f2 !important;
+}
+
+html[data-theme="dark"] body .atlas-ai-composer textarea::placeholder,
+html[data-theme="dark"] body .atlas-ai-privacy {
+  color: #a9bbb3 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-theme="dark"] body .atlas-ai-mic-button,
+html[data-theme="dark"] body .atlas-ai-dictate-button {
+  background: #173128 !important;
+  color: #dff7eb !important;
+  border-color: #3a6655 !important;
+}
+
+html[data-theme="dark"] body :is(
+  .atlas-ai-error,
+  .atlas-ai-inline-voice-progress,
+  .atlas-ai-voice-recovery-error
+) {
+  color: #ffd1d5 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] body .atlas-ai-message.is-user {
+    background: #176b50 !important;
+    color: #f7fffb !important;
+    -webkit-text-fill-color: #f7fffb !important;
+  }
+  html[data-theme="system"] body .atlas-ai-composer,
+  html[data-theme="system"] body .atlas-ai-message.is-assistant,
+  html[data-theme="system"] body .atlas-ai-privacy {
+    background: #10261f !important;
+    color: #edf7f2 !important;
+    border-color: #33594a !important;
+  }
+  html[data-theme="system"] body .atlas-ai-composer textarea {
+    color: #edf7f2 !important;
+    -webkit-text-fill-color: #edf7f2 !important;
+  }
+  html[data-theme="system"] body .atlas-ai-composer textarea::placeholder,
+  html[data-theme="system"] body .atlas-ai-privacy {
+    color: #a9bbb3 !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  html[data-theme="system"] body .atlas-ai-mic-button,
+  html[data-theme="system"] body .atlas-ai-dictate-button {
+    background: #173128 !important;
+    color: #dff7eb !important;
+    border-color: #3a6655 !important;
+  }
+  html[data-theme="system"] body :is(
+    .atlas-ai-error,
+    .atlas-ai-inline-voice-progress,
+    .atlas-ai-voice-recovery-error
+  ) {
+    color: #ffd1d5 !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+}
