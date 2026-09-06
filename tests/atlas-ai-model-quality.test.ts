@@ -26,12 +26,14 @@ test("model order never calls the same model twice", () => {
   assert.deepEqual(atlasCloudflareModelOrder("ku", ATLAS_AI_MULTILINGUAL_MODEL), [ATLAS_AI_MULTILINGUAL_MODEL]);
 });
 
-test("clean Kurdish answers still receive the dedicated final language pass", () => {
+test("clean Kurdish answers skip a second model call while mixed or wrong-dialect output is refined", () => {
   const table = "| کات | ناوی نەخۆش | دۆخ |\n|---|---|---|\n| 09:30 | Ari | چاوەڕێ |";
   assert.equal(isAcceptableAtlasModelAnswer(table, "ku"), true);
-  assert.equal(atlasAnswerNeedsKurdishRefinement(table, "ku"), true);
-  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەمڕۆ سێ مەوعید هەیە.", "ku"), true);
-  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەڤرۆ سێ مەوعید هەن.", "bd"), true);
+  assert.equal(atlasAnswerNeedsKurdishRefinement(table, "ku"), false);
+  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەمڕۆ سێ مەوعید هەیە.", "ku"), false);
+  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەڤرۆ سێ مەوعید هەن.", "bd"), false);
+  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەڤرۆ سێ مەوعید هەن.", "ku"), true);
+  assert.equal(atlasAnswerNeedsKurdishRefinement("ئەمڕۆ سێ مەوعید هەیە.", "bd"), true);
 });
 
 test("Atlas rejects invented Appointments UI instructions without rejecting ordinary appointment wording", () => {
@@ -41,7 +43,7 @@ test("Atlas rejects invented Appointments UI instructions without rejecting ordi
   assert.equal(isAcceptableAtlasModelAnswer("ئەمڕۆ ٣ مەوعید هەیە.", "ku"), true);
 });
 
-test("Kurdish response quality gate rejects accidental English-only output", () => {
+test("Kurdish response quality gate rejects accidental English-only output and requests refinement", () => {
   assert.equal(isAcceptableAtlasModelAnswer("There are three appointments today.", "ku"), false);
   assert.equal(atlasAnswerNeedsKurdishRefinement("There are three appointments today.", "ku"), true);
 });
