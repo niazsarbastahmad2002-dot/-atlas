@@ -1,0 +1,123 @@
+/* Final real-device guardrails.
+   Loaded after every Atlas theme/responsive layer so temporary feedback,
+   settings surfaces and phone-number tokens cannot fall back to unsafe styles. */
+
+/* Phone numbers are identifiers, not prose. Keep their character sequence LTR
+   even when the surrounding interface and the displayed digits are Kurdish/Arabic. */
+html body :is(.patient-cell, .appointment-primary, .polished-appointment) bdi[dir="ltr"],
+html body :is(.patient-cell, .appointment-primary, .polished-appointment) [dir="ltr"] {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  display: inline-block;
+  white-space: nowrap;
+  text-align: left !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* App feedback must remain readable in explicit dark mode. The fast-save toast
+   previously used hard-coded white/light-red backgrounds and was the bright box
+   visible after a failed appointment save. */
+html[data-theme="dark"] body :is(.notice, .workspace-notice, .atlas-fast-save-toast) {
+  background: #11231c !important;
+  background-image: none !important;
+  color: #e7efeb !important;
+  -webkit-text-fill-color: currentColor !important;
+  border-color: #355548 !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .34) !important;
+}
+html[data-theme="dark"] body .atlas-fast-save-toast span,
+html[data-theme="dark"] body :is(.notice, .workspace-notice) :is(span, small, p) {
+  color: #a8b8b0 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+html[data-theme="dark"] body :is(.notice-error, .atlas-fast-save-toast.is-error) {
+  background: #291719 !important;
+  border-color: #724045 !important;
+  color: #ffd9dc !important;
+}
+html[data-theme="dark"] body :is(.notice-error, .atlas-fast-save-toast.is-error) strong {
+  color: #ffb9bf !important;
+}
+html[data-theme="dark"] body :is(.notice-success, .atlas-fast-save-toast.is-success) {
+  background: #102a20 !important;
+  border-color: #386c55 !important;
+  color: #dcf8e9 !important;
+}
+html[data-theme="dark"] body :is(.notice-success, .atlas-fast-save-toast.is-success) strong {
+  color: #8ee0b8 !important;
+}
+
+/* Settings and transient panels must inherit the dark surface instead of any
+   earlier light-only card/background declaration. */
+html[data-theme="dark"] body .settings-page :is(
+  .settings-card,
+  .settings-link-card,
+  details,
+  [role="dialog"],
+  dialog
+) {
+  background-color: var(--surface) !important;
+  color: var(--ink) !important;
+  border-color: var(--line-strong) !important;
+}
+html[data-theme="dark"] body .settings-page :is(
+  .settings-card,
+  .settings-link-card,
+  details,
+  [role="dialog"],
+  dialog
+) :is(p, small, .quiet, .field-help) {
+  color: var(--muted) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] body :is(.notice, .workspace-notice, .atlas-fast-save-toast) {
+    background: #11231c !important;
+    background-image: none !important;
+    color: #e7efeb !important;
+    -webkit-text-fill-color: currentColor !important;
+    border-color: #355548 !important;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .34) !important;
+  }
+  html[data-theme="system"] body .atlas-fast-save-toast span,
+  html[data-theme="system"] body :is(.notice, .workspace-notice) :is(span, small, p) {
+    color: #a8b8b0 !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  html[data-theme="system"] body :is(.notice-error, .atlas-fast-save-toast.is-error) {
+    background: #291719 !important;
+    border-color: #724045 !important;
+    color: #ffd9dc !important;
+  }
+  html[data-theme="system"] body :is(.notice-error, .atlas-fast-save-toast.is-error) strong {
+    color: #ffb9bf !important;
+  }
+  html[data-theme="system"] body :is(.notice-success, .atlas-fast-save-toast.is-success) {
+    background: #102a20 !important;
+    border-color: #386c55 !important;
+    color: #dcf8e9 !important;
+  }
+  html[data-theme="system"] body :is(.notice-success, .atlas-fast-save-toast.is-success) strong {
+    color: #8ee0b8 !important;
+  }
+  html[data-theme="system"] body .settings-page :is(
+    .settings-card,
+    .settings-link-card,
+    details,
+    [role="dialog"],
+    dialog
+  ) {
+    background-color: var(--surface) !important;
+    color: var(--ink) !important;
+    border-color: var(--line-strong) !important;
+  }
+  html[data-theme="system"] body .settings-page :is(
+    .settings-card,
+    .settings-link-card,
+    details,
+    [role="dialog"],
+    dialog
+  ) :is(p, small, .quiet, .field-help) {
+    color: var(--muted) !important;
+  }
+}
