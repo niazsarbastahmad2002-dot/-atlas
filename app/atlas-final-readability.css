@@ -207,13 +207,10 @@ html body .atlas-ai-send-button {
   min-height: 42px !important;
 }
 
-html[data-theme="dark"] body .atlas-ai-message.is-user,
-@media (prefers-color-scheme: dark) {
-  html[data-theme="system"] body .atlas-ai-message.is-user {
-    background: #176b50 !important;
-    color: #f7fffb !important;
-    -webkit-text-fill-color: #f7fffb !important;
-  }
+html[data-theme="dark"] body .atlas-ai-message.is-user {
+  background: #176b50 !important;
+  color: #f7fffb !important;
+  -webkit-text-fill-color: #f7fffb !important;
 }
 
 html[data-theme="dark"] body .atlas-ai-composer,
@@ -242,7 +239,21 @@ html[data-theme="dark"] body .atlas-ai-dictate-button {
   border-color: #3a6655 !important;
 }
 
+html[data-theme="dark"] body :is(
+  .atlas-ai-error,
+  .atlas-ai-inline-voice-progress,
+  .atlas-ai-voice-recovery-error
+) {
+  color: #ffd1d5 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
 @media (prefers-color-scheme: dark) {
+  html[data-theme="system"] body .atlas-ai-message.is-user {
+    background: #176b50 !important;
+    color: #f7fffb !important;
+    -webkit-text-fill-color: #f7fffb !important;
+  }
   html[data-theme="system"] body .atlas-ai-composer,
   html[data-theme="system"] body .atlas-ai-message.is-assistant,
   html[data-theme="system"] body .atlas-ai-privacy {
@@ -265,14 +276,12 @@ html[data-theme="dark"] body .atlas-ai-dictate-button {
     color: #dff7eb !important;
     border-color: #3a6655 !important;
   }
-}
-
-/* Never allow a transient AI/feedback surface to bleach white in dark mode. */
-html[data-theme="dark"] body :is(
-  .atlas-ai-error,
-  .atlas-ai-inline-voice-progress,
-  .atlas-ai-voice-recovery-error
-) {
-  color: #ffd1d5 !important;
-  -webkit-text-fill-color: currentColor !important;
+  html[data-theme="system"] body :is(
+    .atlas-ai-error,
+    .atlas-ai-inline-voice-progress,
+    .atlas-ai-voice-recovery-error
+  ) {
+    color: #ffd1d5 !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
 }
