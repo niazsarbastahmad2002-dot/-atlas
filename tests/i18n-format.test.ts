@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatTimeValue, localizeDigits, toAsciiDigits } from "../lib/i18n/format.ts";
+import { formatLocalDateValue, formatTimeValue, localizeDigits, toAsciiDigits } from "../lib/i18n/format.ts";
+
+test("formats appointment dates strictly as DD/MM/YYYY", () => {
+  assert.equal(formatLocalDateValue("2026-09-07", "en"), "07/09/2026");
+  assert.equal(formatLocalDateValue("2026-09-07", "ku"), "٠٧/٠٩/٢٠٢٦");
+  assert.equal(formatLocalDateValue("2026-09-07", "bd"), "٠٧/٠٩/٢٠٢٦");
+  assert.equal(formatLocalDateValue("2026-09-07", "ar"), "٠٧/٠٩/٢٠٢٦");
+});
 
 test("formats receptionist times as a simple 12-hour clock", () => {
   assert.equal(formatTimeValue("14:00", "en"), "02:00 PM");
