@@ -11,7 +11,6 @@ Atlas is intentionally not an EMR, diagnostic system, treatment tool, hospital-m
 - Production: `https://atlasdemofixed.vercel.app`
 - GitHub: `niazsarbastahmad2002-dot/-atlas`, branch `main`
 - Vercel project: `atlas_demo_fixed` (Git-connected; production deploys from `main`)
-- Supabase project: `Atlas`, project ref `moazrwbalqiyoafrydkj`
 - Application timezone: `Asia/Baghdad`
 - `/demo`: synthetic browser-only test workspace; never connected to production clinic/patient data
 
