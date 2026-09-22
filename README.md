@@ -72,6 +72,8 @@ Atlas is an actively developed product project. Some production integrations rem
 
 ## License
 
-Atlas is currently published publicly for transparency and review, but **no open-source license has been granted at this time**. All rights remain with the copyright holder.
+Atlas is open source under the **MIT License**.
 
-If Atlas is later released as open source, this section will be replaced with the applicable license.
+See LICENSE for the full license text.
+
+Copyright © 2026 Niaz Sarbast Ahmad.
