@@ -1,7 +1,5 @@
 # Atlas Supabase Migration History
 
-This file records the migration history currently registered by the production Atlas Supabase project (`moazrwbalqiyoafrydkj`).
-
 ## Important source-history note
 
 The production database predates complete migration-file capture in this GitHub repository. Supabase currently records 26 migrations, while the repository contains SQL files only for the most recent migrations that were recovered or created during the current source-control hardening work.
