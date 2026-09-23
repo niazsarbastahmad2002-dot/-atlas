@@ -98,7 +98,7 @@ Community participation is covered by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Releases
 
-Atlas is actively developed and has not yet published a formal GitHub release.
+Atlas is actively developed. The first formal GitHub release is [v0.1.0](https://github.com/niazsarbastahmad2002-dot/-atlas/releases/tag/v0.1.0), published as the open-source baseline.
 
 See:
 
