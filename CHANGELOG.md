@@ -2,9 +2,13 @@
 
 This file records notable user-facing, developer-facing, security, and operational changes to the public Atlas project.
 
-Atlas has not yet published a formal GitHub release. Earlier development history remains available in Git.
-
 ## Unreleased
+
+No unreleased changes are currently documented.
+
+## v0.1.0 — 2026-09-23
+
+First formal GitHub release and open-source maintenance baseline.
 
 ### Added
 
@@ -13,10 +17,28 @@ Atlas has not yet published a formal GitHub release. Earlier development history
 - documented release process
 - pull request template
 - structured bug-report and feature-request templates
+- weekly npm Dependabot version-update configuration
+- GitHub repository topics for project discoverability
 
 ### Changed
 
 - public project documentation now makes contribution, verification, safety, and release expectations explicit
+- Next.js updated from 16.3.0 to 16.3.6
+- resolved sharp dependency updated from 0.35.3 to 0.35.4
+
+### Security
+
+- GitHub secret scanning enabled
+- GitHub push protection enabled
+- private vulnerability reporting enabled
+- final release baseline passed the production dependency audit
+- secret scanning reported no open alerts at release preparation time
+
+### Verification
+
+The release commit passed Atlas CI, including TypeScript, 347 tests, the production build, production dependency audit, and browser E2E smoke tests.
+
+Publishing a GitHub release is separate from deploying Atlas production.
 
 ## Changelog policy
 
