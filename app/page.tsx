@@ -156,6 +156,7 @@ export default async function HomePage() {
         <Link href="/privacy">{copy.privacy}</Link>
         <Link href="/terms">{copy.terms}</Link>
         {company.isVerifiedCompanyProfile && company.legalEntityName ? <span className="quiet">{company.legalEntityName}</span> : null}
+        <span className="quiet">Atlas Novera · Registration 20260104383672</span>
       </footer>
 
       <style>{`
