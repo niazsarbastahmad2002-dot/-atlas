@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a focused improvement to Atlas's clinic workflow.
+title: "[Feature] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Atlas prioritizes simple, reliable clinic and receptionist workflows. Please explain the real workflow problem before proposing a solution.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Workflow problem
+      description: What real clinic/receptionist problem needs to be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behavior
+      description: How is the workflow handled today?
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: Describe the smallest useful change.
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: Why this belongs in Atlas
+      description: Explain how it improves the core appointment/reception workflow without expanding Atlas into a general EMR.
+    validations:
+      required: true
+  - type: checkboxes
+    id: considerations
+    attributes:
+      label: Considerations
+      options:
+        - label: I considered multilingual / RTL behavior.
+        - label: I considered phone and tablet usability.
+        - label: I considered privacy, authorization, and tenant isolation.
+        - label: I can provide synthetic examples or tests if this is implemented.
