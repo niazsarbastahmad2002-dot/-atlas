@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Atlas clinic appointments showcase cover</title>
+  <desc id="desc">A representative visual of the Atlas receptionist workflow with a clinic-day schedule, appointment statuses, multilingual support, and mobile-first design.</desc>
+  <rect width="1600" height="900" fill="#f4f7f5"/>
+  <rect x="70" y="60" width="1460" height="780" rx="34" fill="#ffffff" stroke="#d7e0dc" stroke-width="2"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <circle cx="135" cy="125" r="34" fill="#08775a"/>
+    <text x="135" y="137" text-anchor="middle" font-size="34" font-weight="700" fill="#ffffff">A</text>
+    <text x="190" y="137" font-size="38" font-weight="700" fill="#17201d">Atlas</text>
+    <text x="190" y="172" font-size="19" fill="#66736e">Clinic appointments, built around the receptionist workflow</text>
+
+    <rect x="1090" y="96" width="122" height="42" rx="21" fill="#edf8f4"/>
+    <text x="1151" y="123" text-anchor="middle" font-size="18" font-weight="700" fill="#08775a">کوردی</text>
+    <rect x="1225" y="96" width="122" height="42" rx="21" fill="#f7f8f8"/>
+    <text x="1286" y="123" text-anchor="middle" font-size="18" font-weight="700" fill="#45524d">العربية</text>
+    <rect x="1360" y="96" width="112" height="42" rx="21" fill="#f7f8f8"/>
+    <text x="1416" y="123" text-anchor="middle" font-size="18" font-weight="700" fill="#45524d">English</text>
+
+    <text x="110" y="250" font-size="22" font-weight="700" fill="#08775a">TODAY · ERBIL</text>
+    <text x="110" y="300" font-size="42" font-weight="700" fill="#17201d">Hawler Sample Clinic</text>
+    <text x="110" y="338" font-size="22" fill="#66736e">Dr. Sara · synthetic data only</text>
+
+    <rect x="110" y="390" width="330" height="360" rx="24" fill="#fbfcfb" stroke="#dfe7e3"/>
+    <text x="140" y="435" font-size="19" font-weight="700" fill="#08775a">NEW APPOINTMENT</text>
+    <text x="140" y="478" font-size="18" fill="#66736e">Patient name</text>
+    <rect x="140" y="495" width="270" height="50" rx="12" fill="#ffffff" stroke="#cfd9d4"/>
+    <text x="158" y="527" font-size="18" fill="#17201d">Sample patient</text>
+    <text x="140" y="582" font-size="18" fill="#66736e">Time · Erbil</text>
+    <rect x="140" y="599" width="270" height="50" rx="12" fill="#ffffff" stroke="#cfd9d4"/>
+    <text x="158" y="631" font-size="18" fill="#17201d">11:30</text>
+    <rect x="140" y="680" width="270" height="48" rx="12" fill="#08775a"/>
+    <text x="275" y="711" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">Save appointment</text>
+
+    <rect x="480" y="390" width="990" height="360" rx="24" fill="#ffffff" stroke="#dfe7e3"/>
+    <text x="515" y="435" font-size="24" font-weight="700" fill="#17201d">Clinic day</text>
+
+    <g font-size="18">
+      <text x="515" y="495" font-weight="700" fill="#17201d">Rana Ahmed</text>
+      <text x="760" y="495" fill="#66736e">9:00 AM</text>
+      <rect x="995" y="465" width="122" height="38" rx="19" fill="#e8f6f1"/>
+      <text x="1056" y="490" text-anchor="middle" font-weight="700" fill="#08775a">Confirmed</text>
+      <line x1="515" y1="525" x2="1425" y2="525" stroke="#edf1ef"/>
+
+      <text x="515" y="580" font-weight="700" fill="#17201d">Omar Karim</text>
+      <text x="760" y="580" fill="#66736e">9:30 AM</text>
+      <rect x="995" y="550" width="105" height="38" rx="19" fill="#fff4dd"/>
+      <text x="1047" y="575" text-anchor="middle" font-weight="700" fill="#9b6a00">Pending</text>
+      <line x1="515" y1="610" x2="1425" y2="610" stroke="#edf1ef"/>
+
+      <text x="515" y="665" font-weight="700" fill="#17201d">Dilan Hassan</text>
+      <text x="760" y="665" fill="#66736e">10:15 AM</text>
+      <rect x="995" y="635" width="122" height="38" rx="19" fill="#e8f6f1"/>
+      <text x="1056" y="660" text-anchor="middle" font-weight="700" fill="#08775a">Confirmed</text>
+    </g>
+
+    <text x="110" y="810" font-size="23" font-weight="700" fill="#17201d">Schedule. Follow up. Communicate.</text>
+    <text x="110" y="845" font-size="19" fill="#66736e">Open-source · mobile-first · multilingual · privacy-conscious</text>
+  </g>
+</svg>
