@@ -42,6 +42,8 @@ Atlas uses a simple clinic-provisioned access model:
 - `/demo` uses synthetic data and must remain isolated from production data.
 - No healthcare or regulatory compliance claim is made without dedicated validation.
 
+See [SECURITY.md](SECURITY.md) for responsible vulnerability reporting.
+
 ## WhatsApp reminders
 
 WhatsApp integration is deliberately gated behind real external prerequisites. The production default remains disabled until business verification, approved templates, server-side credentials, webhook verification, scheduling, quotas, and end-to-end testing are complete.
@@ -56,15 +58,54 @@ Claims about reducing no-shows or improving clinic outcomes should be based on m
 
 ## Development
 
+### Quick start
+
+Requirements:
+
+- Node.js 24.x
+- npm
+
+```bash
+git clone https://github.com/niazsarbastahmad2002-dot/-atlas.git
+cd -atlas
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+Populate only the development environment values you need. Do not reuse production credentials or real clinic data in public development.
+
+Authenticated flows require a suitable development configuration.
+
+### Verification
+
 Typical local verification:
 
 ```bash
-npm ci
 npm run check
 npm audit --omit=dev --audit-level=high
 ```
 
 Browser E2E coverage lives under `e2e/` and uses synthetic data for public development workflows.
+
+## Contributing
+
+Contributions are welcome when they improve Atlas's core clinic/reception workflow, reliability, multilingual usability, security, testing, or documentation.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a substantial issue or pull request.
+
+Community participation is covered by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Releases
+
+Atlas is actively developed and has not yet published a formal GitHub release.
+
+See:
+
+- [CHANGELOG.md](CHANGELOG.md) for notable changes
+- [RELEASES.md](RELEASES.md) for the release process
+
+Publishing a GitHub release is separate from deploying production.
 
 ## Project status
 
@@ -74,6 +115,6 @@ Atlas is an actively developed product project. Some production integrations rem
 
 Atlas is open source under the **MIT License**.
 
-See LICENSE for the full license text.
+See [LICENSE](LICENSE) for the full license text.
 
 Copyright © 2026 Niaz Sarbast Ahmad.
