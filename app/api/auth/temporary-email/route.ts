@@ -20,10 +20,16 @@ function isAlreadyRegistered(error: { code?: string; message?: string } | null) 
     || text.includes("user_already_exists");
 }
 
-function deliveryFailure(code?: string): TemporaryEmailFailure {
+function deliveryFailure(code?: string, status?: number): TemporaryEmailFailure {
   if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit") return "rate_limited";
   if (code === "email_address_not_authorized") return "not_authorized";
-  if (code === "otp_disabled" || code === "email_provider_disabled" || code === "provider_disabled") return "provider";
+  if (
+    code === "otp_disabled"
+    || code === "email_provider_disabled"
+    || code === "provider_disabled"
+    || code === "unexpected_failure"
+    || status === 500
+  ) return "provider";
   return "delivery";
 }
 
@@ -187,7 +193,7 @@ export async function POST(request: Request) {
     });
 
     if (sendError) {
-      const reason = deliveryFailure(sendError.code);
+      const reason = deliveryFailure(sendError.code, sendError.status);
       console.error("atlas_temporary_email_send_failed", {
         code: sendError.code ?? null,
         status: sendError.status ?? null,
