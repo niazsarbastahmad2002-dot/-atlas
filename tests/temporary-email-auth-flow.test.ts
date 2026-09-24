@@ -27,3 +27,13 @@ test("implicit email verification is completed client-side without exposing toke
   assert.match(emailCallback, /\/auth\/activate/);
   assert.match(navigation, /\/dashboard\/select-clinic/);
 });
+
+
+test("temporary email reports upstream auth delivery failures as provider outages", async () => {
+  const route = await read("app/api/auth/temporary-email/route.ts");
+
+  assert.match(route, /deliveryFailure\(code\?: string, status\?: number\)/);
+  assert.match(route, /code === "unexpected_failure"/);
+  assert.match(route, /status === 500/);
+  assert.match(route, /deliveryFailure\(sendError\.code, sendError\.status\)/);
+});
