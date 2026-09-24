@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
-  formatLocalDateValue,
+  formatAppointmentDateValue,
   formatMonthYear,
   formatTimeValue,
   formatWeekday,
@@ -24,10 +24,10 @@ type Props = {
 };
 
 const copy = {
-  en: { hour: "Hour", minute: "Minute", am: "AM", pm: "PM", close: "Done", previous: "Previous month", next: "Next month", custom: "Custom time" },
-  ku: { hour: "کاتژمێر", minute: "خولەک", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", close: "تەواو", previous: "مانگی پێشوو", next: "مانگی داهاتوو", custom: "کاتی دیاریکراو" },
-  bd: { hour: "دەمژمێر", minute: "خولەک", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", close: "تەمام", previous: "مەها بەرێ", next: "مەها پاش", custom: "دەمێ تایبەت" },
-  ar: { hour: "الساعة", minute: "الدقيقة", am: "صباحاً", pm: "مساءً", close: "تم", previous: "الشهر السابق", next: "الشهر التالي", custom: "وقت مخصص" },
+  en: { date: "Appointment date", hour: "Hour", minute: "Minute", am: "AM", pm: "PM", close: "Done", previous: "Previous month", next: "Next month", custom: "Custom time" },
+  ku: { date: "بەرواری وادە", hour: "کاتژمێر", minute: "خولەک", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", close: "تەواو", previous: "مانگی پێشوو", next: "مانگی داهاتوو", custom: "کاتی دیاریکراو" },
+  bd: { date: "ڕێکەفتا وادەیێ", hour: "دەمژمێر", minute: "خولەک", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", close: "تەمام", previous: "مەها بەرێ", next: "مەها پاش", custom: "دەمێ تایبەت" },
+  ar: { date: "تاريخ الموعد", hour: "الساعة", minute: "الدقيقة", am: "صباحاً", pm: "مساءً", close: "تم", previous: "الشهر السابق", next: "الشهر التالي", custom: "وقت مخصص" },
 } as const;
 
 function pad(value: number) {
@@ -92,7 +92,6 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
   const clock = to24Hour(validHour ? numericHour : 1, validMinute ? numericMinute : 0, period);
   const candidate = `${date}T${clock}`;
   const valid = validHour && validMinute && candidate >= min && candidate <= max;
-  const display = `${formatLocalDateValue(date, locale)} · ${formatTimeValue(clock, locale)}`;
 
   const calendarCells = useMemo(() => {
     const year = month.getUTCFullYear();
@@ -129,21 +128,41 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
 
   return (
     <div className="edit-datetime-field">
-      <label htmlFor={`${id}-trigger`}>{label} <span className="label-muted">· {timeZoneLabel}</span></label>
-      <button
-        id={`${id}-trigger`}
-        className="edit-datetime-trigger"
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span>{display}</span>
-        <span aria-hidden="true">⌄</span>
-      </button>
+      <div className="edit-datetime-fields">
+        <div className="edit-datetime-control">
+          <label htmlFor={`${id}-date-trigger`}>{t.date}</label>
+          <button
+            id={`${id}-date-trigger`}
+            className="edit-datetime-trigger"
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-label={t.date}
+            onClick={() => setOpen((value) => !value)}
+          >
+            <bdi dir="ltr" className="edit-datetime-value">{formatAppointmentDateValue(date)}</bdi>
+            <span aria-hidden="true">⌄</span>
+          </button>
+        </div>
+        <div className="edit-datetime-control">
+          <label htmlFor={`${id}-time-trigger`}>{label} <span className="label-muted">· {timeZoneLabel}</span></label>
+          <button
+            id={`${id}-time-trigger`}
+            className="edit-datetime-trigger"
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-label={label}
+            onClick={() => setOpen((value) => !value)}
+          >
+            <bdi dir="ltr" className="edit-datetime-value">{formatTimeValue(clock, locale)}</bdi>
+            <span aria-hidden="true">⌄</span>
+          </button>
+        </div>
+      </div>
 
       {open ? (
-        <div className="edit-datetime-popover" role="dialog" aria-label={label} dir={locale === "en" ? "ltr" : "rtl"}>
+        <div className="edit-datetime-popover" role="dialog" aria-label={`${t.date} / ${label}`} dir={locale === "en" ? "ltr" : "rtl"}>
           <div className="edit-calendar-heading">
             <button type="button" aria-label={t.previous} onClick={() => setMonth((value) => shiftMonth(value, -1))}>‹</button>
             <strong>{formatMonthYear(month, locale)}</strong>
@@ -206,25 +225,27 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
 
       <style jsx>{`
         .edit-datetime-field { position: relative; display: grid; gap: 7px; min-width: 0; }
-        .edit-datetime-field > label { margin-top: 2px; font-size: 12px; font-weight: 760; }
+        .edit-datetime-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .edit-datetime-control { display: grid; gap: 7px; min-width: 0; }
+        .edit-datetime-control > label { margin-top: 2px; font-size: 12px; font-weight: 760; }
         .edit-datetime-trigger {
           display: flex;
           width: 100%;
           min-height: 52px;
           align-items: center;
           justify-content: space-between;
-          gap: 16px;
+          gap: 12px;
           border: 1px solid #cbd4ce;
           border-radius: 13px;
-          padding: 11px 15px;
+          padding: 11px 13px;
           background: #fff;
           color: var(--ink);
-          text-align: ${locale === "en" ? "left" : "right"};
-          font-size: 15px;
+          text-align: left;
+          font-size: 14px;
           font-weight: 760;
           cursor: pointer;
         }
-        .edit-datetime-trigger > span:first-child { min-width: 0; direction: ${locale === "en" ? "ltr" : "rtl"}; }
+        .edit-datetime-value { min-width: 0; direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; white-space: nowrap; }
         .edit-datetime-popover {
           position: relative;
           z-index: 20;
