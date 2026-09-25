@@ -45,3 +45,13 @@ test("legacy SiteURL magic links are bridged onto the canonical Atlas email call
   assert.match(callback, /data\.user\?\.user_metadata\?\.atlas_ui_language/);
   assert.match(callback, /requestedLocale/);
 });
+
+
+test("global email fragment bridge never intercepts clinic invitation fragments", async () => {
+  const bridge = await read("app/components/email-auth-fragment-bridge.tsx");
+  const invite = await read("app/auth/invite/page.tsx");
+
+  assert.match(bridge, /window\.location\.pathname === "\/auth\/invite"/);
+  assert.match(invite, /window\.location\.hash/);
+  assert.match(invite, /window\.location\.replace\("\/auth\/activate"\)/);
+});
