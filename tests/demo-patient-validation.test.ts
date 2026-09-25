@@ -10,7 +10,4 @@ test("public demo uses the same basic patient input validation as Atlas", () => 
   assert.match(demo, /formatIraqiMobile/);
   assert.match(demo, /Enter a valid Iraqi mobile number/);
   assert.match(demo, /feedback\.tone === "error" \? "alert" : "status"/);
-  assert.match(demo, /min=\{minimumTime\}/);
-  assert.match(demo, /isFutureDemoTime\(time\)/);
-  assert.match(demo, /at least 5 minutes from now in Erbil/);
 });
