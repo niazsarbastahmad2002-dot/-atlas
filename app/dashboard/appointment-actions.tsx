@@ -126,7 +126,13 @@ export function AppointmentActions({
   const [optimisticStatus, setOptimisticStatus] = useState(status);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [, setClockTick] = useState(0);
   const workflow = workflowCopy[locale];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     setOptimisticStatus(status);
