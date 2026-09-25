@@ -6,44 +6,6 @@ import { toAsciiDigits } from "@/lib/i18n/format";
 import { localizeDashboardMessageText, localizedDashboardMessage } from "@/lib/dashboard-message-copy";
 import type { UiLocale } from "@/lib/i18n/ui";
 
-const tabletStatsCopy = {
-  en: {
-    total: "All appointments",
-    pending: "Attendance not confirmed",
-    confirmed: "Attendance confirmed",
-    completed: "Visit completed",
-    noShow: "No-show",
-    cancelled: "Cancelled",
-  },
-  ku: {
-    total: "هەموو مەوعیدەکان",
-    pending: "هاتن پشتڕاست نەکراوە",
-    confirmed: "هاتن پشتڕاستکراوە",
-    completed: "سەردان تەواوبوو",
-    noShow: "نەهاتن",
-    cancelled: "هەڵوەشاوە",
-  },
-  bd: {
-    total: "هەمی مەوعید",
-    pending: "هاتن نەهاتیە پشتڕاستکرن",
-    confirmed: "هاتن پشتڕاستکریە",
-    completed: "سەردان تەمام بوو",
-    noShow: "نەهاتن",
-    cancelled: "هەلوەشاندی",
-  },
-  ar: {
-    total: "كل المواعيد",
-    pending: "الحضور غير مؤكد",
-    confirmed: "الحضور مؤكد",
-    completed: "انتهت الزيارة",
-    noShow: "عدم الحضور",
-    cancelled: "ملغي",
-  },
-} as const;
-
-type SummaryTone = "total" | "pending" | "confirmed" | "completed" | "no-show" | "cancelled";
-type AppointmentStatus = "pending" | "confirmed" | "completed" | "no_show" | "cancelled";
-
 function requestScroll(element: HTMLElement, block: ScrollLogicalPosition = "center") {
   window.requestAnimationFrame(() => {
     window.requestAnimationFrame(() => {
@@ -104,24 +66,13 @@ function upsertTabletStat(summary: HTMLElement, tone: SummaryTone, label: string
   if (valueNode && valueNode.textContent !== String(value)) valueNode.textContent = String(value);
 }
 
-function syncTabletStats(locale: UiLocale) {
+function syncSummaryLayout() {
   const summary = document.querySelector<HTMLElement>(".schedule-summary");
   if (!summary) return;
 
-  const copy = tabletStatsCopy[locale];
-  const counts = appointmentStatusCounts();
   const expanded = isExpandedSummaryViewport();
   summary.classList.toggle("atlas-tablet-six-stats", expanded);
   summary.classList.toggle("atlas-phone-six-stats", !expanded);
-
-  // Phone and tablet now share the same six receptionist signals. The phone
-  // uses a compact 2x3 layout in CSS rather than hiding half the information.
-  upsertTabletStat(summary, "total", copy.total, counts.total);
-  upsertTabletStat(summary, "pending", copy.pending, counts.pending);
-  upsertTabletStat(summary, "confirmed", copy.confirmed, counts.confirmed);
-  upsertTabletStat(summary, "completed", copy.completed, counts.completed);
-  upsertTabletStat(summary, "no-show", copy.noShow, counts.no_show);
-  upsertTabletStat(summary, "cancelled", copy.cancelled, counts.cancelled);
 }
 
 function localizeWorkspaceNotices(locale: UiLocale, searchParams: URLSearchParams) {
@@ -232,7 +183,7 @@ export function ResponsiveDashboardExperience({ locale }: { locale: UiLocale }) 
     const update = () => {
       frame = 0;
       localizeWorkspaceNotices(locale, params);
-      syncTabletStats(locale);
+      syncSummaryLayout();
       focusSavedAppointment();
     };
 
