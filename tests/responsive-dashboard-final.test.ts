@@ -97,3 +97,14 @@ test("final iPad summary stylesheet loads after previous responsive layers", () 
   assert.ok(responsiveFinal > phoneFinal);
   assert.ok(ipadSummaryFinal > responsiveFinal);
 });
+
+
+test("dashboard server output includes all six receptionist outcome metrics before client enhancement", () => {
+  const dashboard = source("app/dashboard/page.tsx");
+  assert.match(dashboard, /const noShow = visibleRows\.filter\(\(row\) => row\.status === "no_show"\)\.length/);
+  assert.match(dashboard, /const cancelled = visibleRows\.filter\(\(row\) => row\.status === "cancelled"\)\.length/);
+  assert.match(dashboard, /schedule-summary atlas-tablet-six-stats/);
+  assert.match(dashboard, /tone="no-show"/);
+  assert.match(dashboard, /tone="cancelled"/);
+  assert.match(dashboard, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
+});
