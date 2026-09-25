@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatTimeValue, localizeDigits, toAsciiDigits } from "../lib/i18n/format.ts";
+import { formatAppointmentDateValue, formatTimeValue, localizeDigits, toAsciiDigits } from "../lib/i18n/format.ts";
 
 test("formats receptionist times as a simple 12-hour clock", () => {
   assert.equal(formatTimeValue("14:00", "en"), "02:00 PM");
@@ -19,4 +19,10 @@ test("round-trips Kurdish and Arabic digits safely", () => {
   assert.equal(localizeDigits("0750 123 4567", "ku"), "٠٧٥٠ ١٢٣ ٤٥٦٧");
   assert.equal(toAsciiDigits("٠٧٥٠ ١٢٣ ٤٥٦٧"), "0750 123 4567");
   assert.equal(toAsciiDigits("۰۷۵۰ ۱۲۳ ۴۵۶۷"), "0750 123 4567");
+});
+
+
+test("formats appointment dates as strict DD/MM/YYYY ASCII digits", () => {
+  assert.equal(formatAppointmentDateValue("2026-09-07"), "07/09/2026");
+  assert.equal(formatAppointmentDateValue("٢٠٢٦-٠٩-٠٧"), "07/09/2026");
 });

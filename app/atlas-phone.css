@@ -211,7 +211,7 @@ html body .appointment-composer :is(
     align-items: center;
     gap: 8px;
     width: 100%;
-    min-height: 58px;
+    min-height: 64px;
     border: 0 !important;
     border-radius: 0 !important;
     padding: 8px 10px !important;
@@ -237,10 +237,12 @@ html body .appointment-composer :is(
     white-space: nowrap;
   }
   .atlas-phone-appointment-identity {
-    display: flex;
+    display: grid;
     min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 6px;
+    column-gap: 6px;
+    row-gap: 2px;
   }
   .atlas-phone-appointment-name {
     min-width: 0;
@@ -248,7 +250,7 @@ html body .appointment-composer :is(
     color: var(--ink);
     font-size: 14px;
     font-weight: 850;
-    line-height: 1.25;
+    line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -257,6 +259,20 @@ html body .appointment-composer :is(
     color: var(--muted);
     font-size: 9px;
     font-weight: 850;
+  }
+  .atlas-phone-appointment-phone {
+    grid-column: 1 / -1;
+    min-width: 0;
+    direction: ltr;
+    unicode-bidi: isolate;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 720;
+    line-height: 1.2;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .atlas-phone-appointment-status {
     display: inline-flex;

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  formatLocalDateValue,
+  formatAppointmentDateValue,
   formatMonthYear,
   formatWeekday,
   localizeDigits,
@@ -259,7 +259,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
           aria-expanded={dateOpen}
           onClick={() => setDateOpen((current) => !current)}
         >
-          <span>{formatLocalDateValue(date, locale)}</span>
+          <bdi dir="ltr" className="atlas-date-value">{formatAppointmentDateValue(date)}</bdi>
           <span className="atlas-date-chevron" aria-hidden="true">⌄</span>
         </button>
         {dateOpen ? (
@@ -316,7 +316,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       <div className={`atlas-selected-time ${usable ? "" : "is-error"}`}><span>{usable ? text.selected : exactBooked ? text.booked : text.doctor}</span><strong dir="ltr">{usable ? `${localizeDigits(hour, locale)}:${localizeDigits(pad(minute), locale)} ${period === "am" ? text.am : text.pm}` : "—"}</strong></div>
       <style>{`
         .atlas-time-v2{display:grid;gap:10px;position:relative}.atlas-time-v2>label{font-size:12px;font-weight:800}.atlas-time-v2>label small{font-weight:600;color:var(--muted)}
-        .atlas-date-wrap{position:relative}.atlas-date-trigger{display:flex;width:100%;min-height:50px;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line-strong);border-radius:13px;padding:10px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:760;cursor:pointer}.atlas-date-chevron{color:var(--muted);font-size:16px}
+        .atlas-date-wrap{position:relative}.atlas-date-trigger{display:flex;width:100%;min-height:50px;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line-strong);border-radius:13px;padding:10px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:760;cursor:pointer}.atlas-date-value{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;letter-spacing:.02em}.atlas-date-chevron{color:var(--muted);font-size:16px}
         .atlas-calendar-popover{position:absolute;z-index:40;inset-inline:0;top:calc(100% + 7px);border:1px solid var(--line-strong);border-radius:18px;padding:15px;background:#fff;box-shadow:var(--shadow-md)}
         .atlas-calendar-heading{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center;gap:8px;margin-bottom:10px}.atlas-calendar-heading strong{text-align:center;font-size:15px}.atlas-calendar-heading button{width:40px;height:40px;border:0;border-radius:10px;background:var(--surface-soft);font-size:23px;cursor:pointer}
         .atlas-calendar-weekdays,.atlas-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.atlas-calendar-weekdays{margin-bottom:4px}.atlas-calendar-weekdays span{padding:4px 0;color:var(--muted);text-align:center;font-size:9px;font-weight:760;white-space:nowrap}.atlas-calendar-grid button,.atlas-calendar-grid>span{height:38px;min-width:0}.atlas-calendar-grid button{border:0;border-radius:10px;background:transparent;color:var(--ink);font-size:13px;cursor:pointer}.atlas-calendar-grid button.is-selected{background:var(--accent);color:#fff;font-weight:840;box-shadow:0 4px 12px rgba(8,119,90,.18)}.atlas-calendar-grid button:disabled{opacity:.25;cursor:not-allowed}

@@ -120,6 +120,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
 
       setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-time"), compactTime(timeText));
       setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-name"), name);
+      setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-phone"), phone);
       const statusNode = summary.querySelector<HTMLElement>(".atlas-phone-appointment-status");
       if (statusNode) {
         setText(statusNode, statusLabel);
@@ -213,7 +214,10 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         name.className = "atlas-phone-appointment-name";
         const order = document.createElement("small");
         order.className = "atlas-phone-appointment-order";
-        identity.append(name, order);
+        const phoneNode = document.createElement("bdi");
+        phoneNode.className = "atlas-phone-appointment-phone";
+        phoneNode.dir = "ltr";
+        identity.append(name, order, phoneNode);
         const status = document.createElement("span");
         status.className = "atlas-phone-appointment-status is-pending";
         const chevron = document.createElement("span");

@@ -59,6 +59,13 @@ function badiniNumericParts(date: Date, timeZone: string) {
   return Object.fromEntries(parts.map((part) => [part.type, part.value]));
 }
 
+export function formatAppointmentDateValue(value: string) {
+  const normalized = toAsciiDigits(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
+  if (!match) return value;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
 export function formatLocalDateValue(value: string, locale: UiLocale) {
   const date = new Date(`${value}T12:00:00+03:00`);
   if (Number.isNaN(date.getTime())) return value;

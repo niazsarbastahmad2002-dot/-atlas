@@ -15,6 +15,10 @@ test("phone appointments use compact searchable disclosure rows without replacin
   assert.match(enhancer, /patient-cell strong/);
   assert.match(enhancer, /patient-cell span/);
   assert.match(enhancer, /atlas-phone-appointment-summary/);
+  assert.match(enhancer, /atlas-phone-appointment-phone/);
+  assert.match(enhancer, /phoneNode\.dir = "ltr"/);
+  assert.match(css, /\.atlas-phone-appointment-phone/);
+  assert.match(css, /unicode-bidi: isolate/);
   assert.match(enhancer, /is-atlas-phone-expanded/);
   assert.match(enhancer, /appointment-status-select/);
   assert.match(css, /@media \(max-width: 560px\)/);
