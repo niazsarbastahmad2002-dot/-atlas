@@ -4,6 +4,7 @@ import { AtlasAnalytics } from "@/app/components/atlas-analytics";
 import { AtlasAppleVoiceSafety } from "@/app/components/atlas-apple-voice-safety";
 import { AtlasTimePickerPolish } from "@/app/components/atlas-time-picker-polish";
 import { ContinuityCacheGuard } from "@/app/components/continuity-cache-guard";
+import { EmailAuthFragmentBridge } from "@/app/components/email-auth-fragment-bridge";
 import { KurdishSecretaryTerminology } from "@/app/components/kurdish-secretary-terminology";
 import { LivePageRefresh } from "@/app/components/live-page-refresh";
 import { getUiLocale } from "@/lib/i18n/ui-server";
@@ -90,6 +91,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={meta.language} dir={meta.direction} data-theme={theme} className={atlasKurdishFont.variable}>
       <body>
         {children}
+        <EmailAuthFragmentBridge />
         <AtlasAppleVoiceSafety locale={locale} />
         <ContinuityCacheGuard />
         <LivePageRefresh />
