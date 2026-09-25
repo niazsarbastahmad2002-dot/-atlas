@@ -5,6 +5,7 @@ import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 
 function timeParts(date: Date, locale: string) {
   const parts = new Intl.DateTimeFormat(locale, {
+    timeZone: "Asia/Baghdad",
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
@@ -30,14 +31,20 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
   }, []);
 
   const date = useMemo(() => new Intl.DateTimeFormat(dateLocale, {
+    timeZone: "Asia/Baghdad",
     weekday: "short",
     month: "short",
     day: "numeric",
   }).format(now), [dateLocale, now]);
 
   const clock = useMemo(() => timeParts(now, dateLocale), [dateLocale, now]);
+  const baghdadHour = useMemo(() => Number(new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Baghdad",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(now)), [now]);
   const dayPeriod = locale === "ku"
-    ? (now.getHours() < 12 ? "پ.ن" : "د.ن")
+    ? (baghdadHour < 12 ? "پ.ن" : "د.ن")
     : clock.dayPeriod;
   const accessibleTime = [
     `${clock.hour}:${clock.minute}:${clock.second}`,
