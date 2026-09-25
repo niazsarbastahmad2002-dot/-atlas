@@ -12,7 +12,7 @@ test("production verification waits for the exact deployed commit before browser
   assert.match(route, /VERCEL_GIT_COMMIT_SHA/);
   assert.match(route, /Cache-Control/);
   assert.match(waiter, /ATLAS_EXPECTED_COMMIT/);
-  assert.match(waiter, /body\?\.commit === expectedCommit/);
+  assert.match(waiter, /lastSeen === expectedCommit/);
   assert.match(workflow, /ATLAS_EXPECTED_COMMIT: \$\{\{ github\.sha \}\}/);
   assert.match(workflow, /wait-for-production\.mjs/);
 });
