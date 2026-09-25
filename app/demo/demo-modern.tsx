@@ -36,34 +36,10 @@ function reopenedStatus(status: DemoStatus): DemoStatus {
   return status === "cancelled" ? "pending" : "confirmed";
 }
 
-function baghdadMinutes(date = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Baghdad",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
-  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? "0");
-  return hour * 60 + minute;
-}
-
-function demoMinimumTime() {
-  const minutes = Math.min(baghdadMinutes() + 5, 23 * 60 + 59);
-  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
-}
-
-function isFutureDemoTime(value: string) {
-  const match = /^(\\d{2}):(\\d{2})$/.exec(value);
-  if (!match) return false;
-  const minutes = Number(match[1]) * 60 + Number(match[2]);
-  return minutes >= baghdadMinutes() + 5;
-}
 
 export function ModernDemoWorkspace() {
   const [appointments, setAppointments] = useState<DemoAppointment[]>(seededAppointments);
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
-  const minimumTime = useMemo(() => demoMinimumTime(), []);
   const counts = useMemo(() => ({
     pending: appointments.filter((item) => item.status === "pending").length,
     confirmed: appointments.filter((item) => item.status === "confirmed").length,
@@ -119,10 +95,7 @@ export function ModernDemoWorkspace() {
                 setFeedback({ tone: "error", text: "Enter a valid Iraqi mobile number, such as 0750 000 0000." });
                 return;
               }
-              if (!isFutureDemoTime(time)) {
-                setFeedback({ tone: "error", text: "Choose a time at least 5 minutes from now in Erbil." });
-                return;
-              }
+              if (!time) return;
               const next: DemoAppointment = { id: crypto.randomUUID(), patient, phone, doctor: "Dr. Sara", time, status: "pending" };
               setAppointments((current) => [...current, next].sort((a, b) => a.time.localeCompare(b.time)));
               setFeedback({ tone: "success", text: "Sample appointment added. Nothing was saved to Atlas." });
@@ -131,7 +104,7 @@ export function ModernDemoWorkspace() {
               <label htmlFor="demo_patient">Patient name</label><input id="demo_patient" name="patient" minLength={2} maxLength={120} placeholder="Sample patient" required />
               <label htmlFor="demo_phone">Iraqi mobile number</label><input id="demo_phone" name="phone" type="tel" inputMode="tel" placeholder="0750 000 0000" required />
               <label>Doctor</label><div className="composer-doctor-lock"><strong>Dr. Sara</strong><span aria-hidden="true">✓</span></div>
-              <label htmlFor="demo_time">Time <span className="label-muted">· Erbil</span></label><input className="demo-modern-time-input" id="demo_time" name="time" type="time" min={minimumTime} defaultValue={minimumTime} required />
+              <label htmlFor="demo_time">Time <span className="label-muted">· Erbil</span></label><input className="demo-modern-time-input" id="demo_time" name="time" type="time" defaultValue="11:30" required />
               <button className="button" type="submit">Save sample appointment</button>
             </form>
             <div className="reminder-note"><strong>Patient reminders: </strong>off in safe demo</div><p className="composer-privacy">Scheduling only — do not enter real patient or medical information.</p>
