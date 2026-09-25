@@ -32,3 +32,10 @@ test("appointment date and time controls stay visually separate", () => {
   assert.match(editField, /formatAppointmentDateValue\(date\)/);
   assert.match(editField, /formatTimeValue\(clock, locale\)/);
 });
+
+
+test("appointment edit date and time controls stack safely on narrow phones", () => {
+  const editField = readFileSync(new URL("../app/dashboard/appointment-edit-datetime-field.tsx", import.meta.url), "utf8");
+  assert.match(editField, /@media \(max-width: 560px\)/);
+  assert.match(editField, /\.edit-datetime-fields \{ grid-template-columns: 1fr; \}/);
+});

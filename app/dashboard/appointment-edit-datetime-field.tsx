@@ -246,6 +246,9 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
           cursor: pointer;
         }
         .edit-datetime-value { min-width: 0; direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        @media (max-width: 560px) {
+          .edit-datetime-fields { grid-template-columns: 1fr; }
+        }
         .edit-datetime-popover {
           position: relative;
           z-index: 20;
