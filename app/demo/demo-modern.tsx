@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import {
+  cleanDisplayName,
+  formatIraqiMobile,
+  isValidDisplayName,
+  normalizeIraqiMobile,
+} from "@/lib/appointments";
 
 type DemoStatus = "pending" | "confirmed" | "completed" | "no_show" | "cancelled";
 type DemoAppointment = { id: string; patient: string; phone: string; doctor: string; time: string; status: DemoStatus };
@@ -76,10 +82,19 @@ export function ModernDemoWorkspace() {
               event.preventDefault();
               const form = event.currentTarget;
               const data = new FormData(form);
-              const patient = String(data.get("patient") ?? "").trim();
-              const phone = String(data.get("phone") ?? "").trim();
+              const rawPatient = String(data.get("patient") ?? "");
+              const patient = cleanDisplayName(rawPatient);
+              const phone = normalizeIraqiMobile(String(data.get("phone") ?? ""));
               const time = String(data.get("time") ?? "").trim();
-              if (!patient || !phone || !time) return;
+              if (!isValidDisplayName(rawPatient)) {
+                setFeedback("Use a patient name between 2 and 120 characters.");
+                return;
+              }
+              if (!phone) {
+                setFeedback("Enter a valid Iraqi mobile number, such as 0750 000 0000.");
+                return;
+              }
+              if (!time) return;
               const next: DemoAppointment = { id: crypto.randomUUID(), patient, phone, doctor: "Dr. Sara", time, status: "pending" };
               setAppointments((current) => [...current, next].sort((a, b) => a.time.localeCompare(b.time)));
               setFeedback("Sample appointment added. Nothing was saved to Atlas.");
@@ -100,7 +115,7 @@ export function ModernDemoWorkspace() {
               const order = queueOrder.get(appointment.id);
               const active = appointment.status === "pending" || appointment.status === "confirmed";
               return <article className="appointment-row polished-appointment" key={appointment.id}>
-                <div className="appointment-primary"><div className="patient-cell"><strong>{appointment.patient}</strong><span><bdi dir="ltr">{appointment.phone}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge">#{order}</span> : null}<span className={`status status-${appointment.status}`}>{statusLabel[appointment.status]}</span></div></div>
+                <div className="appointment-primary"><div className="patient-cell"><strong>{appointment.patient}</strong><span><bdi dir="ltr">{formatIraqiMobile(appointment.phone)}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge">#{order}</span> : null}<span className={`status status-${appointment.status}`}>{statusLabel[appointment.status]}</span></div></div>
                 <dl className="appointment-details polished-details"><div><dt>Time</dt><dd className="appointment-time-value">{timeLabel(appointment.time)}</dd></div><div><dt>Doctor</dt><dd>{appointment.doctor}</dd></div><div><dt>Reminder</dt><dd>Safe demo · off</dd></div></dl>
                 <div className="row-actions polished-actions" aria-label={`Sample actions for ${appointment.patient}`}>
                   {appointment.status === "pending" ? <button type="button" onClick={() => setStatus(appointment.id, "confirmed")}>Confirm</button> : null}
