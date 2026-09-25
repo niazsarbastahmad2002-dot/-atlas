@@ -18,6 +18,7 @@ import { AppointmentActions } from "./appointment-actions";
 import { AppointmentEditor } from "./appointment-editor";
 import { AppointmentTimeField } from "./appointment-time-field";
 import { LiveClinicClock } from "./live-clinic-clock";
+import { DashboardDayRollover } from "./dashboard-day-rollover";
 
 export const dynamic = "force-dynamic";
 
@@ -208,6 +209,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       : { ku: "کوردی (سۆرانی)", bd: "کوردی (بادینی)", ar: "عەرەبی (عێراقی)", en: "ئینگلیزی" };
 
   return <main className="workspace-page shell" data-atlas-selected-day={selectedDay} data-atlas-clinic={clinic.id} data-atlas-memory-valid={selectedFutureHasActiveSchedule ? "true" : "false"}>
+    <DashboardDayRollover selectedDay={selectedDay} todayAtRender={today} />
     <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{t.schedule}</div><h1>{clinic.name}</h1></div><LiveClinicClock locale={locale} /></header>
     <nav className="schedule-date-shortcuts" aria-label={days.quickDates}>
       {quickDays.map((item) => <a className={item.day === selectedDay ? "is-selected" : ""} href={scheduleHref(clinic.id, item.day, selectedDoctorId)} key={item.day} aria-current={item.day === selectedDay ? "date" : undefined}>{item.label}</a>)}
