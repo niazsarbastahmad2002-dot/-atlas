@@ -54,20 +54,24 @@ test("remove is a direct visible action with confirmation rather than a one-item
   assert.doesNotMatch(actions, /appointment-more-menu|appointment-more-popover|<summary/);
 });
 
-test("schedule summary stays focused on the four receptionist signals that matter most", () => {
+test("schedule summary renders the six real receptionist outcomes without client-created cards", () => {
   const page = source("app/dashboard/page.tsx");
+  const experience = source("app/dashboard/responsive-dashboard-experience.tsx");
   assert.match(page, /className="stats workspace-stats schedule-summary"/);
   assert.match(page, /All appointments/);
   assert.match(page, /Attendance not confirmed/);
   assert.match(page, /Attendance confirmed/);
   assert.match(page, /Visit completed/);
+  assert.match(page, /Did not attend/);
+  assert.match(page, /Cancelled/);
   assert.match(page, /هەموو مەوعیدەکان/);
   assert.match(page, /هاتن پشتڕاست نەکراوە/);
   assert.match(page, /هاتن پشتڕاستکراوە/);
   assert.match(page, /سەردان تەواوبوو/);
-  assert.match(page, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
-  assert.doesNotMatch(page, /<Stat label=\{t\.noShow\}/);
-  assert.doesNotMatch(page, /<Stat label=\{t\.cancelled\}/);
+  assert.match(page, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
+  assert.match(page, /tone="no-show"/);
+  assert.match(page, /tone="cancelled"/);
+  assert.doesNotMatch(experience, /createElement\("article"\)/);
 });
 
 test("patient sharing remains available but the everyday row uses a short label", () => {

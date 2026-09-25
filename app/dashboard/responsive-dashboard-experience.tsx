@@ -6,44 +6,6 @@ import { toAsciiDigits } from "@/lib/i18n/format";
 import { localizeDashboardMessageText, localizedDashboardMessage } from "@/lib/dashboard-message-copy";
 import type { UiLocale } from "@/lib/i18n/ui";
 
-const tabletStatsCopy = {
-  en: {
-    total: "All appointments",
-    pending: "Attendance not confirmed",
-    confirmed: "Attendance confirmed",
-    completed: "Visit completed",
-    noShow: "No-show",
-    cancelled: "Cancelled",
-  },
-  ku: {
-    total: "هەموو مەوعیدەکان",
-    pending: "هاتن پشتڕاست نەکراوە",
-    confirmed: "هاتن پشتڕاستکراوە",
-    completed: "سەردان تەواوبوو",
-    noShow: "نەهاتن",
-    cancelled: "هەڵوەشاوە",
-  },
-  bd: {
-    total: "هەمی مەوعید",
-    pending: "هاتن نەهاتیە پشتڕاستکرن",
-    confirmed: "هاتن پشتڕاستکریە",
-    completed: "سەردان تەمام بوو",
-    noShow: "نەهاتن",
-    cancelled: "هەلوەشاندی",
-  },
-  ar: {
-    total: "كل المواعيد",
-    pending: "الحضور غير مؤكد",
-    confirmed: "الحضور مؤكد",
-    completed: "انتهت الزيارة",
-    noShow: "عدم الحضور",
-    cancelled: "ملغي",
-  },
-} as const;
-
-type SummaryTone = "total" | "pending" | "confirmed" | "completed" | "no-show" | "cancelled";
-type AppointmentStatus = "pending" | "confirmed" | "completed" | "no_show" | "cancelled";
-
 function requestScroll(element: HTMLElement, block: ScrollLogicalPosition = "center") {
   window.requestAnimationFrame(() => {
     window.requestAnimationFrame(() => {
@@ -56,72 +18,13 @@ function isExpandedSummaryViewport() {
   return window.matchMedia("(min-width: 700px)").matches;
 }
 
-function statusFromRow(row: HTMLElement): AppointmentStatus {
-  const selected = row.querySelector<HTMLSelectElement>(".appointment-status-select")?.value;
-  if (selected === "pending" || selected === "confirmed" || selected === "completed" || selected === "no_show" || selected === "cancelled") {
-    return selected;
-  }
-
-  if (row.querySelector(".status-confirmed")) return "confirmed";
-  if (row.querySelector(".status-completed")) return "completed";
-  if (row.querySelector(".status-no_show")) return "no_show";
-  if (row.querySelector(".status-cancelled")) return "cancelled";
-  return "pending";
-}
-
-function appointmentStatusCounts() {
-  const rows = Array.from(document.querySelectorAll<HTMLElement>(".polished-appointment-list .appointment-row"));
-  const counts: Record<AppointmentStatus, number> = {
-    pending: 0,
-    confirmed: 0,
-    completed: 0,
-    no_show: 0,
-    cancelled: 0,
-  };
-
-  rows.forEach((row) => {
-    counts[statusFromRow(row)] += 1;
-  });
-
-  return { total: rows.length, ...counts };
-}
-
-function upsertTabletStat(summary: HTMLElement, tone: SummaryTone, label: string, value: number) {
-  const selector = `.schedule-stat-${tone}`;
-  let card = summary.querySelector<HTMLElement>(selector);
-  if (!card) {
-    card = document.createElement("article");
-    card.className = `stat schedule-stat schedule-stat-${tone} atlas-tablet-extra-stat`;
-    const labelNode = document.createElement("span");
-    const valueNode = document.createElement("strong");
-    card.append(labelNode, valueNode);
-    summary.append(card);
-  }
-
-  const labelNode = card.querySelector<HTMLElement>("span");
-  const valueNode = card.querySelector<HTMLElement>("strong");
-  if (labelNode && labelNode.textContent !== label) labelNode.textContent = label;
-  if (valueNode && valueNode.textContent !== String(value)) valueNode.textContent = String(value);
-}
-
-function syncTabletStats(locale: UiLocale) {
+function syncSummaryLayout() {
   const summary = document.querySelector<HTMLElement>(".schedule-summary");
   if (!summary) return;
 
-  const copy = tabletStatsCopy[locale];
-  const counts = appointmentStatusCounts();
   const expanded = isExpandedSummaryViewport();
   summary.classList.toggle("atlas-tablet-six-stats", expanded);
   summary.classList.toggle("atlas-phone-six-stats", !expanded);
-
-  // Phone and tablet now share the same six receptionist signals. The phone
-  // uses a compact 2x3 layout in CSS rather than hiding half the information.
-  upsertTabletStat(summary, "total", copy.total, counts.total);
-  upsertTabletStat(summary, "pending", copy.pending, counts.pending);
-  upsertTabletStat(summary, "confirmed", copy.confirmed, counts.confirmed);
-  upsertTabletStat(summary, "completed", copy.completed, counts.completed);
-  upsertTabletStat(summary, "no-show", copy.noShow, counts.no_show);
-  upsertTabletStat(summary, "cancelled", copy.cancelled, counts.cancelled);
 }
 
 function localizeWorkspaceNotices(locale: UiLocale, searchParams: URLSearchParams) {
@@ -232,7 +135,7 @@ export function ResponsiveDashboardExperience({ locale }: { locale: UiLocale }) 
     const update = () => {
       frame = 0;
       localizeWorkspaceNotices(locale, params);
-      syncTabletStats(locale);
+      syncSummaryLayout();
       focusSavedAppointment();
     };
 

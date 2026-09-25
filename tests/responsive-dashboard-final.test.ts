@@ -26,17 +26,15 @@ test("dashboard success and error messages localize with the selected Atlas lang
   assert.match(localizedDashboardMessage("appointment_create_failed", "ku") ?? "", /وادەکە/);
 });
 
-test("responsive dashboard enhancement renders six real status metrics and focuses the appointment just saved", () => {
+test("responsive dashboard enhancement keeps React-owned summary content server-controlled", () => {
   const experience = source("app/dashboard/responsive-dashboard-experience.tsx");
+  assert.match(experience, /syncSummaryLayout/);
   assert.match(experience, /atlas-tablet-six-stats/);
-  assert.match(experience, /appointmentStatusCounts/);
-  assert.match(experience, /statusFromRow/);
-  assert.match(experience, /upsertTabletStat\(summary, "total"/);
-  assert.match(experience, /upsertTabletStat\(summary, "pending"/);
-  assert.match(experience, /upsertTabletStat\(summary, "confirmed"/);
-  assert.match(experience, /upsertTabletStat\(summary, "completed"/);
-  assert.match(experience, /upsertTabletStat\(summary, "no-show"/);
-  assert.match(experience, /upsertTabletStat\(summary, "cancelled"/);
+  assert.match(experience, /atlas-phone-six-stats/);
+  assert.doesNotMatch(experience, /appointmentStatusCounts/);
+  assert.doesNotMatch(experience, /statusFromRow/);
+  assert.doesNotMatch(experience, /upsertTabletStat/);
+  assert.doesNotMatch(experience, /createElement\("article"\)/);
   assert.match(experience, /min-width: 700px/);
   assert.doesNotMatch(experience, /any-pointer: coarse/);
   assert.match(experience, /params\.get\("after"\)/);
@@ -45,10 +43,10 @@ test("responsive dashboard enhancement renders six real status metrics and focus
   assert.match(experience, /is-atlas-phone-expanded/);
 });
 
-test("six summary labels exist in every Atlas interface language", () => {
-  const experience = source("app/dashboard/responsive-dashboard-experience.tsx");
+test("six summary labels exist in every Atlas interface language on the server-rendered dashboard", () => {
+  const dashboard = source("app/dashboard/page.tsx");
   for (const locale of ["en", "ku", "bd", "ar"]) {
-    assert.match(experience, new RegExp(`${locale}: \\{[\\s\\S]*total:[\\s\\S]*pending:[\\s\\S]*confirmed:[\\s\\S]*completed:[\\s\\S]*noShow:[\\s\\S]*cancelled:`));
+    assert.match(dashboard, new RegExp(`${locale}: \\{[\\s\\S]*all:[\\s\\S]*notConfirmed:[\\s\\S]*confirmed:[\\s\\S]*completed:[\\s\\S]*noShow:[\\s\\S]*cancelled:`));
   }
 });
 
@@ -96,4 +94,15 @@ test("final iPad summary stylesheet loads after previous responsive layers", () 
   assert.ok(phoneFinal >= 0);
   assert.ok(responsiveFinal > phoneFinal);
   assert.ok(ipadSummaryFinal > responsiveFinal);
+});
+
+
+test("dashboard server output includes all six receptionist outcome metrics before client enhancement", () => {
+  const dashboard = source("app/dashboard/page.tsx");
+  assert.match(dashboard, /const noShow = visibleRows\.filter\(\(row\) => row\.status === "no_show"\)\.length/);
+  assert.match(dashboard, /const cancelled = visibleRows\.filter\(\(row\) => row\.status === "cancelled"\)\.length/);
+  assert.match(dashboard, /className="stats workspace-stats schedule-summary"/);
+  assert.match(dashboard, /tone="no-show"/);
+  assert.match(dashboard, /tone="cancelled"/);
+  assert.match(dashboard, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
 });

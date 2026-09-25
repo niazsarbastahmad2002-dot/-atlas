@@ -42,11 +42,13 @@ const summaryCopy: Record<UiLocale, {
   notConfirmed: string;
   confirmed: string;
   completed: string;
+  noShow: string;
+  cancelled: string;
 }> = {
-  en: { all: "All appointments", notConfirmed: "Attendance not confirmed", confirmed: "Attendance confirmed", completed: "Visit completed" },
-  ku: { all: "هەموو مەوعیدەکان", notConfirmed: "هاتن پشتڕاست نەکراوە", confirmed: "هاتن پشتڕاستکراوە", completed: "سەردان تەواوبوو" },
-  bd: { all: "هەمی مەوعید", notConfirmed: "هاتن نەهاتیە پشتڕاستکرن", confirmed: "هاتن پشتڕاستکریە", completed: "سەردان تەمام بوو" },
-  ar: { all: "كل المواعيد", notConfirmed: "الحضور غير مؤكد", confirmed: "الحضور مؤكد", completed: "انتهت الزيارة" },
+  en: { all: "All appointments", notConfirmed: "Attendance not confirmed", confirmed: "Attendance confirmed", completed: "Visit completed", noShow: "Did not attend", cancelled: "Cancelled" },
+  ku: { all: "هەموو مەوعیدەکان", notConfirmed: "هاتن پشتڕاست نەکراوە", confirmed: "هاتن پشتڕاستکراوە", completed: "سەردان تەواوبوو", noShow: "نەهات", cancelled: "هەڵوەشاوە" },
+  bd: { all: "هەمی مەوعید", notConfirmed: "هاتن نەهاتیە پشتڕاستکرن", confirmed: "هاتن پشتڕاستکریە", completed: "سەردان تەمام بوو", noShow: "نەهات", cancelled: "هەلوەشیا" },
+  ar: { all: "كل المواعيد", notConfirmed: "الحضور غير مؤكد", confirmed: "الحضور مؤكد", completed: "انتهت الزيارة", noShow: "لم يحضر", cancelled: "ملغي" },
 };
 
 function validBaghdadDay(value: string | undefined, fallback: string) {
@@ -159,6 +161,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const confirmed = visibleRows.filter((row) => row.status === "confirmed").length;
   const pending = visibleRows.filter((row) => row.status === "pending").length;
   const completed = visibleRows.filter((row) => row.status === "completed").length;
+  const noShow = visibleRows.filter((row) => row.status === "no_show").length;
+  const cancelled = visibleRows.filter((row) => row.status === "cancelled").length;
 
   const appointmentOrder = new Map<string, number>();
   let activeOrder = 0;
@@ -216,7 +220,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     {clinics.length > 1 ? <form className="clinic-switcher workspace-switcher" method="get"><label htmlFor="clinic">{t.clinicWorkspace}</label><input type="hidden" name="day" value={selectedDay} /><select id="clinic" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select><button className="button button-ghost button-small" type="submit">{t.switch}</button></form> : null}
     {multiDoctor ? <nav className="doctor-schedule-tabs" aria-label={days.doctorSchedules}>{activeDoctors.map((doctor) => { const count = rows.filter((row) => row.doctor_id === doctor.id).length; const selected = doctor.id === selectedDoctor?.id; return <a href={scheduleHref(clinic.id, selectedDay, doctor.id)} className={selected ? "is-selected" : ""} aria-current={selected ? "page" : undefined} key={doctor.id}><strong>{doctor.name}</strong><span>{count}</span></a>; })}</nav> : null}
     {messageError || selectionError ? <p className="notice notice-error workspace-notice" role="alert">{messageError ?? selectionError}</p> : null}{notice ? <p className="notice notice-success workspace-notice" role="status">{notice}</p> : null}
-    <section className="stats workspace-stats schedule-summary" aria-label={days.appointments}><Stat label={summary.all} value={visibleRows.length} tone="total" /><Stat label={summary.notConfirmed} value={pending} tone="pending" /><Stat label={summary.confirmed} value={confirmed} tone="confirmed" /><Stat label={summary.completed} value={completed} tone="completed" /></section>
+    <section className="stats workspace-stats schedule-summary" aria-label={days.appointments}><Stat label={summary.all} value={visibleRows.length} tone="total" /><Stat label={summary.notConfirmed} value={pending} tone="pending" /><Stat label={summary.confirmed} value={confirmed} tone="confirmed" /><Stat label={summary.completed} value={completed} tone="completed" /><Stat label={summary.noShow} value={noShow} tone="no-show" /><Stat label={summary.cancelled} value={cancelled} tone="cancelled" /></section>
     <div className={`workspace-grid ${canCreateOnSelectedDay ? "" : "is-read-only-day"}`}>
       {canCreateOnSelectedDay ? <section className="panel appointment-composer" id="new-appointment"><div className="panel-heading composer-heading"><div><div className="eyebrow">{relativeDay ?? formatBaghdadDay(selectedDate, locale)}</div><h2>{t.newAppointment}</h2></div><span className="composer-shortcut" aria-hidden="true">+</span></div>
         <form action={createAppointment} className="stack-form appointment-form" key={`${clinic.id}:${selectedDay}:${selectedDoctor?.id ?? "none"}`}><input type="hidden" name="clinic_id" value={clinic.id} /><input type="hidden" name="return_day" value={selectedDay} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
@@ -234,7 +238,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <style>{`
       .workspace-grid.is-read-only-day{grid-template-columns:1fr}
       .workspace-grid.is-read-only-day .appointments-panel{min-width:0}
-      .schedule-summary{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+      .schedule-summary{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
       .schedule-summary .schedule-stat{position:relative;min-height:82px;padding:15px 16px;overflow:hidden}
       .schedule-summary .schedule-stat::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:4px;background:#dbe4df}
       .schedule-summary .schedule-stat-pending{background:#fffaf0;border-color:#eadfbe}
@@ -266,5 +270,5 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   </main>;
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone: "total" | "pending" | "confirmed" | "completed" }) { return <article className={`stat schedule-stat schedule-stat-${tone}`}><span>{label}</span><strong>{value}</strong></article>; }
+function Stat({ label, value, tone }: { label: string; value: number; tone: "total" | "pending" | "confirmed" | "completed" | "no-show" | "cancelled" }) { return <article className={`stat schedule-stat schedule-stat-${tone}`}><span>{label}</span><strong>{value}</strong></article>; }
 function DashboardError() { return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>Atlas could not load this clinic.</h1><p className="quiet">Refresh once. If it continues, check the clinic connection before entering any patient details.</p></section></main>; }
