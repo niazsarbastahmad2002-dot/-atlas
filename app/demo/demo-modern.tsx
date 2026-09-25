@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import {
+  cleanDisplayName,
+  formatIraqiMobile,
+  isValidDisplayName,
+  normalizeIraqiMobile,
+} from "@/lib/appointments";
 
 type DemoStatus = "pending" | "confirmed" | "completed" | "no_show" | "cancelled";
 type DemoAppointment = { id: string; patient: string; phone: string; doctor: string; time: string; status: DemoStatus };
@@ -30,9 +36,10 @@ function reopenedStatus(status: DemoStatus): DemoStatus {
   return status === "cancelled" ? "pending" : "confirmed";
 }
 
+
 export function ModernDemoWorkspace() {
   const [appointments, setAppointments] = useState<DemoAppointment[]>(seededAppointments);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const counts = useMemo(() => ({
     pending: appointments.filter((item) => item.status === "pending").length,
     confirmed: appointments.filter((item) => item.status === "confirmed").length,
@@ -45,7 +52,7 @@ export function ModernDemoWorkspace() {
 
   function setStatus(id: string, status: DemoStatus) {
     setAppointments((current) => current.map((item) => item.id === id ? { ...item, status } : item));
-    setFeedback(`Sample appointment marked ${statusLabel[status].toLowerCase()}.`);
+    setFeedback({ tone: "success", text: `Sample appointment marked ${statusLabel[status].toLowerCase()}.` });
   }
 
   return (
@@ -63,7 +70,7 @@ export function ModernDemoWorkspace() {
         <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">Schedule</div><h1>Hawler Sample Clinic</h1><p>Dr. Sara · synthetic data only</p></div><div className="demo-modern-clock">Today · Erbil</div></header>
 
         <nav className="schedule-date-shortcuts" aria-label="Quick schedule dates"><button type="button" disabled>Yesterday</button><button type="button" className="is-selected" aria-current="date">Today</button><button type="button" disabled>Tomorrow</button></nav>
-        {feedback ? <p className="notice notice-success workspace-notice" role="status">{feedback}</p> : null}
+        {feedback ? <p className={`notice notice-${feedback.tone} workspace-notice`} role={feedback.tone === "error" ? "alert" : "status"}>{feedback.text}</p> : null}
 
         <section className="stats workspace-stats" aria-label="Today’s sample appointment summary">
           <Stat label="Appointments" value={appointments.length} /><Stat label="Pending" value={counts.pending} /><Stat label="Confirmed" value={counts.confirmed} /><Stat label="Completed" value={counts.completed} /><Stat label="No-show" value={counts.noShow} /><Stat label="Cancelled" value={counts.cancelled} />
@@ -76,13 +83,22 @@ export function ModernDemoWorkspace() {
               event.preventDefault();
               const form = event.currentTarget;
               const data = new FormData(form);
-              const patient = String(data.get("patient") ?? "").trim();
-              const phone = String(data.get("phone") ?? "").trim();
+              const rawPatient = String(data.get("patient") ?? "");
+              const patient = cleanDisplayName(rawPatient);
+              const phone = normalizeIraqiMobile(String(data.get("phone") ?? ""));
               const time = String(data.get("time") ?? "").trim();
-              if (!patient || !phone || !time) return;
+              if (!isValidDisplayName(rawPatient)) {
+                setFeedback({ tone: "error", text: "Use a patient name between 2 and 120 characters." });
+                return;
+              }
+              if (!phone) {
+                setFeedback({ tone: "error", text: "Enter a valid Iraqi mobile number, such as 0750 000 0000." });
+                return;
+              }
+              if (!time) return;
               const next: DemoAppointment = { id: crypto.randomUUID(), patient, phone, doctor: "Dr. Sara", time, status: "pending" };
               setAppointments((current) => [...current, next].sort((a, b) => a.time.localeCompare(b.time)));
-              setFeedback("Sample appointment added. Nothing was saved to Atlas.");
+              setFeedback({ tone: "success", text: "Sample appointment added. Nothing was saved to Atlas." });
               form.reset();
             }}>
               <label htmlFor="demo_patient">Patient name</label><input id="demo_patient" name="patient" minLength={2} maxLength={120} placeholder="Sample patient" required />
@@ -100,7 +116,7 @@ export function ModernDemoWorkspace() {
               const order = queueOrder.get(appointment.id);
               const active = appointment.status === "pending" || appointment.status === "confirmed";
               return <article className="appointment-row polished-appointment" key={appointment.id}>
-                <div className="appointment-primary"><div className="patient-cell"><strong>{appointment.patient}</strong><span><bdi dir="ltr">{appointment.phone}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge">#{order}</span> : null}<span className={`status status-${appointment.status}`}>{statusLabel[appointment.status]}</span></div></div>
+                <div className="appointment-primary"><div className="patient-cell"><strong>{appointment.patient}</strong><span><bdi dir="ltr">{formatIraqiMobile(appointment.phone)}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge">#{order}</span> : null}<span className={`status status-${appointment.status}`}>{statusLabel[appointment.status]}</span></div></div>
                 <dl className="appointment-details polished-details"><div><dt>Time</dt><dd className="appointment-time-value">{timeLabel(appointment.time)}</dd></div><div><dt>Doctor</dt><dd>{appointment.doctor}</dd></div><div><dt>Reminder</dt><dd>Safe demo · off</dd></div></dl>
                 <div className="row-actions polished-actions" aria-label={`Sample actions for ${appointment.patient}`}>
                   {appointment.status === "pending" ? <button type="button" onClick={() => setStatus(appointment.id, "confirmed")}>Confirm</button> : null}
