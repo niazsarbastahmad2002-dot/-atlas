@@ -114,3 +114,13 @@ test("phone settings icons drop decorative tiles while keeping the icon visually
   assert.match(css, /border: 0 !important/);
   assert.match(css, /font-size: 22px !important/);
 });
+
+
+test("collapsed appointment cards use a server-formatted localized time with day period", () => {
+  const dashboard = source("app/dashboard/page.tsx");
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+
+  assert.match(dashboard, /data-atlas-compact-time=\{formatTimeValue\(/);
+  assert.match(dashboard, /toBaghdadInputValue\(new Date\(appointment\.appointment_at\)\)\.slice\(11, 16\)/);
+  assert.match(enhancer, /row\.dataset\.atlasCompactTime/);
+});
