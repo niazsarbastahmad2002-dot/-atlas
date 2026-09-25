@@ -274,6 +274,10 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     setTouched(false);
   };
 
+  useEffect(() => {
+    if (date < minDate) chooseDate(minDate);
+  }, [date, minDate]);
+
   return (
     <div className="atlas-time-v2" ref={rootRef}>
       <label>{text.date} <small>· {timeZoneLabel}</small></label>
