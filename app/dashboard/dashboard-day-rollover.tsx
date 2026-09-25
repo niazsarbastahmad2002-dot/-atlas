@@ -3,12 +3,15 @@
 import { useEffect } from "react";
 
 function baghdadDay(date: Date) {
-  return new Intl.DateTimeFormat("en-CA", {
+  const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Baghdad",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(date);
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
 export function DashboardDayRollover({
