@@ -106,7 +106,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
 
       const name = row.querySelector<HTMLElement>(".patient-cell strong")?.textContent?.trim() ?? "";
       const phone = row.querySelector<HTMLElement>(".patient-cell span")?.textContent?.trim() ?? "";
-      const timeText = row.querySelector<HTMLElement>(".appointment-time-value")?.textContent ?? "";
+      const timeText = row.dataset.atlasCompactTime ?? row.querySelector<HTMLElement>(".appointment-time-value")?.textContent ?? "";
       const order = row.querySelector<HTMLElement>(".appointment-order-badge")?.textContent?.trim() ?? "";
       const select = row.querySelector<HTMLSelectElement>(".appointment-status-select");
       const status = statusClass(select?.value);
