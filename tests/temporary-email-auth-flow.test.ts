@@ -35,13 +35,13 @@ test("legacy SiteURL magic links are bridged onto the canonical Atlas email call
   const callback = await read("app/auth/email/callback/page.tsx");
 
   assert.match(layout, /EmailAuthFragmentBridge/);
-  assert.match(bridge, /https:\\/\\/atlasclinic\\.dpdns\\.org/);
-  assert.match(bridge, /https:\\/\\/atlasdemofixed\\.vercel\\.app/);
+  assert.match(bridge, /https:\/\/atlasclinic\.dpdns\.org/);
+  assert.match(bridge, /https:\/\/atlasdemofixed\.vercel\.app/);
   assert.match(bridge, /access_token/);
   assert.match(bridge, /refresh_token/);
-  assert.match(bridge, /\\/auth\\/email\\/callback/);
-  assert.match(bridge, /window\\.history\\.replaceState/);
-  assert.match(bridge, /window\\.location\\.replace/);
-  assert.match(callback, /data\\.user\\?\\.user_metadata\\?\\.atlas_ui_language/);
+  assert.match(bridge, /\/auth\/email\/callback/);
+  assert.match(bridge, /window\.history\.replaceState/);
+  assert.match(bridge, /window\.location\.replace/);
+  assert.match(callback, /data\.user\?\.user_metadata\?\.atlas_ui_language/);
   assert.match(callback, /requestedLocale/);
 });
