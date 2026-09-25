@@ -62,7 +62,7 @@ select 1 / case when (
 rollback;
 
 -- 3) RLS must remain enabled on all current public tenant/privacy-sensitive tables.
-select 1 / case when count(*) = 9 then 1 else 0 end as public_rls_enabled
+select 1 / case when count(*) = 14 then 1 else 0 end as public_rls_enabled
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public'
@@ -72,12 +72,17 @@ where n.nspname = 'public'
     'appointment_audit_events',
     'appointment_reminders',
     'appointments',
+    'clinic_export_audit',
     'clinic_members',
     'clinic_reminder_settings',
     'clinics',
+    'doctor_day_flow',
+    'doctor_workflow_settings',
     'doctors',
     'pending_reminder_delivery_events',
-    'reminder_delivery_events'
+    'reminder_delivery_events',
+    'smart_fill_open_slots',
+    'smart_fill_waitlist'
   );
 
 -- 4) Private patient-link tables must keep RLS and deny direct browser-role reads.
