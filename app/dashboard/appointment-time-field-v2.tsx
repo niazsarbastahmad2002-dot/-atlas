@@ -218,7 +218,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const time = to24(hour, minute, period);
   const value = `${date}T${time}`;
   const exactBooked = occupied.has(value);
-  const outOfRange = value < min || value > max;
+  const outOfRange = value < effectiveMin || value > max;
   const usable = Boolean(doctorId) && !exactBooked && !outOfRange;
 
   useEffect(() => {
