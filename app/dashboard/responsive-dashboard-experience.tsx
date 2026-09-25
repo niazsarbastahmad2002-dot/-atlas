@@ -18,54 +18,6 @@ function isExpandedSummaryViewport() {
   return window.matchMedia("(min-width: 700px)").matches;
 }
 
-function statusFromRow(row: HTMLElement): AppointmentStatus {
-  const selected = row.querySelector<HTMLSelectElement>(".appointment-status-select")?.value;
-  if (selected === "pending" || selected === "confirmed" || selected === "completed" || selected === "no_show" || selected === "cancelled") {
-    return selected;
-  }
-
-  if (row.querySelector(".status-confirmed")) return "confirmed";
-  if (row.querySelector(".status-completed")) return "completed";
-  if (row.querySelector(".status-no_show")) return "no_show";
-  if (row.querySelector(".status-cancelled")) return "cancelled";
-  return "pending";
-}
-
-function appointmentStatusCounts() {
-  const rows = Array.from(document.querySelectorAll<HTMLElement>(".polished-appointment-list .appointment-row"));
-  const counts: Record<AppointmentStatus, number> = {
-    pending: 0,
-    confirmed: 0,
-    completed: 0,
-    no_show: 0,
-    cancelled: 0,
-  };
-
-  rows.forEach((row) => {
-    counts[statusFromRow(row)] += 1;
-  });
-
-  return { total: rows.length, ...counts };
-}
-
-function upsertTabletStat(summary: HTMLElement, tone: SummaryTone, label: string, value: number) {
-  const selector = `.schedule-stat-${tone}`;
-  let card = summary.querySelector<HTMLElement>(selector);
-  if (!card) {
-    card = document.createElement("article");
-    card.className = `stat schedule-stat schedule-stat-${tone} atlas-tablet-extra-stat`;
-    const labelNode = document.createElement("span");
-    const valueNode = document.createElement("strong");
-    card.append(labelNode, valueNode);
-    summary.append(card);
-  }
-
-  const labelNode = card.querySelector<HTMLElement>("span");
-  const valueNode = card.querySelector<HTMLElement>("strong");
-  if (labelNode && labelNode.textContent !== label) labelNode.textContent = label;
-  if (valueNode && valueNode.textContent !== String(value)) valueNode.textContent = String(value);
-}
-
 function syncSummaryLayout() {
   const summary = document.querySelector<HTMLElement>(".schedule-summary");
   if (!summary) return;
