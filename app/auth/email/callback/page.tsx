@@ -16,7 +16,7 @@ export default function EmailAuthCallbackPage() {
         const query = new URLSearchParams(window.location.search);
         const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
         const localeCandidate = query.get("atlas_email_locale");
-        const locale = localeCandidate && EMAIL_LOCALES.has(localeCandidate) ? localeCandidate : "en";
+        const requestedLocale = localeCandidate && EMAIL_LOCALES.has(localeCandidate) ? localeCandidate : null;
         const next = query.get("next") === "/dashboard/select-clinic"
           ? "/dashboard/select-clinic"
           : "/dashboard";
@@ -28,7 +28,9 @@ export default function EmailAuthCallbackPage() {
         window.history.replaceState(
           null,
           "",
-          `/auth/email/callback?next=${encodeURIComponent(next)}&atlas_email_locale=${encodeURIComponent(locale)}`,
+          requestedLocale
+            ? `/auth/email/callback?next=${encodeURIComponent(next)}&atlas_email_locale=${encodeURIComponent(requestedLocale)}`
+            : `/auth/email/callback?next=${encodeURIComponent(next)}`,
         );
 
         if (authError || !accessToken || !refreshToken) {
@@ -36,11 +38,15 @@ export default function EmailAuthCallbackPage() {
         }
 
         const supabase = createClient();
-        const { error } = await supabase.auth.setSession({
+        const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
         if (error) throw error;
+
+        const metadataLocale = data.user?.user_metadata?.atlas_ui_language;
+        const locale = requestedLocale
+          ?? (typeof metadataLocale === "string" && EMAIL_LOCALES.has(metadataLocale) ? metadataLocale : "en");
 
         await fetch("/api/ui-language", {
           method: "POST",
