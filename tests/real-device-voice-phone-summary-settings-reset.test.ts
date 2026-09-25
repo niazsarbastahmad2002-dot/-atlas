@@ -51,13 +51,15 @@ test("phone schedule exposes the same six real appointment metrics in a compact 
   const experience = source("app/dashboard/responsive-dashboard-experience.tsx");
   const css = source("app/atlas-ipad-summary-final.css");
 
+  const dashboard = source("app/dashboard/page.tsx");
   assert.match(experience, /atlas-phone-six-stats/);
-  assert.match(experience, /upsertTabletStat\(summary, "total"/);
-  assert.match(experience, /upsertTabletStat\(summary, "pending"/);
-  assert.match(experience, /upsertTabletStat\(summary, "confirmed"/);
-  assert.match(experience, /upsertTabletStat\(summary, "completed"/);
-  assert.match(experience, /upsertTabletStat\(summary, "no-show"/);
-  assert.match(experience, /upsertTabletStat\(summary, "cancelled"/);
+  assert.doesNotMatch(experience, /upsertTabletStat/);
+  assert.match(dashboard, /tone="total"/);
+  assert.match(dashboard, /tone="pending"/);
+  assert.match(dashboard, /tone="confirmed"/);
+  assert.match(dashboard, /tone="completed"/);
+  assert.match(dashboard, /tone="no-show"/);
+  assert.match(dashboard, /tone="cancelled"/);
   assert.match(css, /@media \(max-width: 699px\)/);
   assert.match(css, /\.schedule-summary\.atlas-phone-six-stats/);
   assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
