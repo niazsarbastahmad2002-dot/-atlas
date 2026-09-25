@@ -122,9 +122,18 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const t = copy[locale];
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
-  const editable = status === "pending" || status === "confirmed" || status === "cancelled";
+  const statusEditable = status === "pending" || status === "confirmed" || status === "cancelled";
+  const withinEditWindow = new Date(appointmentAt).getTime() >= now - 60_000;
+  const editable = statusEditable && (open || withinEditWindow);
   const lockedDoctor = doctors.length === 1 ? doctors[0] : null;
+
+  useEffect(() => {
+    const refreshNow = () => setNow(Date.now());
+    const timer = window.setInterval(refreshNow, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const closeWhenAnotherEditorOpens = (event: Event) => {
