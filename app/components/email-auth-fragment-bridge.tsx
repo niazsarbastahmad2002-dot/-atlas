@@ -20,7 +20,7 @@ function callbackOrigin() {
 
 export function EmailAuthFragmentBridge() {
   useEffect(() => {
-    if (window.location.pathname === "/auth/email/callback") return;
+    if (window.location.pathname === "/auth/email/callback" || window.location.pathname === "/auth/invite") return;
 
     const fragment = authFragment();
     if (!fragment) return;
