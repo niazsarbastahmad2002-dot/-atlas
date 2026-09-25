@@ -275,7 +275,12 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   };
 
   useEffect(() => {
-    if (date < minDate) chooseDate(minDate);
+    if (date >= minDate) return;
+    setDate(minDate);
+    setMonth(monthFromValue(minDate));
+    setDateOpen(false);
+    setSavedAdvance(false);
+    setTouched(false);
   }, [date, minDate]);
 
   return (
