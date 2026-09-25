@@ -35,3 +35,10 @@ test("sample clinic time field stays inside the composer and left-aligns on WebK
   assert.match(demo, /\.demo-modern-time-input\{width:100%;max-width:100%;min-width:0;text-align:left;direction:ltr\}/);
   assert.match(demo, /::-webkit-date-and-time-value\{text-align:left\}/);
 });
+
+
+test("sample clinic reopen behavior matches the production appointment workflow", async () => {
+  const demo = await read("app/demo/demo-modern.tsx");
+  assert.match(demo, /status === "cancelled" \? "pending" : "confirmed"/);
+  assert.match(demo, /setStatus\(appointment\.id, reopenedStatus\(appointment\.status\)\)/);
+});

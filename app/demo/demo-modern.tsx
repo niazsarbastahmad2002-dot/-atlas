@@ -26,6 +26,10 @@ function timeLabel(value: string) {
   return `${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "PM" : "AM"}`;
 }
 
+function reopenedStatus(status: DemoStatus): DemoStatus {
+  return status === "cancelled" ? "pending" : "confirmed";
+}
+
 export function ModernDemoWorkspace() {
   const [appointments, setAppointments] = useState<DemoAppointment[]>(seededAppointments);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -103,7 +107,7 @@ export function ModernDemoWorkspace() {
                   {active ? <button type="button" onClick={() => setStatus(appointment.id, "completed")}>Complete</button> : null}
                   {active ? <button type="button" onClick={() => setStatus(appointment.id, "no_show")}>No-show</button> : null}
                   {active ? <button type="button" onClick={() => setStatus(appointment.id, "cancelled")}>Cancel</button> : null}
-                  {!active ? <button type="button" onClick={() => setStatus(appointment.id, "pending")}>Reopen</button> : null}
+                  {!active ? <button type="button" onClick={() => setStatus(appointment.id, reopenedStatus(appointment.status))}>Reopen</button> : null}
                 </div>
               </article>;
             })}</div>
