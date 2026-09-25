@@ -22,10 +22,10 @@ type Props = {
 type Period = "am" | "pm";
 
 const copy = {
-  en: { date: "Appointment date", time: "Appointment time", am: "AM", pm: "PM", hour: "Hour", minute: "Minute", custom: "Custom time", quick: "Available times", selected: "Selected", booked: "That exact time is already booked for this doctor.", doctor: "Choose a doctor first", previous: "Previous month", next: "Next month" },
-  ku: { date: "بەرواری وادە", time: "کاتی وادە", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", hour: "کاتژمێر", minute: "خولەک", custom: "کاتی تایبەت", quick: "کاتە بەردەستەکان", selected: "هەڵبژێردراو", booked: "ئەم کاتەی تەواو بۆ ئەم پزیشکە گیراوە.", doctor: "سەرەتا پزیشک هەڵبژێرە", previous: "مانگی پێشوو", next: "مانگی داهاتوو" },
-  bd: { date: "ڕێکەفتا وادەیێ", time: "دەمێ وادەیێ", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", hour: "دەمژمێر", minute: "خولەک", custom: "دەمێ تایبەت", quick: "دەمێن بەردەست", selected: "هەلبژارتی", booked: "ئەڤ دەم بۆ ڤی دکتۆری هاتییە گرتن.", doctor: "سەرەتا دکتۆر هەلبژێرە", previous: "مەها بەرێ", next: "مەها پاش" },
-  ar: { date: "تاريخ الموعد", time: "وقت الموعد", am: "صباحاً", pm: "مساءً", hour: "الساعة", minute: "الدقيقة", custom: "وقت مخصص", quick: "الأوقات المتاحة", selected: "المحدد", booked: "هذا الوقت محجوز بالفعل لهذا الطبيب.", doctor: "اختر الطبيب أولاً", previous: "الشهر السابق", next: "الشهر التالي" },
+  en: { date: "Appointment date", time: "Appointment time", am: "AM", pm: "PM", hour: "Hour", minute: "Minute", custom: "Custom time", quick: "Available times", selected: "Selected", booked: "That exact time is already booked for this doctor.", doctor: "Choose a doctor first", invalid: "Choose a valid future time", previous: "Previous month", next: "Next month" },
+  ku: { date: "بەرواری وادە", time: "کاتی وادە", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", hour: "کاتژمێر", minute: "خولەک", custom: "کاتی تایبەت", quick: "کاتە بەردەستەکان", selected: "هەڵبژێردراو", booked: "ئەم کاتەی تەواو بۆ ئەم پزیشکە گیراوە.", doctor: "سەرەتا پزیشک هەڵبژێرە", invalid: "کاتێکی دروستی داهاتوو هەڵبژێرە", previous: "مانگی پێشوو", next: "مانگی داهاتوو" },
+  bd: { date: "ڕێکەفتا وادەیێ", time: "دەمێ وادەیێ", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", hour: "دەمژمێر", minute: "خولەک", custom: "دەمێ تایبەت", quick: "دەمێن بەردەست", selected: "هەلبژارتی", booked: "ئەڤ دەم بۆ ڤی دکتۆری هاتییە گرتن.", doctor: "سەرەتا دکتۆر هەلبژێرە", invalid: "دەمەکێ دروست یێ داهاتوو هەلبژێرە", previous: "مەها بەرێ", next: "مەها پاش" },
+  ar: { date: "تاريخ الموعد", time: "وقت الموعد", am: "صباحاً", pm: "مساءً", hour: "الساعة", minute: "الدقيقة", custom: "وقت مخصص", quick: "الأوقات المتاحة", selected: "المحدد", booked: "هذا الوقت محجوز بالفعل لهذا الطبيب.", doctor: "اختر الطبيب أولاً", invalid: "اختر وقتاً مستقبلياً صالحاً", previous: "الشهر السابق", next: "الشهر التالي" },
 } as const;
 
 function pad(value: number) { return String(value).padStart(2, "0"); }
@@ -313,7 +313,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
         </>
       )}
       <input type="hidden" name="appointment_at" value={usable ? value : ""} />
-      <div className={`atlas-selected-time ${usable ? "" : "is-error"}`}><span>{usable ? text.selected : exactBooked ? text.booked : text.doctor}</span><strong dir="ltr">{usable ? `${localizeDigits(hour, locale)}:${localizeDigits(pad(minute), locale)} ${period === "am" ? text.am : text.pm}` : "—"}</strong></div>
+      <div className={`atlas-selected-time ${usable ? "" : "is-error"}`}><span>{usable ? text.selected : !doctorId ? text.doctor : exactBooked ? text.booked : text.invalid}</span><strong dir="ltr">{usable ? `${localizeDigits(hour, locale)}:${localizeDigits(pad(minute), locale)} ${period === "am" ? text.am : text.pm}` : "—"}</strong></div>
       <style>{`
         .atlas-time-v2{display:grid;gap:10px;position:relative}.atlas-time-v2>label{font-size:12px;font-weight:800}.atlas-time-v2>label small{font-weight:600;color:var(--muted)}
         .atlas-date-wrap{position:relative}.atlas-date-trigger{display:flex;width:100%;min-height:50px;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line-strong);border-radius:13px;padding:10px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:760;cursor:pointer}.atlas-date-value{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;letter-spacing:.02em}.atlas-date-chevron{color:var(--muted);font-size:16px}
