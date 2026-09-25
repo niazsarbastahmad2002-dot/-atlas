@@ -69,11 +69,27 @@ function shiftMonth(date: Date, amount: number) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1));
 }
 
+function baghdadLocalMinute(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Baghdad",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}T${value("hour")}:${value("minute")}`;
+}
+
 export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, occupiedByDoctor, timeZoneLabel, locale }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const appliedAfterRef = useRef("");
   const text = copy[locale];
-  const minDate = min.slice(0, 10);
+  const [liveMin, setLiveMin] = useState(min);
+  const effectiveMin = liveMin > min ? liveMin : min;
+  const minDate = effectiveMin.slice(0, 10);
   const maxDate = max.slice(0, 10);
   const initial = initialDate && initialDate >= minDate && initialDate <= maxDate ? initialDate : minDate;
   const [doctorId, setDoctorId] = useState("");
@@ -87,6 +103,16 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const [custom, setCustom] = useState(false);
   const [touched, setTouched] = useState(false);
   const [savedAdvance, setSavedAdvance] = useState(false);
+
+  useEffect(() => {
+    const refreshMinimum = () => {
+      const fiveMinutesFromNow = addLocalMinutes(baghdadLocalMinute(new Date()), 5);
+      setLiveMin((current) => current === fiveMinutesFromNow ? current : fiveMinutesFromNow);
+    };
+    refreshMinimum();
+    const timer = window.setInterval(refreshMinimum, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const form = rootRef.current?.closest("form");
@@ -174,15 +200,15 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const nextDefault = useMemo(() => {
     if (!doctorId) return "";
     const dayAppointments = [...occupied].filter((value) => value.startsWith(`${date}T`)).sort();
-    let candidate = dayAppointments.length ? addLocalMinutes(dayAppointments[dayAppointments.length - 1], interval) : date === minDate ? ceilToInterval(min, interval) : `${date}T09:00`;
+    let candidate = dayAppointments.length ? addLocalMinutes(dayAppointments[dayAppointments.length - 1], interval) : date === minDate ? ceilToInterval(effectiveMin, interval) : `${date}T09:00`;
     if (!candidate.startsWith(`${date}T`) && date !== minDate) candidate = `${date}T09:00`;
     for (let attempt = 0; attempt < 288; attempt += 1) {
-      if (candidate >= min && candidate <= max && !occupied.has(candidate)) return candidate;
+      if (candidate >= effectiveMin && candidate <= max && !occupied.has(candidate)) return candidate;
       candidate = addLocalMinutes(candidate, interval);
       if (!candidate.startsWith(`${date}T`)) break;
     }
     return "";
-  }, [date, doctorId, interval, max, min, minDate, occupied]);
+  }, [date, doctorId, effectiveMin, interval, max, minDate, occupied]);
 
   useEffect(() => {
     if (custom || touched || savedAdvance || !nextDefault) return;
@@ -192,7 +218,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const time = to24(hour, minute, period);
   const value = `${date}T${time}`;
   const exactBooked = occupied.has(value);
-  const outOfRange = value < min || value > max;
+  const outOfRange = value < effectiveMin || value > max;
   const usable = Boolean(doctorId) && !exactBooked && !outOfRange;
 
   useEffect(() => {
@@ -200,7 +226,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     let candidate = addLocalMinutes(value, interval);
     for (let attempt = 0; attempt < 288; attempt += 1) {
       if (!candidate.startsWith(`${date}T`)) return;
-      if (candidate >= min && candidate <= max && !occupied.has(candidate)) {
+      if (candidate >= effectiveMin && candidate <= max && !occupied.has(candidate)) {
         chooseParts(candidate);
         setCustom(false);
         setSavedAdvance(true);
@@ -208,7 +234,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       }
       candidate = addLocalMinutes(candidate, interval);
     }
-  }, [date, doctorId, interval, max, min, occupied, value]);
+  }, [date, doctorId, effectiveMin, interval, max, occupied, value]);
 
   useEffect(() => {
     if (!doctorId || touched || custom || typeof window === "undefined") return;
@@ -220,7 +246,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     let candidate = addLocalMinutes(after, interval);
     for (let attempt = 0; attempt < 288; attempt += 1) {
       if (!candidate.startsWith(`${date}T`)) break;
-      if (candidate >= min && candidate <= max && !occupied.has(candidate)) {
+      if (candidate >= effectiveMin && candidate <= max && !occupied.has(candidate)) {
         chooseParts(candidate);
         setCustom(false);
         setSavedAdvance(true);
@@ -230,7 +256,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       candidate = addLocalMinutes(candidate, interval);
     }
     appliedAfterRef.current = applicationKey;
-  }, [custom, date, doctorId, interval, max, min, occupied, touched]);
+  }, [custom, date, doctorId, effectiveMin, interval, max, occupied, touched]);
 
   const select = (nextHour: number, nextMinute: number, nextPeriod: Period) => {
     setHour(nextHour);
@@ -247,6 +273,15 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     setSavedAdvance(false);
     setTouched(false);
   };
+
+  useEffect(() => {
+    if (date >= minDate) return;
+    setDate(minDate);
+    setMonth(monthFromValue(minDate));
+    setDateOpen(false);
+    setSavedAdvance(false);
+    setTouched(false);
+  }, [date, minDate]);
 
   return (
     <div className="atlas-time-v2" ref={rootRef}>
@@ -307,7 +342,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
           <span className="atlas-time-grid-label">{text.minute}</span>
           <div className="atlas-minute-grid">{minuteOptions.map((item) => {
             const candidate = `${date}T${to24(hour, item, period)}`;
-            const blocked = occupied.has(candidate) || candidate < min || candidate > max;
+            const blocked = occupied.has(candidate) || candidate < effectiveMin || candidate > max;
             return <button className={minute === item ? "is-selected" : ""} type="button" key={item} disabled={blocked} onClick={() => select(hour, item, period)}>{localizeDigits(item, locale)}</button>;
           })}</div>
         </>
