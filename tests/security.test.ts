@@ -75,3 +75,29 @@ test("receptionist access is constrained to one assigned doctor at the database 
   assert.match(migration, /create policy appointments_update/);
   assert.match(migration, /create policy doctors_select/);
 });
+
+
+test("tenant-isolation smoke covers every current public tenant table", () => {
+  const smoke = readFileSync(
+    new URL("../supabase/tenant_isolation_smoke_test.sql", import.meta.url),
+    "utf8",
+  );
+  const protectedTables = [
+    "appointment_audit_events",
+    "appointment_reminders",
+    "appointments",
+    "clinic_export_audit",
+    "clinic_members",
+    "clinic_reminder_settings",
+    "clinics",
+    "doctor_day_flow",
+    "doctor_workflow_settings",
+    "doctors",
+    "pending_reminder_delivery_events",
+    "reminder_delivery_events",
+    "smart_fill_open_slots",
+    "smart_fill_waitlist",
+  ];
+  assert.match(smoke, /count\(\*\) = 14/);
+  for (const table of protectedTables) assert.match(smoke, new RegExp(`'${table}'`));
+});
