@@ -80,6 +80,33 @@ export async function cancelPendingInvitation(clinicId: string, userId: string) 
   redirect(staffUrl(clinicId, "notice", "invitation_removed"));
 }
 
+export async function revokeManualStaffInvitation(clinicId: string, invitationId: string) {
+  if (!isUuid(clinicId) || !isUuid(invitationId)) {
+    redirect(staffUrl(clinicId, "error", "invalid"));
+  }
+
+  const { ownerId } = await ownerContext(clinicId);
+  const admin = createAdminClient();
+  const revokeRpc = admin.rpc as unknown as (
+    functionName: string,
+    args: { p_invitation_id: string; p_clinic_id: string; p_owner_id: string },
+  ) => Promise<{ data: boolean | null; error: { code?: string; message?: string } | null }>;
+
+  const { data, error } = await revokeRpc("revoke_manual_staff_invite_service", {
+    p_invitation_id: invitationId,
+    p_clinic_id: clinicId,
+    p_owner_id: ownerId,
+  });
+
+  if (error || data !== true) {
+    console.error("Atlas receptionist invitation revocation failed", { code: error?.code ?? "revoke_failed" });
+    redirect(staffUrl(clinicId, "error", "invite_revoke_failed"));
+  }
+
+  revalidatePath("/dashboard/staff");
+  redirect(staffUrl(clinicId, "notice", "invitation_revoked"));
+}
+
 export async function updateStaffRole(clinicId: string, userId: string, formData: FormData) {
   const role = String(formData.get("role") ?? "");
   const assignedDoctorId = String(formData.get("assigned_doctor_id") ?? "");

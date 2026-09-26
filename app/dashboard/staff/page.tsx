@@ -6,7 +6,7 @@ import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { readPendingStaffInvitations } from "@/lib/staff-invitations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { cancelPendingInvitation, removeStaffMember, transferClinicAdministrator, updateStaffRole } from "./actions";
+import { cancelPendingInvitation, removeStaffMember, revokeManualStaffInvitation, transferClinicAdministrator, updateStaffRole } from "./actions";
 import { InviteLinkForm } from "./invite-link-form";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,11 @@ type StaffCopy = {
   transferConfirm: string;
   transferButton: string;
   transferEmpty: string;
+  activeInvites: string;
+  activeInvitesHelp: string;
+  expires: string;
+  revokeInvite: string;
+  noActiveInvites: string;
 };
 
 const copy: Record<UiLocale, StaffCopy> = {
@@ -70,6 +75,11 @@ const copy: Record<UiLocale, StaffCopy> = {
     transferConfirm: "I understand this person will become the clinic administrator.",
     transferButton: "Transfer administration",
     transferEmpty: "Add another person to the clinic before transferring administration.",
+    activeInvites: "Active invitations",
+    activeInvitesHelp: "These secure one-use links can still grant receptionist access. Atlas does not store the shareable link itself.",
+    expires: "Expires",
+    revokeInvite: "Revoke invitation",
+    noActiveInvites: "No active manual invitations.",
   },
   ku: {
     title: "دەسەڵاتی کلینیک",
@@ -97,6 +107,11 @@ const copy: Record<UiLocale, StaffCopy> = {
     transferConfirm: "تێدەگەم کە ئەم کەسە دەبێتە بەڕێوەبەری کلینیک.",
     transferButton: "گواستنەوەی بەڕێوەبردن",
     transferEmpty: "پێش گواستنەوەی بەڕێوەبردن کەسێکی تر زیاد بکە.",
+    activeInvites: "بانگهێشتە چالاکەکان",
+    activeInvitesHelp: "ئەم بەستەرە پارێزراوە یەکجارانە هێشتا دەتوانن دەسەڵاتی ڕیسێپشن بدەن. Atlas خودی بەستەری هاوبەشکراو پاشەکەوت ناکات.",
+    expires: "بەسەر دەچێت",
+    revokeInvite: "بانگهێشت هەڵبوەشێنەوە",
+    noActiveInvites: "هیچ بانگهێشتی دەستی چالاک نییە.",
   },
   bd: {
     title: "دەستهەلاتا کلینیکێ",
@@ -124,6 +139,11 @@ const copy: Record<UiLocale, StaffCopy> = {
     transferConfirm: "دزانم ئەڤ کەسە دێ بیتە بەڕێڤەبەرێ کلینیکێ.",
     transferButton: "بەڕێڤەبرنێ بگوهێزە",
     transferEmpty: "بەری گوهەستنا بەڕێڤەبرنێ کەسەکێ دی زێدە بکە.",
+    activeInvites: "بانگهێشتێن چالاک",
+    activeInvitesHelp: "ئەڤ لینکێن پاراستی یێن ئێکجارە هێشتا دکارن دەستهەلاتا ڕیسێپشنێ بدەن. Atlas خودا لینکا هاتیە هنارتن ناپارێزیت.",
+    expires: "دێ بەسەر چیت",
+    revokeInvite: "بانگهێشتێ هەلوەشینە",
+    noActiveInvites: "چ بانگهێشتا دەستی یا چالاک نینە.",
   },
   ar: {
     title: "صلاحيات العيادة",
@@ -151,6 +171,11 @@ const copy: Record<UiLocale, StaffCopy> = {
     transferConfirm: "أفهم أن هذا الشخص سيصبح مسؤول العيادة.",
     transferButton: "نقل الإدارة",
     transferEmpty: "أضف شخصاً آخر للعيادة قبل نقل الإدارة.",
+    activeInvites: "الدعوات الفعالة",
+    activeInvitesHelp: "هذه الروابط الآمنة ذات الاستخدام الواحد ما زالت تقدر تمنح صلاحية موظف استقبال. Atlas ما يخزن الرابط القابل للمشاركة نفسه.",
+    expires: "تنتهي",
+    revokeInvite: "إلغاء الدعوة",
+    noActiveInvites: "ماكو دعوات يدوية فعالة.",
   },
 };
 
@@ -167,6 +192,7 @@ const errorMessages: Record<UiLocale, Record<string, string>> = {
     save_failed: "The access change could not be saved.",
     transfer_invalid: "Choose another person and confirm the transfer.",
     transfer_failed: "Administration could not be transferred. Try again.",
+    invite_revoke_failed: "That invitation could not be revoked. Refresh and try again.",
   },
   ku: {
     invalid: "زانیارییەکانی ستاف بپشکنە و دووبارە هەوڵ بدە.",
@@ -180,6 +206,7 @@ const errorMessages: Record<UiLocale, Record<string, string>> = {
     save_failed: "گۆڕانکاریی دەسەڵات پاشەکەوت نەکرا.",
     transfer_invalid: "کەسێکی تر هەڵبژێرە و گواستنەوەکە پشتڕاست بکەرەوە.",
     transfer_failed: "گواستنەوەی بەڕێوەبردن سەرکەوتوو نەبوو. دووبارە هەوڵ بدە.",
+    invite_revoke_failed: "بانگهێشتەکە هەڵنەوەشایەوە. پەڕەکە نوێ بکەرەوە و دووبارە هەوڵ بدە.",
   },
   bd: {
     invalid: "زانیاریێن ستافی بپشکنە و جارەکا دی هەول بدە.",
@@ -193,6 +220,7 @@ const errorMessages: Record<UiLocale, Record<string, string>> = {
     save_failed: "گوهۆڕینا دەستهەلاتێ نەهاتە پاراستن.",
     transfer_invalid: "کەسەکێ دی هەلبژێرە و گوهەستنێ پشتڕاست بکە.",
     transfer_failed: "گوهەستنا بەڕێڤەبرنێ سەرنەکەفت. جارەکا دی هەول بدە.",
+    invite_revoke_failed: "بانگهێشت نەهاتە هەلوەشاندن. پەڕێ نوو بکە و جارەکا دی هەول بدە.",
   },
   ar: {
     invalid: "راجع بيانات الموظف وحاول مرة ثانية.",
@@ -206,6 +234,7 @@ const errorMessages: Record<UiLocale, Record<string, string>> = {
     save_failed: "ما قدرنا نحفظ تغيير الصلاحية.",
     transfer_invalid: "اختَر شخصاً آخر وأكد نقل الإدارة.",
     transfer_failed: "ما تم نقل الإدارة. حاول مرة ثانية.",
+    invite_revoke_failed: "ما قدرنا نلغي الدعوة. حدّث الصفحة وحاول مرة ثانية.",
   },
 };
 
@@ -217,6 +246,7 @@ const noticeMessages: Record<UiLocale, Record<string, string>> = {
     updated: "Access updated.",
     removed: "Access removed.",
     administrator_transferred: "Clinic administration transferred.",
+    invitation_revoked: "Invitation revoked.",
   },
   ku: {
     added: "دەسەڵاتی ڕیسێپشن زیاد کرا.",
@@ -225,6 +255,7 @@ const noticeMessages: Record<UiLocale, Record<string, string>> = {
     updated: "دەسەڵات نوێ کرایەوە.",
     removed: "دەسەڵات لابرا.",
     administrator_transferred: "بەڕێوەبردنی کلینیک گوازرایەوە.",
+    invitation_revoked: "بانگهێشتەکە هەڵوەشایەوە.",
   },
   bd: {
     added: "دەستهەلاتا ڕیسێپشنێ زێدە کرا.",
@@ -233,6 +264,7 @@ const noticeMessages: Record<UiLocale, Record<string, string>> = {
     updated: "دەستهەلات هاتە نووکرن.",
     removed: "دەستهەلات هاتە لابرن.",
     administrator_transferred: "بەڕێڤەبرنا کلینیکێ هاتە گوهەستن.",
+    invitation_revoked: "بانگهێشت هاتە هەلوەشاندن.",
   },
   ar: {
     added: "تمت إضافة صلاحية موظف الاستقبال.",
@@ -241,6 +273,7 @@ const noticeMessages: Record<UiLocale, Record<string, string>> = {
     updated: "تم تحديث الصلاحية.",
     removed: "تمت إزالة الصلاحية.",
     administrator_transferred: "تم نقل إدارة العيادة.",
+    invitation_revoked: "تم إلغاء الدعوة.",
   },
 };
 
@@ -297,10 +330,28 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
 
   let memberRows: Array<{ user_id: string; role: string; assigned_doctor_id: string | null; identity: string }> = [];
   let pendingRows: Array<{ user_id: string; assigned_doctor_id: string }> = [];
+  let activeManualInvites: Array<{ invitation_id: string; doctor_name: string; created_at: string; expires_at: string }> = [];
   try {
     const admin = createAdminClient();
-    const { data: directory, error: directoryError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (directoryError) throw directoryError;
+    const inviteRpc = admin.rpc as unknown as (
+      functionName: string,
+      args: { p_clinic_id: string; p_owner_id: string },
+    ) => Promise<{
+      data: Array<{ invitation_id: string; doctor_name: string; created_at: string; expires_at: string }> | null;
+      error: { code?: string; message?: string } | null;
+    }>;
+    const [
+      { data: directory, error: directoryError },
+      { data: inviteRows, error: inviteRowsError },
+    ] = await Promise.all([
+      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      inviteRpc("list_manual_staff_invites_service", {
+        p_clinic_id: clinic.id,
+        p_owner_id: userData.user.id,
+      }),
+    ]);
+    if (directoryError || inviteRowsError) throw directoryError ?? inviteRowsError;
+    activeManualInvites = inviteRows ?? [];
     const identityById = new Map(directory.users.map((user) => [user.id, user.phone ?? text.phonePending]));
     memberRows = (members ?? []).map((member) => ({
       ...member,
@@ -355,6 +406,30 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
           locale={locale}
           doctors={activeDoctors.map((doctor) => ({ id: doctor.id, name: doctor.name }))}
         />
+
+        <section className="settings-card">
+          <div className="settings-card-heading">
+            <span className="settings-card-icon" aria-hidden="true">🔐</span>
+            <div>
+              <div className="eyebrow">{text.pending}</div>
+              <h2>{text.activeInvites}</h2>
+              <p>{text.activeInvitesHelp}</p>
+            </div>
+          </div>
+          <div className="doctor-settings-list">
+            {activeManualInvites.length ? activeManualInvites.map((invitation) => (
+              <article className="doctor-settings-row" key={invitation.invitation_id}>
+                <div className="patient-cell">
+                  <strong>{invitation.doctor_name}</strong>
+                  <span className="field-help">{text.expires}: {formatStaffInviteExpiry(invitation.expires_at)}</span>
+                </div>
+                <form action={revokeManualStaffInvitation.bind(null, clinic.id, invitation.invitation_id)}>
+                  <button className="danger-link" type="submit">{text.revokeInvite}</button>
+                </form>
+              </article>
+            )) : <p className="field-help">{text.noActiveInvites}</p>}
+          </div>
+        </section>
 
         <section className="settings-card">
           <div className="settings-card-heading">
@@ -439,6 +514,20 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       </div>
     </main>
   );
+}
+
+function formatStaffInviteExpiry(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Baghdad",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
 }
 
 function DirectoryUnavailable({ label, back }: { label: string; back: string }) {
