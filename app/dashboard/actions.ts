@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  appointmentCreatePayloadMatches,
   canTransitionAppointment,
   classifyAppointmentCreateError,
   cleanDisplayName,
@@ -276,12 +277,36 @@ export async function createAppointment(formData: FormData) {
       `${error.message ?? ""} ${error.details ?? ""}`,
     );
     if (conflict === "duplicate") {
-      redirect(appointmentDestination({
-        clinicId,
+      const { data: existing, error: existingError } = await supabase
+        .from("appointments")
+        .select("patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_consent, reminder_language, voided_at")
+        .eq("clinic_id", clinicId)
+        .eq("idempotency_key", idempotencyKey)
+        .maybeSingle();
+
+      const matches = !existingError && existing && appointmentCreatePayloadMatches(existing, {
+        patientName,
+        patientPhone,
+        contactRelationship: "patient",
         doctorId: doctor.id,
-        appointmentAt,
-        notice: "appointment_duplicate",
-      }));
+        appointmentAt: appointmentAt.toISOString(),
+        reminderConsent,
+        reminderLanguage,
+      });
+
+      if (matches) {
+        redirect(appointmentDestination({
+          clinicId,
+          doctorId: doctor.id,
+          appointmentAt,
+          notice: "appointment_duplicate",
+        }));
+      }
+
+      console.error("Atlas appointment idempotency payload mismatch", {
+        code: existingError?.code ?? "payload_mismatch",
+      });
+      redirect(dashboardUrl("error", "appointment_create_failed", clinicId));
     }
     if (conflict === "slot_taken") {
       redirect(appointmentDestination({
