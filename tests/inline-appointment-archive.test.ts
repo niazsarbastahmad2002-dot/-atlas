@@ -31,6 +31,6 @@ test("fast appointment removal is concurrency-safe and repeat removal is idempot
     archiveAction,
     /if \(current && isAppointmentStatus\(current\.status\) && current\.status !== expectedStatus\) \{\s*return \{ ok: false, reason: "stale" \};\s*\}\s*return \{ ok: false, reason: "stale" \};/,
   );
-  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus\)/);
+  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, revision\)/);
   assert.match(ui, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
 });
