@@ -28,7 +28,13 @@ export function LoginLanguagePicker({ locale }: { locale: UiLocale }) {
         outcome: response.ok ? "success" : "failure",
         interaction: "form",
       });
-      if (response.ok) window.location.reload();
+      const url = new URL(window.location.href);
+      url.searchParams.set("lang", value);
+      window.location.assign(url.toString());
+    } catch {
+      const url = new URL(window.location.href);
+      url.searchParams.set("lang", value);
+      window.location.assign(url.toString());
     } finally {
       setBusy(false);
     }
