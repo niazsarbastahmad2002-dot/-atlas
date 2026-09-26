@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { AppointmentMutationFailure, AppointmentStatus } from "@/lib/appointments";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { AppointmentEditDateTimeField } from "./appointment-edit-datetime-field";
@@ -40,6 +40,7 @@ const copy = {
     slotTaken: "That doctor already has an appointment at this time. Choose another time.",
     busy: "This appointment is still updating. Try again.",
     closed: "Reopen this appointment before changing its details.",
+    stale: "This appointment changed elsewhere. Loading the latest status.",
     failed: "The appointment could not be updated. Try again.",
   },
   ku: {
@@ -54,6 +55,7 @@ const copy = {
     slotTaken: "ئەم پزیشکە لەم کاتەدا وادەیەکی تری هەیە. کاتێکی تر هەڵبژێرە.",
     busy: "وادەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.",
     closed: "پێش گۆڕینی زانیارییەکان، وادەکە بکەرەوە.",
+    stale: "ئەم وادەیە لە شوێنێکی تر گۆڕدراوە. نوێترین دۆخ بار دەکرێتەوە.",
     failed: "وادەکە نوێ نەکرایەوە. دووبارە هەوڵ بدە.",
   },
   bd: {
@@ -68,6 +70,7 @@ const copy = {
     slotTaken: "ڤی دکتۆری ل ڤی دەمی وادە هەیە. دەمەکێ دی هەلبژێرە.",
     busy: "وادە هێشتا دهێتە نوێکرن. دووبارە هەول بدە.",
     closed: "بەری گۆڕینا زانیارییان، وادەیێ دووبارە ڤەکە.",
+    stale: "ئەڤ وادەیە ل جهەکێ دی هاتیە گۆڕین. نووترین بار دهێتە بارکرن.",
     failed: "وادە نەهاتە نوێکرن. دووبارە هەول بدە.",
   },
   ar: {
@@ -82,6 +85,7 @@ const copy = {
     slotTaken: "لدى هذا الطبيب موعد في هذا الوقت. اختر وقتاً آخر.",
     busy: "الموعد قيد التحديث. حاول مرة أخرى.",
     closed: "أعد فتح الموعد قبل تغيير تفاصيله.",
+    stale: "تم تغيير هذا الموعد من مكان آخر. سيتم تحميل أحدث حالة.",
     failed: "تعذر تحديث الموعد. حاول مرة أخرى.",
   },
 } as const;
@@ -97,6 +101,7 @@ function failureText(locale: UiLocale, reason: AppointmentMutationFailure) {
   const t = copy[locale];
   if (reason === "slot_taken") return t.slotTaken;
   if (reason === "busy") return t.busy;
+  if (reason === "stale") return t.stale;
   if (reason === "invalid" || reason === "past_cancelled" || reason === "too_early") return t.invalid;
   return t.failed;
 }
@@ -124,6 +129,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
+  const openedStatusRef = useRef<AppointmentStatus | null>(null);
   const statusEditable = status === "pending" || status === "confirmed" || status === "cancelled";
   const withinEditWindow = new Date(appointmentAt).getTime() >= now - 60_000;
   const editable = statusEditable && (open || withinEditWindow);
@@ -136,9 +142,18 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   }, []);
 
   useEffect(() => {
+    if (open && openedStatusRef.current && openedStatusRef.current !== status) {
+      openedStatusRef.current = null;
+      setOpen(false);
+      setMessage({ tone: "error", text: t.stale });
+    }
+  }, [open, status, t.stale]);
+
+  useEffect(() => {
     const closeWhenAnotherEditorOpens = (event: Event) => {
       const detail = (event as CustomEvent<{ appointmentId?: string }>).detail;
       if (detail?.appointmentId && detail.appointmentId !== appointmentId) {
+        openedStatusRef.current = null;
         setOpen(false);
         setMessage(null);
       }
@@ -152,9 +167,11 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   function toggleEditor() {
     setMessage(null);
     if (open) {
+      openedStatusRef.current = null;
       setOpen(false);
       return;
     }
+    openedStatusRef.current = status;
     window.dispatchEvent(new CustomEvent(editorOpenEvent, { detail: { appointmentId } }));
     setOpen(true);
   }
@@ -163,12 +180,24 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
     if (pending) return;
     setMessage(null);
     startTransition(async () => {
-      const result = await updateAppointmentDetailsInline(clinicId, appointmentId, formData);
+      const expectedStatus = openedStatusRef.current;
+      if (!expectedStatus) {
+        setMessage({ tone: "error", text: t.stale });
+        router.refresh();
+        return;
+      }
+      const result = await updateAppointmentDetailsInline(clinicId, appointmentId, expectedStatus, formData);
       if (!result.ok) {
         setMessage({ tone: "error", text: failureText(locale, result.reason) });
+        if (result.reason === "stale") {
+          openedStatusRef.current = null;
+          setOpen(false);
+          router.refresh();
+        }
         return;
       }
       setMessage({ tone: "success", text: t.saved });
+      openedStatusRef.current = null;
       router.refresh();
       setOpen(false);
     });

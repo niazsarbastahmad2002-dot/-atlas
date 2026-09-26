@@ -239,6 +239,7 @@ export async function updateAppointmentStatusInline(
 export async function updateAppointmentDetailsInline(
   clinicId: string,
   id: string,
+  expectedStatus: string,
   formData: FormData,
 ): Promise<InlineAppointmentResult> {
   const rawPatientName = String(formData.get("patient_name") ?? "");
@@ -253,6 +254,8 @@ export async function updateAppointmentDetailsInline(
   if (
     !isUuid(clinicId)
     || !isUuid(id)
+    || !isAppointmentStatus(expectedStatus)
+    || !["pending", "confirmed", "cancelled"].includes(expectedStatus)
     || !isUuid(doctorId)
     || !isValidDisplayName(rawPatientName)
     || !patientPhone
@@ -285,7 +288,7 @@ export async function updateAppointmentDetailsInline(
     })
     .eq("clinic_id", clinicId)
     .eq("id", id)
-    .in("status", ["pending", "confirmed", "cancelled"])
+    .eq("status", expectedStatus)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();
@@ -295,7 +298,20 @@ export async function updateAppointmentDetailsInline(
     if (reason === "failed") console.error("Atlas inline appointment edit failed", { code: error.code });
     return { ok: false, reason };
   }
-  if (!data) return { ok: false, reason: "invalid" };
+  if (!data) {
+    const { data: current } = await supabase
+      .from("appointments")
+      .select("status")
+      .eq("clinic_id", clinicId)
+      .eq("id", id)
+      .is("voided_at", null)
+      .maybeSingle();
+
+    if (current && isAppointmentStatus(current.status) && current.status !== expectedStatus) {
+      return { ok: false, reason: "stale" };
+    }
+    return { ok: false, reason: "invalid" };
+  }
 
   revalidatePath("/dashboard");
   return { ok: true, updated: true };
