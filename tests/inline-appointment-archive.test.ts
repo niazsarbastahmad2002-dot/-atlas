@@ -14,6 +14,8 @@ test("fast appointment removal writes the complete archive audit metadata", () =
   assert.match(action, /voided_by: userId/);
   assert.match(action, /void_reason: "Removed by clinic staff"/);
   assert.match(action, /\.eq\("status", expectedStatus\)/);
+  assert.match(action, /archiveAppointmentInline[\s\S]*\.eq\("appointment_revision", expectedRevision\)/);
+  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, revision\)/);
   assert.match(action, /revalidatePath\("\/dashboard\/history"\)/);
 });
 
