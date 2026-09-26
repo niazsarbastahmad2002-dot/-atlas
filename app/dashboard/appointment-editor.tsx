@@ -12,6 +12,7 @@ type DoctorOption = { id: string; name: string };
 type AppointmentEditorProps = {
   clinicId: string;
   appointmentId: string;
+  revision: number;
   status: AppointmentStatus;
   patientName: string;
   patientPhone: string;
@@ -110,6 +111,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const {
     clinicId,
     appointmentId,
+    revision,
     status,
     patientName,
     patientPhone,
@@ -186,7 +188,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
         router.refresh();
         return;
       }
-      const result = await updateAppointmentDetailsInline(clinicId, appointmentId, expectedStatus, formData);
+      const result = await updateAppointmentDetailsInline(clinicId, appointmentId, expectedStatus, revision, formData);
       if (!result.ok) {
         setMessage({ tone: "error", text: failureText(locale, result.reason) });
         if (result.reason === "stale") {
