@@ -14,6 +14,7 @@ test("appointment detail edits compare against the status the editor opened with
   assert.match(action, /select\("status, voided_at"\)/);
   assert.match(action, /current\?\.voided_at[\s\S]*reason: "stale"/);
   assert.match(action, /current\.status !== expectedStatus[\s\S]*reason: "stale"/);
+  assert.match(action, /updateAppointmentDetailsInline[\s\S]*if \(!data\)[\s\S]*current\?\.voided_at[\s\S]*current\.status !== expectedStatus[\s\S]*return \{ ok: false, reason: "stale" \}/);
 
   assert.match(editor, /openedStatusRef\.current = status/);
   assert.match(editor, /const expectedStatus = openedStatusRef\.current/);
