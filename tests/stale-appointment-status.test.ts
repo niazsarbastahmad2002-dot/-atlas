@@ -16,7 +16,6 @@ test("fast appointment status updates use compare-and-set against the status the
   assert.match(ui, /updateAppointmentStatusInline\(clinicId, appointmentId, previousStatus, revision, nextStatus\)/);
   assert.match(action, /return \{ ok: false, reason: "stale" \}/);
 
-  assert.match(ui, /updateAppointmentStatusInline\(clinicId, appointmentId, previousStatus, nextStatus\)/);
   assert.match(ui, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
 });
 
