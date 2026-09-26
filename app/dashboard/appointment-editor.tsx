@@ -132,6 +132,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const [now, setNow] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
   const openedStatusRef = useRef<AppointmentStatus | null>(null);
+  const openedRevisionRef = useRef<number | null>(null);
   const statusEditable = status === "pending" || status === "confirmed" || status === "cancelled";
   const withinEditWindow = new Date(appointmentAt).getTime() >= now - 60_000;
   const editable = statusEditable && (open || withinEditWindow);
@@ -144,18 +145,23 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   }, []);
 
   useEffect(() => {
-    if (open && openedStatusRef.current && openedStatusRef.current !== status) {
+    if (open && (
+      (openedStatusRef.current && openedStatusRef.current !== status)
+      || (openedRevisionRef.current !== null && openedRevisionRef.current !== revision)
+    )) {
       openedStatusRef.current = null;
+      openedRevisionRef.current = null;
       setOpen(false);
       setMessage({ tone: "error", text: t.stale });
     }
-  }, [open, status, t.stale]);
+  }, [open, revision, status, t.stale]);
 
   useEffect(() => {
     const closeWhenAnotherEditorOpens = (event: Event) => {
       const detail = (event as CustomEvent<{ appointmentId?: string }>).detail;
       if (detail?.appointmentId && detail.appointmentId !== appointmentId) {
         openedStatusRef.current = null;
+        openedRevisionRef.current = null;
         setOpen(false);
         setMessage(null);
       }
@@ -170,10 +176,12 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
     setMessage(null);
     if (open) {
       openedStatusRef.current = null;
+      openedRevisionRef.current = null;
       setOpen(false);
       return;
     }
     openedStatusRef.current = status;
+    openedRevisionRef.current = revision;
     window.dispatchEvent(new CustomEvent(editorOpenEvent, { detail: { appointmentId } }));
     setOpen(true);
   }
@@ -183,16 +191,18 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
     setMessage(null);
     startTransition(async () => {
       const expectedStatus = openedStatusRef.current;
-      if (!expectedStatus) {
+      const expectedRevision = openedRevisionRef.current;
+      if (!expectedStatus || expectedRevision === null) {
         setMessage({ tone: "error", text: t.stale });
         router.refresh();
         return;
       }
-      const result = await updateAppointmentDetailsInline(clinicId, appointmentId, expectedStatus, revision, formData);
+      const result = await updateAppointmentDetailsInline(clinicId, appointmentId, expectedStatus, expectedRevision, formData);
       if (!result.ok) {
         setMessage({ tone: "error", text: failureText(locale, result.reason) });
         if (result.reason === "stale") {
           openedStatusRef.current = null;
+          openedRevisionRef.current = null;
           setOpen(false);
           router.refresh();
         }
@@ -200,6 +210,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
       }
       setMessage({ tone: "success", text: t.saved });
       openedStatusRef.current = null;
+      openedRevisionRef.current = null;
       router.refresh();
       setOpen(false);
     });
