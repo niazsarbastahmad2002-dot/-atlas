@@ -154,27 +154,94 @@ const copy: Record<UiLocale, StaffCopy> = {
   },
 };
 
-const errorMessages: Record<string, string> = {
-  invalid: "Check the staff details and try again.",
-  doctor_required: "Choose an active doctor for this receptionist.",
-  owner_required: "Only clinic administration can manage access.",
-  directory_unavailable: "The staff directory is temporarily unavailable.",
-  user_not_found: "That Atlas account could not be found.",
-  owner_protected: "The clinic administrator cannot be removed or demoted.",
-  already_member: "That person already has access to this clinic.",
-  invite_failed: "Atlas could not create that receptionist invitation. Try again.",
-  save_failed: "The access change could not be saved.",
-  transfer_invalid: "Choose another person and confirm the transfer.",
-  transfer_failed: "Administration could not be transferred. Try again.",
+const errorMessages: Record<UiLocale, Record<string, string>> = {
+  en: {
+    invalid: "Check the staff details and try again.",
+    doctor_required: "Choose an active doctor for this receptionist.",
+    owner_required: "Only clinic administration can manage access.",
+    directory_unavailable: "The staff directory is temporarily unavailable.",
+    user_not_found: "That Atlas account could not be found.",
+    owner_protected: "The clinic administrator cannot be removed or demoted.",
+    already_member: "That person already has access to this clinic.",
+    invite_failed: "Atlas could not create that receptionist invitation. Try again.",
+    save_failed: "The access change could not be saved.",
+    transfer_invalid: "Choose another person and confirm the transfer.",
+    transfer_failed: "Administration could not be transferred. Try again.",
+  },
+  ku: {
+    invalid: "زانیارییەکانی ستاف بپشکنە و دووبارە هەوڵ بدە.",
+    doctor_required: "پزیشکێکی چالاک بۆ ئەم ستافی ڕیسێپشنە هەڵبژێرە.",
+    owner_required: "تەنها بەڕێوەبەری کلینیک دەتوانێت دەسەڵات بەڕێوە ببات.",
+    directory_unavailable: "لیستی ستاف کاتێکی کورت بەردەست نییە.",
+    user_not_found: "ئەم هەژمارەی Atlas نەدۆزرایەوە.",
+    owner_protected: "بەڕێوەبەری کلینیک لێرە ناتوانرێت لاببرێت یان دەسەڵاتی کەم بکرێتەوە.",
+    already_member: "ئەم کەسە پێشتر دەسەڵاتی ئەم کلینیکەی هەیە.",
+    invite_failed: "Atlas نەیتوانی بانگهێشتی ڕیسێپشن دروست بکات. دووبارە هەوڵ بدە.",
+    save_failed: "گۆڕانکاریی دەسەڵات پاشەکەوت نەکرا.",
+    transfer_invalid: "کەسێکی تر هەڵبژێرە و گواستنەوەکە پشتڕاست بکەرەوە.",
+    transfer_failed: "گواستنەوەی بەڕێوەبردن سەرکەوتوو نەبوو. دووبارە هەوڵ بدە.",
+  },
+  bd: {
+    invalid: "زانیاریێن ستافی بپشکنە و جارەکا دی هەول بدە.",
+    doctor_required: "دکتۆرەکێ چالاک بۆ ڤی ستافێ ڕیسێپشنێ هەلبژێرە.",
+    owner_required: "تەنێ بەڕێڤەبەرێ کلینیکێ دشێت دەستهەلاتێ بەڕێڤە ببەت.",
+    directory_unavailable: "لیستا ستافی بۆ دەمەکێ کورت بەردەست نینە.",
+    user_not_found: "ئەڤ هەژمارا Atlas نەهاتە دیتن.",
+    owner_protected: "بەڕێڤەبەرێ کلینیکێ ل ڤێرێ ناهێتە لابرن یان دەستهەلاتا وی کێمکرن.",
+    already_member: "ئەڤ کەسە ژبەرێ دەستهەلاتا ڤێ کلینیکێ هەیە.",
+    invite_failed: "Atlas نەشیا بانگهێشتا ڕیسێپشنێ دروست بکەت. جارەکا دی هەول بدە.",
+    save_failed: "گوهۆڕینا دەستهەلاتێ نەهاتە پاراستن.",
+    transfer_invalid: "کەسەکێ دی هەلبژێرە و گوهەستنێ پشتڕاست بکە.",
+    transfer_failed: "گوهەستنا بەڕێڤەبرنێ سەرنەکەفت. جارەکا دی هەول بدە.",
+  },
+  ar: {
+    invalid: "راجع بيانات الموظف وحاول مرة ثانية.",
+    doctor_required: "اختَر طبيباً فعالاً لموظف الاستقبال.",
+    owner_required: "فقط إدارة العيادة تقدر تدير الصلاحيات.",
+    directory_unavailable: "دليل الموظفين غير متاح مؤقتاً.",
+    user_not_found: "ما لقينا حساب Atlas هذا.",
+    owner_protected: "مسؤول العيادة ما ينشال ولا تنخفض صلاحيته من هنا.",
+    already_member: "هذا الشخص عنده صلاحية لهذه العيادة بالفعل.",
+    invite_failed: "ما قدر Atlas ينشئ دعوة موظف الاستقبال. حاول مرة ثانية.",
+    save_failed: "ما قدرنا نحفظ تغيير الصلاحية.",
+    transfer_invalid: "اختَر شخصاً آخر وأكد نقل الإدارة.",
+    transfer_failed: "ما تم نقل الإدارة. حاول مرة ثانية.",
+  },
 };
 
-const noticeMessages: Record<string, string> = {
-  added: "Receptionist access added.",
-  invited: "Receptionist invitation created.",
-  invitation_removed: "Pending invitation removed.",
-  updated: "Access updated.",
-  removed: "Access removed.",
-  administrator_transferred: "Clinic administration transferred.",
+const noticeMessages: Record<UiLocale, Record<string, string>> = {
+  en: {
+    added: "Receptionist access added.",
+    invited: "Receptionist invitation created.",
+    invitation_removed: "Pending invitation removed.",
+    updated: "Access updated.",
+    removed: "Access removed.",
+    administrator_transferred: "Clinic administration transferred.",
+  },
+  ku: {
+    added: "دەسەڵاتی ڕیسێپشن زیاد کرا.",
+    invited: "بانگهێشتی ڕیسێپشن دروست کرا.",
+    invitation_removed: "بانگهێشتی چاوەڕوان لابرا.",
+    updated: "دەسەڵات نوێ کرایەوە.",
+    removed: "دەسەڵات لابرا.",
+    administrator_transferred: "بەڕێوەبردنی کلینیک گوازرایەوە.",
+  },
+  bd: {
+    added: "دەستهەلاتا ڕیسێپشنێ زێدە کرا.",
+    invited: "بانگهێشتا ڕیسێپشنێ هاتە دروستکرن.",
+    invitation_removed: "بانگهێشتا چاڤەڕێ هاتە لابرن.",
+    updated: "دەستهەلات هاتە نووکرن.",
+    removed: "دەستهەلات هاتە لابرن.",
+    administrator_transferred: "بەڕێڤەبرنا کلینیکێ هاتە گوهەستن.",
+  },
+  ar: {
+    added: "تمت إضافة صلاحية موظف الاستقبال.",
+    invited: "تم إنشاء دعوة موظف الاستقبال.",
+    invitation_removed: "تمت إزالة الدعوة المعلقة.",
+    updated: "تم تحديث الصلاحية.",
+    removed: "تمت إزالة الصلاحية.",
+    administrator_transferred: "تم نقل إدارة العيادة.",
+  },
 };
 
 export default async function StaffPage({ searchParams }: StaffPageProps) {
@@ -255,8 +322,8 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   }
 
   const transferCandidates = memberRows.filter((member) => member.user_id !== clinic.owner_id && member.role !== "owner");
-  const errorMessage = params.error ? errorMessages[params.error] : null;
-  const noticeMessage = params.notice ? noticeMessages[params.notice] : null;
+  const errorMessage = params.error ? errorMessages[locale][params.error] : null;
+  const noticeMessage = params.notice ? noticeMessages[locale][params.notice] : null;
 
   return (
     <main className="settings-page shell">
