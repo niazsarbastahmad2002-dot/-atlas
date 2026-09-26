@@ -25,6 +25,8 @@ export function JoinLanguagePicker({ locale, label }: {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ locale: value }),
       });
+    } catch {
+      // The explicit lang query still switches this invitation safely.
     } finally {
       setBusy(false);
       const url = new URL(window.location.href);
