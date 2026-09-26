@@ -11,6 +11,9 @@ test("fast appointment status updates use compare-and-set against the status the
   assert.match(action, /expectedStatus: string,[\s\S]*status: string/);
   assert.match(action, /canTransitionAppointment\(expectedStatus, status\)/);
   assert.match(action, /\.eq\("status", expectedStatus\)/);
+  assert.match(action, /\.eq\("appointment_revision", expectedRevision\)/);
+  assert.match(ui, /revision: number/);
+  assert.match(ui, /updateAppointmentStatusInline\(clinicId, appointmentId, previousStatus, revision, nextStatus\)/);
   assert.match(action, /return \{ ok: false, reason: "stale" \}/);
 
   assert.match(ui, /updateAppointmentStatusInline\(clinicId, appointmentId, previousStatus, nextStatus\)/);
@@ -20,8 +23,8 @@ test("fast appointment status updates use compare-and-set against the status the
 test("concurrent identical status changes are idempotent instead of reported stale", () => {
   const action = read("app/dashboard/instant-actions.ts");
 
-  assert.match(action, /select\("status"\)/);
-  assert.match(action, /current\.status === status/);
+  assert.match(action, /select\("status, appointment_revision"\)/);
+  assert.match(action, /current\.appointment_revision === expectedRevision \+ 1[\s\S]*current\.status === status/);
   assert.match(action, /outcome: "duplicate"/);
   assert.match(action, /return \{ ok: true, status \}/);
 });
