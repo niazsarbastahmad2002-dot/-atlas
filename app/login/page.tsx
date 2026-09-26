@@ -2,13 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { isUiLocale, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { LegacyLoginForm } from "./legacy/legacy-login-form";
 import { LoginForm } from "./login-form";
 import { LoginLanguagePicker } from "./language-picker";
 
-type LoginPageProps = { searchParams: Promise<{ error?: string; notice?: string }> };
+type LoginPageProps = { searchParams: Promise<{ error?: string; notice?: string; lang?: string | string[] }> };
 type LoginPageCopy = {
   eyebrow: string;
   title: string;
@@ -98,7 +98,8 @@ function AtlasLoginLogo() {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error, notice } = await searchParams;
+  const { error, notice, lang } = await searchParams;
+  const requestedLang = Array.isArray(lang) ? lang[0] : lang;
   const e2eMode = process.env.ATLAS_E2E_NO_AUTH === "true";
   if (!e2eMode) {
     const supabase = await createClient();
@@ -110,7 +111,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const phoneFlowEnabled = e2eMode || readiness?.supabasePhoneEnabled === true;
   const legacyFallbackEnabled = !phoneFlowEnabled && readiness?.supabaseEmailEnabled === true;
 
-  const locale = await getUiLocale();
+  const locale = isUiLocale(requestedLang) ? requestedLang : await getUiLocale();
   const copy = pageCopy[locale];
   const errorMessage = error === "invalid_link" || error === "invalid_otp" ? copy.invalid : null;
   const noticeMessage = notice === "signed_out" ? copy.signedOut
