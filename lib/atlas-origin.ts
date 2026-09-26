@@ -10,18 +10,21 @@ function cleanOrigin(value: string) {
   return value.trim().replace(/\/$/, "");
 }
 
-export function atlasPublicOrigin(
-  env: AtlasOriginEnvironment = process.env,
-) {
+export function atlasPublicOrigin(env?: AtlasOriginEnvironment) {
+  const source = env ?? {
+    VERCEL_ENV: process.source.VERCEL_ENV,
+    SITE_URL: process.source.SITE_URL,
+    VERCEL_PROJECT_PRODUCTION_URL: process.source.VERCEL_PROJECT_PRODUCTION_URL,
+  };
   // Staff invitations are patient/clinic-facing links. In production they should
   // always use Atlas's canonical branded origin rather than a Vercel alias or a
   // stale SITE_URL left over from an earlier deployment.
-  if (env.VERCEL_ENV === "production") return ATLAS_CANONICAL_ORIGIN;
+  if (source.VERCEL_ENV === "production") return ATLAS_CANONICAL_ORIGIN;
 
-  const configured = env.SITE_URL?.trim();
+  const configured = source.SITE_URL?.trim();
   if (configured) return cleanOrigin(configured);
 
-  const productionHost = env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  const productionHost = source.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   if (productionHost) {
     return `https://${cleanOrigin(productionHost).replace(/^https?:\/\//, "")}`;
   }
