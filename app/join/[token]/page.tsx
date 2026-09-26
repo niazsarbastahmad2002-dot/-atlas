@@ -6,6 +6,7 @@ import { isUiLocale, uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { JoinClinicAuth } from "./join-auth";
+import { JoinLanguagePicker } from "./join-language-picker";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ type Preview = { clinic_id: string; clinic_name: string; doctor_name: string; ex
 type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
 type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
 
-const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doctor: string; invalid: string; back: string }> = {
+const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doctor: string; invalid: string; back: string; language: string }> = {
   en: {
     eyebrow: "Clinic invitation",
     title: "Join this clinic",
@@ -25,6 +26,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     doctor: "You will work with",
     invalid: "This invitation is expired, already used, or no longer valid.",
     back: "Open Atlas",
+    language: "Choose your language",
   },
   ku: {
     eyebrow: "بانگهێشتی کلینیک",
@@ -33,6 +35,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     doctor: "لەگەڵ ئەم دکتۆرە کار دەکەیت",
     invalid: "ئەم بانگهێشتە بەسەرچووە، پێشتر بەکارهاتووە یان چیتر دروست نییە.",
     back: "Atlas بکەرەوە",
+    language: "زمانەکەت هەڵبژێرە",
   },
   bd: {
     eyebrow: "بانگهێشتا کلینیکێ",
@@ -41,6 +44,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     doctor: "تو دێ دگەل ڤی دکتۆری کار کەی",
     invalid: "ئەڤ بانگهێشتە بەسەرچووە، پێشتر هاتییە بکارئینان یان ئیدی دروست نینە.",
     back: "Atlas ڤەکە",
+    language: "زمانێ خۆ هەلبژێرە",
   },
   ar: {
     eyebrow: "دعوة العيادة",
@@ -49,6 +53,7 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     doctor: "ستعمل مع",
     invalid: "هذه الدعوة انتهت أو استُخدمت أو لم تعد صالحة.",
     back: "فتح Atlas",
+    language: "اختار لغتك",
   },
 };
 
@@ -72,6 +77,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
     return (
       <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
         <section className="auth-card">
+          <JoinLanguagePicker locale={locale} label={t.language} />
           <h1>{t.invalid}</h1>
           <Link className="button" href={`/login?lang=${encodeURIComponent(locale)}`}>{t.back}</Link>
         </section>
@@ -88,6 +94,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
     return (
       <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
         <section className="auth-card">
+          <JoinLanguagePicker locale={locale} label={t.language} />
           <h1>{t.invalid}</h1>
           <Link className="button" href={`/login?lang=${encodeURIComponent(locale)}`}>{t.back}</Link>
         </section>
@@ -102,6 +109,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
   return (
     <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
       <section className="auth-card">
+        <JoinLanguagePicker locale={locale} label={t.language} />
         <div className="eyebrow">{t.eyebrow}</div>
         <h1>{t.title}</h1>
         <p>{t.help}</p>
