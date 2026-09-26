@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   canTransitionAppointment,
+  classifyAppointmentCreateError,
   cleanDisplayName,
   isAppointmentStatus,
   isUuid,
@@ -270,12 +271,24 @@ export async function createAppointment(formData: FormData) {
   });
 
   if (error) {
-    if (error.code === "23505") {
+    const conflict = classifyAppointmentCreateError(
+      error.code,
+      `${error.message ?? ""} ${error.details ?? ""}`,
+    );
+    if (conflict === "duplicate") {
       redirect(appointmentDestination({
         clinicId,
         doctorId: doctor.id,
         appointmentAt,
         notice: "appointment_duplicate",
+      }));
+    }
+    if (conflict === "slot_taken") {
+      redirect(appointmentDestination({
+        clinicId,
+        doctorId: doctor.id,
+        appointmentAt,
+        notice: "appointment_slot_taken",
       }));
     }
     console.error("Atlas appointment creation failed", { code: error.code });
