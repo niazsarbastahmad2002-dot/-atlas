@@ -74,10 +74,10 @@ const exactCopy: Record<Exclude<UiLocale, "en">, Record<string, string>> = {
 };
 
 const fastSaveCopy = {
-  en: { saving: "Adding appointment…", saved: "Appointment added", failed: "Could not add appointment. Check the details and try again.", slotTaken: "That time was just taken. Choose another time." },
-  ku: { saving: "وادە دادەنرێت…", saved: "وادە دانرا", failed: "وادە دانەنرا. زانیارییەکان بپشکنە.", slotTaken: "ئەم کاتە گیرا. کاتێکی تر هەڵبژێرە." },
-  bd: { saving: "وادە دهێتە زێدەکرن…", saved: "وادە هاتە زێدەکرن", failed: "وادە زێدە نەبوو. زانیارییان بپشکنە.", slotTaken: "ئەڤ دەم هاتە گرتن. دەمەکێ دی هەلبژێرە." },
-  ar: { saving: "جارٍ إضافة الموعد…", saved: "تمت إضافة الموعد", failed: "تعذرت إضافة الموعد. تحقق من البيانات وحاول مرة أخرى.", slotTaken: "تم حجز هذا الوقت للتو. اختر وقتاً آخر." },
+  en: { saving: "Adding appointment…", saved: "Appointment added", duplicate: "Appointment was already added", failed: "Could not add appointment. Check the details and try again.", slotTaken: "That time was just taken. Choose another time." },
+  ku: { saving: "وادە دادەنرێت…", saved: "وادە دانرا", duplicate: "وادەکە پێشتر دانراوە", failed: "وادە دانەنرا. زانیارییەکان بپشکنە.", slotTaken: "ئەم کاتە گیرا. کاتێکی تر هەڵبژێرە." },
+  bd: { saving: "وادە دهێتە زێدەکرن…", saved: "وادە هاتە زێدەکرن", duplicate: "وادە پێشتر هاتیە زێدەکرن", failed: "وادە زێدە نەبوو. زانیارییان بپشکنە.", slotTaken: "ئەڤ دەم هاتە گرتن. دەمەکێ دی هەلبژێرە." },
+  ar: { saving: "جارٍ إضافة الموعد…", saved: "تمت إضافة الموعد", duplicate: "الموعد مضاف مسبقاً", failed: "تعذرت إضافة الموعد. تحقق من البيانات وحاول مرة أخرى.", slotTaken: "تم حجز هذا الوقت للتو. اختر وقتاً آخر." },
 } as const;
 
 function groupPhone(value: string) {
@@ -128,7 +128,7 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
   toast.append(main, detail);
   document.body.append(toast);
   return {
-    success() { toast.classList.add("is-success"); main.textContent = `✓ ${fastSaveCopy[locale].saved}`; window.setTimeout(() => toast.remove(), 700); },
+    success(duplicate = false) { toast.classList.add("is-success"); main.textContent = `✓ ${duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`; window.setTimeout(() => toast.remove(), duplicate ? 1200 : 700); },
     fail(slotTaken = false) { toast.classList.add("is-error"); main.textContent = slotTaken ? fastSaveCopy[locale].slotTaken : fastSaveCopy[locale].failed; window.setTimeout(() => toast.remove(), 2600); },
   };
 }
@@ -174,7 +174,12 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         try {
           const result = await createAppointmentInline(formData);
           if (!result.ok) { toast.fail(result.reason === "slot_taken"); return; }
-          const destination = appointmentFormDestination({ clinicId: String(formData.get("clinic_id") ?? ""), doctorId: String(formData.get("doctor_id") ?? ""), appointmentAt });
+          const destination = appointmentFormDestination({
+            clinicId: String(formData.get("clinic_id") ?? ""),
+            doctorId: String(formData.get("doctor_id") ?? ""),
+            appointmentAt,
+            notice: result.duplicate ? "appointment_duplicate" : "appointment_created",
+          });
           const nameInput = form.querySelector<HTMLInputElement>('#patient_name');
           const phoneInput = form.querySelector<HTMLInputElement>('#patient_phone');
           const consentInput = form.querySelector<HTMLInputElement>('#reminder_consent');
@@ -183,8 +188,8 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           if (phoneInput) phoneInput.value = "";
           if (consentInput) consentInput.checked = false;
           if (idempotencyInput && typeof crypto.randomUUID === "function") idempotencyInput.value = crypto.randomUUID();
-          toast.success();
-          if (button) button.textContent = `✓ ${fastSaveCopy[locale].saved}`;
+          toast.success(Boolean(result.duplicate));
+          if (button) button.textContent = `✓ ${result.duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`;
           if (destination) router.push(destination); else router.refresh();
         } catch { toast.fail(false); }
         finally {
