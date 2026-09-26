@@ -312,7 +312,7 @@ export async function updateAppointmentDetailsInline(
     if (current && isAppointmentStatus(current.status) && current.status !== expectedStatus) {
       return { ok: false, reason: "stale" };
     }
-    return { ok: false, reason: "invalid" };
+    return { ok: false, reason: "stale" };
   }
 
   revalidatePath("/dashboard");
@@ -369,7 +369,7 @@ export async function archiveAppointmentInline(
     if (current && isAppointmentStatus(current.status) && current.status !== expectedStatus) {
       return { ok: false, reason: "stale" };
     }
-    return { ok: false, reason: "failed" };
+    return { ok: false, reason: "stale" };
   }
 
   revalidatePath("/dashboard");
