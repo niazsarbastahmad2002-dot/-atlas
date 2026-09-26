@@ -14,6 +14,7 @@ type LoginPageCopy = {
   title: string;
   subtitle: string;
   invalid: string;
+  invalidInvite: string;
   signedOut: string;
   clinicDeleted: string;
   accountDeleted: string;
@@ -31,6 +32,7 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     title: "Your clinic starts with your number.",
     subtitle: "Verify your phone, then open your clinic or create a new one.",
     invalid: "That sign-in session is no longer valid. Request a fresh verification code below.",
+    invalidInvite: "That clinic invitation is no longer valid. Ask the clinic administrator to send a fresh invitation.",
     signedOut: "You signed out safely.",
     clinicDeleted: "Your clinic was deleted. Your Atlas account is still safe — verify your phone whenever you want to create a clinic again.",
     accountDeleted: "Your Atlas account was permanently deleted.",
@@ -46,6 +48,7 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     title: "کلینیکەکەت بە ژمارەی مۆبایلەکەت دەست پێ دەکات.",
     subtitle: "ژمارەکەت پشتڕاست بکەرەوە، پاشان کلینیکەکەت بکەرەوە یان کلینیکێکی نوێ دروست بکە.",
     invalid: "دانیشتنی چوونەژوورەوەکە چیتر دروست نییە. کۆدێکی نوێ داوا بکە.",
+    invalidInvite: "بانگهێشتی کلینیکەکە چیتر دروست نییە. داوا لە بەڕێوەبەری کلینیک بکە بانگهێشتێکی نوێ بنێرێت.",
     signedOut: "بە سەلامەتی چوویتە دەرەوە.",
     clinicDeleted: "کلینیکەکەت سڕایەوە، بەڵام هەژماری Atlas ـەکەت پارێزراوە. هەر کات دەتەوێت ژمارەکەت پشتڕاست بکەرەوە و کلینیکێکی نوێ دروست بکە.",
     accountDeleted: "هەژماری Atlas ـەکەت بە هەمیشەیی سڕایەوە.",
@@ -61,6 +64,7 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     title: "کلینیکا تە ب ژمارا موبایلا تە دەست پێ دکەت.",
     subtitle: "ژمارا خۆ پشتڕاست بکە، پاشی کلینیکا خۆ ڤەکە یان کلینیکەکا نوو دروست بکە.",
     invalid: "دانیشتنا چوونەژوورێ دیگر دروست نینە. کۆدەکێ نوو بخوازە.",
+    invalidInvite: "بانگهێشتا کلینیکێ ئیدی دروست نینە. ژ بەڕێڤەبەرێ کلینیکێ بخوازە بانگهێشتەکا نوو بهنێریت.",
     signedOut: "ب سەلامەتی چوویە دەرڤە.",
     clinicDeleted: "کلینیکا تە هاتە ژێبرن، لێ هەژمارا Atlas یا تە پاراستییە. هەر دەم بخوازیت ژمارا خۆ پشتڕاست بکە و کلینیکەکا نوو دروست بکە.",
     accountDeleted: "هەژمارا Atlas یا تە بۆ هەردەم هاتە ژێبرن.",
@@ -76,6 +80,7 @@ const pageCopy: Record<UiLocale, LoginPageCopy> = {
     title: "عيادتك تبدأ من رقمك.",
     subtitle: "تحقق من رقم الهاتف، وبعدها افتح عيادتك أو أنشئ عيادة جديدة.",
     invalid: "جلسة تسجيل الدخول لم تعد صالحة. اطلب رمز تحقق جديد بالأسفل.",
+    invalidInvite: "دعوة العيادة لم تعد صالحة. اطلب من مسؤول العيادة إرسال دعوة جديدة.",
     signedOut: "تم تسجيل الخروج بأمان.",
     clinicDeleted: "تم حذف العيادة، لكن حساب Atlas ما زال محفوظاً. تحقق من رقمك عندما تريد إنشاء عيادة جديدة.",
     accountDeleted: "تم حذف حسابك في Atlas نهائياً.",
@@ -113,7 +118,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const locale = isUiLocale(requestedLang) ? requestedLang : await getUiLocale();
   const copy = pageCopy[locale];
-  const errorMessage = error === "invalid_link" || error === "invalid_otp" ? copy.invalid : null;
+  const errorMessage = error === "invalid_invite" ? copy.invalidInvite
+    : error === "invalid_link" || error === "invalid_otp" ? copy.invalid
+      : null;
   const noticeMessage = notice === "signed_out" ? copy.signedOut
     : notice === "clinic_deleted" ? copy.clinicDeleted
       : notice === "account_deleted" ? copy.accountDeleted
