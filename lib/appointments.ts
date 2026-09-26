@@ -9,6 +9,26 @@ export const appointmentStatuses = [
 export type AppointmentStatus = (typeof appointmentStatuses)[number];
 export type AppointmentMutationFailure = "invalid" | "too_early" | "past_cancelled" | "slot_taken" | "busy" | "failed";
 export type AppointmentCreateFailure = "duplicate" | "slot_taken" | "failed";
+export type AppointmentCreatePayload = {
+  patientName: string;
+  patientPhone: string;
+  contactRelationship: "patient" | "parent_guardian" | "relative_caregiver";
+  doctorId: string;
+  appointmentAt: string;
+  reminderConsent: boolean;
+  reminderLanguage: string;
+};
+
+export type ExistingAppointmentCreatePayload = {
+  patient_name: string;
+  patient_phone: string;
+  contact_relationship: string;
+  doctor_id: string | null;
+  appointment_at: string;
+  reminder_consent: boolean;
+  reminder_language: string;
+  voided_at: string | null;
+};
 
 const statusTransitions: Record<AppointmentStatus, readonly AppointmentStatus[]> = {
   pending: ["confirmed", "cancelled", "completed", "no_show"],
@@ -117,6 +137,24 @@ export function canTransitionAppointment(from: AppointmentStatus, to: Appointmen
 
 export function allowedAppointmentTransitions(from: AppointmentStatus) {
   return [...statusTransitions[from]];
+}
+
+export function appointmentCreatePayloadMatches(
+  existing: ExistingAppointmentCreatePayload,
+  expected: AppointmentCreatePayload,
+) {
+  if (existing.voided_at !== null) return false;
+  const existingTime = Date.parse(existing.appointment_at);
+  const expectedTime = Date.parse(expected.appointmentAt);
+  return Number.isFinite(existingTime)
+    && Number.isFinite(expectedTime)
+    && existingTime === expectedTime
+    && existing.patient_name === expected.patientName
+    && existing.patient_phone === expected.patientPhone
+    && existing.contact_relationship === expected.contactRelationship
+    && existing.doctor_id === expected.doctorId
+    && existing.reminder_consent === expected.reminderConsent
+    && existing.reminder_language === expected.reminderLanguage;
 }
 
 export function classifyAppointmentCreateError(code: string | undefined, message: string | undefined): AppointmentCreateFailure {
