@@ -12,8 +12,8 @@ test("appointment detail edits compare against the status the editor opened with
   assert.match(action, /\["pending", "confirmed", "cancelled"\]\.includes\(expectedStatus\)/);
   assert.match(action, /\.eq\("status", expectedStatus\)/);
   assert.match(action, /\.eq\("appointment_revision", expectedRevision\)/);
-  assert.match(ui, /revision: number/);
-  assert.match(ui, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, revision, formData\)/);
+  assert.match(editor, /revision: number/);
+  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, revision, formData\)/);
   assert.match(action, /select\("status, voided_at"\)/);
   assert.match(action, /current\?\.voided_at[\s\S]*reason: "stale"/);
   assert.match(action, /current\.status !== expectedStatus[\s\S]*reason: "stale"/);
@@ -28,7 +28,7 @@ test("appointment detail edits compare against the status the editor opened with
 
   assert.match(editor, /openedStatusRef\.current = status/);
   assert.match(editor, /const expectedStatus = openedStatusRef\.current/);
-  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, formData\)/);
+  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, revision, formData\)/);
   assert.match(editor, /openedStatusRef\.current !== status[\s\S]*setOpen\(false\)/);
   assert.match(editor, /result\.reason === "stale"[\s\S]*openedStatusRef\.current = null[\s\S]*setOpen\(false\)[\s\S]*router\.refresh\(\)/);
 });
