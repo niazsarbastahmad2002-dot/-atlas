@@ -17,6 +17,7 @@ const copy = {
     creating: "Creating…",
     copy: "Copy link",
     copied: "Copied",
+    copyFailed: "Could not copy the link. Select the link above and copy it manually.",
     share: "Share",
   },
   ku: {
@@ -28,6 +29,7 @@ const copy = {
     creating: "دروست دەکرێت…",
     copy: "بەستەر کۆپی بکە",
     copied: "کۆپی کرا",
+    copyFailed: "بەستەرەکە کۆپی نەکرا. بەستەرەکەی سەرەوە هەڵبژێرە و بە دەستی کۆپی بکە.",
     share: "بنێرە",
   },
   bd: {
@@ -39,6 +41,7 @@ const copy = {
     creating: "دهێتە دروستکرن…",
     copy: "لینکێ کۆپی بکە",
     copied: "هاتە کۆپیکرن",
+    copyFailed: "لینک نەهاتە کۆپیکرن. لینکا سەرێ هەلبژێرە و ب دەستی کۆپی بکە.",
     share: "بهنێرە",
   },
   ar: {
@@ -50,6 +53,7 @@ const copy = {
     creating: "جارٍ الإنشاء…",
     copy: "نسخ الرابط",
     copied: "تم النسخ",
+    copyFailed: "تعذر نسخ الرابط. حدد الرابط بالأعلى وانسخه يدوياً.",
     share: "مشاركة",
   },
 } as const;
@@ -62,21 +66,33 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
   const t = copy[locale];
   const [state, action, pending] = useActionState(createReceptionistInviteLink, initialState);
   const [copied, setCopied] = useState(false);
+  const [shareError, setShareError] = useState("");
 
   async function copyLink() {
     if (!state.url) return;
-    await navigator.clipboard.writeText(state.url);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+    setShareError("");
+    try {
+      await navigator.clipboard.writeText(state.url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+      setShareError(t.copyFailed);
+    }
   }
 
   async function shareLink() {
     if (!state.url) return;
+    setShareError("");
     if (navigator.share) {
-      await navigator.share({ title: "Atlas clinic invitation", url: state.url });
-    } else {
-      await copyLink();
+      try {
+        await navigator.share({ title: "Atlas clinic invitation", url: state.url });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
     }
+    await copyLink();
   }
 
   return (
@@ -111,6 +127,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
                 <button className="button button-ghost button-small" type="button" onClick={() => void copyLink()}>{copied ? t.copied : t.copy}</button>
                 <button className="button button-ghost button-small" type="button" onClick={() => void shareLink()}>{t.share}</button>
               </div>
+              {shareError ? <p className="field-help notice-error" role="alert">{shareError}</p> : null}
             </>
           ) : null}
         </div>
