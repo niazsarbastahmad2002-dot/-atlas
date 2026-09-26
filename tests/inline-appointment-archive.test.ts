@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 
 test("fast appointment removal writes the complete archive audit metadata", () => {
   const action = read("app/dashboard/instant-actions.ts");
+  const ui = read("app/dashboard/appointment-actions.tsx");
 
   assert.match(action, /archiveAppointmentInline\([\s\S]*expectedStatus: string/);
   assert.match(action, /supabase\.auth\.getUser\(\)/);
