@@ -8,6 +8,7 @@ export const appointmentStatuses = [
 
 export type AppointmentStatus = (typeof appointmentStatuses)[number];
 export type AppointmentMutationFailure = "invalid" | "too_early" | "past_cancelled" | "slot_taken" | "busy" | "failed";
+export type AppointmentCreateFailure = "duplicate" | "slot_taken" | "failed";
 
 const statusTransitions: Record<AppointmentStatus, readonly AppointmentStatus[]> = {
   pending: ["confirmed", "cancelled", "completed", "no_show"],
@@ -116,6 +117,14 @@ export function canTransitionAppointment(from: AppointmentStatus, to: Appointmen
 
 export function allowedAppointmentTransitions(from: AppointmentStatus) {
   return [...statusTransitions[from]];
+}
+
+export function classifyAppointmentCreateError(code: string | undefined, message: string | undefined): AppointmentCreateFailure {
+  if (code !== "23505") return "failed";
+  const text = (message ?? "").toLowerCase();
+  if (text.includes("appointments_active_doctor_slot_idx")) return "slot_taken";
+  if (text.includes("appointments_clinic_idempotency_idx")) return "duplicate";
+  return "failed";
 }
 
 export function classifyAppointmentMutationError(code: string | undefined, message: string | undefined): AppointmentMutationFailure {
