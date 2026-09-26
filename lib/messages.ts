@@ -19,6 +19,7 @@ export const dashboardMessages = {
   appointment_create_failed: "The appointment could not be saved. Please try again.",
   appointment_created: "Appointment saved.",
   appointment_duplicate: "That appointment was already saved.",
+  appointment_slot_taken: "That doctor already has an appointment at this time. Choose another time.",
   appointment_status_invalid: "That appointment status change is not allowed yet.",
   appointment_update_busy: "A reminder is being processed for this appointment. Try again in a moment.",
   appointment_update_failed: "The appointment could not be updated. Refresh and try again.",
