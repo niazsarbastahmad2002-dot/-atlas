@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  classifyAppointmentCreateError,
   classifyAppointmentMutationError,
   cleanDisplayName,
   isAppointmentStatus,
@@ -21,7 +22,7 @@ const contactRelationships = new Set<AppointmentContactRelationship>(["patient",
 export type AppointmentContactRelationship = "patient" | "parent_guardian" | "relative_caregiver";
 
 export type InlineAppointmentResult =
-  | { ok: true; status?: AppointmentStatus; archived?: boolean; updated?: boolean; created?: boolean }
+  | { ok: true; status?: AppointmentStatus; archived?: boolean; updated?: boolean; created?: boolean; duplicate?: boolean }
   | { ok: false; reason: AppointmentMutationFailure };
 
 function statusAction(status: AppointmentStatus) {
@@ -107,10 +108,33 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
   });
 
   if (error) {
+    const createFailure = classifyAppointmentCreateError(
+      error.code,
+      `${error.message ?? ""} ${error.details ?? ""}`,
+    );
+    if (createFailure === "duplicate") {
+      queueAtlasServerEvent("atlas_appointment_created", {
+        outcome: "duplicate",
+        interaction: "form",
+        screen: "schedule",
+        surface: "clinic",
+      });
+      return { ok: true, created: false, duplicate: true };
+    }
+    if (createFailure === "slot_taken") {
+      queueAtlasServerEvent("atlas_appointment_created", {
+        outcome: "slot_taken",
+        interaction: "form",
+        screen: "schedule",
+        surface: "clinic",
+      });
+      return { ok: false, reason: "slot_taken" };
+    }
+
     const reason = classifyAppointmentMutationError(error.code, error.message);
     if (reason === "failed") console.error("Atlas fast appointment creation failed", { code: error.code });
     queueAtlasServerEvent("atlas_appointment_created", {
-      outcome: reason === "slot_taken" ? "slot_taken" : "failure",
+      outcome: "failure",
       interaction: "form",
       screen: "schedule",
       surface: "clinic",
