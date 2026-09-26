@@ -301,12 +301,14 @@ export async function updateAppointmentDetailsInline(
   if (!data) {
     const { data: current } = await supabase
       .from("appointments")
-      .select("status")
+      .select("status, voided_at")
       .eq("clinic_id", clinicId)
       .eq("id", id)
-      .is("voided_at", null)
       .maybeSingle();
 
+    if (current?.voided_at) {
+      return { ok: false, reason: "stale" };
+    }
     if (current && isAppointmentStatus(current.status) && current.status !== expectedStatus) {
       return { ok: false, reason: "stale" };
     }
