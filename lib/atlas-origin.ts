@@ -12,9 +12,9 @@ function cleanOrigin(value: string) {
 
 export function atlasPublicOrigin(env?: AtlasOriginEnvironment) {
   const source = env ?? {
-    VERCEL_ENV: process.source.VERCEL_ENV,
-    SITE_URL: process.source.SITE_URL,
-    VERCEL_PROJECT_PRODUCTION_URL: process.source.VERCEL_PROJECT_PRODUCTION_URL,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    SITE_URL: process.env.SITE_URL,
+    VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
   };
   // Staff invitations are patient/clinic-facing links. In production they should
   // always use Atlas's canonical branded origin rather than a Vercel alias or a
