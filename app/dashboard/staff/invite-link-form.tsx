@@ -19,6 +19,8 @@ const copy = {
     copied: "Copied",
     copyFailed: "Could not copy the link. Select the link above and copy it manually.",
     share: "Share",
+    shareTitle: "Atlas clinic invitation",
+    shareText: "Join the clinic in Atlas with this secure one-use link. Verify your phone to continue. The link expires in 24 hours.",
   },
   ku: {
     title: "بەستەری پارێزراوی چوونەژوورەوە بنێرە",
@@ -31,6 +33,8 @@ const copy = {
     copied: "کۆپی کرا",
     copyFailed: "بەستەرەکە کۆپی نەکرا. بەستەرەکەی سەرەوە هەڵبژێرە و بە دەستی کۆپی بکە.",
     share: "بنێرە",
+    shareTitle: "بانگهێشتی کلینیکی Atlas",
+    shareText: "بەم بەستەرە پارێزراوە یەکجارە بچۆ ژوورەوەی کلینیک لە Atlas. ژمارەی مۆبایلەکەت پشتڕاست بکەرەوە. بەستەرەکە دوای 24 کاتژمێر بەسەر دەچێت.",
   },
   bd: {
     title: "لینکا پاراستی یا چوونەژوورێ بهنێرە",
@@ -43,6 +47,8 @@ const copy = {
     copied: "هاتە کۆپیکرن",
     copyFailed: "لینک نەهاتە کۆپیکرن. لینکا سەرێ هەلبژێرە و ب دەستی کۆپی بکە.",
     share: "بهنێرە",
+    shareTitle: "بانگهێشتا کلینیکا Atlas",
+    shareText: "ب ڤێ لینکا پاراستی یا ئێکجارە بچۆ ژوورا کلینیکێ ل Atlas. ژمارا موبایلا خۆ پشتڕاست بکە. لینک پشتی 24 دەمژمێران بەسەر دچیت.",
   },
   ar: {
     title: "شارك رابط انضمام آمن",
@@ -55,6 +61,8 @@ const copy = {
     copied: "تم النسخ",
     copyFailed: "تعذر نسخ الرابط. حدد الرابط بالأعلى وانسخه يدوياً.",
     share: "مشاركة",
+    shareTitle: "دعوة عيادة Atlas",
+    shareText: "انضم إلى العيادة في Atlas عبر هذا الرابط الآمن ذي الاستخدام الواحد. وثّق رقم موبايلك للمتابعة. تنتهي صلاحية الرابط بعد 24 ساعة.",
   },
 } as const;
 
@@ -86,7 +94,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
     setShareError("");
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Atlas clinic invitation", url: state.url });
+        await navigator.share({ title: t.shareTitle, text: t.shareText, url: state.url });
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;

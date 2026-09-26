@@ -13,6 +13,11 @@ test("receptionist invite sharing falls back safely when native share or clipboa
   assert.match(source, /setShareError\(t\.copyFailed\)/);
   assert.match(source, /error instanceof DOMException && error\.name === "AbortError"/);
   assert.match(source, /await copyLink\(\)/);
+  assert.match(source, /title: t\.shareTitle, text: t\.shareText, url: state\.url/);
+  assert.match(source, /بانگهێشتی کلینیکی Atlas/);
+  assert.match(source, /بانگهێشتا کلینیکا Atlas/);
+  assert.match(source, /دعوة عيادة Atlas/);
+  assert.match(source, /expires in 24 hours/);
   assert.match(source, /role="alert"/);
   assert.match(source, /بەستەرەکە کۆپی نەکرا/);
   assert.match(source, /تعذر نسخ الرابط/);
