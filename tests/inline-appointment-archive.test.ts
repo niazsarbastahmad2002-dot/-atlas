@@ -24,7 +24,11 @@ test("fast appointment removal is concurrency-safe and repeat removal is idempot
   assert.match(action, /select\("status, voided_at"\)/);
   assert.match(action, /current\?\.voided_at[\s\S]*archived: true/);
   assert.match(action, /current\.status !== expectedStatus[\s\S]*reason: "stale"/);
-  assert.match(action, /archiveAppointmentInline[\s\S]*if \(!data\)[\s\S]*current\?\.voided_at[\s\S]*current\.status !== expectedStatus[\s\S]*return \{ ok: false, reason: "stale" \}/);
+  const archiveAction = action.slice(action.indexOf("export async function archiveAppointmentInline"));
+  assert.match(
+    archiveAction,
+    /if \(current && isAppointmentStatus\(current\.status\) && current\.status !== expectedStatus\) \{\s*return \{ ok: false, reason: "stale" \};\s*\}\s*return \{ ok: false, reason: "stale" \};/,
+  );
   assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus\)/);
   assert.match(ui, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
 });
