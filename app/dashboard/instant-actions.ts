@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   appointmentCreatePayloadMatches,
+  canTransitionAppointment,
   classifyAppointmentCreateError,
   classifyAppointmentMutationError,
   cleanDisplayName,
@@ -180,9 +181,16 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
 export async function updateAppointmentStatusInline(
   clinicId: string,
   id: string,
+  expectedStatus: string,
   status: string,
 ): Promise<InlineAppointmentResult> {
-  if (!isUuid(clinicId) || !isUuid(id) || !isAppointmentStatus(status)) {
+  if (
+    !isUuid(clinicId)
+    || !isUuid(id)
+    || !isAppointmentStatus(expectedStatus)
+    || !isAppointmentStatus(status)
+    || !canTransitionAppointment(expectedStatus, status)
+  ) {
     return { ok: false, reason: "invalid" };
   }
 
@@ -193,6 +201,7 @@ export async function updateAppointmentStatusInline(
     .update({ status })
     .eq("clinic_id", clinicId)
     .eq("id", id)
+    .eq("status", expectedStatus)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();
@@ -204,8 +213,22 @@ export async function updateAppointmentStatusInline(
     return { ok: false, reason };
   }
   if (!data) {
-    if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "failure", screen: "schedule", surface: "clinic" });
-    return { ok: false, reason: "failed" };
+    const { data: current } = await supabase
+      .from("appointments")
+      .select("status")
+      .eq("clinic_id", clinicId)
+      .eq("id", id)
+      .is("voided_at", null)
+      .maybeSingle();
+
+    if (current && isAppointmentStatus(current.status) && current.status === status) {
+      if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "duplicate", screen: "schedule", surface: "clinic" });
+      revalidatePath("/dashboard");
+      return { ok: true, status };
+    }
+
+    if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "stale", screen: "schedule", surface: "clinic" });
+    return { ok: false, reason: "stale" };
   }
 
   if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "success", screen: "schedule", surface: "clinic" });

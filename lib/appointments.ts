@@ -7,7 +7,7 @@ export const appointmentStatuses = [
 ] as const;
 
 export type AppointmentStatus = (typeof appointmentStatuses)[number];
-export type AppointmentMutationFailure = "invalid" | "too_early" | "past_cancelled" | "slot_taken" | "busy" | "failed";
+export type AppointmentMutationFailure = "invalid" | "too_early" | "past_cancelled" | "slot_taken" | "busy" | "stale" | "failed";
 export type AppointmentCreateFailure = "duplicate" | "slot_taken" | "failed";
 export type AppointmentCreatePayload = {
   patientName: string;

@@ -29,6 +29,7 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
     if (reason === "busy") return "مەوعیدەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.";
     if (reason === "too_early") return "هێشتا کاتی مەوعیدەکە نەهاتووە. دوای کاتی مەوعید دۆخی کۆتایی تۆمار بکە.";
     if (reason === "past_cancelled") return "مەوعیدی هەڵوەشێنراوی ڕابردوو ناگەڕێندرێتەوە؛ مەوعیدێکی نوێ دروست بکە.";
+    if (reason === "stale") return "ئەم مەوعیدە لە شوێنێکی تر گۆڕدراوە. نوێترین دۆخ بار دەکرێتەوە.";
     if (reason === "invalid") return "ئەم گۆڕانکارییە بۆ ئەم مەوعیدە ڕێگەپێدراو نییە.";
     return "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.";
   }
@@ -36,6 +37,7 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
     if (reason === "busy") return "مەوعید هێشتا دهێتە نوێکرن. دووبارە هەول بدە.";
     if (reason === "too_early") return "هێشتا دەمێ مەوعیدی نەهاتییە. پشتی دەمێ مەوعیدی ئەنجامێ تۆمار بکە.";
     if (reason === "past_cancelled") return "مەوعیدا هەلوەشاندی یا دەربازبووی ناهێتە ڤەگەراندن؛ مەوعیدا نوو دروست بکە.";
+    if (reason === "stale") return "ئەڤ مەوعیدە ل جهەکێ دی هاتیە گۆڕین. نووترین بار دهێتە بارکرن.";
     if (reason === "invalid") return "ئەڤ گۆڕین بۆ ڤی مەوعیدی بەردەست نینە.";
     return "گۆڕین نەهاتە پاراستن. دووبارە هەول بدە.";
   }
@@ -43,12 +45,14 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
     if (reason === "busy") return "الموعد قيد التحديث. حاول مرة أخرى.";
     if (reason === "too_early") return "لم يحن وقت الموعد بعد. سجّل النتيجة بعد وقت الموعد.";
     if (reason === "past_cancelled") return "لا يمكن استعادة موعد ملغي مضى وقته. أنشئ موعداً جديداً.";
+    if (reason === "stale") return "تم تغيير هذا الموعد من مكان آخر. سيتم تحميل أحدث حالة.";
     if (reason === "invalid") return "هذا التغيير غير متاح لهذا الموعد.";
     return "لم يتم حفظ التغيير. حاول مرة أخرى.";
   }
   if (reason === "busy") return "This appointment is still updating. Try again.";
   if (reason === "too_early") return "It is too early to record the appointment outcome. Try again after the appointment time.";
   if (reason === "past_cancelled") return "A past cancelled appointment cannot be restored. Create a new appointment instead.";
+  if (reason === "stale") return "This appointment changed elsewhere. Loading the latest status.";
   if (reason === "invalid") return "That change is not available for this appointment.";
   return "The change was not saved. Try again.";
 }
@@ -171,11 +175,12 @@ export function AppointmentActions({
     paintOrderVisibility(card, nextStatus);
 
     startTransition(async () => {
-      const result = await updateAppointmentStatusInline(clinicId, appointmentId, nextStatus);
+      const result = await updateAppointmentStatusInline(clinicId, appointmentId, previousStatus, nextStatus);
       if (!result.ok) {
         setOptimisticStatus(previousStatus);
         if (orderBadge) orderBadge.style.display = previousOrderDisplay;
         setError(actionFeedback(locale, result.reason));
+        if (result.reason === "stale") router.refresh();
         return;
       }
       router.refresh();
