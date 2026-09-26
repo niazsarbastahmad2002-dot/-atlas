@@ -13,8 +13,11 @@ test("appointment detail edits compare against the status the editor opened with
   assert.match(action, /\.eq\("status", expectedStatus\)/);
   assert.match(action, /current\.status !== expectedStatus[\s\S]*reason: "stale"/);
 
-  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, status, formData\)/);
-  assert.match(editor, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
+  assert.match(editor, /openedStatusRef\.current = status/);
+  assert.match(editor, /const expectedStatus = openedStatusRef\.current/);
+  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, formData\)/);
+  assert.match(editor, /openedStatusRef\.current !== status[\s\S]*setOpen\(false\)/);
+  assert.match(editor, /result\.reason === "stale"[\s\S]*openedStatusRef\.current = null[\s\S]*setOpen\(false\)[\s\S]*router\.refresh\(\)/);
 });
 
 test("stale appointment edit feedback is localized in all Atlas interface languages", () => {
