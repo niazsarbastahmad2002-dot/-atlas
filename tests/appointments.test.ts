@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   allowedAppointmentTransitions,
   canTransitionAppointment,
+  classifyAppointmentCreateError,
   classifyAppointmentMutationError,
   cleanDisplayName,
   formatIraqiMobile,
@@ -56,6 +57,25 @@ test("enforces receptionist-friendly appointment status transitions", () => {
   assert.equal(canTransitionAppointment("pending", "no_show"), true);
   assert.equal(canTransitionAppointment("confirmed", "no_show"), true);
   assert.equal(canTransitionAppointment("completed", "completed"), true);
+});
+
+test("distinguishes duplicate submissions from occupied doctor slots", () => {
+  assert.equal(
+    classifyAppointmentCreateError(
+      "23505",
+      'duplicate key value violates unique constraint "appointments_clinic_idempotency_idx"',
+    ),
+    "duplicate",
+  );
+  assert.equal(
+    classifyAppointmentCreateError(
+      "23505",
+      'duplicate key value violates unique constraint "appointments_active_doctor_slot_idx"',
+    ),
+    "slot_taken",
+  );
+  assert.equal(classifyAppointmentCreateError("23505", "unknown unique conflict"), "failed");
+  assert.equal(classifyAppointmentCreateError("23514", "check constraint failed"), "failed");
 });
 
 test("maps appointment constraint failures without weakening database invariants", () => {
