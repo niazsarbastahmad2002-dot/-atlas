@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   allowedAppointmentTransitions,
+  appointmentCreatePayloadMatches,
   canTransitionAppointment,
   classifyAppointmentCreateError,
   classifyAppointmentMutationError,
@@ -57,6 +58,36 @@ test("enforces receptionist-friendly appointment status transitions", () => {
   assert.equal(canTransitionAppointment("pending", "no_show"), true);
   assert.equal(canTransitionAppointment("confirmed", "no_show"), true);
   assert.equal(canTransitionAppointment("completed", "completed"), true);
+});
+
+test("accepts appointment idempotency only when the saved payload is the same", () => {
+  const existing = {
+    patient_name: "Ari Hassan",
+    patient_phone: "+9647501234567",
+    contact_relationship: "patient",
+    doctor_id: "11111111-1111-4111-8111-111111111111",
+    appointment_at: "2026-09-27T07:30:00.000Z",
+    reminder_consent: true,
+    reminder_language: "ku",
+    voided_at: null,
+  };
+  const expected = {
+    patientName: "Ari Hassan",
+    patientPhone: "+9647501234567",
+    contactRelationship: "patient" as const,
+    doctorId: "11111111-1111-4111-8111-111111111111",
+    appointmentAt: "2026-09-27T10:30:00+03:00",
+    reminderConsent: true,
+    reminderLanguage: "ku",
+  };
+
+  assert.equal(appointmentCreatePayloadMatches(existing, expected), true);
+  assert.equal(appointmentCreatePayloadMatches({ ...existing, patient_name: "Different Patient" }, expected), false);
+  assert.equal(appointmentCreatePayloadMatches({ ...existing, appointment_at: "2026-09-27T08:00:00.000Z" }, expected), false);
+  assert.equal(appointmentCreatePayloadMatches({ ...existing, doctor_id: "22222222-2222-4222-8222-222222222222" }, expected), false);
+  assert.equal(appointmentCreatePayloadMatches({ ...existing, contact_relationship: "parent_guardian" }, expected), false);
+  assert.equal(appointmentCreatePayloadMatches({ ...existing, reminder_language: "bd" }, expected), false);
+  assert.equal(appointmentCreatePayloadMatches({ ...existing, voided_at: "2026-09-27T07:00:00.000Z" }, expected), false);
 });
 
 test("distinguishes duplicate submissions from occupied doctor slots", () => {
