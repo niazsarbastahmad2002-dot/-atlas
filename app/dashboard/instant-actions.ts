@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  appointmentCreatePayloadMatches,
   classifyAppointmentCreateError,
   classifyAppointmentMutationError,
   cleanDisplayName,
@@ -113,13 +114,43 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
       `${error.message ?? ""} ${error.details ?? ""}`,
     );
     if (createFailure === "duplicate") {
+      const { data: existing, error: existingError } = await supabase
+        .from("appointments")
+        .select("patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_consent, reminder_language, voided_at")
+        .eq("clinic_id", clinicId)
+        .eq("idempotency_key", idempotencyKey)
+        .maybeSingle();
+
+      const matches = !existingError && existing && appointmentCreatePayloadMatches(existing, {
+        patientName,
+        patientPhone,
+        contactRelationship: relationship,
+        doctorId: doctor.id,
+        appointmentAt: appointmentAt.toISOString(),
+        reminderConsent,
+        reminderLanguage,
+      });
+
+      if (matches) {
+        queueAtlasServerEvent("atlas_appointment_created", {
+          outcome: "duplicate",
+          interaction: "form",
+          screen: "schedule",
+          surface: "clinic",
+        });
+        return { ok: true, created: false, duplicate: true };
+      }
+
+      console.error("Atlas fast appointment idempotency payload mismatch", {
+        code: existingError?.code ?? "payload_mismatch",
+      });
       queueAtlasServerEvent("atlas_appointment_created", {
-        outcome: "duplicate",
+        outcome: "failure",
         interaction: "form",
         screen: "schedule",
         surface: "clinic",
       });
-      return { ok: true, created: false, duplicate: true };
+      return { ok: false, reason: "failed" };
     }
     if (createFailure === "slot_taken") {
       queueAtlasServerEvent("atlas_appointment_created", {
