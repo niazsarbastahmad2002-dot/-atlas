@@ -116,12 +116,14 @@ const workflowCopy: Record<UiLocale, {
 export function AppointmentActions({
   clinicId,
   appointmentId,
+  revision,
   appointmentAt,
   status,
   locale,
 }: {
   clinicId: string;
   appointmentId: string;
+  revision: number;
   appointmentAt: string;
   status: AppointmentStatus;
   locale: UiLocale;
@@ -175,7 +177,7 @@ export function AppointmentActions({
     paintOrderVisibility(card, nextStatus);
 
     startTransition(async () => {
-      const result = await updateAppointmentStatusInline(clinicId, appointmentId, previousStatus, nextStatus);
+      const result = await updateAppointmentStatusInline(clinicId, appointmentId, previousStatus, revision, nextStatus);
       if (!result.ok) {
         setOptimisticStatus(previousStatus);
         if (orderBadge) orderBadge.style.display = previousOrderDisplay;
@@ -199,7 +201,7 @@ export function AppointmentActions({
     setError(null);
 
     startTransition(async () => {
-      const result = await archiveAppointmentInline(clinicId, appointmentId, optimisticStatus);
+      const result = await archiveAppointmentInline(clinicId, appointmentId, optimisticStatus, revision);
       if (!result.ok) {
         if (card) {
           card.style.visibility = previousVisibility;

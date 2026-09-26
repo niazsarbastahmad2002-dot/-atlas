@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 
 test("fast appointment removal writes the complete archive audit metadata", () => {
   const action = read("app/dashboard/instant-actions.ts");
+  const ui = read("app/dashboard/appointment-actions.tsx");
 
   assert.match(action, /archiveAppointmentInline\([\s\S]*expectedStatus: string/);
   assert.match(action, /supabase\.auth\.getUser\(\)/);
@@ -14,6 +15,8 @@ test("fast appointment removal writes the complete archive audit metadata", () =
   assert.match(action, /voided_by: userId/);
   assert.match(action, /void_reason: "Removed by clinic staff"/);
   assert.match(action, /\.eq\("status", expectedStatus\)/);
+  assert.match(action, /archiveAppointmentInline[\s\S]*\.eq\("appointment_revision", expectedRevision\)/);
+  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, revision\)/);
   assert.match(action, /revalidatePath\("\/dashboard\/history"\)/);
 });
 
@@ -29,6 +32,6 @@ test("fast appointment removal is concurrency-safe and repeat removal is idempot
     archiveAction,
     /if \(current && isAppointmentStatus\(current\.status\) && current\.status !== expectedStatus\) \{\s*return \{ ok: false, reason: "stale" \};\s*\}\s*return \{ ok: false, reason: "stale" \};/,
   );
-  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus\)/);
+  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, revision\)/);
   assert.match(ui, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
 });

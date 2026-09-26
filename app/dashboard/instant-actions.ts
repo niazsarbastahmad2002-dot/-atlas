@@ -182,12 +182,15 @@ export async function updateAppointmentStatusInline(
   clinicId: string,
   id: string,
   expectedStatus: string,
+  expectedRevision: number,
   status: string,
 ): Promise<InlineAppointmentResult> {
   if (
     !isUuid(clinicId)
     || !isUuid(id)
     || !isAppointmentStatus(expectedStatus)
+    || !Number.isInteger(expectedRevision)
+    || expectedRevision < 1
     || !isAppointmentStatus(status)
     || !canTransitionAppointment(expectedStatus, status)
   ) {
@@ -202,6 +205,7 @@ export async function updateAppointmentStatusInline(
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .eq("status", expectedStatus)
+    .eq("appointment_revision", expectedRevision)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();
@@ -215,13 +219,13 @@ export async function updateAppointmentStatusInline(
   if (!data) {
     const { data: current } = await supabase
       .from("appointments")
-      .select("status")
+      .select("status, appointment_revision")
       .eq("clinic_id", clinicId)
       .eq("id", id)
       .is("voided_at", null)
       .maybeSingle();
 
-    if (current && isAppointmentStatus(current.status) && current.status === status) {
+    if (current && current.appointment_revision === expectedRevision + 1 && isAppointmentStatus(current.status) && current.status === status) {
       if (action) queueAtlasServerEvent("atlas_appointment_status_changed", { status_action: action, outcome: "duplicate", screen: "schedule", surface: "clinic" });
       revalidatePath("/dashboard");
       return { ok: true, status };
@@ -240,6 +244,7 @@ export async function updateAppointmentDetailsInline(
   clinicId: string,
   id: string,
   expectedStatus: string,
+  expectedRevision: number,
   formData: FormData,
 ): Promise<InlineAppointmentResult> {
   const rawPatientName = String(formData.get("patient_name") ?? "");
@@ -255,6 +260,8 @@ export async function updateAppointmentDetailsInline(
     !isUuid(clinicId)
     || !isUuid(id)
     || !isAppointmentStatus(expectedStatus)
+    || !Number.isInteger(expectedRevision)
+    || expectedRevision < 1
     || !["pending", "confirmed", "cancelled"].includes(expectedStatus)
     || !isUuid(doctorId)
     || !isValidDisplayName(rawPatientName)
@@ -289,6 +296,7 @@ export async function updateAppointmentDetailsInline(
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .eq("status", expectedStatus)
+    .eq("appointment_revision", expectedRevision)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();
@@ -323,8 +331,9 @@ export async function archiveAppointmentInline(
   clinicId: string,
   id: string,
   expectedStatus: string,
+  expectedRevision: number,
 ): Promise<InlineAppointmentResult> {
-  if (!isUuid(clinicId) || !isUuid(id) || !isAppointmentStatus(expectedStatus)) {
+  if (!isUuid(clinicId) || !isUuid(id) || !isAppointmentStatus(expectedStatus) || !Number.isInteger(expectedRevision) || expectedRevision < 1) {
     return { ok: false, reason: "invalid" };
   }
 
@@ -344,6 +353,7 @@ export async function archiveAppointmentInline(
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .eq("status", expectedStatus)
+    .eq("appointment_revision", expectedRevision)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();

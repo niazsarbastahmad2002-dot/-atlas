@@ -11,6 +11,9 @@ test("appointment detail edits compare against the status the editor opened with
   assert.match(action, /updateAppointmentDetailsInline\([\s\S]*expectedStatus: string,[\s\S]*formData: FormData/);
   assert.match(action, /\["pending", "confirmed", "cancelled"\]\.includes\(expectedStatus\)/);
   assert.match(action, /\.eq\("status", expectedStatus\)/);
+  assert.match(action, /\.eq\("appointment_revision", expectedRevision\)/);
+  assert.match(editor, /revision: number/);
+  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, expectedRevision, formData\)/);
   assert.match(action, /select\("status, voided_at"\)/);
   assert.match(action, /current\?\.voided_at[\s\S]*reason: "stale"/);
   assert.match(action, /current\.status !== expectedStatus[\s\S]*reason: "stale"/);
@@ -23,10 +26,10 @@ test("appointment detail edits compare against the status the editor opened with
     /if \(current && isAppointmentStatus\(current\.status\) && current\.status !== expectedStatus\) \{\s*return \{ ok: false, reason: "stale" \};\s*\}\s*return \{ ok: false, reason: "stale" \};/,
   );
 
-  assert.match(editor, /openedStatusRef\.current = status/);
-  assert.match(editor, /const expectedStatus = openedStatusRef\.current/);
-  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, formData\)/);
-  assert.match(editor, /openedStatusRef\.current !== status[\s\S]*setOpen\(false\)/);
+  assert.match(editor, /openedStatusRef\.current = status[\s\S]*openedRevisionRef\.current = revision/);
+  assert.match(editor, /const expectedStatus = openedStatusRef\.current[\s\S]*const expectedRevision = openedRevisionRef\.current/);
+  assert.match(editor, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, expectedRevision, formData\)/);
+  assert.match(editor, /openedStatusRef\.current !== status[\s\S]*openedRevisionRef\.current !== revision[\s\S]*setOpen\(false\)/);
   assert.match(editor, /result\.reason === "stale"[\s\S]*openedStatusRef\.current = null[\s\S]*setOpen\(false\)[\s\S]*router\.refresh\(\)/);
 });
 
