@@ -199,13 +199,14 @@ export function AppointmentActions({
     setError(null);
 
     startTransition(async () => {
-      const result = await archiveAppointmentInline(clinicId, appointmentId);
+      const result = await archiveAppointmentInline(clinicId, appointmentId, optimisticStatus);
       if (!result.ok) {
         if (card) {
           card.style.visibility = previousVisibility;
           card.style.pointerEvents = previousPointerEvents;
         }
         setError(actionFeedback(locale, result.reason));
+        if (result.reason === "stale") router.refresh();
         return;
       }
       router.refresh();
