@@ -2,6 +2,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { isUuid } from "@/lib/appointments";
+import { atlasPublicOrigin } from "@/lib/atlas-origin";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -15,14 +16,6 @@ export type InviteLinkState = {
 
 type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
 type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
-
-function atlasSiteUrl() {
-  const configured = process.env.SITE_URL?.trim();
-  if (configured) return configured.replace(/\/$/, "");
-  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  if (productionHost) return `https://${productionHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
-  return "http://localhost:3000";
-}
 
 function successMessage(locale: UiLocale) {
   if (locale === "ku") return "بانگهێشتی پارێزراوی یەکجارە ئامادەیە. دوای 24 کاتژمێر بەسەر دەچێت.";
@@ -81,6 +74,6 @@ export async function createReceptionistInviteLink(
   return {
     status: "success",
     message: successMessage(inviteLocale),
-    url: `${atlasSiteUrl()}/join/${token}?lang=${encodeURIComponent(inviteLocale)}`,
+    url: `${atlasPublicOrigin()}/join/${token}?lang=${encodeURIComponent(inviteLocale)}`,
   };
 }
