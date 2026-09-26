@@ -73,7 +73,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
       <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
         <section className="auth-card">
           <h1>{t.invalid}</h1>
-          <Link className="button" href="/login">{t.back}</Link>
+          <Link className="button" href={`/login?lang=${encodeURIComponent(locale)}`}>{t.back}</Link>
         </section>
       </main>
     );
@@ -89,7 +89,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
       <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
         <section className="auth-card">
           <h1>{t.invalid}</h1>
-          <Link className="button" href="/login">{t.back}</Link>
+          <Link className="button" href={`/login?lang=${encodeURIComponent(locale)}`}>{t.back}</Link>
         </section>
       </main>
     );
