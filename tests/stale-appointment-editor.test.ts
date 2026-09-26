@@ -11,6 +11,9 @@ test("appointment detail edits compare against the status the editor opened with
   assert.match(action, /updateAppointmentDetailsInline\([\s\S]*expectedStatus: string,[\s\S]*formData: FormData/);
   assert.match(action, /\["pending", "confirmed", "cancelled"\]\.includes\(expectedStatus\)/);
   assert.match(action, /\.eq\("status", expectedStatus\)/);
+  assert.match(action, /\.eq\("appointment_revision", expectedRevision\)/);
+  assert.match(ui, /revision: number/);
+  assert.match(ui, /updateAppointmentDetailsInline\(clinicId, appointmentId, expectedStatus, revision, formData\)/);
   assert.match(action, /select\("status, voided_at"\)/);
   assert.match(action, /current\?\.voided_at[\s\S]*reason: "stale"/);
   assert.match(action, /current\.status !== expectedStatus[\s\S]*reason: "stale"/);
