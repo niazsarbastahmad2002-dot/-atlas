@@ -30,3 +30,16 @@ test("production invite RPC calls remain bound to their Supabase client", () => 
   assert.match(page, /\.call\(admin, name, args\)/);
   assert.match(finish, /\.call\(admin, name, args\)/);
 });
+
+
+test("receptionist invitation failures stay in the sender interface language", () => {
+  const action = read("app/dashboard/staff/invite-actions.ts");
+
+  assert.match(action, /function errorMessage\(locale: UiLocale/);
+  assert.match(action, /messages\[locale\]\[reason\]/);
+  assert.match(action, /errorMessage\(inviteLocale, "doctor_first"\)/);
+  assert.match(action, /errorMessage\(inviteLocale, "sign_in"\)/);
+  assert.match(action, /errorMessage\(inviteLocale, "administrator"\)/);
+  assert.match(action, /errorMessage\(inviteLocale, "active_doctor"\)/);
+  assert.match(action, /errorMessage\(inviteLocale, "create_failed"\)/);
+});
