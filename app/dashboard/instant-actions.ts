@@ -320,18 +320,28 @@ export async function updateAppointmentDetailsInline(
 export async function archiveAppointmentInline(
   clinicId: string,
   id: string,
+  expectedStatus: string,
 ): Promise<InlineAppointmentResult> {
-  if (!isUuid(clinicId) || !isUuid(id)) return { ok: false, reason: "invalid" };
+  if (!isUuid(clinicId) || !isUuid(id) || !isAppointmentStatus(expectedStatus)) {
+    return { ok: false, reason: "invalid" };
+  }
 
   const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (userError || !userId) return { ok: false, reason: "invalid" };
+
   const { data, error } = await supabase
     .from("appointments")
     .update({
       status: "voided",
+      voided_at: new Date().toISOString(),
+      voided_by: userId,
       void_reason: "Removed by clinic staff",
     })
     .eq("clinic_id", clinicId)
     .eq("id", id)
+    .eq("status", expectedStatus)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();
@@ -341,8 +351,26 @@ export async function archiveAppointmentInline(
     if (reason === "failed") console.error("Atlas inline appointment archive failed", { code: error.code });
     return { ok: false, reason };
   }
-  if (!data) return { ok: false, reason: "failed" };
+  if (!data) {
+    const { data: current } = await supabase
+      .from("appointments")
+      .select("status, voided_at")
+      .eq("clinic_id", clinicId)
+      .eq("id", id)
+      .maybeSingle();
+
+    if (current?.voided_at) {
+      revalidatePath("/dashboard");
+      revalidatePath("/dashboard/history");
+      return { ok: true, archived: true };
+    }
+    if (current && isAppointmentStatus(current.status) && current.status !== expectedStatus) {
+      return { ok: false, reason: "stale" };
+    }
+    return { ok: false, reason: "failed" };
+  }
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/history");
   return { ok: true, archived: true };
 }
