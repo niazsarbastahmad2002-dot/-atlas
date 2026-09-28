@@ -167,3 +167,14 @@ test("manual patient sharing failures stay localized in every Atlas interface la
   assert.match(button, /لینکێ هنارتنێ نەهاتە ئامادەکرن/);
   assert.match(button, /ما كدرنا نجهز رابط المشاركة/);
 });
+
+
+test("manual patient sharing reports clipboard failures instead of failing silently", () => {
+  const button = source("app/dashboard/patient-link-button.tsx");
+  assert.match(button, /const \[copyFailed, setCopyFailed\] = useState\(false\)/);
+  assert.match(button, /setCopyFailed\(true\)/);
+  assert.match(button, /role="alert">\{t\.copyFailed\}/);
+  assert.match(button, /ما كدرنا ننسخ الرابط/);
+  assert.match(button, /بەستەرەکە کۆپی نەکرا/);
+  assert.match(button, /لینک نەهاتە کۆپیکرن/);
+});
