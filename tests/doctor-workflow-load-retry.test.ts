@@ -7,7 +7,7 @@ const source = readFileSync(new URL("../app/dashboard/doctor-workflow-card.tsx",
 test("doctor workflow initial load failure replaces the skeleton with a retry action", () => {
   assert.match(source, /!workflow && state === "load-failed"/);
   assert.match(source, /role="alert"/);
-  assert.match(source, /onClick=\\{\\(\\) => void load\\(retryDoctorId\\)\\}/);
+  assert.match(source, /onClick=\{\(\) => void load\(retryDoctorId\)\}/);
   assert.match(source, />\{t\.retry\}<\/button>/);
 });
 
