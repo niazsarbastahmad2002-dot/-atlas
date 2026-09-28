@@ -35,14 +35,24 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    response.headers.forEach((value, key) => {
+      if (key.toLowerCase() !== "set-cookie") redirect.headers.set(key, value);
+    });
+    return redirect;
   }
 
   if (signedIn && request.nextUrl.pathname === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    response.headers.forEach((value, key) => {
+      if (key.toLowerCase() !== "set-cookie") redirect.headers.set(key, value);
+    });
+    return redirect;
   }
 
   return response;
