@@ -13,7 +13,7 @@ test("fast appointment status updates use compare-and-set against the status the
   assert.match(action, /\.eq\("status", expectedStatus\)/);
   assert.match(action, /\.eq\("appointment_revision", expectedRevision\)/);
   assert.match(ui, /revision: number/);
-  assert.match(ui, /updateAppointmentStatusInline\\(clinicId, appointmentId, previousStatus, optimisticRevision, nextStatus\\)/);
+  assert.ok(ui.includes("updateAppointmentStatusInline(clinicId, appointmentId, previousStatus, optimisticRevision, nextStatus)"));
   assert.match(action, /return \{ ok: false, reason: "stale" \}/);
 
   assert.match(ui, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
