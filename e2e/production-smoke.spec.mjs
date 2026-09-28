@@ -11,6 +11,22 @@ test("production login renders safely without sending authentication traffic", a
   await expect(page.getByRole("button", { name: "کوردی سۆرانی" })).toBeVisible();
   await expect(page.getByRole("button", { name: /English/ })).toBeVisible();
 
+  await page.getByRole("button", { name: "کوردی سۆرانی" }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: /کلینیکەکەت بە ژمارەی مۆبایلەکەت/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "کوردی بادینی" }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: /کلینیکا تە ب ژمارا موبایلا تە/ })).toBeVisible();
+
+  await page.getByRole("button", { name: /العربية/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: /عيادتك تبدأ من رقمك/ })).toBeVisible();
+
+  await page.getByRole("button", { name: /English/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  await expect(page.getByRole("heading", { name: "Your clinic starts with your number." })).toBeVisible();
+
   const dimensions = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
     client: document.documentElement.clientWidth,
@@ -37,6 +53,10 @@ test("production safe demo supports the receptionist appointment flow without ba
   await expect(appointment).toContainText("0750 000 9999");
   await appointment.getByRole("button", { name: "Confirm" }).click();
   await expect(appointment.locator(".status-confirmed")).toContainText("Confirmed");
+  await appointment.getByRole("button", { name: "Cancel" }).click();
+  await expect(appointment.locator(".status-cancelled")).toContainText("Cancelled");
+  await appointment.getByRole("button", { name: "Reopen" }).click();
+  await expect(appointment.locator(".status-pending")).toContainText("Pending");
 
   const dimensions = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
