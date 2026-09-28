@@ -41,3 +41,23 @@ test("stale appointment edit feedback is localized in all Atlas interface langua
   assert.match(editor, /ئەڤ وادەیە ل جهەکێ دی هاتیە گۆڕین/);
   assert.match(editor, /تم تغيير هذا الموعد من مكان آخر/);
 });
+
+
+test("concurrent identical appointment detail saves are idempotent instead of reported stale", () => {
+  const action = read("app/dashboard/instant-actions.ts");
+  const editAction = action.slice(
+    action.indexOf("export async function updateAppointmentDetailsInline"),
+    action.indexOf("export async function archiveAppointmentInline"),
+  );
+
+  assert.match(editAction, /select\("status, appointment_revision, patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_language, reminder_consent, voided_at"\)/);
+  assert.match(editAction, /current\.appointment_revision === expectedRevision \+ 1/);
+  assert.match(editAction, /current\.patient_name === patientName/);
+  assert.match(editAction, /current\.patient_phone === patientPhone/);
+  assert.match(editAction, /current\.contact_relationship === relationship/);
+  assert.match(editAction, /current\.doctor_id === doctor\.id/);
+  assert.match(editAction, /currentTime === appointmentAt\.getTime\(\)/);
+  assert.match(editAction, /current\.reminder_language === reminderLanguage/);
+  assert.match(editAction, /current\.reminder_consent === reminderConsent/);
+  assert.match(editAction, /return \{ ok: true, updated: true \}/);
+});
