@@ -19,6 +19,7 @@ type Copy = {
   paste: string;
   verify: string;
   verifying: string;
+  back: string;
   samePhone: string;
   invalidPhone: string;
   invalidCode: string;
@@ -39,6 +40,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "Paste code",
     verify: "Verify and change phone",
     verifying: "Verifying…",
+    back: "Use a different number / send a new code",
     samePhone: "This is already your current Atlas phone. Enter a new phone number.",
     invalidPhone: "Enter a valid new phone number.",
     invalidCode: "Enter the verification code you received.",
@@ -57,6 +59,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "کۆد دابنێ",
     verify: "پشتڕاست بکەرەوە و ژمارەکە بگۆڕە",
     verifying: "پشتڕاست دەکرێتەوە…",
+    back: "ژمارەیەکی تر بەکاربهێنە / کۆدی نوێ بنێرە",
     samePhone: "ئەمە هەر ژمارەی ئێستای تۆیە. ژمارەیەکی نوێ بنووسە.",
     invalidPhone: "ژمارەیەکی نوێ و دروست بنووسە.",
     invalidCode: "کۆدی پشتڕاستکردنەوەی گەیشتوو بنووسە.",
@@ -75,6 +78,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "کۆد دابنێ",
     verify: "پشتڕاست بکە و ژمارێ بگوهەرە",
     verifying: "دهێتە پشتڕاستکرن…",
+    back: "ژمارەکا دی بکاربینە / کۆدەکا نوو بهنێرە",
     samePhone: "ئەڤە هەر ژمارا نوکە یا تەیە. ژمارەکا نوو بنڤیسە.",
     invalidPhone: "ژمارەکا نوو و دروست بنڤیسە.",
     invalidCode: "کۆدێ پشتڕاستکرنێ یێ گەهشتی بنڤیسە.",
@@ -93,6 +97,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "لصق الرمز",
     verify: "تحقق وغيّر الرقم",
     verifying: "جارٍ التحقق…",
+    back: "استخدم رقماً آخر / أرسل رمزاً جديداً",
     samePhone: "هذا هو رقمك الحالي بالفعل. أدخل رقم هاتف جديداً.",
     invalidPhone: "أدخل رقم هاتف جديداً وصحيحاً.",
     invalidCode: "أدخل رمز التحقق الذي وصلك.",
@@ -226,6 +231,7 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
             autoFocus
           />
           <button className="button" type="submit" disabled={busy}>{busy ? copy.verifying : copy.verify}</button>
+          <button className="button button-ghost" type="button" disabled={busy} onClick={() => { setStep("phone"); setPendingPhone(""); setToken(""); setError(""); }}>{copy.back}</button>
         </form>
       )}
 
