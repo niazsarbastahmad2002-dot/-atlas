@@ -112,3 +112,13 @@ test("phone change distinguishes request failures from verification failures in 
   assert.match(form, /تعذر التحقق من الرمز/);
   assert.match(form, /setError\(copy\.verifyFailed\)/);
 });
+
+
+test("phone change verification exposes a direct recovery path to request another code", () => {
+  const form = read("app/dashboard/settings/phone-change-form.tsx");
+  assert.match(form, /Use a different number \/ send a new code/);
+  assert.match(form, /setStep\("phone"\)/);
+  assert.match(form, /setPendingPhone\(""\)/);
+  assert.match(form, /setToken\(""\)/);
+  assert.match(form, /\{copy\.back\}<\/button>/);
+});
