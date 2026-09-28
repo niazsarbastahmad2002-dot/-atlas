@@ -43,3 +43,12 @@ test("live clinic timing load failures are visible and retryable in every Atlas 
   assert.match(ui, /onClick=\{\(\) => void load\(\)\}/);
   assert.match(ui, />\{t\.retry\}<\/button>/);
 });
+
+
+test("superseded live clinic loads cannot overwrite the latest load state", () => {
+  const ui = read("app/dashboard/live-clinic-flow.tsx");
+
+  assert.match(ui, /const loadRequestRef = useRef\(0\)/);
+  assert.match(ui, /const requestId = \+\+loadRequestRef\.current/);
+  assert.match(ui, /if \(requestId !== loadRequestRef\.current\) return/);
+});
