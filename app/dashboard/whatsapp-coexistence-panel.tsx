@@ -358,7 +358,7 @@ export function WhatsAppCoexistencePanel({
       {error === "status_failed" ? (
         <div className="atlas-whatsapp-status-retry" role="alert">
           <span>{t.statusFailed}</span>
-          <button className="button button-ghost button-small" type="button" disabled={statusBusy} onClick={() => void loadStatus().catch(() => setError("status_failed"))}>
+          <button className="button button-ghost button-small" type="button" disabled={statusBusy} onClick={() => void loadStatus().catch(() => { setStatusBusy(false); setError("status_failed"); })}>
             {statusBusy ? t.loading : t.retry}
           </button>
         </div>
