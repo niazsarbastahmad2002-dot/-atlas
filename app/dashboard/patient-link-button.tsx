@@ -4,9 +4,11 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createPatientAccessLink } from "./patient-link-actions";
 
+type PatientLinkError = "invalid" | "signed_out" | "unavailable" | "failed" | "not_configured";
+
 const initialPatientLinkState = {
   link: null as string | null,
-  error: null as string | null,
+  error: null as PatientLinkError | null,
   patientPhone: null as string | null,
   patientName: null as string | null,
   doctorName: null as string | null,
