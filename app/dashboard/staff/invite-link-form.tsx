@@ -81,6 +81,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
     setShareError("");
     try {
       await navigator.clipboard.writeText(state.url);
+      setShareError("");
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
@@ -91,6 +92,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
 
   async function shareLink() {
     if (!state.url) return;
+    setCopied(false);
     setShareError("");
     if (navigator.share) {
       try {
