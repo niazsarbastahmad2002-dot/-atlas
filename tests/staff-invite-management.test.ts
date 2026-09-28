@@ -55,3 +55,13 @@ test("active invitation management is localized across all Atlas interface langu
   assert.match(page, /noActiveInvites:/);
   assert.ok((page.match(/revokeInvite:/g) ?? []).length >= 4);
 });
+
+
+test("staff invitation expiry follows the selected Atlas language and Baghdad time", () => {
+  const page = read("app/dashboard/staff/page.tsx");
+
+  assert.match(page, /formatStaffInviteExpiry\(invitation\.expires_at, locale\)/);
+  assert.match(page, /function formatStaffInviteExpiry\(value: string, locale: UiLocale\)/);
+  assert.match(page, /formatTimeValue\(value, locale, \{ timeZone: "Asia\/Baghdad" \}\)/);
+  assert.match(page, /locale === "ar" \? "ar-IQ" : "ckb-IQ"/);
+});
