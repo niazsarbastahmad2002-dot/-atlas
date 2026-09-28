@@ -34,6 +34,7 @@ const copy = {
     onWay: "on the way",
     runningLate: "running late",
     failed: "Timing did not save.",
+    stale: "Clinic timing changed on another device. Latest timing loaded.",
   },
   ku: {
     timing: "کاتی کلینیک",
@@ -45,6 +46,7 @@ const copy = {
     onWay: "لە ڕێگادایە",
     runningLate: "دواکەوتووە",
     failed: "کاتی کلینیک پاشەکەوت نەکرا.",
+    stale: "کاتی کلینیک لە ئامێرێکی تر گۆڕدرا. نوێترین کات بارکرا.",
   },
   bd: {
     timing: "دەمێ کلینیکێ",
@@ -56,6 +58,7 @@ const copy = {
     onWay: "د ڕێکێ دایە",
     runningLate: "دواکەفتییە",
     failed: "دەمێ کلینیکێ نەهاتە پاراستن.",
+    stale: "دەمێ کلینیکێ ل ئامێرەکێ دی هاتیە گۆڕین. نووترین دەم هاتە بارکرن.",
   },
   ar: {
     timing: "وقت العيادة",
@@ -67,6 +70,7 @@ const copy = {
     onWay: "بالطريق",
     runningLate: "راح يتأخر",
     failed: "ما انحفظ وقت العيادة.",
+    stale: "توقيت العيادة اتغيّر من جهاز ثاني. تم تحميل آخر توقيت.",
   },
 } as const;
 
@@ -91,7 +95,7 @@ export function LiveClinicFlow({
   const t = copy[locale];
   const [flow, setFlow] = useState<Flow | null>(null);
   const [saving, setSaving] = useState<number | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<"failed" | "stale" | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -127,7 +131,7 @@ export function LiveClinicFlow({
   async function setDelay(delayMinutes: number) {
     if (!flow || saving !== null || flow.delayMinutes === delayMinutes) return;
     setSaving(delayMinutes);
-    setError(false);
+    setError(null);
     try {
       const response = await fetch("/api/clinic-live-flow", {
         method: "POST",
@@ -138,13 +142,31 @@ export function LiveClinicFlow({
           clinicId: flow.clinicId,
           doctorId: flow.doctorId,
           delayMinutes,
+          expectedUpdatedAt: flow.timingUpdatedAt ?? null,
         }),
       });
-      if (!response.ok) throw new Error("save_failed");
-      const saved = await response.json() as { delayMinutes: number };
-      setFlow((current) => current ? { ...current, delayMinutes: saved.delayMinutes } : current);
+      const saved = await response.json() as {
+        error?: string;
+        delayMinutes?: number | null;
+        timingUpdatedAt?: string | null;
+      };
+      if (response.status === 409 && saved.error === "stale") {
+        setFlow((current) => current ? {
+          ...current,
+          delayMinutes: typeof saved.delayMinutes === "number" ? saved.delayMinutes : current.delayMinutes,
+          timingUpdatedAt: saved.timingUpdatedAt ?? current.timingUpdatedAt,
+        } : current);
+        setError("stale");
+        return;
+      }
+      if (!response.ok || typeof saved.delayMinutes !== "number") throw new Error("save_failed");
+      setFlow((current) => current ? {
+        ...current,
+        delayMinutes: saved.delayMinutes!,
+        timingUpdatedAt: saved.timingUpdatedAt ?? current.timingUpdatedAt,
+      } : current);
     } catch {
-      setError(true);
+      setError("failed");
     } finally {
       setSaving(null);
     }
@@ -174,7 +196,7 @@ export function LiveClinicFlow({
             </button>
           ))}
         </div>
-        {error ? <span className="live-clinic-error" role="alert">{t.failed}</span> : null}
+        {error ? <span className="live-clinic-error" role="alert">{t[error]}</span> : null}
       </div>
 
       {flow.signals.length ? (

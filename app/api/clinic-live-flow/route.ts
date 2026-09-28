@@ -116,7 +116,18 @@ export async function POST(request: Request) {
   const clinicId = typeof body.clinicId === "string" ? body.clinicId : null;
   const doctorId = typeof body.doctorId === "string" ? body.doctorId : null;
   const delayMinutes = Number(body.delayMinutes);
-  if ((clinicId && !uuidPattern.test(clinicId)) || (doctorId && !uuidPattern.test(doctorId)) || !allowedDelays.has(delayMinutes)) {
+  const rawExpectedUpdatedAt = body.expectedUpdatedAt;
+  const expectedUpdatedAt = rawExpectedUpdatedAt == null
+    ? null
+    : typeof rawExpectedUpdatedAt === "string" && !Number.isNaN(Date.parse(rawExpectedUpdatedAt))
+      ? rawExpectedUpdatedAt
+      : "__invalid__";
+  if (
+    (clinicId && !uuidPattern.test(clinicId))
+    || (doctorId && !uuidPattern.test(doctorId))
+    || !allowedDelays.has(delayMinutes)
+    || expectedUpdatedAt === "__invalid__"
+  ) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
@@ -125,21 +136,76 @@ export async function POST(request: Request) {
   if (doctorId && doctorId !== context.doctor.id) return NextResponse.json({ error: "doctor_forbidden" }, { status: 403 });
 
   const today = baghdadDate.format(new Date());
+  const nextValues = {
+    delay_minutes: delayMinutes,
+    updated_by: context.userId,
+    updated_at: new Date().toISOString(),
+  };
+
+  const readCurrent = async () => context.db.from("doctor_day_flow")
+    .select("delay_minutes, updated_at")
+    .eq("clinic_id", context.clinicId)
+    .eq("doctor_id", context.doctor.id)
+    .eq("service_day", today)
+    .maybeSingle();
+
+  const staleOrDuplicate = async () => {
+    const { data: current, error: currentError } = await readCurrent();
+    if (currentError) {
+      console.error("Atlas clinic timing refresh failed", { code: currentError.code ?? "not_loaded" });
+      return NextResponse.json({ error: "save_failed" }, { status: 500 });
+    }
+    if (current && current.delay_minutes === delayMinutes) {
+      return NextResponse.json({
+        clinicId: context.clinicId,
+        doctorId: context.doctor.id,
+        delayMinutes: current.delay_minutes,
+        timingUpdatedAt: current.updated_at,
+      }, { headers: { "Cache-Control": "no-store" } });
+    }
+    return NextResponse.json({
+      error: "stale",
+      delayMinutes: current?.delay_minutes ?? null,
+      timingUpdatedAt: current?.updated_at ?? null,
+    }, { status: 409, headers: { "Cache-Control": "no-store" } });
+  };
+
+  if (expectedUpdatedAt) {
+    const { data, error } = await context.db.from("doctor_day_flow")
+      .update(nextValues)
+      .eq("clinic_id", context.clinicId)
+      .eq("doctor_id", context.doctor.id)
+      .eq("service_day", today)
+      .eq("updated_at", expectedUpdatedAt)
+      .select("delay_minutes, updated_at")
+      .maybeSingle();
+    if (error) {
+      console.error("Atlas clinic timing update failed", { code: error.code ?? "not_saved" });
+      return NextResponse.json({ error: "save_failed" }, { status: 500 });
+    }
+    if (!data) return staleOrDuplicate();
+    return NextResponse.json({
+      clinicId: context.clinicId,
+      doctorId: context.doctor.id,
+      delayMinutes: data.delay_minutes,
+      timingUpdatedAt: data.updated_at,
+    }, { headers: { "Cache-Control": "no-store" } });
+  }
+
   const { data, error } = await context.db.from("doctor_day_flow")
-    .upsert({
+    .insert({
       clinic_id: context.clinicId,
       doctor_id: context.doctor.id,
       service_day: today,
-      delay_minutes: delayMinutes,
-      updated_by: context.userId,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "clinic_id,doctor_id,service_day" })
+      ...nextValues,
+    })
     .select("delay_minutes, updated_at")
     .maybeSingle();
-  if (error || !data) {
-    console.error("Atlas clinic timing update failed", { code: error?.code ?? "not_saved" });
+  if (error && error.code !== "23505") {
+    console.error("Atlas clinic timing update failed", { code: error.code ?? "not_saved" });
     return NextResponse.json({ error: "save_failed" }, { status: 500 });
   }
+  if (!data) return staleOrDuplicate();
 
   return NextResponse.json({
     clinicId: context.clinicId,
