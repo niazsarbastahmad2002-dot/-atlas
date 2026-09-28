@@ -2,6 +2,8 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { formatTimeValue } from "@/lib/i18n/format";
+import type { UiLocale } from "@/lib/i18n/ui";
 
 type ContinuityAppointment = {
   id: string;
@@ -148,18 +150,47 @@ export async function clearBrowserContinuityCache() {
   }
 }
 
-function syncTimeLabel(value: string | null) {
-  if (!value) return "the last successful load";
+const offlineCopy = {
+  en: {
+    badge: "OFFLINE",
+    message: "Atlas is read-only while disconnected. This screen remains available, and a protected copy of today's schedule can reopen offline.",
+    lastSynced: "Last synced",
+    fallback: "at the last successful load",
+  },
+  ku: {
+    badge: "ئۆفلاین",
+    message: "تا پەیوەندی ئینتەرنێت نییە، Atlas تەنها بۆ بینینە. ئەم پەڕەیە بەردەست دەمێنێتەوە و کۆپییەکی پارێزراوی خشتەی ئەمڕۆ دەتوانێت بەبێ ئینتەرنێت بکرێتەوە.",
+    lastSynced: "دوا هاوکاتکردنەوە",
+    fallback: "لە دوا بارکردنی سەرکەوتوو",
+  },
+  bd: {
+    badge: "ئۆفلاین",
+    message: "هەتا گرێدانا ئینتەرنێتێ نەبیت، Atlas تەنێ بۆ دیتنێیە. ئەڤ پەرە بەردەست دمینیت و کۆپیەکا پاراستی یا خشتەیا ئەڤرۆ دشێت بێ ئینتەرنێت بهێتە ڤەکرن.",
+    lastSynced: "دوماهیک هاوکاتکرن",
+    fallback: "ل دوماهیک بارکرنا سەرکەفتی",
+  },
+  ar: {
+    badge: "بدون إنترنت",
+    message: "أثناء انقطاع الإنترنت يكون Atlas للعرض فقط. تبقى هذه الصفحة متاحة، ويمكن فتح نسخة محمية من جدول اليوم بدون إنترنت.",
+    lastSynced: "آخر مزامنة",
+    fallback: "عند آخر تحميل ناجح",
+  },
+} as const;
+
+function syncTimeLabel(value: string | null, locale: UiLocale) {
+  if (!value) return offlineCopy[locale].fallback;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "the last successful load";
-  return new Intl.DateTimeFormat(undefined, {
+  if (Number.isNaN(date.getTime())) return offlineCopy[locale].fallback;
+  const clock = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Baghdad",
-    hour: "numeric",
+    hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
   }).format(date);
+  return formatTimeValue(clock, locale);
 }
 
-export function AtlasContinuityMode() {
+export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchKey = searchParams.toString();
@@ -254,17 +285,16 @@ export function AtlasContinuityMode() {
   }, []);
 
   if (!offline) return null;
+  const t = offlineCopy[locale];
 
   return (
     <>
       <div className="atlas-continuity-banner" role="status" aria-live="polite">
-        <strong>OFFLINE</strong>
-        <span>
-          Atlas is read-only while disconnected. This screen remains available, and a protected copy of today&apos;s schedule can reopen offline. Last synced {syncTimeLabel(lastSyncedAt)}.
-        </span>
+        <strong>{t.badge}</strong>
+        <span>{t.message} {t.lastSynced} {syncTimeLabel(lastSyncedAt, locale)}.</span>
       </div>
       <style>{`
-        .atlas-continuity-banner{position:sticky;top:0;z-index:80;display:flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:8px 14px;border-bottom:1px solid #d8caa2;background:#fff8e7;color:#5e4a12;font-size:11px;line-height:1.35;text-align:center}.atlas-continuity-banner strong{flex:0 0 auto;font-size:10px;letter-spacing:.08em}html[data-atlas-offline="true"] .app-content form,html[data-atlas-offline="true"] .app-content button,html[data-atlas-offline="true"] .live-clinic-flow button{pointer-events:none;opacity:.58}html[data-atlas-offline="true"] .app-content input,html[data-atlas-offline="true"] .app-content select,html[data-atlas-offline="true"] .app-content textarea{pointer-events:none}@media(max-width:680px){.atlas-continuity-banner{align-items:flex-start;flex-direction:column;gap:2px;text-align:left}}
+        .atlas-continuity-banner{position:sticky;top:0;z-index:80;display:flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:8px 14px;border-bottom:1px solid #d8caa2;background:#fff8e7;color:#5e4a12;font-size:11px;line-height:1.35;text-align:center}.atlas-continuity-banner strong{flex:0 0 auto;font-size:10px;letter-spacing:.08em}html[data-atlas-offline="true"] .app-content form,html[data-atlas-offline="true"] .app-content button,html[data-atlas-offline="true"] .live-clinic-flow button{pointer-events:none;opacity:.58}html[data-atlas-offline="true"] .app-content input,html[data-atlas-offline="true"] .app-content select,html[data-atlas-offline="true"] .app-content textarea{pointer-events:none}@media(max-width:680px){.atlas-continuity-banner{align-items:flex-start;flex-direction:column;gap:2px;text-align:start}}
       `}</style>
     </>
   );

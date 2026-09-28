@@ -29,7 +29,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <DashboardScrollContinuity />
       </Suspense>
       <Suspense fallback={null}>
-        <AtlasContinuityMode />
+        <AtlasContinuityMode locale={locale} />
       </Suspense>
       <Suspense fallback={null}>
         <AppNavigation locale={locale} />
