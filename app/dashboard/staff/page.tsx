@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import { formatTimeValue, uiText, type UiLocale } from "@/lib/i18n/ui";
+import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { readPendingStaffInvitations } from "@/lib/staff-invitations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -519,13 +520,18 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
 function formatStaffInviteExpiry(value: string, locale: UiLocale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  const datePart = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : locale === "ar" ? "ar-IQ" : "ckb-IQ", {
+  const baghdadParts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Baghdad",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(date);
-  const timePart = formatTimeValue(value, locale, { timeZone: "Asia/Baghdad" });
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => baghdadParts.find((item) => item.type === type)?.value ?? "";
+  const datePart = formatLocalDateValue(`${part("year")}-${part("month")}-${part("day")}`, locale);
+  const timePart = formatTimeValue(`${part("hour")}:${part("minute")}`, locale);
   return `${datePart} · ${timePart}`;
 }
 
