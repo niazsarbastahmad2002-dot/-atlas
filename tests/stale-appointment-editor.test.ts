@@ -50,12 +50,12 @@ test("concurrent identical appointment detail saves are idempotent instead of re
     action.indexOf("export async function archiveAppointmentInline"),
   );
 
-  assert.match(editAction, /select\("status, appointment_revision, patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_language, reminder_consent, voided_at"\)/);
+  assert.match(editAction, /select\("status, appointment_revision, patient_name, patient_phone, contact_relationship, doctor_id, doctor_name, appointment_at, reminder_language, reminder_consent, voided_at"\)/);
   assert.match(editAction, /current\.appointment_revision === expectedRevision \+ 1/);
   assert.match(editAction, /current\.patient_name === patientName/);
   assert.match(editAction, /current\.patient_phone === patientPhone/);
   assert.match(editAction, /current\.contact_relationship === relationship/);
-  assert.match(editAction, /current\.doctor_id === doctor\.id/);
+  assert.match(editAction, /current\.doctor_id === doctor\.id/);\n  assert.match(editAction, /current\.doctor_name === doctor\.name/);
   assert.match(editAction, /currentTime === appointmentAt\.getTime\(\)/);
   assert.match(editAction, /current\.reminder_language === reminderLanguage/);
   assert.match(editAction, /current\.reminder_consent === reminderConsent/);
