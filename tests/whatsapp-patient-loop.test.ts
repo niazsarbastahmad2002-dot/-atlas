@@ -151,3 +151,19 @@ test("manual sharing puts appointment details in WhatsApp before the private det
   assert.match(button, /Full details or changes/);
   assert.match(button, /wa\.me/);
 });
+
+
+test("manual patient sharing failures stay localized in every Atlas interface language", () => {
+  const action = source("app/dashboard/patient-link-actions.ts");
+  const button = source("app/dashboard/patient-link-button.tsx");
+
+  assert.match(action, /error: "invalid" \| "signed_out" \| "unavailable" \| "failed" \| "not_configured" \| null/);
+  assert.match(action, /emptyState\("signed_out"\)/);
+  assert.match(action, /emptyState\("unavailable"\)/);
+  assert.match(action, /emptyState\("not_configured"\)/);
+  assert.match(button, /t\.errors\[state\.error\]/);
+  assert.match(button, /Could not prepare the share link\. Try again\./);
+  assert.match(button, /بەستەری ناردن ئامادە نەکرا/);
+  assert.match(button, /لینکێ هنارتنێ نەهاتە ئامادەکرن/);
+  assert.match(button, /ما كدرنا نجهز رابط المشاركة/);
+});
