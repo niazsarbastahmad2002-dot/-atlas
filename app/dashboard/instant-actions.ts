@@ -309,13 +309,30 @@ export async function updateAppointmentDetailsInline(
   if (!data) {
     const { data: current } = await supabase
       .from("appointments")
-      .select("status, voided_at")
+      .select("status, appointment_revision, patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_language, reminder_consent, voided_at")
       .eq("clinic_id", clinicId)
       .eq("id", id)
       .maybeSingle();
 
     if (current?.voided_at) {
       return { ok: false, reason: "stale" };
+    }
+    const currentTime = current ? Date.parse(current.appointment_at) : Number.NaN;
+    if (
+      current
+      && current.appointment_revision === expectedRevision + 1
+      && current.status === expectedStatus
+      && current.patient_name === patientName
+      && current.patient_phone === patientPhone
+      && current.contact_relationship === relationship
+      && current.doctor_id === doctor.id
+      && Number.isFinite(currentTime)
+      && currentTime === appointmentAt.getTime()
+      && current.reminder_language === reminderLanguage
+      && current.reminder_consent === reminderConsent
+    ) {
+      revalidatePath("/dashboard");
+      return { ok: true, updated: true };
     }
     if (current && isAppointmentStatus(current.status) && current.status !== expectedStatus) {
       return { ok: false, reason: "stale" };
