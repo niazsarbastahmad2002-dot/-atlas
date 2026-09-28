@@ -12,7 +12,7 @@ test("receptionist invite sharing falls back safely when native share or clipboa
   assert.match(source, /await navigator\.clipboard\.writeText\(state\.url\)/);
   assert.match(source, /setShareError\(t\.copyFailed\)/);
   assert.match(source, /await navigator\.clipboard\.writeText\(state\.url\);\s*setShareError\(""\);\s*setCopied\(true\)/);
-  assert.match(source, /async function shareLink\(\) \{[\s\S]*?setCopied\(false\);[\s\S]*?setShareError\(""""\);/);
+  assert.match(source, /async function shareLink\(\) \{[\s\S]*?setCopied\(false\);[\s\S]*?setShareError\(""\);/);
   assert.match(source, /error instanceof DOMException && error\.name === "AbortError"/);
   assert.match(source, /await copyLink\(\)/);
   assert.match(source, /title: t\.shareTitle, text: t\.shareText, url: state\.url/);
