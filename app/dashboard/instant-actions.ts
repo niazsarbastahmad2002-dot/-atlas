@@ -309,7 +309,7 @@ export async function updateAppointmentDetailsInline(
   if (!data) {
     const { data: current } = await supabase
       .from("appointments")
-      .select("status, appointment_revision, patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_language, reminder_consent, voided_at")
+      .select("status, appointment_revision, patient_name, patient_phone, contact_relationship, doctor_id, doctor_name, appointment_at, reminder_language, reminder_consent, voided_at")
       .eq("clinic_id", clinicId)
       .eq("id", id)
       .maybeSingle();
@@ -326,6 +326,7 @@ export async function updateAppointmentDetailsInline(
       && current.patient_phone === patientPhone
       && current.contact_relationship === relationship
       && current.doctor_id === doctor.id
+      && current.doctor_name === doctor.name
       && Number.isFinite(currentTime)
       && currentTime === appointmentAt.getTime()
       && current.reminder_language === reminderLanguage
