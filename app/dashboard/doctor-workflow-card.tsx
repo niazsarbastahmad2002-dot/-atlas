@@ -171,7 +171,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   const [firstReminder, setFirstReminder] = useState(1440);
   const [secondReminder, setSecondReminder] = useState<number | null>(null);
   const [language, setLanguage] = useState("ku");
-  const [state, setState] = useState<"idle" | "loading" | "saving" | "saved" | "failed">("loading");
+  const [state, setState] = useState<"idle" | "loading" | "saving" | "saved" | "load-failed" | "save-failed">("loading");
 
   const apply = (data: Workflow) => {
     setWorkflow(data);
@@ -195,7 +195,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
       if (!response.ok) throw new Error("load_failed");
       apply(await response.json() as Workflow);
     } catch {
-      setState("failed");
+      setState("load-failed");
     }
   };
 
@@ -230,7 +230,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
       setWorkflow((current) => current ? { ...current, ...saved } : current);
       setState("saved");
       window.setTimeout(() => setState((current) => current === "saved" ? "idle" : current), 1600);
-    }).catch(() => setState("failed"));
+    }).catch(() => setState("save-failed"));
   };
 
   return (
@@ -244,7 +244,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
         </div>
       </div>
 
-      {!workflow && state === "failed" ? (
+      {!workflow && state === "load-failed" ? (
         <div className="atlas-workflow-load-error" role="alert">
           <p className="notice notice-error">{t.loadFailed}</p>
           <button className="button button-ghost button-small" type="button" onClick={() => void load()}>{t.retry}</button>
@@ -306,7 +306,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
           </details>
 
           <button className="button" type="button" onClick={save} disabled={state === "saving" || state === "loading"}>{state === "saving" ? t.saving : t.save}</button>
-          <p className={state === "failed" ? "notice notice-error" : "atlas-workflow-status"} role="status">{state === "saved" ? t.saved : state === "failed" ? t.failed : ""}</p>
+          <p className={state === "load-failed" || state === "save-failed" ? "notice notice-error" : "atlas-workflow-status"} role={state === "load-failed" || state === "save-failed" ? "alert" : "status"}>{state === "saved" ? t.saved : state === "load-failed" ? t.loadFailed : state === "save-failed" ? t.failed : ""}</p>
         </div>
       )}
 
