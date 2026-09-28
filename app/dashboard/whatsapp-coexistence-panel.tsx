@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 type MetaLaunch = {
@@ -203,19 +203,22 @@ export function WhatsAppCoexistencePanel({
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
+  const statusRequestRef = useRef(0);
   const [error, setError] = useState<string | null>(null);
 
   const loadStatus = useCallback(async () => {
+    const requestId = ++statusRequestRef.current;
     setStatusBusy(true);
     const response = await fetch(`/api/whatsapp/onboarding/status?clinic_id=${encodeURIComponent(clinicId)}`, {
       credentials: "same-origin",
       cache: "no-store",
     });
     if (!response.ok) {
-      setStatusBusy(false);
+      if (requestId === statusRequestRef.current) setStatusBusy(false);
       throw new Error("status_failed");
     }
     const value = await response.json() as OnboardingStatus;
+    if (requestId !== statusRequestRef.current) return value;
     setStatus(value);
     setError((current) => current === "status_failed" ? null : current);
     setStatusBusy(false);
@@ -231,7 +234,7 @@ export function WhatsAppCoexistencePanel({
         setError("status_failed");
       }
     });
-    return () => { active = false; };
+    return () => { active = false; statusRequestRef.current += 1; };
   }, [canManage, loadStatus]);
 
   useEffect(() => {
