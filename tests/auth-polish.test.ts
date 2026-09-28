@@ -51,3 +51,15 @@ test("production authentication polish does not add test-only Meta transport fla
   assert.doesNotMatch(login, /DIRECT_META_OTP_ENABLED|ATLAS_WHATSAPP_MODE|meta_test/);
   assert.doesNotMatch(join, /DIRECT_META_OTP_ENABLED|ATLAS_WHATSAPP_MODE|meta_test/);
 });
+
+
+test("Supabase SSR refresh forwards anti-cache headers to prevent cross-user session caching", () => {
+  const proxy = read("lib/supabase/proxy.ts");
+
+  assert.match(proxy, /setAll\(cookiesToSet, headersToSet\)/);
+  assert.match(proxy, /Object\.entries\(headersToSet\)/);
+  assert.match(proxy, /response\.headers\.set\(key, value\)/);
+  assert.equal((proxy.match(/response\.cookies\.getAll\(\)\.forEach/g) ?? []).length, 2);
+  assert.equal((proxy.match(/redirect\.cookies\.set\(cookie\)/g) ?? []).length, 2);
+  assert.equal((proxy.match(/redirect\.headers\.set\(key, value\)/g) ?? []).length, 2);
+});
