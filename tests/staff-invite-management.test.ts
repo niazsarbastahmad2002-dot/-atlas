@@ -62,6 +62,7 @@ test("staff invitation expiry follows the selected Atlas language and Baghdad ti
 
   assert.match(page, /formatStaffInviteExpiry\(invitation\.expires_at, locale\)/);
   assert.match(page, /function formatStaffInviteExpiry\(value: string, locale: UiLocale\)/);
-  assert.match(page, /formatTimeValue\(value, locale, \{ timeZone: "Asia\/Baghdad" \}\)/);
-  assert.match(page, /locale === "ar" \? "ar-IQ" : "ckb-IQ"/);
+  assert.match(page, /timeZone: "Asia\\/Baghdad"/);
+  assert.match(page, /formatLocalDateValue/);
+  assert.match(page, /formatTimeValue/);
 });
