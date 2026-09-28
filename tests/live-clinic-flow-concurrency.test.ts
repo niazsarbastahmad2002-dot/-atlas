@@ -28,3 +28,18 @@ test("stale clinic timing feedback is localized instead of silently overwriting 
   assert.match(ui, /دەمێ کلینیکێ ل ئامێرەکێ دی هاتیە گۆڕین/);
   assert.match(ui, /توقيت العيادة اتغيّر من جهاز ثاني/);
 });
+
+
+test("live clinic timing load failures are visible and retryable in every Atlas language", () => {
+  const ui = read("app/dashboard/live-clinic-flow.tsx");
+
+  assert.match(ui, /Clinic timing could not be loaded\./);
+  assert.match(ui, /کاتی کلینیک بار نەکرا/);
+  assert.match(ui, /دەمێ کلینیکێ نەهاتە بارکرن/);
+  assert.match(ui, /ما كدرنا نحمّل وقت العيادة/);
+  assert.match(ui, /if \(!response\.ok\) throw new Error\("load_failed"\)/);
+  assert.match(ui, /setLoadFailed\(true\)/);
+  assert.match(ui, /setLoadFailed\(false\)/);
+  assert.match(ui, /onClick=\{\(\) => void load\(\)\}/);
+  assert.match(ui, />\{t\.retry\}<\/button>/);
+});
