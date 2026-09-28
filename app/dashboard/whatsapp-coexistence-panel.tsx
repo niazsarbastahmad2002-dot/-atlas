@@ -63,6 +63,8 @@ const copy = {
     loading: "Checking WhatsApp connection…",
     notReady: "Meta Coexistence setup is not ready yet.",
     failed: "The WhatsApp connection did not finish. Try again.",
+    statusFailed: "Atlas could not check the WhatsApp connection.",
+    retry: "Retry",
     testSender: "Choose the clinic's real +964 WhatsApp Business number, not Meta's test number.",
     multiple: "Meta returned more than one real sender. Choose the clinic's existing WhatsApp Business number and try again.",
   },
@@ -75,6 +77,8 @@ const copy = {
     loading: "پەیوەندی واتسئاپ پشکنین دەکرێت…",
     notReady: "ڕێکخستنی Meta Coexistence هێشتا ئامادە نییە.",
     failed: "پەیوەستکردنی واتسئاپ تەواو نەبوو. دووبارە هەوڵ بدە.",
+    statusFailed: "Atlas نەیتوانی پەیوەندی واتسئاپ بپشکنێت.",
+    retry: "دووبارە هەوڵ بدەوە",
     testSender: "ژمارەی ڕاستەقینەی +964 ـی WhatsApp Business هەڵبژێرە، نەک ژمارەی تاقیکردنەوەی Meta.",
     multiple: "Meta زیاتر لە یەک ژمارەی ڕاستەقینە گەڕاندەوە. ژمارەی WhatsApp Business ـی کلینیک هەڵبژێرە و دووبارە هەوڵ بدە.",
   },
@@ -87,6 +91,8 @@ const copy = {
     loading: "گرێدانا واتسئاپێ دهێتە پشکنین…",
     notReady: "ڕێکخستنا Meta Coexistence هێشتا ئامادە نینە.",
     failed: "گرێدانا واتسئاپێ تەمام نەبوو. دووبارە هەول بدە.",
+    statusFailed: "Atlas نەشیا گرێدانا واتسئاپێ بپشکنیت.",
+    retry: "دووبارە هەول بدە",
     testSender: "ژمارا ڕاستەقینە یا +964 یا WhatsApp Business هەلبژێرە، نە ژمارا تاقیکرنێ یا Meta.",
     multiple: "Meta پتر ژ ژمارەکا ڕاستەقینە ڤەگەڕاند. ژمارا WhatsApp Business یا کلینیکێ هەلبژێرە و دووبارە هەول بدە.",
   },
@@ -99,6 +105,8 @@ const copy = {
     loading: "جارٍ التحقق من اتصال واتساب…",
     notReady: "إعداد Meta Coexistence غير جاهز بعد.",
     failed: "لم يكتمل ربط واتساب. حاول مرة أخرى.",
+    statusFailed: "تعذر على Atlas التحقق من اتصال واتساب.",
+    retry: "حاول مرة ثانية",
     testSender: "اختر رقم WhatsApp Business العراقي الحقيقي +964 للعيادة، وليس رقم Meta التجريبي.",
     multiple: "أعادت Meta أكثر من رقم حقيقي. اختر رقم WhatsApp Business الحالي للعيادة وحاول مرة أخرى.",
   },
@@ -194,16 +202,23 @@ export function WhatsAppCoexistencePanel({
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [statusBusy, setStatusBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadStatus = useCallback(async () => {
+    setStatusBusy(true);
     const response = await fetch(`/api/whatsapp/onboarding/status?clinic_id=${encodeURIComponent(clinicId)}`, {
       credentials: "same-origin",
       cache: "no-store",
     });
-    if (!response.ok) throw new Error("status_failed");
+    if (!response.ok) {
+      setStatusBusy(false);
+      throw new Error("status_failed");
+    }
     const value = await response.json() as OnboardingStatus;
     setStatus(value);
+    setError((current) => current === "status_failed" ? null : current);
+    setStatusBusy(false);
     return value;
   }, [clinicId]);
 
@@ -211,7 +226,10 @@ export function WhatsAppCoexistencePanel({
     if (!canManage) return;
     let active = true;
     void loadStatus().catch(() => {
-      if (active) setError("status_failed");
+      if (active) {
+        setStatusBusy(false);
+        setError("status_failed");
+      }
     });
     return () => { active = false; };
   }, [canManage, loadStatus]);
@@ -337,6 +355,14 @@ export function WhatsAppCoexistencePanel({
       </div>
 
       {!status && !error ? <small>{t.loading}</small> : null}
+      {error === "status_failed" ? (
+        <div className="atlas-whatsapp-status-retry" role="alert">
+          <span>{t.statusFailed}</span>
+          <button className="button button-ghost button-small" type="button" disabled={statusBusy} onClick={() => void loadStatus().catch(() => setError("status_failed"))}>
+            {statusBusy ? t.loading : t.retry}
+          </button>
+        </div>
+      ) : null}
 
       {connected ? (
         <div className="atlas-whatsapp-connected" role="status">
@@ -351,7 +377,7 @@ export function WhatsAppCoexistencePanel({
         </button>
       ) : null}
 
-      {error ? <p className="notice notice-error" role="alert">{errorCopy(error, locale)}</p> : null}
+      {error && error !== "status_failed" ? <p className="notice notice-error" role="alert">{errorCopy(error, locale)}</p> : null}
 
       <style>{`
         .atlas-whatsapp-connect{display:grid;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
@@ -359,6 +385,7 @@ export function WhatsAppCoexistencePanel({
         .atlas-whatsapp-connect>div:first-child p{color:var(--muted);font-size:11px;line-height:1.5}
         .atlas-whatsapp-connected{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:11px;padding:9px 11px;background:var(--surface-soft);font-size:12px}
         .atlas-whatsapp-connected span{color:var(--muted)}
+        .atlas-whatsapp-status-retry{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:11px;padding:9px 11px;color:var(--danger);font-size:11px}
       `}</style>
     </div>
   );
