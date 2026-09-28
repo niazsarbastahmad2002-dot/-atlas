@@ -16,7 +16,7 @@ test("fast appointment removal writes the complete archive audit metadata", () =
   assert.match(action, /void_reason: "Removed by clinic staff"/);
   assert.match(action, /\.eq\("status", expectedStatus\)/);
   assert.match(action, /archiveAppointmentInline[\s\S]*\.eq\("appointment_revision", expectedRevision\)/);
-  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, revision\)/);
+  assert.ok(ui.includes("archiveAppointmentInline(clinicId, appointmentId, optimisticStatus, optimisticRevision)"));
   assert.match(action, /revalidatePath\("\/dashboard\/history"\)/);
 });
 
@@ -32,6 +32,6 @@ test("fast appointment removal is concurrency-safe and repeat removal is idempot
     archiveAction,
     /if \(current && isAppointmentStatus\(current\.status\) && current\.status !== expectedStatus\) \{\s*return \{ ok: false, reason: "stale" \};\s*\}\s*return \{ ok: false, reason: "stale" \};/,
   );
-  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, revision\)/);
+  assert.ok(ui.includes("archiveAppointmentInline(clinicId, appointmentId, optimisticStatus, optimisticRevision)"));
   assert.match(ui, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
 });
