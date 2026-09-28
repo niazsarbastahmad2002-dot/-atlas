@@ -59,4 +59,7 @@ test("Supabase SSR refresh forwards anti-cache headers to prevent cross-user ses
   assert.match(proxy, /setAll\(cookiesToSet, headersToSet\)/);
   assert.match(proxy, /Object\.entries\(headersToSet\)/);
   assert.match(proxy, /response\.headers\.set\(key, value\)/);
+  assert.equal((proxy.match(/response\.cookies\.getAll\(\)\.forEach/g) ?? []).length, 2);
+  assert.equal((proxy.match(/redirect\.cookies\.set\(cookie\)/g) ?? []).length, 2);
+  assert.equal((proxy.match(/redirect\.headers\.set\(key, value\)/g) ?? []).length, 2);
 });
