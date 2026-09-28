@@ -19,7 +19,6 @@ export function createClient() {
     {
       auth: {
         flowType: "pkce",
-        experimental: { passkey: true },
       },
       cookieOptions,
     },
