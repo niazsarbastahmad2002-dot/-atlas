@@ -34,6 +34,8 @@ const copy = {
     onWay: "on the way",
     runningLate: "running late",
     failed: "Timing did not save.",
+    loadFailed: "Clinic timing could not be loaded.",
+    retry: "Retry",
     stale: "Clinic timing changed on another device. Latest timing loaded.",
   },
   ku: {
@@ -46,6 +48,8 @@ const copy = {
     onWay: "لە ڕێگادایە",
     runningLate: "دواکەوتووە",
     failed: "کاتی کلینیک پاشەکەوت نەکرا.",
+    loadFailed: "کاتی کلینیک بار نەکرا.",
+    retry: "دووبارە هەوڵ بدەوە",
     stale: "کاتی کلینیک لە ئامێرێکی تر گۆڕدرا. نوێترین کات بارکرا.",
   },
   bd: {
@@ -58,6 +62,8 @@ const copy = {
     onWay: "د ڕێکێ دایە",
     runningLate: "دواکەفتییە",
     failed: "دەمێ کلینیکێ نەهاتە پاراستن.",
+    loadFailed: "دەمێ کلینیکێ نەهاتە بارکرن.",
+    retry: "دووبارە هەوڵ بدە",
     stale: "دەمێ کلینیکێ ل ئامێرەکێ دی هاتیە گۆڕین. نووترین دەم هاتە بارکرن.",
   },
   ar: {
@@ -70,6 +76,8 @@ const copy = {
     onWay: "بالطريق",
     runningLate: "راح يتأخر",
     failed: "ما انحفظ وقت العيادة.",
+    loadFailed: "ما كدرنا نحمّل وقت العيادة.",
+    retry: "حاول مرة ثانية",
     stale: "توقيت العيادة اتغيّر من جهاز ثاني. تم تحميل آخر توقيت.",
   },
 } as const;
@@ -95,6 +103,7 @@ export function LiveClinicFlow({
   const t = copy[locale];
   const [flow, setFlow] = useState<Flow | null>(null);
   const [saving, setSaving] = useState<number | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState<"failed" | "stale" | null>(null);
 
   const query = useMemo(() => {
@@ -111,10 +120,13 @@ export function LiveClinicFlow({
         credentials: "same-origin",
         cache: "no-store",
       });
-      if (!response.ok) return;
+      if (!response.ok) throw new Error("load_failed");
       const next = await response.json() as Flow;
       setFlow(next.isToday ? next : null);
-    } catch {}
+      setLoadFailed(false);
+    } catch {
+      setLoadFailed(true);
+    }
   }, [query]);
 
   useEffect(() => {
@@ -172,7 +184,18 @@ export function LiveClinicFlow({
     }
   }
 
-  if (!flow) return null;
+  if (!flow) {
+    if (!loadFailed) return null;
+    return (
+      <section className="live-clinic-flow shell" aria-label={t.timing}>
+        <div className="live-clinic-load-error" role="alert">
+          <span>{t.loadFailed}</span>
+          <button type="button" onClick={() => void load()}>{t.retry}</button>
+        </div>
+        <style>{`.live-clinic-load-error{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface);color:var(--danger);font-size:10px;font-weight:720}.live-clinic-load-error button{min-height:34px;border:1px solid var(--line);border-radius:10px;padding:6px 11px;background:var(--surface-soft);color:var(--ink);font:inherit;cursor:pointer}`}</style>
+      </section>
+    );
+  }
 
   return (
     <section className="live-clinic-flow shell" aria-label={t.timing}>
@@ -196,6 +219,7 @@ export function LiveClinicFlow({
             </button>
           ))}
         </div>
+        {loadFailed ? <span className="live-clinic-error" role="alert">{t.loadFailed} <button type="button" className="live-clinic-retry" onClick={() => void load()}>{t.retry}</button></span> : null}
         {error ? <span className="live-clinic-error" role="alert">{t[error]}</span> : null}
       </div>
 
@@ -214,7 +238,7 @@ export function LiveClinicFlow({
       ) : null}
 
       <style>{`
-        .live-clinic-flow{display:grid;gap:9px;margin-top:10px;margin-bottom:10px}.live-clinic-timing{display:grid;grid-template-columns:minmax(150px,1fr) auto;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface)}.live-clinic-copy{display:grid;gap:2px;min-width:0}.live-clinic-copy>strong{font-size:11px;font-weight:880}.live-clinic-copy>span{color:var(--muted);font-size:10px;font-weight:720}.live-clinic-copy>small{margin-top:2px;color:var(--muted);font-size:9px;font-weight:560;line-height:1.4}.live-clinic-options{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}.live-clinic-options::-webkit-scrollbar{display:none}.live-clinic-options button{flex:0 0 auto;min-height:34px;border:1px solid var(--line);border-radius:999px;padding:6px 9px;background:var(--surface-soft);color:var(--ink-soft);font-size:9.5px;font-weight:800;cursor:pointer}.live-clinic-options button.is-selected{border-color:rgba(8,119,90,.28);background:var(--accent-soft);color:var(--accent)}.live-clinic-options button:disabled{cursor:wait;opacity:.72}.live-clinic-error{grid-column:1/-1;color:var(--danger);font-size:10px;font-weight:720}.live-patient-updates{display:flex;align-items:center;gap:9px;min-width:0}.live-patient-updates>strong{flex:0 0 auto;color:var(--muted);font-size:9.5px;font-weight:850}.live-patient-pills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.live-patient-pills::-webkit-scrollbar{display:none}.live-patient-pill{display:inline-flex;flex:0 0 auto;align-items:center;gap:2px;border-radius:999px;padding:6px 9px;background:var(--accent-faint);color:var(--ink-soft);font-size:9.5px}.live-patient-pill b{font-weight:850}.live-patient-pill.is-running_late{background:var(--warning-bg);color:var(--warning)}@media(max-width:720px){.live-clinic-timing{grid-template-columns:1fr}.live-clinic-copy>small{display:none}.live-clinic-options{width:100%}.live-clinic-options button{flex:1 0 auto}.live-patient-updates{align-items:flex-start;flex-direction:column;gap:5px}.live-patient-pills{width:100%}}
+        .live-clinic-flow{display:grid;gap:9px;margin-top:10px;margin-bottom:10px}.live-clinic-timing{display:grid;grid-template-columns:minmax(150px,1fr) auto;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface)}.live-clinic-copy{display:grid;gap:2px;min-width:0}.live-clinic-copy>strong{font-size:11px;font-weight:880}.live-clinic-copy>span{color:var(--muted);font-size:10px;font-weight:720}.live-clinic-copy>small{margin-top:2px;color:var(--muted);font-size:9px;font-weight:560;line-height:1.4}.live-clinic-options{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}.live-clinic-options::-webkit-scrollbar{display:none}.live-clinic-options button{flex:0 0 auto;min-height:34px;border:1px solid var(--line);border-radius:999px;padding:6px 9px;background:var(--surface-soft);color:var(--ink-soft);font-size:9.5px;font-weight:800;cursor:pointer}.live-clinic-options button.is-selected{border-color:rgba(8,119,90,.28);background:var(--accent-soft);color:var(--accent)}.live-clinic-options button:disabled{cursor:wait;opacity:.72}.live-clinic-error{grid-column:1/-1;color:var(--danger);font-size:10px;font-weight:720}.live-clinic-retry{margin-inline-start:6px;border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}.live-patient-updates{display:flex;align-items:center;gap:9px;min-width:0}.live-patient-updates>strong{flex:0 0 auto;color:var(--muted);font-size:9.5px;font-weight:850}.live-patient-pills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.live-patient-pills::-webkit-scrollbar{display:none}.live-patient-pill{display:inline-flex;flex:0 0 auto;align-items:center;gap:2px;border-radius:999px;padding:6px 9px;background:var(--accent-faint);color:var(--ink-soft);font-size:9.5px}.live-patient-pill b{font-weight:850}.live-patient-pill.is-running_late{background:var(--warning-bg);color:var(--warning)}@media(max-width:720px){.live-clinic-timing{grid-template-columns:1fr}.live-clinic-copy>small{display:none}.live-clinic-options{width:100%}.live-clinic-options button{flex:1 0 auto}.live-patient-updates{align-items:flex-start;flex-direction:column;gap:5px}.live-patient-pills{width:100%}}
       `}</style>
     </section>
   );
