@@ -13,7 +13,7 @@ test("fast appointment status updates use compare-and-set against the status the
   assert.match(action, /\.eq\("status", expectedStatus\)/);
   assert.match(action, /\.eq\("appointment_revision", expectedRevision\)/);
   assert.match(ui, /revision: number/);
-  assert.match(ui, /updateAppointmentStatusInline\(clinicId, appointmentId, previousStatus, revision, nextStatus\)/);
+  assert.ok(ui.includes("updateAppointmentStatusInline(clinicId, appointmentId, previousStatus, optimisticRevision, nextStatus)"));
   assert.match(action, /return \{ ok: false, reason: "stale" \}/);
 
   assert.match(ui, /result\.reason === "stale"[\s\S]*router\.refresh\(\)/);
@@ -35,4 +35,15 @@ test("stale status feedback is localized across all Atlas interface languages", 
   assert.match(ui, /ئەم مەوعیدە لە شوێنێکی تر گۆڕدراوە/);
   assert.match(ui, /ئەڤ مەوعیدە ل جهەکێ دی هاتیە گۆڕین/);
   assert.match(ui, /تم تغيير هذا الموعد من مكان آخر/);
+});
+
+
+test("same-card follow-up actions advance the local appointment revision after a successful status save", () => {
+  const ui = read("app/dashboard/appointment-actions.tsx");
+
+  assert.match(ui, /const \[optimisticRevision, setOptimisticRevision\] = useState\(revision\)/);
+  assert.match(ui, /setOptimisticRevision\(revision\)/);
+  assert.match(ui, /updateAppointmentStatusInline\(clinicId, appointmentId, previousStatus, optimisticRevision, nextStatus\)/);
+  assert.match(ui, /setOptimisticRevision\(\(current\) => current \+ 1\)/);
+  assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, optimisticRevision\)/);
 });

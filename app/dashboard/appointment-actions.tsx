@@ -130,6 +130,7 @@ export function AppointmentActions({
 }) {
   const router = useRouter();
   const [optimisticStatus, setOptimisticStatus] = useState(status);
+  const [optimisticRevision, setOptimisticRevision] = useState(revision);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [, setClockTick] = useState(0);
@@ -142,7 +143,8 @@ export function AppointmentActions({
 
   useEffect(() => {
     setOptimisticStatus(status);
-  }, [status]);
+    setOptimisticRevision(revision);
+  }, [revision, status]);
 
   const scheduledAt = new Date(appointmentAt).getTime();
   const tooEarlyForOutcome = Number.isFinite(scheduledAt) && scheduledAt > Date.now() + 5 * 60 * 1000;
@@ -177,7 +179,7 @@ export function AppointmentActions({
     paintOrderVisibility(card, nextStatus);
 
     startTransition(async () => {
-      const result = await updateAppointmentStatusInline(clinicId, appointmentId, previousStatus, revision, nextStatus);
+      const result = await updateAppointmentStatusInline(clinicId, appointmentId, previousStatus, optimisticRevision, nextStatus);
       if (!result.ok) {
         setOptimisticStatus(previousStatus);
         if (orderBadge) orderBadge.style.display = previousOrderDisplay;
@@ -185,6 +187,7 @@ export function AppointmentActions({
         if (result.reason === "stale") router.refresh();
         return;
       }
+      setOptimisticRevision((current) => current + 1);
       router.refresh();
     });
   }
@@ -201,7 +204,7 @@ export function AppointmentActions({
     setError(null);
 
     startTransition(async () => {
-      const result = await archiveAppointmentInline(clinicId, appointmentId, optimisticStatus, revision);
+      const result = await archiveAppointmentInline(clinicId, appointmentId, optimisticStatus, optimisticRevision);
       if (!result.ok) {
         if (card) {
           card.style.visibility = previousVisibility;
