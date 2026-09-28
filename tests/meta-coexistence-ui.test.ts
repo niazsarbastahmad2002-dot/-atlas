@@ -44,3 +44,12 @@ test("WhatsApp connection status failures are visible and retryable without chan
   assert.match(panel, /setStatusBusy\(false\)/);
   assert.match(panel, /error && error !== "status_failed"/);
 });
+
+
+test("superseded WhatsApp status checks cannot replace the current clinic state", () => {
+  const panel = readFileSync("app/dashboard/whatsapp-coexistence-panel.tsx", "utf8");
+  assert.match(panel, /const statusRequestRef = useRef\(0\)/);
+  assert.match(panel, /const requestId = \+\+statusRequestRef\.current/);
+  assert.match(panel, /if \(requestId !== statusRequestRef\.current\) return value/);
+  assert.match(panel, /statusRequestRef\.current \+= 1/);
+});
