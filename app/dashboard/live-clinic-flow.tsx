@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 type Signal = {
@@ -105,6 +105,7 @@ export function LiveClinicFlow({
   const [saving, setSaving] = useState<number | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState<"failed" | "stale" | null>(null);
+  const loadRequestRef = useRef(0);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -115,6 +116,7 @@ export function LiveClinicFlow({
   }, [clinicId, doctorId, day]);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequestRef.current;
     try {
       const response = await fetch(`/api/clinic-live-flow${query ? `?${query}` : ""}`, {
         credentials: "same-origin",
@@ -122,9 +124,11 @@ export function LiveClinicFlow({
       });
       if (!response.ok) throw new Error("load_failed");
       const next = await response.json() as Flow;
+      if (requestId !== loadRequestRef.current) return;
       setFlow(next.isToday ? next : null);
       setLoadFailed(false);
     } catch {
+      if (requestId !== loadRequestRef.current) return;
       setLoadFailed(true);
     }
   }, [query]);
