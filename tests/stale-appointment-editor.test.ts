@@ -55,7 +55,8 @@ test("concurrent identical appointment detail saves are idempotent instead of re
   assert.match(editAction, /current\.patient_name === patientName/);
   assert.match(editAction, /current\.patient_phone === patientPhone/);
   assert.match(editAction, /current\.contact_relationship === relationship/);
-  assert.match(editAction, /current\.doctor_id === doctor\.id/);\n  assert.match(editAction, /current\.doctor_name === doctor\.name/);
+  assert.match(editAction, /current\.doctor_id === doctor\.id/);
+  assert.match(editAction, /current\.doctor_name === doctor\.name/);
   assert.match(editAction, /currentTime === appointmentAt\.getTime\(\)/);
   assert.match(editAction, /current\.reminder_language === reminderLanguage/);
   assert.match(editAction, /current\.reminder_consent === reminderConsent/);
