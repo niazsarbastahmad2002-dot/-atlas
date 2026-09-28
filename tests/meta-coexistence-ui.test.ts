@@ -31,3 +31,25 @@ test("settings only accepts Embedded Signup completion messages from Facebook or
   assert.match(panel, /url\.hostname\.endsWith\("\.facebook\.com"\)/);
   assert.match(panel, /String\(root\.version\) !== "3"/);
 });
+
+
+test("WhatsApp connection status failures are visible and retryable without changing Coexistence configuration", () => {
+  const panel = readFileSync("app/dashboard/whatsapp-coexistence-panel.tsx", "utf8");
+  assert.match(panel, /Atlas could not check the WhatsApp connection\./);
+  assert.match(panel, /Atlas نەیتوانی پەیوەندی واتسئاپ بپشکنێت/);
+  assert.match(panel, /Atlas نەشیا گرێدانا واتسئاپێ بپشکنیت/);
+  assert.match(panel, /تعذر على Atlas التحقق من اتصال واتساب/);
+  assert.match(panel, /error === "status_failed"/);
+  assert.match(panel, /void loadStatus\(\)\.catch/);
+  assert.match(panel, /setStatusBusy\(false\)/);
+  assert.match(panel, /error && error !== "status_failed"/);
+});
+
+
+test("superseded WhatsApp status checks cannot replace the current clinic state", () => {
+  const panel = readFileSync("app/dashboard/whatsapp-coexistence-panel.tsx", "utf8");
+  assert.match(panel, /const statusRequestRef = useRef\(0\)/);
+  assert.match(panel, /const requestId = \+\+statusRequestRef\.current/);
+  assert.match(panel, /if \(requestId !== statusRequestRef\.current\) return value/);
+  assert.match(panel, /statusRequestRef\.current \+= 1/);
+});
