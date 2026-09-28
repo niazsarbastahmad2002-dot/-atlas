@@ -4,9 +4,11 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createPatientAccessLink } from "./patient-link-actions";
 
+type PatientLinkError = "invalid" | "signed_out" | "unavailable" | "failed" | "not_configured";
+
 const initialPatientLinkState = {
   link: null as string | null,
-  error: null as string | null,
+  error: null as PatientLinkError | null,
   patientPhone: null as string | null,
   patientName: null as string | null,
   doctorName: null as string | null,
@@ -27,6 +29,7 @@ const copy = {
     doctor: "Doctor",
     time: "Time",
     details: "Full details or changes",
+    errors: { invalid: "Could not prepare this share link.", signed_out: "Sign in again before sharing.", unavailable: "This appointment is unavailable.", failed: "Could not prepare the share link. Try again.", not_configured: "Patient sharing is not configured on this deployment." },
   },
   ku: {
     shareShort: "ناردن",
@@ -41,6 +44,7 @@ const copy = {
     doctor: "دکتۆر",
     time: "کات",
     details: "زانیاری تەواو یان گۆڕانکاری",
+    errors: { invalid: "بەستەری ناردن ئامادە نەکرا.", signed_out: "پێش ناردن دووبارە بچۆ ژوورەوە.", unavailable: "ئەم مەوعیدە بەردەست نییە.", failed: "بەستەری ناردن ئامادە نەکرا. دووبارە هەوڵ بدەوە.", not_configured: "ناردنی زانیاری نەخۆش لەم وەشانەدا ڕێک نەخراوە." },
   },
   bd: {
     shareShort: "هنارتن",
@@ -55,6 +59,7 @@ const copy = {
     doctor: "دکتۆر",
     time: "دەم",
     details: "زانیاریێن تەمام یان گوهۆڕین",
+    errors: { invalid: "لینکێ هنارتنێ نەهاتە ئامادەکرن.", signed_out: "بەری هنارتنێ دووبارە بچۆ ژوور.", unavailable: "ئەڤ مەوعیدە بەردەست نینە.", failed: "لینکێ هنارتنێ نەهاتە ئامادەکرن. دووبارە هەوڵ بدە.", not_configured: "هنارتنا زانیاریێن نەخۆشی ل ڤێ وەشانێ نەهاتیە ڕێکخستن." },
   },
   ar: {
     shareShort: "مشاركة",
@@ -69,6 +74,7 @@ const copy = {
     doctor: "الدكتور",
     time: "الوقت",
     details: "التفاصيل الكاملة أو التغيير",
+    errors: { invalid: "ما كدرنا نجهز رابط المشاركة.", signed_out: "سجّل الدخول مرة ثانية قبل المشاركة.", unavailable: "هذا الموعد غير متاح.", failed: "ما كدرنا نجهز رابط المشاركة. حاول مرة ثانية.", not_configured: "مشاركة تفاصيل المريض غير مهيأة بهذا الإصدار." },
   },
 } as const;
 
@@ -164,7 +170,7 @@ export function PatientLinkButton({
         <button type="button" onClick={() => setShowResult(true)} aria-label={t.shareAppointment} title={t.shareAppointment}>{t.shareShort}</button>
       ) : null}
 
-      {state.error ? <span className="field-help" role="alert">{state.error}</span> : null}
+      {state.error ? <span className="field-help" role="alert">{t.errors[state.error]}</span> : null}
 
       {state.link && showResult ? (
         <div className="patient-link-result" role="status">

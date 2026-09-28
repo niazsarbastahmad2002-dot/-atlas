@@ -11,14 +11,14 @@ import { createClient } from "@/lib/supabase/server";
 
 type PatientLinkState = {
   link: string | null;
-  error: string | null;
+  error: "invalid" | "signed_out" | "unavailable" | "failed" | "not_configured" | null;
   patientPhone: string | null;
   patientName: string | null;
   doctorName: string | null;
   appointmentAt: string | null;
 };
 
-const emptyState = (error: string): PatientLinkState => ({
+const emptyState = (error: NonNullable<PatientLinkState["error"]>): PatientLinkState => ({
   link: null,
   error,
   patientPhone: null,
@@ -35,13 +35,13 @@ export async function createPatientAccessLink(
   const appointmentId = String(formData.get("appointment_id") ?? "");
 
   if (!isUuid(clinicId) || !isUuid(appointmentId)) {
-    return emptyState("Could not create a patient link.");
+    return emptyState("invalid");
   }
 
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
-    return emptyState("Sign in again before creating a patient link.");
+    return emptyState("signed_out");
   }
 
   const { data: appointment, error: appointmentError } = await supabase
@@ -53,7 +53,7 @@ export async function createPatientAccessLink(
     .maybeSingle();
 
   if (appointmentError || !appointment) {
-    return emptyState("That appointment is unavailable.");
+    return emptyState("unavailable");
   }
 
   const token = createPatientToken();
@@ -70,7 +70,7 @@ export async function createPatientAccessLink(
 
   if (error || data !== true) {
     console.error("Atlas patient link creation failed", { code: error?.code ?? "rejected" });
-    return emptyState("Could not create a patient link. Please try again.");
+    return emptyState("failed");
   }
 
   try {
@@ -83,6 +83,6 @@ export async function createPatientAccessLink(
       appointmentAt: appointment.appointment_at,
     };
   } catch {
-    return emptyState("Patient links are not configured on this deployment.");
+    return emptyState("not_configured");
   }
 }
