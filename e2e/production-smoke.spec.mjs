@@ -15,6 +15,14 @@ test("production login renders safely without sending authentication traffic", a
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: /کلینیکەکەت بە ژمارەی مۆبایلەکەت/ })).toBeVisible();
 
+  await page.getByRole("button", { name: "کوردی بادینی" }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: /کلینیکا تە ب ژمارا موبایلا تە/ })).toBeVisible();
+
+  await page.getByRole("button", { name: /العربية/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: /عيادتك تبدأ من رقمك/ })).toBeVisible();
+
   await page.getByRole("button", { name: /English/ }).click();
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
   await expect(page.getByRole("heading", { name: "Your clinic starts with your number." })).toBeVisible();
