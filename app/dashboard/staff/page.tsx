@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
+import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { readPendingStaffInvitations } from "@/lib/staff-invitations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -421,7 +422,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
               <article className="doctor-settings-row" key={invitation.invitation_id}>
                 <div className="patient-cell">
                   <strong>{invitation.doctor_name}</strong>
-                  <span className="field-help">{text.expires}: {formatStaffInviteExpiry(invitation.expires_at)}</span>
+                  <span className="field-help">{text.expires}: {formatStaffInviteExpiry(invitation.expires_at, locale)}</span>
                 </div>
                 <form action={revokeManualStaffInvitation.bind(null, clinic.id, invitation.invitation_id)}>
                   <button className="danger-link" type="submit">{text.revokeInvite}</button>
@@ -516,18 +517,22 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   );
 }
 
-function formatStaffInviteExpiry(value: string) {
+function formatStaffInviteExpiry(value: string, locale: UiLocale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en-GB", {
+  const baghdadParts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Baghdad",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
-  }).format(date);
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => baghdadParts.find((item) => item.type === type)?.value ?? "";
+  const datePart = formatLocalDateValue(`${part("year")}-${part("month")}-${part("day")}`, locale);
+  const timePart = formatTimeValue(`${part("hour")}:${part("minute")}`, locale);
+  return `${datePart} · ${timePart}`;
 }
 
 function DirectoryUnavailable({ label, back }: { label: string; back: string }) {
