@@ -19,10 +19,12 @@ type Copy = {
   paste: string;
   verify: string;
   verifying: string;
+  back: string;
   samePhone: string;
   invalidPhone: string;
   invalidCode: string;
-  failed: string;
+  requestFailed: string;
+  verifyFailed: string;
   verified: string;
 };
 
@@ -38,10 +40,12 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "Paste code",
     verify: "Verify and change phone",
     verifying: "Verifying…",
+    back: "Use a different number / send a new code",
     samePhone: "This is already your current Atlas phone. Enter a new phone number.",
     invalidPhone: "Enter a valid new phone number.",
     invalidCode: "Enter the verification code you received.",
-    failed: "Atlas could not start the phone-number change. Nothing was changed.",
+    requestFailed: "Atlas could not start the phone-number change. Nothing was changed.",
+    verifyFailed: "Atlas could not verify that code. Check the code or request a new one.",
     verified: "Your Atlas sign-in phone was changed successfully.",
   },
   ku: {
@@ -55,10 +59,12 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "کۆد دابنێ",
     verify: "پشتڕاست بکەرەوە و ژمارەکە بگۆڕە",
     verifying: "پشتڕاست دەکرێتەوە…",
+    back: "ژمارەیەکی تر بەکاربهێنە / کۆدی نوێ بنێرە",
     samePhone: "ئەمە هەر ژمارەی ئێستای تۆیە. ژمارەیەکی نوێ بنووسە.",
     invalidPhone: "ژمارەیەکی نوێ و دروست بنووسە.",
     invalidCode: "کۆدی پشتڕاستکردنەوەی گەیشتوو بنووسە.",
-    failed: "Atlas نەیتوانی گۆڕینی ژمارەکە دەستپێبکات. هیچ شتێک نەگۆڕا.",
+    requestFailed: "Atlas نەیتوانی گۆڕینی ژمارەکە دەستپێبکات. هیچ شتێک نەگۆڕا.",
+    verifyFailed: "Atlas نەیتوانی کۆدەکە پشتڕاست بکاتەوە. کۆدەکە بپشکنە یان کۆدێکی نوێ داوا بکە.",
     verified: "ژمارەی چوونەژوورەوەی Atlas بە سەرکەوتوویی گۆڕا.",
   },
   bd: {
@@ -72,10 +78,12 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "کۆد دابنێ",
     verify: "پشتڕاست بکە و ژمارێ بگوهەرە",
     verifying: "دهێتە پشتڕاستکرن…",
+    back: "ژمارەکا دی بکاربینە / کۆدەکا نوو بهنێرە",
     samePhone: "ئەڤە هەر ژمارا نوکە یا تەیە. ژمارەکا نوو بنڤیسە.",
     invalidPhone: "ژمارەکا نوو و دروست بنڤیسە.",
     invalidCode: "کۆدێ پشتڕاستکرنێ یێ گەهشتی بنڤیسە.",
-    failed: "Atlas نەشیا گوهارتنا ژمارێ دەستپێبکەت. چ تشت نەهاتە گوهارتن.",
+    requestFailed: "Atlas نەشیا گوهارتنا ژمارێ دەستپێبکەت. چ تشت نەهاتە گوهارتن.",
+    verifyFailed: "Atlas نەشیا کۆدی پشتڕاست بکەت. کۆدی بپشکنە یان کۆدەکا نوو بخوازە.",
     verified: "ژمارا چوونەژوورا Atlas ب سەرکەفتی هاتە گوهارتن.",
   },
   ar: {
@@ -89,10 +97,12 @@ const copyByLocale: Record<UiLocale, Copy> = {
     paste: "لصق الرمز",
     verify: "تحقق وغيّر الرقم",
     verifying: "جارٍ التحقق…",
+    back: "استخدم رقماً آخر / أرسل رمزاً جديداً",
     samePhone: "هذا هو رقمك الحالي بالفعل. أدخل رقم هاتف جديداً.",
     invalidPhone: "أدخل رقم هاتف جديداً وصحيحاً.",
     invalidCode: "أدخل رمز التحقق الذي وصلك.",
-    failed: "تعذر بدء تغيير رقم الهاتف. لم يتغير شيء.",
+    requestFailed: "تعذر بدء تغيير رقم الهاتف. لم يتغير شيء.",
+    verifyFailed: "تعذر التحقق من الرمز. تأكد من الرمز أو اطلب رمزاً جديداً.",
     verified: "تم تغيير رقم تسجيل الدخول في Atlas بنجاح.",
   },
 };
@@ -130,14 +140,14 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
       const supabase = createClient();
       const { error: updateError } = await supabase.auth.updateUser({ phone });
       if (updateError) {
-        setError(copy.failed);
+        setError(copy.requestFailed);
         return;
       }
       setPendingPhone(phone);
       setToken("");
       setStep("code");
     } catch {
-      setError(copy.failed);
+      setError(copy.requestFailed);
     } finally {
       setBusy(false);
     }
@@ -163,7 +173,7 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
         type: "phone_change",
       });
       if (verifyError) {
-        setError(copy.failed);
+        setError(copy.verifyFailed);
         return;
       }
       setNotice(copy.verified);
@@ -173,7 +183,7 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
       setStep("phone");
       router.refresh();
     } catch {
-      setError(copy.failed);
+      setError(copy.verifyFailed);
     } finally {
       setBusy(false);
     }
@@ -221,6 +231,7 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
             autoFocus
           />
           <button className="button" type="submit" disabled={busy}>{busy ? copy.verifying : copy.verify}</button>
+          <button className="button button-ghost" type="button" disabled={busy} onClick={() => { setStep("phone"); setPendingPhone(""); setToken(""); setError(""); }}>{copy.back}</button>
         </form>
       )}
 

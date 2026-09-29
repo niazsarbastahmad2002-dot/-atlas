@@ -100,3 +100,25 @@ test("temporary email fallback safely recreates a deleted account while SMS is u
   assert.match(legacy, /bd:\s*\{/);
   assert.match(legacy, /ar:\s*\{/);
 });
+
+
+test("phone change distinguishes request failures from verification failures in every Atlas language", () => {
+  const form = read("app/dashboard/settings/phone-change-form.tsx");
+  assert.match(form, /requestFailed: string/);
+  assert.match(form, /verifyFailed: string/);
+  assert.match(form, /could not verify that code/);
+  assert.match(form, /نەیتوانی کۆدەکە پشتڕاست بکاتەوە/);
+  assert.match(form, /نەشیا کۆدی پشتڕاست بکەت/);
+  assert.match(form, /تعذر التحقق من الرمز/);
+  assert.match(form, /setError\(copy\.verifyFailed\)/);
+});
+
+
+test("phone change verification exposes a direct recovery path to request another code", () => {
+  const form = read("app/dashboard/settings/phone-change-form.tsx");
+  assert.match(form, /Use a different number \/ send a new code/);
+  assert.match(form, /setStep\("phone"\)/);
+  assert.match(form, /setPendingPhone\(""\)/);
+  assert.match(form, /setToken\(""\)/);
+  assert.match(form, /\{copy\.back\}<\/button>/);
+});
