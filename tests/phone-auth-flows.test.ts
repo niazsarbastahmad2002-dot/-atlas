@@ -142,12 +142,12 @@ test("OTP paste failures are visible and localized across login and phone change
 });
 
 
-test("passkey-disabled guidance points users to normal phone verification", () => {
+test("passkey-disabled guidance stays correct across available sign-in methods", () => {
   const passkey = read("app/dashboard/settings/passkey-manager.tsx");
 
-  assert.match(passkey, /Phone verification still works normally/);
-  assert.match(passkey, /پشتڕاستکردنەوە بە ژمارەی مۆبایل هەر کار دەکات/);
-  assert.match(passkey, /پشتڕاستکرن ب ژمارا موبایلێ هێشتا کار دکەت/);
-  assert.match(passkey, /التحقق برقم الهاتف ما زال يعمل بشكل طبيعي/);
-  assert.doesNotMatch(passkey, /Email sign-in still works normally/);
+  assert.match(passkey, /Your normal Atlas sign-in is still available/);
+  assert.match(passkey, /چوونەژوورەوەی ئاسایی Atlas هەر بەردەستە/);
+  assert.match(passkey, /چوونەژوورا ئاسایی یا Atlas هێشتا بەردەستە/);
+  assert.match(passkey, /تسجيل الدخول العادي إلى Atlas ما زال متاحاً/);
+  assert.doesNotMatch(passkey, /Phone verification still works normally|Email sign-in still works normally/);
 });
