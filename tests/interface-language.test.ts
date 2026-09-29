@@ -25,3 +25,16 @@ test("interface language endpoint keeps the preference in a secure site-wide coo
   assert.match(route, /sameSite: "lax"/);
   assert.match(route, /httpOnly: true/);
 });
+
+
+test("settings load failures stay in the selected Atlas language", () => {
+  const settings = read("app/dashboard/settings/page.tsx");
+
+  assert.match(settings, /loadFailed: string/);
+  assert.match(settings, /The clinic settings could not load\. Go back to the schedule and try again\./);
+  assert.match(settings, /ڕێکخستنەکانی کلینیک بار نەبوون/);
+  assert.match(settings, /ڕێکخستنێن کلینیکێ بار نەبوون/);
+  assert.match(settings, /تعذر تحميل إعدادات العيادة/);
+  assert.match(settings, /error=\{copy\.loadFailed\}/);
+  assert.match(settings, /role="alert">\{error\}<\/p>/);
+});
