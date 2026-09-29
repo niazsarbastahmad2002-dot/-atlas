@@ -40,6 +40,7 @@ const authCopy = {
     codeHelp: "We sent a one-time code to",
     codeLabel: "Verification code",
     paste: "Paste code",
+    pasteFailed: "Atlas could not paste a valid code. Enter the code manually or try again.",
     verify: "Verify and continue",
     verifying: "Verifying…",
     resend: "Resend code",
@@ -73,6 +74,8 @@ const authCopy = {
     codeHelp: "کۆدێکی یەکجارەمان نارد بۆ",
     codeLabel: "کۆدی پشتڕاستکردنەوە",
     paste: "کۆد دابنێ",
+    pasteFailed: "Atlas نەشیا کۆدی دابنێت. کۆدی ب دەستی بنڤیسە یان جارەکا دی هەول بدە.",
+    pasteFailed: "Atlas نەیتوانی کۆدەکە دابنێت. کۆدەکە بە دەست بنووسە یان دووبارە هەوڵبدەوە.",
     verify: "پشتڕاست بکەوە و بەردەوام بە",
     verifying: "پشتڕاست دەکرێتەوە…",
     resend: "کۆد دووبارە بنێرە",
@@ -135,6 +138,7 @@ const authCopy = {
     codeHelp: "أرسلنا رمزاً لمرة واحدة إلى",
     codeLabel: "رمز التحقق",
     paste: "لصق الرمز",
+    pasteFailed: "تعذر لصق رمز صالح. اكتب الرمز يدوياً أو حاول مرة ثانية.",
     verify: "تحقق واستمر",
     verifying: "جارٍ التحقق…",
     resend: "إعادة إرسال الرمز",
@@ -330,8 +334,9 @@ export function LoginForm({ locale }: { locale: UiLocale }) {
             id="phone-otp"
             label={copy.codeLabel}
             value={token}
-            onChange={setToken}
+            onChange={(nextToken) => { setToken(nextToken); setError(""); }}
             pasteLabel={copy.paste}
+            onPasteFailure={() => setError(copy.pasteFailed)}
             autoFocus
           />
           <button className="button login-primary-action" type="submit" disabled={busy}>
