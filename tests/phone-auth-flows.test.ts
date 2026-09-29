@@ -140,3 +140,14 @@ test("OTP paste failures are visible and localized across login and phone change
   assert.match(login, /onPasteFailure=\{\(\) => setError\(copy\.pasteFailed\)\}/);
   assert.match(form, /onPasteFailure=\{\(\) => setError\(copy\.pasteFailed\)\}/);
 });
+
+
+test("passkey-disabled guidance points users to normal phone verification", () => {
+  const passkey = read("app/dashboard/settings/passkey-manager.tsx");
+
+  assert.match(passkey, /Phone verification still works normally/);
+  assert.match(passkey, /پشتڕاستکردنەوە بە ژمارەی مۆبایل هەر کار دەکات/);
+  assert.match(passkey, /پشتڕاستکرن ب ژمارا موبایلێ هێشتا کار دکەت/);
+  assert.match(passkey, /التحقق برقم الهاتف ما زال يعمل بشكل طبيعي/);
+  assert.doesNotMatch(passkey, /Email sign-in still works normally/);
+});
