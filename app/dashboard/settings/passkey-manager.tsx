@@ -15,7 +15,7 @@ const copy = {
     existing: "Quick sign-in is already saved for this account.",
     cancelled: "Nothing changed. You can close this or try again later.",
     unavailable: "Nothing changed. If you already saved quick sign-in, you can keep using it normally.",
-    disabled: "Quick sign-in is temporarily unavailable. Email sign-in still works normally.",
+    disabled: "Quick sign-in is temporarily unavailable. Your normal Atlas sign-in is still available.",
   },
   ku: {
     title: "چوونەژوورەوەی خێرای ئارەزوومەندانە",
@@ -27,7 +27,7 @@ const copy = {
     existing: "چوونەژوورەوەی خێرا پێشتر بۆ ئەم هەژمارە هەڵگیراوە.",
     cancelled: "هیچ شتێک نەگۆڕا. دەتوانیت دایبخەیت یان دواتر دووبارە هەوڵ بدەیت.",
     unavailable: "هیچ شتێک نەگۆڕا. ئەگەر چوونەژوورەوەی خێرات پێشتر هەڵگرتووە، هەر بە ئاسایی بەکاری بهێنە.",
-    disabled: "چوونەژوورەوەی خێرا کاتێکی کورت بەردەست نییە. چوونەژوورەوە بە ئیمەیڵ هەر کار دەکات.",
+    disabled: "چوونەژوورەوەی خێرا کاتێکی کورت بەردەست نییە. چوونەژوورەوەی ئاسایی Atlas هەر بەردەستە.",
   },
   bd: {
     title: "چوونەژوورا خێرا یا ئارەزوومەندانە",
@@ -39,7 +39,7 @@ const copy = {
     existing: "چوونەژوورا خێرا پێشتر بۆ ڤی هەژماری هاتییە پاراستن.",
     cancelled: "چ تشت نەگۆڕی. دکاریت داخەیت یان پاشتر دووبارە هەول بدەیت.",
     unavailable: "چ تشت نەگۆڕی. ئەگەر چوونەژوورا خێرا پێشتر پاراستییە، ب شێوەی ئاسایی بکاربینە.",
-    disabled: "چوونەژوورا خێرا نوکە بەردەست نینە. چوونەژوور ب ئیمەیلێ هێشتا کار دکەت.",
+    disabled: "چوونەژوورا خێرا نوکە بەردەست نینە. چوونەژوورا ئاسایی یا Atlas هێشتا بەردەستە.",
   },
   ar: {
     title: "دخول سريع اختياري",
@@ -51,7 +51,7 @@ const copy = {
     existing: "الدخول السريع محفوظ بالفعل لهذا الحساب.",
     cancelled: "لم يتغير شيء. يمكنك الإغلاق أو المحاولة لاحقاً.",
     unavailable: "لم يتغير شيء. إذا كنت قد حفظت الدخول السريع من قبل فيمكنك الاستمرار في استخدامه بشكل طبيعي.",
-    disabled: "الدخول السريع غير متاح مؤقتاً. تسجيل الدخول بالبريد ما زال يعمل بشكل طبيعي.",
+    disabled: "الدخول السريع غير متاح مؤقتاً. تسجيل الدخول العادي إلى Atlas ما زال متاحاً.",
   },
 } as const;
 
