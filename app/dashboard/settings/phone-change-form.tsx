@@ -17,6 +17,7 @@ type Copy = {
   sending: string;
   code: string;
   paste: string;
+  pasteFailed: string;
   verify: string;
   verifying: string;
   back: string;
@@ -38,6 +39,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     sending: "Sending…",
     code: "Verification code",
     paste: "Paste code",
+    pasteFailed: "Atlas could not paste a valid code. Enter the code manually or try again.",
     verify: "Verify and change phone",
     verifying: "Verifying…",
     back: "Use a different number / send a new code",
@@ -57,6 +59,8 @@ const copyByLocale: Record<UiLocale, Copy> = {
     sending: "دەنێردرێت…",
     code: "کۆدی پشتڕاستکردنەوە",
     paste: "کۆد دابنێ",
+    pasteFailed: "Atlas نەشیا کۆدی دابنێت. کۆدی ب دەستی بنڤیسە یان جارەکا دی هەول بدە.",
+    pasteFailed: "Atlas نەیتوانی کۆدەکە دابنێت. کۆدەکە بە دەست بنووسە یان دووبارە هەوڵبدەوە.",
     verify: "پشتڕاست بکەرەوە و ژمارەکە بگۆڕە",
     verifying: "پشتڕاست دەکرێتەوە…",
     back: "ژمارەیەکی تر بەکاربهێنە / کۆدی نوێ بنێرە",
@@ -95,6 +99,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
     sending: "جارٍ الإرسال…",
     code: "رمز التحقق",
     paste: "لصق الرمز",
+    pasteFailed: "تعذر لصق رمز صالح. اكتب الرمز يدوياً أو حاول مرة ثانية.",
     verify: "تحقق وغيّر الرقم",
     verifying: "جارٍ التحقق…",
     back: "استخدم رقماً آخر / أرسل رمزاً جديداً",
@@ -226,8 +231,9 @@ export function PhoneChangeForm({ locale, currentPhone }: { locale: UiLocale; cu
             id="sign-in-phone-code"
             label={copy.code}
             value={token}
-            onChange={setToken}
+            onChange={(nextToken) => { setToken(nextToken); setError(""); }}
             pasteLabel={copy.paste}
+            onPasteFailure={() => setError(copy.pasteFailed)}
             autoFocus
           />
           <button className="button" type="submit" disabled={busy}>{busy ? copy.verifying : copy.verify}</button>
