@@ -8,6 +8,7 @@ export function OtpCodeField({
   value,
   onChange,
   pasteLabel,
+  onPasteFailure,
   autoFocus = false,
 }: {
   id: string;
@@ -15,15 +16,20 @@ export function OtpCodeField({
   value: string;
   onChange: (value: string) => void;
   pasteLabel: string;
+  onPasteFailure?: () => void;
   autoFocus?: boolean;
 }) {
   async function pasteCode() {
     try {
       const text = await navigator.clipboard.readText();
       const code = normalizeOtpToken(text);
-      if (code) onChange(code);
+      if (!code) {
+        onPasteFailure?.();
+        return;
+      }
+      onChange(code);
     } catch {
-      // Clipboard access can be blocked; manual entry remains available.
+      onPasteFailure?.();
     }
   }
 

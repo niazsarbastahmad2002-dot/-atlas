@@ -122,3 +122,21 @@ test("phone change verification exposes a direct recovery path to request anothe
   assert.match(form, /setToken\(""\)/);
   assert.match(form, /\{copy\.back\}<\/button>/);
 });
+
+
+test("OTP paste failures are visible and localized across login and phone change", () => {
+  const login = read("app/login/login-form.tsx");
+  const form = read("app/dashboard/settings/phone-change-form.tsx");
+  const otpField = read("app/components/otp-code-field.tsx");
+
+  assert.match(otpField, /onPasteFailure\?: \(\) => void/);
+  assert.match(otpField, /onPasteFailure\?\.\(\)/);
+  assert.match(login, /Atlas could not paste a valid code/);
+  assert.match(login, /نەیتوانی کۆدەکە دابنێت/);
+  assert.match(login, /نەشیا کۆدی دابنێت/);
+  assert.match(login, /تعذر لصق رمز صالح/);
+  assert.match(form, /pasteFailed: string/);
+  assert.match(form, /Atlas could not paste a valid code/);
+  assert.match(login, /onPasteFailure=\{\(\) => setError\(copy\.pasteFailed\)\}/);
+  assert.match(form, /onPasteFailure=\{\(\) => setError\(copy\.pasteFailed\)\}/);
+});
