@@ -65,6 +65,7 @@ const settingsCopy: Record<UiLocale, {
   readOnlyClinic: string;
   phonePending: string;
   support: string;
+  loadFailed: string;
 }> = {
   en: {
     clinicBasics: "Clinic",
@@ -91,6 +92,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "Clinic administration manages the clinic name.",
     phonePending: "Phone not verified yet",
     support: "Help & legal",
+    loadFailed: "The clinic settings could not load. Go back to the schedule and try again.",
   },
   ku: {
     clinicBasics: "کلینیک",
@@ -117,6 +119,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "بەڕێوەبەری کلینیک ناوی کلینیک بەڕێوە دەبات.",
     phonePending: "ژمارەی مۆبایل هێشتا پشتڕاست نەکراوەتەوە",
     support: "یارمەتی و یاسایی",
+    loadFailed: "ڕێکخستنەکانی کلینیک بار نەبوون. بگەڕێوە بۆ خشتەی وادەکان و دووبارە هەوڵ بدەوە.",
   },
   bd: {
     clinicBasics: "کلینیک",
@@ -143,6 +146,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "بەڕێڤەبرنا کلینیکێ ناڤێ کلینیکێ بەڕێڤە دبەت.",
     phonePending: "ژمارا موبایلێ هێشتا نەهاتییە پشتڕاستکرن",
     support: "هاریکاری و یاسایی",
+    loadFailed: "ڕێکخستنێن کلینیکێ بار نەبوون. ڤەگەڕە خشتەیا وادەیان و جارەکا دی هەول بدە.",
   },
   ar: {
     clinicBasics: "العيادة",
@@ -169,6 +173,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "تدير إدارة العيادة اسم العيادة.",
     phonePending: "رقم الهاتف غير موثق بعد",
     support: "المساعدة والقانوني",
+    loadFailed: "تعذر تحميل إعدادات العيادة. ارجع إلى جدول المواعيد وحاول مرة ثانية.",
   },
 };
 
@@ -208,7 +213,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       .order("name", { ascending: true }),
   ]);
 
-  if (doctorsError) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} />;
+  if (doctorsError) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} error={copy.loadFailed} />;
 
   const canManage = clinic.owner_id === userData.user.id
     || membership?.role === "owner"
@@ -423,13 +428,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   );
 }
 
-function SettingsUnavailable({ label, back }: { label: string; back: string }) {
+function SettingsUnavailable({ label, back, error }: { label: string; back: string; error: string }) {
   return (
     <main className="center-page">
       <section className="auth-card">
         <div className="brand">Atlas</div>
         <h1>{label}</h1>
-        <p className="notice notice-error">The clinic settings could not load.</p>
+        <p className="notice notice-error" role="alert">{error}</p>
         <Link className="button" href="/dashboard">{back}</Link>
       </section>
     </main>
