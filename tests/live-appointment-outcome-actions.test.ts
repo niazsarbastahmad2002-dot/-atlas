@@ -18,6 +18,7 @@ test("appointment status controls identify the patient for assistive technology"
   const actions = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
   const dashboard = readFileSync(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
   assert.ok(actions.includes('const statusLabel = `${workflow.status}: ${patientName}`;'));
+  assert.ok(actions.includes('role="group" aria-label={statusLabel}'));
   assert.ok(actions.includes("aria-label={statusLabel}"));
   assert.ok(dashboard.includes("patientName={appointment.patient_name}"));
 });
