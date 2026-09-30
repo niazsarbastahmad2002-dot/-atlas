@@ -16,6 +16,6 @@ test("near-term appointment details remain editable at their existing time", () 
 
 
 test("appointment edit disclosure identifies the patient for assistive technology", () => {
-  const editor = source("app/dashboard/appointment-editor.tsx");
+  const editor = readFileSync(new URL("../app/dashboard/appointment-editor.tsx", import.meta.url), "utf8");
   assert.match(editor, /aria-label=\\{`\\$\\{open \\? t\\.close : t\\.edit\\}: \\$\\{patientName\\}`\\}/);
 });
