@@ -22,6 +22,7 @@ test("doctor workflow keeps the five supported clinic intervals and receptionist
 
 test("patient appointment stays doctor-aware, localized, and queue-aware", () => {
   const patientPage = source("app/patient/[token]/page.tsx");
+  const shareButton = source("app/dashboard/patient-link-button.tsx");
   assert.match(patientPage, /doctor_specialty/);
   assert.match(patientPage, /receptionist_phone/);
   assert.match(patientPage, /queue_position/);
@@ -78,6 +79,8 @@ test("unavailable patient links keep a localized fallback language", () => {
 
   assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string \}>/);
   assert.match(patientPage, /const fallbackLocale = patientLocale\(query\.lang \?\? "en"\)/);
+  assert.match(shareButton, /url\.searchParams\.set\("lang", locale\)/);
+  assert.match(shareButton, /\}, \[locale, state\.link\]\);/);
   assert.match(patientPage, /<Unavailable locale=\{fallbackLocale\} \/>/);
   for (const phrase of [
     "This link is unavailable.",
