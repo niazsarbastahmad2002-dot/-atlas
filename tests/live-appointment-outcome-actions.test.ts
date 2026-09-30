@@ -12,3 +12,12 @@ test("appointment outcome controls refresh while receptionist leaves schedule op
   assert.match(source, /window\.clearInterval\(timer\)/);
   assert.match(source, /scheduledAt > Date\.now\(\) \+ 5 \* 60 \* 1000/);
 });
+
+
+test("appointment status controls identify the patient for assistive technology", () => {
+  const actions = source("app/dashboard/appointment-actions.tsx");
+  const dashboard = source("app/dashboard/page.tsx");
+  assert.match(actions, /const statusLabel = `\\$\\{workflow\\.status\\}: \\$\\{patientName\\}`/);
+  assert.match(actions, /aria-label=\\{statusLabel\\}/);
+  assert.match(dashboard, /patientName=\\{appointment\\.patient_name\\}/);
+});
