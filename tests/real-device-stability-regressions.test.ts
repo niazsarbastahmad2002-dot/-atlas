@@ -41,3 +41,13 @@ test("appointment phone-number tokens are forced to LTR in RTL interfaces", () =
   assert.match(css, /unicode-bidi:\s*isolate !important/);
   assert.match(css, /white-space:\s*nowrap/);
 });
+
+
+test("new appointment accepts localized Iraqi phone digits before server normalization", () => {
+  const dashboard = source("app/dashboard/page.tsx");
+
+  assert.match(
+    dashboard,
+    /pattern="\(\?:\[\+\]\?\(\?:\[9٩۹\]\[6٦۶\]\[4٤۴\]\)\|\[0٠۰\]\)\[7٧۷\]\[0-9٠-٩۰-۹ \(\)-\]\{9,16\}"/,
+  );
+});
