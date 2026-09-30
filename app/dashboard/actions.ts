@@ -13,7 +13,7 @@ import {
   normalizeIraqiMobile,
   parseBaghdadDateTime,
 } from "@/lib/appointments";
-import { appointmentDestination } from "@/lib/dashboard-booking-navigation";
+import { appointmentDestination, appointmentErrorDestination } from "@/lib/dashboard-booking-navigation";
 import type { DashboardMessageCode } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 
@@ -234,6 +234,13 @@ export async function createAppointment(formData: FormData) {
   const appointmentAt = parseBaghdadDateTime(String(formData.get("appointment_at") ?? ""));
   const reminderConsent = formData.get("reminder_consent") === "on";
   const reminderLanguage = String(formData.get("reminder_language") ?? "ku");
+  const returnDay = String(formData.get("return_day") ?? "");
+  const appointmentError = (code: DashboardMessageCode) => appointmentErrorDestination({
+    clinicId,
+    doctorId: isUuid(doctorId) ? doctorId : null,
+    day: returnDay,
+    error: code,
+  });
 
   if (
     !isUuid(clinicId)
@@ -242,10 +249,10 @@ export async function createAppointment(formData: FormData) {
     || !isValidDisplayName(rawPatientName)
     || !reminderLanguages.has(reminderLanguage)
   ) {
-    redirect(dashboardUrl("error", "appointment_invalid", clinicId));
+    redirect(appointmentError("appointment_invalid"));
   }
-  if (!patientPhone) redirect(dashboardUrl("error", "appointment_phone_invalid", clinicId));
-  if (!appointmentAt) redirect(dashboardUrl("error", "appointment_time_invalid", clinicId));
+  if (!patientPhone) redirect(appointmentError("appointment_phone_invalid"));
+  if (!appointmentAt) redirect(appointmentError("appointment_time_invalid"));
 
   const { supabase } = await authorizeClinic(clinicId);
   const { data: doctor, error: doctorError } = await supabase
@@ -256,7 +263,7 @@ export async function createAppointment(formData: FormData) {
     .eq("active", true)
     .maybeSingle();
   if (doctorError || !doctor) {
-    redirect(dashboardUrl("error", "appointment_invalid", clinicId));
+    redirect(appointmentError("appointment_invalid"));
   }
 
   const { error } = await supabase.from("appointments").insert({
@@ -306,7 +313,7 @@ export async function createAppointment(formData: FormData) {
       console.error("Atlas appointment idempotency payload mismatch", {
         code: existingError?.code ?? "payload_mismatch",
       });
-      redirect(dashboardUrl("error", "appointment_create_failed", clinicId));
+      redirect(appointmentError("appointment_create_failed"));
     }
     if (conflict === "slot_taken") {
       redirect(appointmentDestination({
@@ -317,7 +324,7 @@ export async function createAppointment(formData: FormData) {
       }));
     }
     console.error("Atlas appointment creation failed", { code: error.code });
-    redirect(dashboardUrl("error", "appointment_create_failed", clinicId));
+    redirect(appointmentError("appointment_create_failed"));
   }
 
   revalidatePath("/dashboard");
