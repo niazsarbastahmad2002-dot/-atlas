@@ -13,3 +13,9 @@ test("near-term appointment details remain editable at their existing time", () 
   );
   assert.match(source, /const canEditDetails = new Date\(appointment\.appointment_at\)\.getTime\(\) >= now - 60_000/);
 });
+
+
+test("appointment edit disclosure identifies the patient for assistive technology", () => {
+  const editor = source("app/dashboard/appointment-editor.tsx");
+  assert.match(editor, /aria-label=\\{`\\$\\{open \\? t\\.close : t\\.edit\\}: \\$\\{patientName\\}`\\}/);
+});
