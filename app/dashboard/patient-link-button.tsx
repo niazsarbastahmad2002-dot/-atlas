@@ -125,13 +125,14 @@ export function PatientLinkButton({
 
   useEffect(() => {
     if (state.link) setShowResult(true);
-  }, [state.link]);
+  }, [locale, state.link]);
 
   const initialLink = useMemo(() => {
     if (!state.link) return null;
     try {
       const url = new URL(state.link);
       url.searchParams.set("view", "initial");
+      url.searchParams.set("lang", locale);
       return url.toString();
     } catch {
       return state.link;
