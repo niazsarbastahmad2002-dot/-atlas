@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   appointmentDestination,
+  appointmentErrorDestination,
   appointmentFormDestination,
 } from "../lib/dashboard-booking-navigation.ts";
 
@@ -56,4 +57,35 @@ test("duplicate booking feedback also stays on the attempted appointment day and
   assert.equal(url.searchParams.get("notice"), "appointment_duplicate");
   assert.equal(url.searchParams.get("day"), "2026-08-22");
   assert.equal(url.searchParams.get("after"), "2026-08-22T10:00");
+});
+
+
+test("appointment errors keep the receptionist on the attempted schedule", () => {
+  const destination = appointmentErrorDestination({
+    clinicId: "11111111-1111-4111-8111-111111111111",
+    doctorId: "22222222-2222-4222-8222-222222222222",
+    day: "2026-09-30",
+    error: "appointment_phone_invalid",
+  });
+
+  const url = new URL(destination, "https://atlas.example");
+  assert.equal(url.searchParams.get("error"), "appointment_phone_invalid");
+  assert.equal(url.searchParams.get("clinic"), "11111111-1111-4111-8111-111111111111");
+  assert.equal(url.searchParams.get("doctor"), "22222222-2222-4222-8222-222222222222");
+  assert.equal(url.searchParams.get("day"), "2026-09-30");
+});
+
+test("appointment error navigation drops malformed optional schedule days", () => {
+  const destination = appointmentErrorDestination({
+    clinicId: "",
+    doctorId: null,
+    day: "not-a-day",
+    error: "appointment_invalid",
+  });
+
+  const url = new URL(destination, "https://atlas.example");
+  assert.equal(url.searchParams.get("error"), "appointment_invalid");
+  assert.equal(url.searchParams.has("clinic"), false);
+  assert.equal(url.searchParams.has("doctor"), false);
+  assert.equal(url.searchParams.has("day"), false);
 });

@@ -61,3 +61,22 @@ export function appointmentFormDestination({
     after: appointmentAt,
   });
 }
+
+
+export function appointmentErrorDestination({
+  clinicId,
+  doctorId,
+  day,
+  error,
+}: {
+  clinicId: string;
+  doctorId?: string | null;
+  day?: string | null;
+  error: string;
+}) {
+  const params = new URLSearchParams({ error });
+  if (clinicId) params.set("clinic", clinicId);
+  if (doctorId) params.set("doctor", doctorId);
+  if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) params.set("day", day);
+  return `/dashboard?${params.toString()}`;
+}
