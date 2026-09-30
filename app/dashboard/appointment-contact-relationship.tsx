@@ -5,10 +5,10 @@ import type { UiLocale } from "@/lib/i18n/ui";
 import { getAppointmentContactRelationshipInline } from "./instant-actions";
 
 const copy = {
-  en: { label: "Whose phone is this?", patient: "Patient", guardian: "Parent / guardian", caregiver: "Relative / caregiver", consent: "This phone’s owner agreed to WhatsApp reminders" },
-  ku: { label: "ئەم ژمارەیە هی کێیە؟", patient: "نەخۆش", guardian: "دایک، باوک / سەرپەرشت", caregiver: "خزم / چاودێر", consent: "خاوەنی ئەم ژمارەیە ڕازییە بیرخستنەوەی واتسئاپ وەربگرێت" },
-  bd: { label: "ئەڤ ژمارە یا کێیە؟", patient: "نەخۆش", guardian: "دایک، باب / سەرپەرشت", caregiver: "خزم / چاڤدێر", consent: "خودانێ ڤێ ژمارەیێ ڕازییە بیرخستنەوەیا واتسئاپێ وەربگریت" },
-  ar: { label: "رقم من هذا؟", patient: "المريض", guardian: "الأب / الأم / ولي الأمر", caregiver: "قريب / مقدم رعاية", consent: "صاحب هذا الرقم وافق على استلام تذكيرات واتساب" },
+  en: { label: "Whose phone is this?", patient: "Patient", guardian: "Parent / guardian", caregiver: "Relative / caregiver", consent: "This phone’s owner agreed to WhatsApp reminders", loadFailed: "Could not load whose phone this is. Close and reopen the appointment to try again." },
+  ku: { label: "ئەم ژمارەیە هی کێیە؟", patient: "نەخۆش", guardian: "دایک، باوک / سەرپەرشت", caregiver: "خزم / چاودێر", consent: "خاوەنی ئەم ژمارەیە ڕازییە بیرخستنەوەی واتسئاپ وەربگرێت", loadFailed: "نەتوانرا خاوەنی ژمارەکە بار بکرێت. وادەکە دابخە و دووبارە بیکەرەوە." },
+  bd: { label: "ئەڤ ژمارە یا کێیە؟", patient: "نەخۆش", guardian: "دایک، باب / سەرپەرشت", caregiver: "خزم / چاڤدێر", consent: "خودانێ ڤێ ژمارەیێ ڕازییە بیرخستنەوەیا واتسئاپێ وەربگریت", loadFailed: "خودانێ ژمارەیێ نەهاتە بارکرن. وادەیێ داخە و دووبارە ڤەکە." },
+  ar: { label: "رقم من هذا؟", patient: "المريض", guardian: "الأب / الأم / ولي الأمر", caregiver: "قريب / مقدم رعاية", consent: "صاحب هذا الرقم وافق على استلام تذكيرات واتساب", loadFailed: "تعذر تحميل صاحب رقم الهاتف. أغلق الموعد وافتحه مرة أخرى للمحاولة." },
 } as const;
 
 type Relationship = "patient" | "parent_guardian" | "relative_caregiver";
@@ -74,15 +74,27 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
       replaceConsentCopy(form, locale);
       const save = form.querySelector<HTMLButtonElement>('button[type="submit"]');
       if (save) save.disabled = true;
+      let loaded = false;
       try {
         if (appointmentId) {
           const value = await getAppointmentContactRelationshipInline(appointmentId);
-          if (!disposed && value && field.select.isConnected) field.select.value = value;
+          if (!disposed && value && field.select.isConnected) {
+            field.select.value = value;
+            loaded = true;
+          }
         }
       } catch {}
-      finally {
-        if (!disposed && save?.isConnected) save.disabled = false;
+      if (disposed || !field.select.isConnected) return;
+      if (loaded) {
+        if (save?.isConnected) save.disabled = false;
+        return;
       }
+      field.select.disabled = true;
+      const error = document.createElement("p");
+      error.className = "field-help notice-error";
+      error.setAttribute("role", "alert");
+      error.textContent = copy[locale].loadFailed;
+      field.select.after(error);
     };
 
     const scan = () => {

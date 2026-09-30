@@ -52,3 +52,14 @@ test("generated appointment types include the contact relationship without clien
   assert.match(appointmentTypes, /Update: \{[^\n]*contact_relationship\?: string/);
   assert.doesNotMatch(actions, /\(supabase as any\)/);
 });
+
+
+test("appointment editing never defaults the contact relationship after a load failure", async () => {
+  const enhancer = await read("app/dashboard/appointment-contact-relationship.tsx");
+
+  assert.match(enhancer, /let loaded = false/);
+  assert.match(enhancer, /if \(loaded\) \{[\s\S]*save\.disabled = false/);
+  assert.match(enhancer, /field\.select\.disabled = true/);
+  assert.match(enhancer, /error\.setAttribute\("role", "alert"\)/);
+  assert.match(enhancer, /Could not load whose phone this is/);
+});
