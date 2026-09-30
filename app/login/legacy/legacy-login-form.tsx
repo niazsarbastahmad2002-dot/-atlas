@@ -274,9 +274,10 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
       <label htmlFor="legacy-email">{copy.label}</label>
       <input
         id="legacy-email"
+        name="username"
         type="email"
         inputMode="email"
-        autoComplete="email"
+        autoComplete="username"
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
