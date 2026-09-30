@@ -118,6 +118,8 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       if (row.dataset.atlasPhonePhone !== phoneSearch) row.dataset.atlasPhonePhone = phoneSearch;
       if (row.dataset.atlasPhoneStatus !== status) row.dataset.atlasPhoneStatus = status;
 
+      const expanded = row.classList.contains("is-atlas-phone-expanded");
+      summary.setAttribute("aria-label", `${expanded ? text.collapse : text.expand}: ${name}`);
       setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-time"), compactTime(timeText));
       setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-name"), name);
       setText(summary.querySelector<HTMLElement>(".atlas-phone-appointment-phone"), phone);
@@ -234,12 +236,15 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
               other.classList.remove("is-atlas-phone-expanded");
               const otherSummary = other.querySelector<HTMLButtonElement>(".atlas-phone-appointment-summary");
               otherSummary?.setAttribute("aria-expanded", "false");
-              otherSummary?.setAttribute("aria-label", text.expand);
+              const otherName = otherSummary?.querySelector<HTMLElement>(".atlas-phone-appointment-name")?.textContent?.trim() ?? "";
+              otherSummary?.setAttribute("aria-label", otherName ? `${text.expand}: ${otherName}` : text.expand);
             });
           }
           row.classList.toggle("is-atlas-phone-expanded", willOpen);
           summary.setAttribute("aria-expanded", String(willOpen));
-          summary.setAttribute("aria-label", willOpen ? text.collapse : text.expand);
+          const summaryName = summary.querySelector<HTMLElement>(".atlas-phone-appointment-name")?.textContent?.trim() ?? "";
+          const action = willOpen ? text.collapse : text.expand;
+          summary.setAttribute("aria-label", summaryName ? `${action}: ${summaryName}` : action);
         });
 
         row.prepend(summary);

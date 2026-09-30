@@ -124,3 +124,12 @@ test("collapsed appointment cards use a server-formatted localized time with day
   assert.match(dashboard, /toBaghdadInputValue\(new Date\(appointment\.appointment_at\)\)\.slice\(11, 16\)/);
   assert.match(enhancer, /row\.dataset\.atlasCompactTime/);
 });
+
+
+test("mobile appointment disclosure labels identify the patient for screen readers", () => {
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+
+  assert.match(enhancer, /summary\.setAttribute\("aria-label", `\$\{expanded \? text\.collapse : text\.expand\}: \$\{name\}`\)/);
+  assert.match(enhancer, /otherName \? `\$\{text\.expand\}: \$\{otherName\}` : text\.expand/);
+  assert.match(enhancer, /summaryName \? `\$\{action\}: \$\{summaryName\}` : action/);
+});
