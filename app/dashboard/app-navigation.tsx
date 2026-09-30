@@ -64,13 +64,23 @@ function shiftBaghdadDay(day: string, amount: number) {
   return baghdadDay(date);
 }
 
+function isCalendarDay(day: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+  const date = new Date(`${day}T12:00:00+03:00`);
+  return Number.isFinite(date.getTime()) && baghdadDay(date) === day;
+}
+
 function validRememberedSchedule(href: string | null) {
   if (!href) return "/dashboard";
   try {
     const url = new URL(href, window.location.origin);
     if (url.pathname !== "/dashboard") return "/dashboard";
     const day = url.searchParams.get("day");
-    if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return `${url.pathname}${url.search}`;
+    if (!day) return `${url.pathname}${url.search}`;
+    if (!isCalendarDay(day)) {
+      url.searchParams.delete("day");
+      return `${url.pathname}${url.search}`;
+    }
 
     const today = baghdadDay(new Date());
     const yesterday = shiftBaghdadDay(today, -1);
