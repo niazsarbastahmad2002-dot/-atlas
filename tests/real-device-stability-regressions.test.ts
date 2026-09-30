@@ -43,26 +43,6 @@ test("appointment phone-number tokens are forced to LTR in RTL interfaces", () =
 });
 
 
-test("new appointment accepts localized Iraqi phone digits before server normalization", () => {
-  const dashboard = source("app/dashboard/page.tsx");
-
-  assert.match(
-    dashboard,
-    /pattern="\(\?:\[\+\]\?\(\?:\[9٩۹\]\[6٦۶\]\[4٤۴\]\)\|\[0٠۰\]\)\[7٧۷\]\[0-9٠-٩۰-۹ \(\)-\]\{9,16\}"/,
-  );
-});
-
-
-test("appointment editing accepts localized Iraqi phone digits on mobile keyboards", () => {
-  const editor = source("app/dashboard/appointment-editor.tsx");
-
-  assert.match(
-    editor,
-    /name="patient_phone" type="tel" inputMode="tel" autoComplete="tel"[\s\S]*pattern="\(\?:\[\+\]\?\(\?:\[9٩۹\]\[6٦۶\]\[4٤۴\]\)\|\[0٠۰\]\)\[7٧۷\]\[0-9٠-٩۰-۹ \(\)-\]\{9,16\}"/,
-  );
-});
-
-
 test("localized Iraqi phone patterns compile under modern browser v-mode", () => {
   const dashboard = source("app/dashboard/page.tsx");
   const editor = source("app/dashboard/appointment-editor.tsx");
@@ -70,6 +50,7 @@ test("localized Iraqi phone patterns compile under modern browser v-mode", () =>
 
   assert.ok(dashboard.includes(`pattern="${expected}"`));
   assert.ok(editor.includes(`pattern="${expected}"`));
+  assert.match(editor, /name="patient_phone" type="tel" inputMode="tel" autoComplete="tel"/);
   assert.doesNotThrow(() => new RegExp(expected, "v"));
   assert.equal(new RegExp(expected, "v").test("0750 ١٢٣ ۴۵۶۷"), true);
   assert.equal(new RegExp(expected, "v").test("abc"), false);
