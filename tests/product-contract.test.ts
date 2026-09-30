@@ -72,3 +72,12 @@ test("the durable Atlas product contract is part of the repository", () => {
   assert.match(contract, /Security and privacy invariants/);
   assert.match(contract, /Quality bar for every future Atlas change/);
 });
+
+test("remembered receptionist schedules reject impossible calendar days", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.match(navigation, /function isCalendarDay\(day: string\)/);
+  assert.match(navigation, /baghdadDay\(date\) === day/);
+  assert.match(navigation, /if \(!isCalendarDay\(day\)\)/);
+  assert.match(navigation, /url\.searchParams\.delete\("day"\)/);
+});
