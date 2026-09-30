@@ -31,3 +31,9 @@ test("patient share controls identify the appointment patient for assistive tech
   assert.ok(share.includes("aria-label={shareLabel}"));
   assert.ok(actions.includes("patientName={patientName}"));
 });
+
+
+test("appointment remove controls identify the patient for assistive technology", () => {
+  const actions = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
+  assert.ok(actions.includes('aria-label={`${workflow.remove}: ${patientName}`}'));
+});
