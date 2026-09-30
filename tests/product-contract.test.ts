@@ -101,3 +101,15 @@ test("remembered receptionist schedules reject impossible calendar days", () => 
   assert.match(navigation, /if \(!isCalendarDay\(day\)\)/);
   assert.match(navigation, /url\.searchParams\.delete\("day"\)/);
 });
+
+
+test("patient appointment response accessibility follows the patient language", () => {
+  const patientPage = source("app/patient/[token]/page.tsx");
+
+  assert.match(patientPage, /responseActions: "Appointment response options"/);
+  assert.match(patientPage, /responseActions: "هەڵبژاردەکانی وەڵامدانەوەی مەوعید"/);
+  assert.match(patientPage, /responseActions: "هەلبژاردەیێن بەرسڤدانا وادەیێ"/);
+  assert.match(patientPage, /responseActions: "خيارات الرد على الموعد"/);
+  assert.match(patientPage, /aria-label=\{text\.responseActions\}/);
+  assert.doesNotMatch(patientPage, /aria-label="Patient appointment response"/);
+});
