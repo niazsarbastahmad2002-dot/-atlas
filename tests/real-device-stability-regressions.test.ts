@@ -61,3 +61,16 @@ test("appointment editing accepts localized Iraqi phone digits on mobile keyboar
     /name="patient_phone" type="tel" inputMode="tel" autoComplete="tel"[\s\S]*pattern="\(\?:\[\+\]\?\(\?:\[9٩۹\]\[6٦۶\]\[4٤۴\]\)\|\[0٠۰\]\)\[7٧۷\]\[0-9٠-٩۰-۹ \(\)-\]\{9,16\}"/,
   );
 });
+
+
+test("localized Iraqi phone patterns compile under modern browser v-mode", () => {
+  const dashboard = source("app/dashboard/page.tsx");
+  const editor = source("app/dashboard/appointment-editor.tsx");
+  const expected = String.raw`(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\\(\\)\\-]{9,16}`;
+
+  assert.ok(dashboard.includes(`pattern="${expected}"`));
+  assert.ok(editor.includes(`pattern="${expected}"`));
+  assert.doesNotThrow(() => new RegExp(expected, "v"));
+  assert.equal(new RegExp(expected, "v").test("0750 ١٢٣ ۴۵۶۷"), true);
+  assert.equal(new RegExp(expected, "v").test("abc"), false);
+});
