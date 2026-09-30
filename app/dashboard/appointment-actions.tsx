@@ -120,6 +120,7 @@ export function AppointmentActions({
   appointmentAt,
   status,
   locale,
+  reminderLanguage,
 }: {
   clinicId: string;
   appointmentId: string;
@@ -127,6 +128,7 @@ export function AppointmentActions({
   appointmentAt: string;
   status: AppointmentStatus;
   locale: UiLocale;
+  reminderLanguage: UiLocale;
 }) {
   const router = useRouter();
   const [optimisticStatus, setOptimisticStatus] = useState(status);
@@ -237,7 +239,7 @@ export function AppointmentActions({
         </select>
       </div>
 
-      <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} />
+      <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} locale={locale} reminderLanguage={reminderLanguage} />
 
       <button
         className="appointment-remove-action"
