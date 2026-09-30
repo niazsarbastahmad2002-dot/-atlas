@@ -63,3 +63,13 @@ test("Supabase SSR refresh forwards anti-cache headers to prevent cross-user ses
   assert.equal((proxy.match(/redirect\.cookies\.set\(cookie\)/g) ?? []).length, 2);
   assert.equal((proxy.match(/redirect\.headers\.set\(key, value\)/g) ?? []).length, 2);
 });
+
+
+test("temporary email sign-in exposes its identifier to password-manager AutoFill", () => {
+  const legacyLogin = read("app/login/legacy/legacy-login-form.tsx");
+
+  assert.match(legacyLogin, /name="username"/);
+  assert.match(legacyLogin, /type="email"/);
+  assert.match(legacyLogin, /autoComplete="username"/);
+  assert.match(legacyLogin, /autoCapitalize="none"/);
+});
