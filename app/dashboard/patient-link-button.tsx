@@ -109,10 +109,12 @@ export function PatientLinkButton({
   clinicId,
   appointmentId,
   locale,
+  reminderLanguage,
 }: {
   clinicId: string;
   appointmentId: string;
   locale: UiLocale;
+  reminderLanguage: UiLocale;
 }) {
   const t = copy[locale];
   const [state, action, pending] = useActionState(
@@ -125,14 +127,14 @@ export function PatientLinkButton({
 
   useEffect(() => {
     if (state.link) setShowResult(true);
-  }, [locale, state.link]);
+  }, [reminderLanguage, state.link]);
 
   const initialLink = useMemo(() => {
     if (!state.link) return null;
     try {
       const url = new URL(state.link);
       url.searchParams.set("view", "initial");
-      url.searchParams.set("lang", locale);
+      url.searchParams.set("lang", reminderLanguage);
       return url.toString();
     } catch {
       return state.link;
