@@ -72,3 +72,18 @@ test("the durable Atlas product contract is part of the repository", () => {
   assert.match(contract, /Security and privacy invariants/);
   assert.match(contract, /Quality bar for every future Atlas change/);
 });
+
+test("unavailable patient links keep a localized fallback language", () => {
+  const patientPage = source("app/patient/[token]/page.tsx");
+
+  assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string \}>/);
+  assert.match(patientPage, /const fallbackLocale = patientLocale\(query\.lang \?\? "en"\)/);
+  assert.match(patientPage, /<Unavailable locale=\{fallbackLocale\} \/>/);
+  for (const phrase of [
+    "This link is unavailable.",
+    "ئەم بەستەرە بەردەست نییە.",
+    "ئەڤ لینکە بەردەست نینە.",
+    "هذا الرابط غير متاح.",
+  ]) assert.match(patientPage, new RegExp(phrase));
+  assert.match(patientPage, /<section className="auth-card" lang=\{text\.lang\} dir=\{text\.dir\}>/);
+});
