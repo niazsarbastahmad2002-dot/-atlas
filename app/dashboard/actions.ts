@@ -236,7 +236,7 @@ export async function createAppointment(formData: FormData) {
   const reminderLanguage = String(formData.get("reminder_language") ?? "ku");
   const returnDay = String(formData.get("return_day") ?? "");
   const appointmentError = (code: DashboardMessageCode) => appointmentErrorDestination({
-    clinicId,
+    clinicId: isUuid(clinicId) ? clinicId : "",
     doctorId: isUuid(doctorId) ? doctorId : null,
     day: returnDay,
     error: code,
