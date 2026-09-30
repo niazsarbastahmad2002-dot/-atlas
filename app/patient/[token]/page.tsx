@@ -53,6 +53,7 @@ const patientCopy = {
     confirmInitial: "Confirm appointment",
     cancelSmall: "Need to cancel?",
     question: "Will you come?",
+    responseActions: "Appointment response options",
     confirm: "Yes, I’m coming",
     cancel: "No, cancel it",
     confirmed: "Confirmed. We’ll be expecting you.",
@@ -89,6 +90,7 @@ const patientCopy = {
     confirmInitial: "پشتڕاستکردنەوەی کات",
     cancelSmall: "دەتەوێت هەڵیوەشێنیتەوە؟",
     question: "دێیت؟",
+    responseActions: "هەڵبژاردەکانی وەڵامدانەوەی مەوعید",
     confirm: "بەڵێ، دێم",
     cancel: "نەخێر، هەڵیوەشێنەوە",
     confirmed: "پشتڕاست کرا. چاوەڕێت دەکەین.",
@@ -125,6 +127,7 @@ const patientCopy = {
     confirmInitial: "وادەیێ پشتڕاست بکە",
     cancelSmall: "دخوازیت هەلوەشێنیت؟",
     question: "تو دێی؟",
+    responseActions: "هەلبژاردەیێن بەرسڤدانا وادەیێ",
     confirm: "بەلێ، دێم",
     cancel: "نەخێر، هەلوەشێنە",
     confirmed: "پشتڕاست بوو. چاڤەڕێیا تە دکەین.",
@@ -161,6 +164,7 @@ const patientCopy = {
     confirmInitial: "أكد الموعد",
     cancelSmall: "تريد تلغي الموعد؟",
     question: "راح تجي؟",
+    responseActions: "خيارات الرد على الموعد",
     confirm: "إي، راح أجي",
     cancel: "لا، ألغي الموعد",
     confirmed: "تم التأكيد. ننتظرك.",
@@ -336,7 +340,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         {isPending && reminderView ? (
           <div className="patient-response-block">
             <h2>{text.question}</h2>
-            <div className="patient-actions" aria-label="Patient appointment response">
+            <div className="patient-actions" aria-label={text.responseActions}>
               <form action={updatePatientAppointment.bind(null, token, "confirmed")}>
                 <button className="button" type="submit">{text.confirm}</button>
               </form>
