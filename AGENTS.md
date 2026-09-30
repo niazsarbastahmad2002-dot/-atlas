@@ -24,9 +24,11 @@ Atlas is clinic SaaS for independent clinics. Optimize for real receptionist use
 
 ## Stop for human authorization
 
-Do not merge or deploy, modify production data or infrastructure, change authentication or tenant policies, change Meta/WhatsApp configuration, change payments, use real patient data, add a paid recurring service, or make irreversible/destructive changes without explicit human authorization.
+Routine safe Atlas code changes may be merged and deployed when the user has already given standing authorization for autonomous development; do not interrupt the run to re-ask for each ordinary merge or deployment.
 
-Read-only investigation and a reviewable proposal or branch are allowed.
+Still stop before changing production data, databases, authentication or tenant policies, DNS/domains, Meta/WhatsApp configuration, payments/subscriptions, paid services, or other irreversible/destructive infrastructure unless the user explicitly authorizes that consequential scope. Never use real patient data for testing. Money-related commitments always require explicit approval.
+
+Read-only investigation and a reviewable proposal or branch are allowed without additional approval.
 
 ## Engineering discipline
 
