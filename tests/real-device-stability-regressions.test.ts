@@ -46,7 +46,7 @@ test("appointment phone-number tokens are forced to LTR in RTL interfaces", () =
 test("localized Iraqi phone patterns compile under modern browser v-mode", () => {
   const dashboard = source("app/dashboard/page.tsx");
   const editor = source("app/dashboard/appointment-editor.tsx");
-  const expected = String.raw`(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\\(\\)\\-]{9,16}`;
+  const expected = String.raw`(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\(\)\-]{9,16}`;
 
   assert.ok(dashboard.includes(`pattern="${expected}"`));
   assert.ok(editor.includes(`pattern="${expected}"`));
