@@ -229,7 +229,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           <input id={`edit-patient-${appointmentId}`} name="patient_name" defaultValue={patientName} minLength={2} maxLength={120} required />
 
           <label htmlFor={`edit-phone-${appointmentId}`}>{ui.iraqiMobile}</label>
-          <input id={`edit-phone-${appointmentId}`} name="patient_phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={patientPhone} placeholder="0750 000 0000" pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ ()-]{9,16}" dir="ltr" required />
+          <input id={`edit-phone-${appointmentId}`} name="patient_phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={patientPhone} placeholder="0750 000 0000" pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\\(\\)\\-]{9,16}" dir="ltr" required />
 
           <label htmlFor={`edit-doctor-${appointmentId}`}>{ui.doctor}</label>
           {lockedDoctor ? (
