@@ -248,6 +248,7 @@ export function AppointmentActions({
         className="appointment-remove-action"
         type="button"
         disabled={pending}
+        aria-label={`${workflow.remove}: ${patientName}`}
         onClick={(event) => remove(event.currentTarget)}
       >
         {workflow.remove}
