@@ -340,7 +340,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         {isPending && reminderView ? (
           <div className="patient-response-block">
             <h2>{text.question}</h2>
-            <div className="patient-actions" aria-label={text.responseActions}>
+            <div className="patient-actions" role="group" aria-label={text.responseActions}>
               <form action={updatePatientAppointment.bind(null, token, "confirmed")}>
                 <button className="button" type="submit">{text.confirm}</button>
               </form>
