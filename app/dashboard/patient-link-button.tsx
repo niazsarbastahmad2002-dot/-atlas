@@ -108,15 +108,18 @@ function appointmentText(value: string | null, locale: UiLocale) {
 export function PatientLinkButton({
   clinicId,
   appointmentId,
+  patientName,
   locale,
   reminderLanguage,
 }: {
   clinicId: string;
   appointmentId: string;
+  patientName: string;
   locale: UiLocale;
   reminderLanguage: UiLocale;
 }) {
   const t = copy[locale];
+  const shareLabel = `${t.shareAppointment}: ${patientName}`;
   const [state, action, pending] = useActionState(
     createPatientAccessLink,
     initialPatientLinkState,
@@ -172,12 +175,12 @@ export function PatientLinkButton({
         <form action={action}>
           <input type="hidden" name="clinic_id" value={clinicId} />
           <input type="hidden" name="appointment_id" value={appointmentId} />
-          <button type="submit" disabled={pending} aria-label={t.shareAppointment} title={t.shareAppointment}>
+          <button type="submit" disabled={pending} aria-label={shareLabel} title={t.shareAppointment}>
             {pending ? t.creating : t.shareShort}
           </button>
         </form>
       ) : !showResult ? (
-        <button type="button" onClick={() => setShowResult(true)} aria-label={t.shareAppointment} title={t.shareAppointment}>{t.shareShort}</button>
+        <button type="button" onClick={() => setShowResult(true)} aria-label={shareLabel} title={t.shareAppointment}>{t.shareShort}</button>
       ) : null}
 
       {state.error ? <span className="field-help" role="alert">{t.errors[state.error]}</span> : null}

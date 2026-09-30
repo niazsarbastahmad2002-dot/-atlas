@@ -22,3 +22,12 @@ test("appointment status controls identify the patient for assistive technology"
   assert.ok(actions.includes("aria-label={statusLabel}"));
   assert.ok(dashboard.includes("patientName={appointment.patient_name}"));
 });
+
+
+test("patient share controls identify the appointment patient for assistive technology", () => {
+  const share = readFileSync(new URL("../app/dashboard/patient-link-button.tsx", import.meta.url), "utf8");
+  const actions = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
+  assert.ok(share.includes('const shareLabel = `${t.shareAppointment}: ${patientName}`;'));
+  assert.ok(share.includes("aria-label={shareLabel}"));
+  assert.ok(actions.includes("patientName={patientName}"));
+});
