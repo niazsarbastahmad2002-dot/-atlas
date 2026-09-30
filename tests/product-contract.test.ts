@@ -22,6 +22,7 @@ test("doctor workflow keeps the five supported clinic intervals and receptionist
 
 test("patient appointment stays doctor-aware, localized, and queue-aware", () => {
   const patientPage = source("app/patient/[token]/page.tsx");
+  const shareButton = source("app/dashboard/patient-link-button.tsx");
   assert.match(patientPage, /doctor_specialty/);
   assert.match(patientPage, /receptionist_phone/);
   assert.match(patientPage, /queue_position/);
@@ -73,11 +74,20 @@ test("the durable Atlas product contract is part of the repository", () => {
   assert.match(contract, /Quality bar for every future Atlas change/);
 });
 
-test("remembered receptionist schedules reject impossible calendar days", () => {
-  const navigation = source("app/dashboard/app-navigation.tsx");
+test("unavailable patient links keep a localized fallback language", () => {
+  const patientPage = source("app/patient/[token]/page.tsx");
+  const shareButton = source("app/dashboard/patient-link-button.tsx");
 
-  assert.match(navigation, /function isCalendarDay\(day: string\)/);
-  assert.match(navigation, /baghdadDay\(date\) === day/);
-  assert.match(navigation, /if \(!isCalendarDay\(day\)\)/);
-  assert.match(navigation, /url\.searchParams\.delete\("day"\)/);
+  assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string \}>/);
+  assert.match(patientPage, /const fallbackLocale = patientLocale\(query\.lang \?\? "en"\)/);
+  assert.match(shareButton, /url\.searchParams\.set\("lang", locale\)/);
+  assert.match(shareButton, /\}, \[locale, state\.link\]\);/);
+  assert.match(patientPage, /<Unavailable locale=\{fallbackLocale\} \/>/);
+  for (const phrase of [
+    "This link is unavailable.",
+    "ئەم بەستەرە بەردەست نییە.",
+    "ئەڤ لینکە بەردەست نینە.",
+    "هذا الرابط غير متاح.",
+  ]) assert.match(patientPage, new RegExp(phrase));
+  assert.match(patientPage, /<section className="auth-card" lang=\{text\.lang\} dir=\{text\.dir\}>/);
 });
