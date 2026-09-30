@@ -227,7 +227,7 @@ export function AppointmentActions({
   const options = [optimisticStatus, ...transitions.filter((item) => item !== optimisticStatus)];
 
   return (
-    <div className="row-actions polished-actions appointment-action-bar" aria-label={statusLabel} aria-busy={pending}>
+    <div className="row-actions polished-actions appointment-action-bar" role="group" aria-label={statusLabel} aria-busy={pending}>
       <div className="appointment-status-control">
         <label className="sr-only" htmlFor={`appointment-status-${appointmentId}`}>{statusLabel}</label>
         <select
