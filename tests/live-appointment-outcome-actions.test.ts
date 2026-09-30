@@ -15,8 +15,8 @@ test("appointment outcome controls refresh while receptionist leaves schedule op
 
 
 test("appointment status controls identify the patient for assistive technology", () => {
-  const actions = source("app/dashboard/appointment-actions.tsx");
-  const dashboard = source("app/dashboard/page.tsx");
+  const actions = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
+  const dashboard = readFileSync(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
   assert.match(actions, /const statusLabel = `\\$\\{workflow\\.status\\}: \\$\\{patientName\\}`/);
   assert.match(actions, /aria-label=\\{statusLabel\\}/);
   assert.match(dashboard, /patientName=\\{appointment\\.patient_name\\}/);
