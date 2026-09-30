@@ -218,7 +218,13 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
 
   return (
     <div className="appointment-editor">
-      <button className="appointment-edit-toggle" type="button" onClick={toggleEditor} aria-expanded={open}>
+      <button
+        className="appointment-edit-toggle"
+        type="button"
+        onClick={toggleEditor}
+        aria-expanded={open}
+        aria-label={`${open ? t.close : t.edit}: ${patientName}`}
+      >
         {open ? t.close : t.edit}
       </button>
       {open ? (
