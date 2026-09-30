@@ -118,6 +118,7 @@ export function AppointmentActions({
   appointmentId,
   revision,
   appointmentAt,
+  patientName,
   status,
   locale,
   reminderLanguage,
@@ -126,6 +127,7 @@ export function AppointmentActions({
   appointmentId: string;
   revision: number;
   appointmentAt: string;
+  patientName: string;
   status: AppointmentStatus;
   locale: UiLocale;
   reminderLanguage: UiLocale;
@@ -137,6 +139,7 @@ export function AppointmentActions({
   const [pending, startTransition] = useTransition();
   const [, setClockTick] = useState(0);
   const workflow = workflowCopy[locale];
+  const statusLabel = `${workflow.status}: ${patientName}`;
 
   useEffect(() => {
     const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 30_000);
@@ -224,16 +227,16 @@ export function AppointmentActions({
   const options = [optimisticStatus, ...transitions.filter((item) => item !== optimisticStatus)];
 
   return (
-    <div className="row-actions polished-actions appointment-action-bar" aria-label={workflow.status} aria-busy={pending}>
+    <div className="row-actions polished-actions appointment-action-bar" aria-label={statusLabel} aria-busy={pending}>
       <div className="appointment-status-control">
-        <label className="sr-only" htmlFor={`appointment-status-${appointmentId}`}>{workflow.status}</label>
+        <label className="sr-only" htmlFor={`appointment-status-${appointmentId}`}>{statusLabel}</label>
         <select
           id={`appointment-status-${appointmentId}`}
           className={`appointment-status-select is-${optimisticStatus}`}
           value={optimisticStatus}
           disabled={pending}
           onChange={(event) => changeStatus(event.currentTarget.value as AppointmentStatus, event.currentTarget)}
-          aria-label={workflow.status}
+          aria-label={statusLabel}
         >
           {options.map((value) => <option key={value} value={value}>{workflow.labels[value]}</option>)}
         </select>
