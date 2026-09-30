@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 type PatientPageProps = {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; lang?: string }>;
 };
 
 type PatientAppointment = {
@@ -66,6 +66,9 @@ const patientCopy = {
     earlierJoined: "You’re on the earlier-slot list.",
     earlierLeave: "Leave earlier-slot list",
     privacy: "This page is private to this appointment.",
+    unavailableEyebrow: "Private appointment link",
+    unavailableTitle: "This link is unavailable.",
+    unavailableHelp: "It may be invalid, expired, replaced, or temporarily rate-limited. Contact the clinic for a new link.",
   },
   ku: {
     lang: "ckb",
@@ -99,6 +102,9 @@ const patientCopy = {
     earlierJoined: "تۆ لە لیستی مەوعیدی زووتریت.",
     earlierLeave: "لە لیستی زووتر دەرچم",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
+    unavailableEyebrow: "بەستەری تایبەتی مەوعید",
+    unavailableTitle: "ئەم بەستەرە بەردەست نییە.",
+    unavailableHelp: "لەوانەیە بەستەرەکە نادروست، بەسەرچوو یان گۆڕدرابێت، یان کاتێک سنووردار کرابێت. بۆ بەستەرێکی نوێ پەیوەندی بە کلینیکەوە بکە.",
   },
   bd: {
     lang: "ku",
@@ -132,6 +138,9 @@ const patientCopy = {
     earlierJoined: "تو د لیستا مەوعیدێن زووتر دای.",
     earlierLeave: "ژ لیستا زووتر دەربکەڤم",
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
+    unavailableEyebrow: "لینکێ تایبەت یێ وادەیێ",
+    unavailableTitle: "ئەڤ لینکە بەردەست نینە.",
+    unavailableHelp: "دبیت لینک نەدروست بیت، دەمێ وێ دەرباز بووبیت یان هاتبیتە گوهۆڕین، یان بۆ ماوەیەک سنووردار بووبیت. بۆ لینکەکا نوو پەیوەندی ب کلینیکێ بکە.",
   },
   ar: {
     lang: "ar-IQ",
@@ -165,6 +174,9 @@ const patientCopy = {
     earlierJoined: "إنت بقائمة المواعيد الأبكر.",
     earlierLeave: "شيلوني من قائمة الأبكر",
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
+    unavailableEyebrow: "رابط موعد خاص",
+    unavailableTitle: "هذا الرابط غير متاح.",
+    unavailableHelp: "ممكن الرابط غير صالح، منتهي، متبدل، أو محدود مؤقتاً. تواصل ويا العيادة حتى تحصل على رابط جديد.",
   },
 } as const;
 
@@ -195,13 +207,14 @@ function baghdadClock(date: Date, locale: PatientLocale) {
 
 export default async function PatientAppointmentPage({ params, searchParams }: PatientPageProps) {
   const [{ token }, query] = await Promise.all([params, searchParams]);
-  if (!isPatientToken(token)) return <Unavailable />;
+  const fallbackLocale = patientLocale(query.lang ?? "en");
+  if (!isPatientToken(token)) return <Unavailable locale={fallbackLocale} />;
 
   let admin: ReturnType<typeof createAdminClient>;
   try {
     admin = createAdminClient();
   } catch {
-    return <Unavailable />;
+    return <Unavailable locale={fallbackLocale} />;
   }
 
   const tokenHash = hashPatientToken(token);
@@ -210,13 +223,13 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
     "consume_patient_link_rate_limit",
     { p_bucket_hash: bucketHash },
   );
-  if (limitError || allowed !== true) return <Unavailable />;
+  if (limitError || allowed !== true) return <Unavailable locale={fallbackLocale} />;
 
   const { data, error } = await admin.rpc("get_patient_appointment", {
     p_token_hash: tokenHash,
   });
   const appointment = Array.isArray(data) ? data[0] as PatientAppointment | undefined : undefined;
-  if (error || !appointment) return <Unavailable />;
+  if (error || !appointment) return <Unavailable locale={fallbackLocale} />;
 
   const locale = patientLocale(appointment.reminder_language);
   const text = patientCopy[locale];
@@ -394,17 +407,18 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   );
 }
 
-function Unavailable() {
+function Unavailable({ locale }: { locale: PatientLocale }) {
+  const text = patientCopy[locale];
   return (
     <main className="center-page patient-page">
-      <section className="auth-card">
+      <section className="auth-card" lang={text.lang} dir={text.dir}>
         <a className="app-brand" href="/">
           <span className="app-brand-mark" aria-hidden="true">A</span>
           <span className="app-brand-word">Atlas</span>
         </a>
-        <div className="eyebrow">Private appointment link</div>
-        <h1>This link is unavailable.</h1>
-        <p className="quiet">It may be invalid, expired, replaced, or temporarily rate-limited. Contact the clinic for a new link.</p>
+        <div className="eyebrow">{text.unavailableEyebrow}</div>
+        <h1>{text.unavailableTitle}</h1>
+        <p className="quiet">{text.unavailableHelp}</p>
       </section>
     </main>
   );
