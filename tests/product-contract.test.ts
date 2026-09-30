@@ -76,6 +76,7 @@ test("the durable Atlas product contract is part of the repository", () => {
 
 test("unavailable patient links keep a localized fallback language", () => {
   const patientPage = source("app/patient/[token]/page.tsx");
+  const shareButton = source("app/dashboard/patient-link-button.tsx");
 
   assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string \}>/);
   assert.match(patientPage, /const fallbackLocale = patientLocale\(query\.lang \?\? "en"\)/);
