@@ -51,3 +51,13 @@ test("new appointment accepts localized Iraqi phone digits before server normali
     /pattern="\(\?:\[\+\]\?\(\?:\[9٩۹\]\[6٦۶\]\[4٤۴\]\)\|\[0٠۰\]\)\[7٧۷\]\[0-9٠-٩۰-۹ \(\)-\]\{9,16\}"/,
   );
 });
+
+
+test("appointment editing accepts localized Iraqi phone digits on mobile keyboards", () => {
+  const editor = source("app/dashboard/appointment-editor.tsx");
+
+  assert.match(
+    editor,
+    /name="patient_phone" type="tel" inputMode="tel" autoComplete="tel"[\s\S]*pattern="\(\?:\[\+\]\?\(\?:\[9٩۹\]\[6٦۶\]\[4٤۴\]\)\|\[0٠۰\]\)\[7٧۷\]\[0-9٠-٩۰-۹ \(\)-\]\{9,16\}"/,
+  );
+});
