@@ -70,3 +70,13 @@ test("settings action results stay in the selected Atlas language", () => {
   assert.match(settings, /resultCopy\.notices\[params\.notice\]/);
 });
 
+test("receptionist schedule counts use the selected Atlas digit system", () => {
+  const dashboard = read("app/dashboard/page.tsx");
+
+  assert.match(dashboard, /localizeDigits\(visibleRows\.length, locale\)/);
+  assert.match(dashboard, /localizeDigits\(count, locale\)/);
+  assert.match(dashboard, /localizeDigits\(order, locale\)/);
+  assert.match(dashboard, /function Stat\([\s\S]*locale: UiLocale[\s\S]*localizeDigits\(value, locale\)/);
+  assert.equal((dashboard.match(/<Stat [^>]*locale=\{locale\}/g) ?? []).length, 6);
+});
+
