@@ -26,9 +26,9 @@ test("removing a doctor from new scheduling requires confirmation", async () => 
 
   assert.match(page, /import \{ ConfirmSubmitButton \} from "\.\.\/staff\/confirm-submit-button"/);
   assert.match(page, /archiveDoctorConfirm: "Remove \{doctor\} from new scheduling\?/);
-  assert.match(page, /archiveDoctorConfirm: "\{doctor\} لە وادە نوێکان لاببرێت\?/);
-  assert.match(page, /archiveDoctorConfirm: "\{doctor\} ژ وادەیێن نوو بهێتە لابرن\?/);
-  assert.match(page, /archiveDoctorConfirm: "إزالة \{doctor\} من المواعيد الجديدة\?/);
+  assert.match(page, /archiveDoctorConfirm: "\{doctor\} لە وادە نوێکان لاببرێت/);
+  assert.match(page, /archiveDoctorConfirm: "\{doctor\} ژ وادەیێن نوو بهێتە لابرن/);
+  assert.match(page, /archiveDoctorConfirm: "إزالة \{doctor\} من المواعيد الجديدة/);
   assert.match(page, /setDoctorActive\.bind\(null, clinic\.id, doctor\.id, false\)[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{copy\.archiveDoctorConfirm\.replace\("\{doctor\}", doctor\.name\)\}/);
   assert.doesNotMatch(page, /setDoctorActive\.bind\(null, clinic\.id, doctor\.id, false\)\}><button className="danger-link"/);
 });
