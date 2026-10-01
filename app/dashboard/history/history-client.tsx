@@ -153,7 +153,8 @@ export function HistoryClient({
   }, [filter, query, rows, sort]);
 
   const removableVisible = visibleRows.filter((row) => row.removed).map((row) => row.id);
-  const allVisibleSelected = removableVisible.length > 0 && removableVisible.every((id) => selected.has(id));
+  const selectedVisible = removableVisible.filter((id) => selected.has(id));
+  const allVisibleSelected = removableVisible.length > 0 && selectedVisible.length === removableVisible.length;
 
   function toggle(id: string) {
     setFeedback("");
@@ -176,9 +177,9 @@ export function HistoryClient({
   }
 
   function permanentlyDelete() {
-    if (!canDelete || pending || selected.size === 0) return;
+    if (!canDelete || pending || selectedVisible.length === 0) return;
     if (!window.confirm(t.deleteConfirm)) return;
-    const ids = [...selected];
+    const ids = selectedVisible;
     setFeedback("");
     startTransition(async () => {
       const result = await deleteArchivedAppointments(clinicId, ids);
@@ -224,8 +225,8 @@ export function HistoryClient({
       {!canDelete ? <p className="field-help history-admin-note">{t.adminOnly}</p> : null}
       {feedback ? <p className="notice notice-error history-feedback" role="alert">{feedback}</p> : null}
 
-      {canDelete && selected.size > 0 ? (
-        <div className="history-selection-bar"><strong>{selected.size} {t.selected}</strong><div><button className="button button-ghost button-small" type="button" disabled={pending} onClick={() => setSelected(new Set())}>{t.clear}</button><button className="button button-danger button-small" type="button" disabled={pending} onClick={permanentlyDelete}>{pending ? t.deleting : t.delete}</button></div></div>
+      {canDelete && selectedVisible.length > 0 ? (
+        <div className="history-selection-bar"><strong>{selectedVisible.length} {t.selected}</strong><div><button className="button button-ghost button-small" type="button" disabled={pending} onClick={() => setSelected(new Set())}>{t.clear}</button><button className="button button-danger button-small" type="button" disabled={pending} onClick={permanentlyDelete}>{pending ? t.deleting : t.delete}</button></div></div>
       ) : null}
     </section>
   );
