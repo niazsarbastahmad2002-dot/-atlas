@@ -110,3 +110,15 @@ test("activity detail field names stay in the selected Atlas language", async ()
   assert.match(activityPage, /changedFieldLabel\[locale\]\[item\] \?\? item\.replaceAll/);
 });
 
+test("permanent history deletion is limited to removed records visible in the current view", async () => {
+  const historyClient = await read("app/dashboard/history/history-client.tsx");
+
+  assert.match(historyClient, /const selectedVisible = removableVisible\.filter\(\(id\) => selected\.has\(id\)\)/);
+  assert.match(historyClient, /selectedVisible\.length === removableVisible\.length/);
+  assert.match(historyClient, /if \(!canDelete \|\| pending \|\| selectedVisible\.length === 0\) return/);
+  assert.match(historyClient, /const ids = selectedVisible/);
+  assert.match(historyClient, /canDelete && selectedVisible\.length > 0/);
+  assert.match(historyClient, /\{selectedVisible\.length\} \{t\.selected\}/);
+  assert.doesNotMatch(historyClient, /const ids = \[\.\.\.selected\]/);
+});
+
