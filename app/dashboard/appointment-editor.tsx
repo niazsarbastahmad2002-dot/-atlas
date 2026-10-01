@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import type { AppointmentMutationFailure, AppointmentStatus } from "@/lib/appointments";
+import { normalizeIraqiMobile, type AppointmentMutationFailure, type AppointmentStatus } from "@/lib/appointments";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { AppointmentEditDateTimeField } from "./appointment-edit-datetime-field";
 import { updateAppointmentDetailsInline } from "./instant-actions";
@@ -129,6 +129,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const t = copy[locale];
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [editConsent, setEditConsent] = useState(reminderConsent);
   const [now, setNow] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
   const openedStatusRef = useRef<AppointmentStatus | null>(null);
@@ -137,6 +138,10 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const withinEditWindow = new Date(appointmentAt).getTime() >= now - 60_000;
   const editable = statusEditable && (open || withinEditWindow);
   const lockedDoctor = doctors.length === 1 ? doctors[0] : null;
+
+  useEffect(() => {
+    setEditConsent(reminderConsent);
+  }, [reminderConsent, revision]);
 
   useEffect(() => {
     const refreshNow = () => setNow(Date.now());
@@ -235,7 +240,23 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           <input id={`edit-patient-${appointmentId}`} name="patient_name" defaultValue={patientName} minLength={2} maxLength={120} required />
 
           <label htmlFor={`edit-phone-${appointmentId}`}>{ui.iraqiMobile}</label>
-          <input id={`edit-phone-${appointmentId}`} name="patient_phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={patientPhone} placeholder="0750 000 0000" pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\(\)\-]{9,16}" dir="ltr" required />
+          <input
+            id={`edit-phone-${appointmentId}`}
+            name="patient_phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            defaultValue={patientPhone}
+            placeholder="0750 000 0000"
+            pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\(\)\-]{9,16}"
+            dir="ltr"
+            required
+            onBlur={(event) => {
+              const originalPhone = normalizeIraqiMobile(patientPhone);
+              const currentPhone = normalizeIraqiMobile(event.currentTarget.value);
+              if (currentPhone !== originalPhone) setEditConsent(false);
+            }}
+          />
 
           <label htmlFor={`edit-doctor-${appointmentId}`}>{ui.doctor}</label>
           {lockedDoctor ? (
@@ -271,7 +292,13 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           </select>
 
           <label className="checkbox-field consent-card" htmlFor={`edit-consent-${appointmentId}`}>
-            <input id={`edit-consent-${appointmentId}`} name="reminder_consent" type="checkbox" defaultChecked={reminderConsent} />
+            <input
+              id={`edit-consent-${appointmentId}`}
+              name="reminder_consent"
+              type="checkbox"
+              checked={editConsent}
+              onChange={(event) => setEditConsent(event.currentTarget.checked)}
+            />
             <span>{t.consent}</span>
           </label>
 
