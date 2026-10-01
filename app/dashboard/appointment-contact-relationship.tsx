@@ -67,6 +67,7 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
       if (decorated.has(form)) return;
       decorated.add(form);
       const appointmentId = appointmentIdFromEditor(form);
+      const clinicId = form.closest<HTMLElement>("[data-atlas-clinic]")?.dataset.atlasClinic ?? null;
       const phone = form.querySelector<HTMLInputElement>('input[name="patient_phone"]');
       if (!phone) return;
       const field = createRelationshipField(locale, `edit-contact-${appointmentId ?? Math.random().toString(36).slice(2)}`);
@@ -76,8 +77,8 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
       if (save) save.disabled = true;
       let loaded = false;
       try {
-        if (appointmentId) {
-          const value = await getAppointmentContactRelationshipInline(appointmentId);
+        if (appointmentId && clinicId) {
+          const value = await getAppointmentContactRelationshipInline(clinicId, appointmentId);
           if (!disposed && value && field.select.isConnected) {
             field.select.value = value;
             loaded = true;
