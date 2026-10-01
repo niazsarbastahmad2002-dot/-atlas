@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
-import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
+import { formatLocalDateValue, formatTimeValue, localizeDigits } from "@/lib/i18n/format";
 import { readPendingStaffInvitations } from "@/lib/staff-invitations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -463,7 +463,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         <section className="settings-card">
           <div className="settings-card-heading">
             <span className="settings-card-icon" aria-hidden="true">👥</span>
-            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p>{clinic.name} · {memberRows.length + pendingRows.length}</p></div>
+            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p>{clinic.name} · {localizeDigits(memberRows.length + pendingRows.length, locale)}</p></div>
           </div>
           <div className="doctor-settings-list">
             {pendingRows.map((pending) => {

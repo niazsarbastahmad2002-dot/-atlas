@@ -43,3 +43,11 @@ test("receptionist invitation failures stay in the sender interface language", (
   assert.match(action, /errorMessage\(inviteLocale, "active_doctor"\)/);
   assert.match(action, /errorMessage\(inviteLocale, "create_failed"\)/);
 });
+
+test("clinic access count follows the selected Atlas digit style", () => {
+  const page = read("app/dashboard/staff/page.tsx");
+
+  assert.match(page, /formatLocalDateValue, formatTimeValue, localizeDigits/);
+  assert.match(page, /localizeDigits\(memberRows\.length \+ pendingRows\.length, locale\)/);
+});
+
