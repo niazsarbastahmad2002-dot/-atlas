@@ -6,10 +6,20 @@ import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
 import { setPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-function patientMutationFailureUrl(token: string, formData: FormData) {
-  const params = new URLSearchParams({ error: "update_failed" });
+function patientMutationReturnUrl(token: string, formData: FormData, failed = false) {
+  const params = new URLSearchParams();
+  const returnLanguage = String(formData.get("return_lang") ?? "");
+  if (returnLanguage === "ku" || returnLanguage === "bd" || returnLanguage === "ar" || returnLanguage === "en") {
+    params.set("lang", returnLanguage);
+  }
   if (formData.get("return_view") === "reminder") params.set("view", "reminder");
-  return `/patient/${token}?${params}`;
+  if (failed) params.set("error", "update_failed");
+  const query = params.toString();
+  return query ? `/patient/${token}?${query}` : `/patient/${token}`;
+}
+
+function patientMutationFailureUrl(token: string, formData: FormData) {
+  return patientMutationReturnUrl(token, formData, true);
 }
 
 async function patientMutationAdmin(token: string) {
@@ -51,6 +61,7 @@ export async function updatePatientAppointment(token: string, status: string, fo
   }
 
   revalidatePath(`/patient/${token}`);
+  redirect(patientMutationReturnUrl(token, formData));
 }
 
 export async function updateEarlierSlotPreference(token: string, enabled: boolean, formData: FormData) {
@@ -72,4 +83,5 @@ export async function updateEarlierSlotPreference(token: string, enabled: boolea
   }
 
   revalidatePath(`/patient/${token}`);
+  redirect(patientMutationReturnUrl(token, formData));
 }
