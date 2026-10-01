@@ -115,6 +115,13 @@ const copy = {
   },
 } as const;
 
+function normalizeHistorySearch(value: string) {
+  return value
+    .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0))
+    .toLowerCase();
+}
+
 const statusLabels: Record<UiLocale, Record<string, string>> = {
   en: { pending: "Pending", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "No-show", voided: "Removed" },
   ku: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراوە", cancelled: "هەڵوەشێنراوەتەوە", completed: "تەواوبوو", no_show: "نەهات", voided: "لابراوە" },
@@ -143,10 +150,10 @@ export function HistoryClient({
   const [pending, startTransition] = useTransition();
 
   const visibleRows = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    const needle = normalizeHistorySearch(query.trim());
     return rows
       .filter((row) => filter === "all" || row.removed)
-      .filter((row) => !needle || `${row.patientName} ${row.patientPhone} ${row.doctorName}`.toLowerCase().includes(needle))
+      .filter((row) => !needle || normalizeHistorySearch(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(needle))
       .sort((a, b) => sort === "newest"
         ? new Date(b.appointmentAt).getTime() - new Date(a.appointmentAt).getTime()
         : new Date(a.appointmentAt).getTime() - new Date(b.appointmentAt).getTime());
