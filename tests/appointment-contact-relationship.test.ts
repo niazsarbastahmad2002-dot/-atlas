@@ -115,3 +115,18 @@ test("new appointment booking renders and requires explicit phone ownership", as
   assert.doesNotMatch(instantActions, /value \?\? "patient"/);
 });
 
+test("each new appointment requires a fresh phone owner choice after confirmed save", async () => {
+  const [enhancer, polish] = await Promise.all([
+    read("app/dashboard/appointment-contact-relationship.tsx"),
+    read("app/dashboard/dashboard-client-polish.tsx"),
+  ]);
+
+  assert.match(enhancer, /createRelationshipField\(locale, "contact_relationship", ""\)/);
+  assert.match(enhancer, /select\.required = true/);
+  assert.match(enhancer, /prompt\.value = ""/);
+  assert.match(enhancer, /prompt\.disabled = true/);
+  assert.doesNotMatch(enhancer, /setTimeout\([\s\S]*700/);
+  assert.match(polish, /relationshipInput = form\.querySelector<HTMLSelectElement>\('select\[name="contact_relationship"\]'\)/);
+  assert.match(polish, /if \(relationshipInput\) relationshipInput\.value = ""/);
+});
+
