@@ -49,6 +49,8 @@ type StaffCopy = {
   activeInvitesHelp: string;
   expires: string;
   revokeInvite: string;
+  revokeInviteConfirm: string;
+  removePendingConfirm: string;
   noActiveInvites: string;
   working: string;
 };
@@ -85,6 +87,8 @@ const copy: Record<UiLocale, StaffCopy> = {
     activeInvitesHelp: "These secure one-use links can still grant receptionist access. Atlas does not store the shareable link itself.",
     expires: "Expires",
     revokeInvite: "Revoke invitation",
+    revokeInviteConfirm: "Revoke this invitation for {doctor}? The join link will stop working immediately.",
+    removePendingConfirm: "Remove this pending invitation? It will no longer grant clinic access.",
     noActiveInvites: "No active manual invitations.",
     working: "Working…",
   },
@@ -119,6 +123,8 @@ const copy: Record<UiLocale, StaffCopy> = {
     activeInvitesHelp: "ئەم بەستەرە پارێزراوە یەکجارانە هێشتا دەتوانن دەسەڵاتی ڕیسێپشن بدەن. Atlas خودی بەستەری هاوبەشکراو پاشەکەوت ناکات.",
     expires: "بەسەر دەچێت",
     revokeInvite: "بانگهێشت هەڵبوەشێنەوە",
+    revokeInviteConfirm: "ئەم بانگهێشتە بۆ {doctor} هەڵبوەشێنرێتەوە؟ بەستەری چوونەژوورەوە دەستبەجێ چیتر کار ناکات.",
+    removePendingConfirm: "ئەم بانگهێشتە چاوەڕوانە لاببرێت؟ چیتر ناتوانێت دەسەڵاتی کلینیک بدات.",
     noActiveInvites: "هیچ بانگهێشتی دەستی چالاک نییە.",
     working: "چاوەڕێ بکە…",
   },
@@ -153,6 +159,8 @@ const copy: Record<UiLocale, StaffCopy> = {
     activeInvitesHelp: "ئەڤ لینکێن پاراستی یێن ئێکجارە هێشتا دکارن دەستهەلاتا ڕیسێپشنێ بدەن. Atlas خودا لینکا هاتیە هنارتن ناپارێزیت.",
     expires: "دێ بەسەر چیت",
     revokeInvite: "بانگهێشتێ هەلوەشینە",
+    revokeInviteConfirm: "ئەڤ بانگهێشتە بۆ {doctor} بهێتە هەلوەشاندن؟ لینکا چوونەژوورێ دێ دەستبەجێ ئیدی کار نەکەت.",
+    removePendingConfirm: "ئەڤ بانگهێشتا چاڤەڕێ بهێتە لابرن؟ ئیدی ناتوانیت دەستهەلاتا کلینیکێ بدەت.",
     noActiveInvites: "چ بانگهێشتا دەستی یا چالاک نینە.",
     working: "چاڤەڕێ بە…",
   },
@@ -187,6 +195,8 @@ const copy: Record<UiLocale, StaffCopy> = {
     activeInvitesHelp: "هذه الروابط الآمنة ذات الاستخدام الواحد ما زالت تقدر تمنح صلاحية موظف استقبال. Atlas ما يخزن الرابط القابل للمشاركة نفسه.",
     expires: "تنتهي",
     revokeInvite: "إلغاء الدعوة",
+    revokeInviteConfirm: "إلغاء هذه الدعوة الخاصة بـ {doctor}؟ رابط الانضمام راح يتوقف فوراً.",
+    removePendingConfirm: "إزالة هذه الدعوة المعلقة؟ بعدها ما راح تمنح صلاحية دخول للعيادة.",
     noActiveInvites: "ماكو دعوات يدوية فعالة.",
     working: "جارٍ التنفيذ…",
   },
@@ -437,7 +447,13 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                   <span className="field-help">{text.expires}: {formatStaffInviteExpiry(invitation.expires_at, locale)}</span>
                 </div>
                 <form action={revokeManualStaffInvitation.bind(null, clinic.id, invitation.invitation_id)}>
-                  <SubmitButton className="danger-link" pendingLabel={text.working}>{text.revokeInvite}</SubmitButton>
+                  <ConfirmSubmitButton
+                    className="danger-link"
+                    pendingLabel={text.working}
+                    confirmMessage={text.revokeInviteConfirm.replace("{doctor}", invitation.doctor_name)}
+                  >
+                    {text.revokeInvite}
+                  </ConfirmSubmitButton>
                 </form>
               </article>
             )) : <p className="field-help">{text.noActiveInvites}</p>}
@@ -460,7 +476,13 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                     <span className="field-help">{text.legacyPending}</span>
                   </div>
                   <form action={cancelPendingInvitation.bind(null, clinic.id, pending.user_id)}>
-                    <SubmitButton className="danger-link" pendingLabel={text.working}>{text.remove}</SubmitButton>
+                    <ConfirmSubmitButton
+                      className="danger-link"
+                      pendingLabel={text.working}
+                      confirmMessage={text.removePendingConfirm}
+                    >
+                      {text.remove}
+                    </ConfirmSubmitButton>
                   </form>
                 </article>
               );
