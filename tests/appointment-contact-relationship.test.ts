@@ -130,3 +130,24 @@ test("each new appointment requires a fresh phone owner choice after confirmed s
   assert.match(polish, /if \(relationshipInput\) relationshipInput\.value = ""/);
 });
 
+test("editing a phone or its owner requires fresh reminder consent", async () => {
+  const [page, editor, enhancer] = await Promise.all([
+    read("app/dashboard/page.tsx"),
+    read("app/dashboard/appointment-editor.tsx"),
+    read("app/dashboard/appointment-contact-relationship.tsx"),
+  ]);
+
+  assert.match(page, /patient_phone, contact_relationship, doctor_id/);
+  assert.match(page, /contactRelationship=\{appointment\.contact_relationship as "patient" \| "parent_guardian" \| "relative_caregiver"\}/);
+  assert.match(editor, /normalizeIraqiMobile, type AppointmentMutationFailure/);
+  assert.match(editor, /const \[editConsent, setEditConsent\] = useState\(reminderConsent\)/);
+  assert.match(editor, /const \[editRelationship, setEditRelationship\] = useState<ContactRelationship>\(contactRelationship\)/);
+  assert.match(editor, /onChange=\{\(event\) => \{[\s\S]*currentPhone && originalPhone && currentPhone !== originalPhone[\s\S]*setEditConsent\(false\)/);
+  assert.match(editor, /name="contact_relationship"[\s\S]*value=\{editRelationship\}/);
+  assert.match(editor, /if \(next !== contactRelationship\) setEditConsent\(false\)/);
+  assert.match(editor, /checked=\{editConsent\}/);
+  assert.match(enhancer, /form\.querySelector\('select\[name="contact_relationship"\]'\)[\s\S]*replaceConsentCopy\(form, locale\)[\s\S]*return/);
+  assert.doesNotMatch(enhancer, /atlasInitialRelationship/);
+  assert.doesNotMatch(enhancer, /consent\.checked = false/);
+});
+

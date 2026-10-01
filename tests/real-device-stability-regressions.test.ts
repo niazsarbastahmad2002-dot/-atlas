@@ -50,7 +50,10 @@ test("localized Iraqi phone patterns compile under modern browser v-mode", () =>
 
   assert.ok(dashboard.includes(`pattern="${expected}"`));
   assert.ok(editor.includes(`pattern="${expected}"`));
-  assert.match(editor, /name="patient_phone" type="tel" inputMode="tel" autoComplete="tel"/);
+  assert.match(editor, /name="patient_phone"/);
+  assert.match(editor, /type="tel"/);
+  assert.match(editor, /inputMode="tel"/);
+  assert.match(editor, /autoComplete="tel"/);
   assert.doesNotThrow(() => new RegExp(expected, "v"));
   assert.equal(new RegExp(expected, "v").test("0750 ١٢٣ ۴۵۶۷"), true);
   assert.equal(new RegExp(expected, "v").test("abc"), false);
