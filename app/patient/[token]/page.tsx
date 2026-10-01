@@ -5,6 +5,7 @@ import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
 import { getPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
+import { PatientSubmitButton } from "./patient-submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,7 @@ const patientCopy = {
     earlierJoin: "Yes, offer me an earlier time",
     earlierJoined: "You’re on the earlier-slot list.",
     earlierLeave: "Leave earlier-slot list",
+    updating: "Updating…",
     privacy: "This page is private to this appointment.",
     unavailableEyebrow: "Private appointment link",
     unavailableTitle: "This link is unavailable.",
@@ -103,6 +105,7 @@ const patientCopy = {
     earlierJoin: "بەڵێ، مەوعیدی زووترم پێشنیار بکە",
     earlierJoined: "تۆ لە لیستی مەوعیدی زووتریت.",
     earlierLeave: "لە لیستی زووتر دەرچم",
+    updating: "نوێ دەکرێتەوە…",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
     unavailableEyebrow: "بەستەری تایبەتی مەوعید",
     unavailableTitle: "ئەم بەستەرە بەردەست نییە.",
@@ -140,6 +143,7 @@ const patientCopy = {
     earlierJoin: "بەلێ، مەوعیدەکا زووتر بۆ من پێشنیار بکە",
     earlierJoined: "تو د لیستا مەوعیدێن زووتر دای.",
     earlierLeave: "ژ لیستا زووتر دەربکەڤم",
+    updating: "دهێتە نوێکرن…",
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
     unavailableEyebrow: "لینکێ تایبەت یێ وادەیێ",
     unavailableTitle: "ئەڤ لینکە بەردەست نینە.",
@@ -177,6 +181,7 @@ const patientCopy = {
     earlierJoin: "إي، عرضوا عليّ موعد أبكر",
     earlierJoined: "إنت بقائمة المواعيد الأبكر.",
     earlierLeave: "شيلوني من قائمة الأبكر",
+    updating: "جارٍ التحديث…",
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
     unavailableEyebrow: "رابط موعد خاص",
     unavailableTitle: "هذا الرابط غير متاح.",
@@ -319,10 +324,14 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           <section className={`patient-earlier-card ${wantsEarlierSlot ? "is-active" : ""}`}>
             <strong>{text.earlierTitle}</strong>
             <p>{wantsEarlierSlot ? text.earlierJoined : text.earlierHelp}</p>
-            <form action={updateEarlierSlotPreference.bind(null, token, !wantsEarlierSlot)}>
-              <button className={wantsEarlierSlot ? "patient-earlier-leave" : "button button-ghost patient-earlier-join"} type="submit">
+            <form>
+              <PatientSubmitButton
+                formAction={updateEarlierSlotPreference.bind(null, token, !wantsEarlierSlot)}
+                pendingLabel={text.updating}
+                className={wantsEarlierSlot ? "patient-earlier-leave" : "button button-ghost patient-earlier-join"}
+              >
                 {wantsEarlierSlot ? text.earlierLeave : text.earlierJoin}
-              </button>
+              </PatientSubmitButton>
             </form>
           </section>
         ) : null}
@@ -330,11 +339,21 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         {isPending && !reminderView ? (
           <div className="patient-initial-response">
             <h2>{text.confirmTitle}</h2>
-            <form action={updatePatientAppointment.bind(null, token, "confirmed")}>
-              <button className="button patient-confirm-primary" type="submit">{text.confirmInitial}</button>
-            </form>
-            <form action={updatePatientAppointment.bind(null, token, "cancelled")}>
-              <button className="patient-cancel-small" type="submit">{text.cancelSmall}</button>
+            <form>
+              <PatientSubmitButton
+                formAction={updatePatientAppointment.bind(null, token, "confirmed")}
+                pendingLabel={text.updating}
+                className="button patient-confirm-primary"
+              >
+                {text.confirmInitial}
+              </PatientSubmitButton>
+              <PatientSubmitButton
+                formAction={updatePatientAppointment.bind(null, token, "cancelled")}
+                pendingLabel={text.updating}
+                className="patient-cancel-small"
+              >
+                {text.cancelSmall}
+              </PatientSubmitButton>
             </form>
           </div>
         ) : null}
@@ -342,14 +361,22 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         {isPending && reminderView ? (
           <div className="patient-response-block">
             <h2>{text.question}</h2>
-            <div className="patient-actions" role="group" aria-label={text.responseActions}>
-              <form action={updatePatientAppointment.bind(null, token, "confirmed")}>
-                <button className="button" type="submit">{text.confirm}</button>
-              </form>
-              <form action={updatePatientAppointment.bind(null, token, "cancelled")}>
-                <button className="button button-ghost" type="submit">{text.cancel}</button>
-              </form>
-            </div>
+            <form className="patient-actions" role="group" aria-label={text.responseActions}>
+              <PatientSubmitButton
+                formAction={updatePatientAppointment.bind(null, token, "confirmed")}
+                pendingLabel={text.updating}
+                className="button"
+              >
+                {text.confirm}
+              </PatientSubmitButton>
+              <PatientSubmitButton
+                formAction={updatePatientAppointment.bind(null, token, "cancelled")}
+                pendingLabel={text.updating}
+                className="button button-ghost"
+              >
+                {text.cancel}
+              </PatientSubmitButton>
+            </form>
           </div>
         ) : null}
 
@@ -357,8 +384,14 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           <div className={`patient-status-message ${isConfirmed ? "is-confirmed" : ""}`} role="status">
             <strong>{statusMessage}</strong>
             {isConfirmed ? (
-              <form action={updatePatientAppointment.bind(null, token, "cancelled")}>
-                <button className="patient-change-mind" type="submit">{text.changeMind}</button>
+              <form>
+                <PatientSubmitButton
+                  formAction={updatePatientAppointment.bind(null, token, "cancelled")}
+                  pendingLabel={text.updating}
+                  className="patient-change-mind"
+                >
+                  {text.changeMind}
+                </PatientSubmitButton>
               </form>
             ) : null}
           </div>
