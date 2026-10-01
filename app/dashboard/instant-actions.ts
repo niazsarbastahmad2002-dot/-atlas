@@ -47,24 +47,6 @@ function requiredContactRelationship(value: FormDataEntryValue | null): Appointm
   return contactRelationship(value);
 }
 
-export async function getAppointmentContactRelationshipInline(
-  clinicId: string,
-  id: string,
-): Promise<AppointmentContactRelationship | null> {
-  if (!isUuid(clinicId) || !isUuid(id)) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("appointments")
-    .select("contact_relationship")
-    .eq("clinic_id", clinicId)
-    .eq("id", id)
-    .is("voided_at", null)
-    .maybeSingle();
-  if (error || !data) return null;
-  const relationship = data.contact_relationship as AppointmentContactRelationship;
-  return contactRelationships.has(relationship) ? relationship : null;
-}
-
 export async function createAppointmentInline(formData: FormData): Promise<InlineAppointmentResult> {
   const clinicId = String(formData.get("clinic_id") ?? "");
   const idempotencyKey = String(formData.get("idempotency_key") ?? "");
