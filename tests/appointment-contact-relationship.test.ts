@@ -78,3 +78,13 @@ test("appointment contact relationship reads are explicitly scoped to the active
   assert.match(enhancer, /getAppointmentContactRelationshipInline\(clinicId, appointmentId\)/);
 });
 
+test("main appointment creation persists the selected phone contact relationship", async () => {
+  const actions = await read("app/dashboard/actions.ts");
+
+  assert.match(actions, /appointmentContactRelationship\(formData\.get\("contact_relationship"\)\)/);
+  assert.match(actions, /\|\| !relationship/);
+  assert.match(actions, /patient_phone: patientPhone,[\s\S]*contact_relationship: relationship/);
+  assert.match(actions, /contactRelationship: relationship/);
+  assert.doesNotMatch(actions, /contactRelationship: "patient"/);
+});
+

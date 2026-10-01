@@ -19,6 +19,13 @@ import { createClient } from "@/lib/supabase/server";
 
 const appointmentIntervals = new Set([5, 10, 15, 20, 30]);
 const reminderLanguages = new Set(["ku", "bd", "ar", "en"]);
+type AppointmentContactRelationship = "patient" | "parent_guardian" | "relative_caregiver";
+const contactRelationships = new Set<AppointmentContactRelationship>(["patient", "parent_guardian", "relative_caregiver"]);
+
+function appointmentContactRelationship(value: FormDataEntryValue | null): AppointmentContactRelationship | null {
+  const relationship = String(value ?? "patient") as AppointmentContactRelationship;
+  return contactRelationships.has(relationship) ? relationship : null;
+}
 
 function dashboardUrl(
   key: "error" | "notice",
@@ -230,6 +237,7 @@ export async function createAppointment(formData: FormData) {
   const rawPatientName = String(formData.get("patient_name") ?? "");
   const patientName = cleanDisplayName(rawPatientName);
   const patientPhone = normalizeIraqiMobile(String(formData.get("patient_phone") ?? ""));
+  const relationship = appointmentContactRelationship(formData.get("contact_relationship"));
   const doctorId = String(formData.get("doctor_id") ?? "");
   const appointmentAt = parseBaghdadDateTime(String(formData.get("appointment_at") ?? ""));
   const reminderConsent = formData.get("reminder_consent") === "on";
@@ -247,6 +255,7 @@ export async function createAppointment(formData: FormData) {
     || !isUuid(doctorId)
     || !isUuid(idempotencyKey)
     || !isValidDisplayName(rawPatientName)
+    || !relationship
     || !reminderLanguages.has(reminderLanguage)
   ) {
     redirect(appointmentError("appointment_invalid"));
@@ -270,6 +279,7 @@ export async function createAppointment(formData: FormData) {
     clinic_id: clinicId,
     patient_name: patientName,
     patient_phone: patientPhone,
+    contact_relationship: relationship,
     doctor_name: doctor.name,
     doctor_id: doctor.id,
     appointment_at: appointmentAt.toISOString(),
@@ -294,7 +304,7 @@ export async function createAppointment(formData: FormData) {
       const matches = !existingError && existing && appointmentCreatePayloadMatches(existing, {
         patientName,
         patientPhone,
-        contactRelationship: "patient",
+        contactRelationship: relationship,
         doctorId: doctor.id,
         appointmentAt: appointmentAt.toISOString(),
         reminderConsent,

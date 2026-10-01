@@ -8,7 +8,7 @@ test("normal appointment retries verify the existing idempotency payload before 
   const actions = read("app/dashboard/actions.ts");
 
   assert.match(actions, /conflict === "duplicate"[\s\S]*idempotency_key[\s\S]*appointmentCreatePayloadMatches/);
-  assert.match(actions, /contactRelationship: "patient"/);
+  assert.match(actions, /contactRelationship: relationship/);
   assert.match(actions, /if \(matches\)[\s\S]*notice: "appointment_duplicate"/);
   assert.match(actions, /idempotency payload mismatch[\s\S]*appointment_create_failed/);
 });
