@@ -73,14 +73,17 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
 }) {
   const t = copy[locale];
   const [state, action, pending] = useActionState(createReceptionistInviteLink, initialState);
+  const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [copied, setCopied] = useState(false);
   const [shareError, setShareError] = useState("");
 
+  const currentInviteUrl = !pending && state.assignedDoctorId === selectedDoctorId ? state.url : undefined;
+
   async function copyLink() {
-    if (!state.url) return;
+    if (!currentInviteUrl) return;
     setShareError("");
     try {
-      await navigator.clipboard.writeText(state.url);
+      await navigator.clipboard.writeText(currentInviteUrl);
       setShareError("");
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
@@ -91,12 +94,12 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
   }
 
   async function shareLink() {
-    if (!state.url) return;
+    if (!currentInviteUrl) return;
     setCopied(false);
     setShareError("");
     if (navigator.share) {
       try {
-        await navigator.share({ title: t.shareTitle, text: t.shareText, url: state.url });
+        await navigator.share({ title: t.shareTitle, text: t.shareText, url: currentInviteUrl });
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -118,7 +121,18 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
       <form action={action} className="settings-form">
         <input type="hidden" name="clinic_id" value={clinicId} />
         <label htmlFor="invite_assigned_doctor_id">{t.doctor}</label>
-        <select id="invite_assigned_doctor_id" name="assigned_doctor_id" defaultValue="" required disabled={doctors.length === 0}>
+        <select
+          id="invite_assigned_doctor_id"
+          name="assigned_doctor_id"
+          value={selectedDoctorId}
+          onChange={(event) => {
+            setSelectedDoctorId(event.target.value);
+            setCopied(false);
+            setShareError("");
+          }}
+          required
+          disabled={doctors.length === 0}
+        >
           <option value="" disabled>{t.choose}</option>
           {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
         </select>
@@ -127,12 +141,12 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
         </button>
       </form>
 
-      {state.message ? (
+      {state.message && (state.status !== "success" || currentInviteUrl) ? (
         <div className={`notice ${state.status === "success" ? "notice-success" : "notice-error"}`} role={state.status === "success" ? "status" : "alert"}>
           <strong>{state.message}</strong>
-          {state.url ? (
+          {currentInviteUrl ? (
             <>
-              <div className="field-help" dir="ltr" style={{ overflowWrap: "anywhere", marginTop: 8 }}>{state.url}</div>
+              <div className="field-help" dir="ltr" style={{ overflowWrap: "anywhere", marginTop: 8 }}>{currentInviteUrl}</div>
               <div className="login-secondary-actions" style={{ marginTop: 10 }}>
                 <button className="button button-ghost button-small" type="button" onClick={() => void copyLink()}>{copied ? t.copied : t.copy}</button>
                 <button className="button button-ghost button-small" type="button" onClick={() => void shareLink()}>{t.share}</button>
