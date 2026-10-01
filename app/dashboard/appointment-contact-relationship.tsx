@@ -112,26 +112,12 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
       document.querySelectorAll<HTMLFormElement>(".app-shell form.appointment-edit-form").forEach((form) => { void decorateEditor(form); });
     };
 
-    const onSubmit = (event: Event) => {
-      const form = event.target instanceof HTMLFormElement ? event.target : null;
-      if (!form?.matches(".appointment-form")) return;
-      window.setTimeout(() => {
-        if (!form.isConnected) return;
-        const name = form.querySelector<HTMLInputElement>('input[name="patient_name"]');
-        const phone = form.querySelector<HTMLInputElement>('input[name="patient_phone"]');
-        const select = form.querySelector<HTMLSelectElement>('select[name="contact_relationship"]');
-        if (select && !name?.value && !phone?.value) select.value = "";
-      }, 700);
-    };
-
     scan();
-    document.addEventListener("submit", onSubmit, true);
     const observer = new MutationObserver(scan);
     observer.observe(document.body, { childList: true, subtree: true });
     return () => {
       disposed = true;
       observer.disconnect();
-      document.removeEventListener("submit", onSubmit, true);
     };
   }, [locale]);
 
