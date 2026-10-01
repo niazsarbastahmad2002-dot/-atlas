@@ -28,6 +28,14 @@ function redirectWithLocale(destination: URL, locale: string | null) {
   return response;
 }
 
+function inviteDestination(requestUrl: URL, token: string, locale: string | null) {
+  const destination = new URL(`/join/${encodeURIComponent(token)}`, requestUrl.origin);
+  if (isUiLocale(locale)) destination.searchParams.set("lang", locale);
+  return destination;
+}
+
+// GET is intentionally read-only. Old auth callbacks, browser prefetchers, and
+// link scanners may visit this URL, but only an explicit POST may redeem access.
 export async function GET(request: Request, { params }: Context) {
   const requestUrl = new URL(request.url);
   const inviteLocale = requestUrl.searchParams.get("lang");
@@ -35,13 +43,26 @@ export async function GET(request: Request, { params }: Context) {
   if (!validToken(token)) {
     return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale);
   }
+  return redirectWithLocale(inviteDestination(requestUrl, token, inviteLocale), inviteLocale);
+}
+
+export async function POST(request: Request, { params }: Context) {
+  const requestUrl = new URL(request.url);
+  const inviteLocale = requestUrl.searchParams.get("lang");
+  const { token } = await params;
+  if (!validToken(token)) {
+    return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale);
+  }
+
+  const origin = request.headers.get("origin");
+  if (origin && origin !== requestUrl.origin) {
+    return redirectWithLocale(inviteDestination(requestUrl, token, inviteLocale), inviteLocale);
+  }
 
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
-    const destination = new URL(`/join/${encodeURIComponent(token)}`, requestUrl.origin);
-    if (isUiLocale(inviteLocale)) destination.searchParams.set("lang", inviteLocale);
-    return redirectWithLocale(destination, inviteLocale);
+    return redirectWithLocale(inviteDestination(requestUrl, token, inviteLocale), inviteLocale);
   }
 
   const admin = createAdminClient();
