@@ -104,6 +104,8 @@ test("activity detail field names stay in the selected Atlas language", async ()
   assert.match(activityPage, /changedFieldLabel: Record<UiLocale/);
   assert.match(activityPage, /patient_name: "ناوی نەخۆش"/);
   assert.match(activityPage, /patient_phone: "ژمارا موبایلا نەخۆشی"/);
+  assert.match(activityPage, /contact_relationship: "پەیوەندی خاوەنی ژمارە"/);
+  assert.match(activityPage, /contact_relationship: "صلة صاحب الرقم"/);
   assert.match(activityPage, /reminder_language: "لغة التذكير"/);
   assert.match(activityPage, /changedFieldLabel\[locale\]\[item\] \?\? item\.replaceAll/);
 });
