@@ -37,7 +37,8 @@ function statusAction(status: AppointmentStatus) {
 }
 
 function contactRelationship(value: FormDataEntryValue | null): AppointmentContactRelationship | null {
-  const relationship = String(value ?? "patient") as AppointmentContactRelationship;
+  if (value === null) return null;
+  const relationship = String(value) as AppointmentContactRelationship;
   return contactRelationships.has(relationship) ? relationship : null;
 }
 
