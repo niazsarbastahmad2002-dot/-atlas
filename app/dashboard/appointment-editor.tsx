@@ -8,6 +8,7 @@ import { AppointmentEditDateTimeField } from "./appointment-edit-datetime-field"
 import { updateAppointmentDetailsInline } from "./instant-actions";
 
 type DoctorOption = { id: string; name: string };
+type ContactRelationship = "patient" | "parent_guardian" | "relative_caregiver";
 
 type AppointmentEditorProps = {
   clinicId: string;
@@ -16,6 +17,7 @@ type AppointmentEditorProps = {
   status: AppointmentStatus;
   patientName: string;
   patientPhone: string;
+  contactRelationship: ContactRelationship;
   doctorId: string | null;
   appointmentAt: string;
   reminderLanguage: string;
@@ -35,7 +37,11 @@ const copy = {
     close: "Close",
     save: "Save changes",
     saving: "Saving…",
-    consent: "Patient agreed to WhatsApp reminder",
+    consent: "This phone’s owner agreed to WhatsApp reminders",
+    relationship: "Whose phone is this?",
+    patient: "Patient",
+    guardian: "Parent / guardian",
+    caregiver: "Relative / caregiver",
     saved: "Appointment updated.",
     invalid: "Check the appointment details and try again.",
     slotTaken: "That doctor already has an appointment at this time. Choose another time.",
@@ -50,7 +56,11 @@ const copy = {
     close: "داخستن",
     save: "گۆڕانکارییەکان پاشەکەوت بکە",
     saving: "پاشەکەوت دەکرێت…",
-    consent: "نەخۆش ڕازییە بیرخستنەوەی واتسئاپ وەربگرێت",
+    consent: "خاوەنی ئەم ژمارەیە ڕازییە بیرخستنەوەی واتسئاپ وەربگرێت",
+    relationship: "ئەم ژمارەیە هی کێیە؟",
+    patient: "نەخۆش",
+    guardian: "دایک، باوک / سەرپەرشت",
+    caregiver: "خزم / چاودێر",
     saved: "وادەکە نوێکرایەوە.",
     invalid: "زانیاری وادەکە بپشکنە و دووبارە هەوڵ بدە.",
     slotTaken: "ئەم پزیشکە لەم کاتەدا وادەیەکی تری هەیە. کاتێکی تر هەڵبژێرە.",
@@ -65,7 +75,11 @@ const copy = {
     close: "داخە",
     save: "گۆڕینان بپارێزە",
     saving: "دهێتە پاراستن…",
-    consent: "نەخۆش ڕازییە بیرخستنەوەیا واتسئاپێ وەربگریت",
+    consent: "خودانێ ڤێ ژمارەیێ ڕازییە بیرخستنەوەیا واتسئاپێ وەربگریت",
+    relationship: "ئەڤ ژمارە یا کێیە؟",
+    patient: "نەخۆش",
+    guardian: "دایک، باب / سەرپەرشت",
+    caregiver: "خزم / چاڤدێر",
     saved: "وادە هاتە نوێکرن.",
     invalid: "زانیاریێن وادەیێ بپشکنە و دووبارە هەول بدە.",
     slotTaken: "ڤی دکتۆری ل ڤی دەمی وادە هەیە. دەمەکێ دی هەلبژێرە.",
@@ -80,7 +94,11 @@ const copy = {
     close: "إغلاق",
     save: "حفظ التغييرات",
     saving: "جارٍ الحفظ…",
-    consent: "وافق المريض على تذكير واتساب",
+    consent: "صاحب هذا الرقم وافق على استلام تذكيرات واتساب",
+    relationship: "رقم من هذا؟",
+    patient: "المريض",
+    guardian: "الأب / الأم / ولي الأمر",
+    caregiver: "قريب / مقدم رعاية",
     saved: "تم تحديث الموعد.",
     invalid: "تحقق من تفاصيل الموعد وحاول مرة أخرى.",
     slotTaken: "لدى هذا الطبيب موعد في هذا الوقت. اختر وقتاً آخر.",
@@ -115,6 +133,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
     status,
     patientName,
     patientPhone,
+    contactRelationship,
     doctorId,
     appointmentAt,
     reminderLanguage,
@@ -130,6 +149,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [editConsent, setEditConsent] = useState(reminderConsent);
+  const [editRelationship, setEditRelationship] = useState<ContactRelationship>(contactRelationship);
   const [now, setNow] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
   const openedStatusRef = useRef<AppointmentStatus | null>(null);
@@ -141,7 +161,8 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
 
   useEffect(() => {
     setEditConsent(reminderConsent);
-  }, [reminderConsent, revision]);
+    setEditRelationship(contactRelationship);
+  }, [contactRelationship, reminderConsent, revision]);
 
   useEffect(() => {
     const refreshNow = () => setNow(Date.now());
@@ -251,12 +272,29 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
             pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\(\)\-]{9,16}"
             dir="ltr"
             required
-            onBlur={(event) => {
+            onChange={(event) => {
               const originalPhone = normalizeIraqiMobile(patientPhone);
               const currentPhone = normalizeIraqiMobile(event.currentTarget.value);
-              if (currentPhone !== originalPhone) setEditConsent(false);
+              if (currentPhone && originalPhone && currentPhone !== originalPhone) setEditConsent(false);
             }}
           />
+
+          <label htmlFor={`edit-contact-${appointmentId}`}>{t.relationship}</label>
+          <select
+            id={`edit-contact-${appointmentId}`}
+            name="contact_relationship"
+            value={editRelationship}
+            onChange={(event) => {
+              const next = event.currentTarget.value as ContactRelationship;
+              if (next !== contactRelationship) setEditConsent(false);
+              setEditRelationship(next);
+            }}
+            required
+          >
+            <option value="patient">{t.patient}</option>
+            <option value="parent_guardian">{t.guardian}</option>
+            <option value="relative_caregiver">{t.caregiver}</option>
+          </select>
 
           <label htmlFor={`edit-doctor-${appointmentId}`}>{ui.doctor}</label>
           {lockedDoctor ? (
