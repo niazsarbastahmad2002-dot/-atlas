@@ -104,7 +104,8 @@ test("new appointment booking renders and requires explicit phone ownership", as
     read("app/dashboard/instant-actions.ts"),
   ]);
 
-  assert.match(page, /<select id="contact_relationship" name="contact_relationship" defaultValue="patient" required>/);
+  assert.match(page, /<select id="contact_relationship" name="contact_relationship" defaultValue="" required>/);
+  assert.match(page, /<option value="" disabled>\{contactRelationship\.choose\}<\/option>/);
   assert.match(page, /<option value="patient">\{contactRelationship\.patient\}<\/option>/);
   assert.match(page, /<option value="parent_guardian">\{contactRelationship\.guardian\}<\/option>/);
   assert.match(page, /<option value="relative_caregiver">\{contactRelationship\.caregiver\}<\/option>/);
