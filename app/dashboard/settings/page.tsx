@@ -32,6 +32,9 @@ const settingsResultCopy: Record<UiLocale, { errors: Record<string, string>; not
       clinic_invalid: "Check the clinic name and try again.",
       doctor_invalid: "Check the doctor details and try again.",
       save_failed: "That setting could not be saved. Refresh and try again.",
+      interval_invalid: "Choose a supported appointment interval.",
+      reminders_invalid: "Check the reminder timing and language, then try again.",
+      approval_required: "Clinic messaging approval is required before reminders can be enabled.",
     },
     notices: {
       language_saved: "Interface language updated.",
@@ -48,6 +51,9 @@ const settingsResultCopy: Record<UiLocale, { errors: Record<string, string>; not
       clinic_invalid: "ناوی کلینیک بپشکنە و دووبارە هەوڵ بدەوە.",
       doctor_invalid: "زانیاری پزیشک بپشکنە و دووبارە هەوڵ بدەوە.",
       save_failed: "ئەم ڕێکخستنە پاشەکەوت نەکرا. پەڕەکە نوێ بکەرەوە و دووبارە هەوڵ بدەوە.",
+      interval_invalid: "ماوەیەکی پشتگیریکراوی وادە هەڵبژێرە.",
+      reminders_invalid: "کات و زمانی بیرخستنەوە بپشکنە و دووبارە هەوڵ بدەوە.",
+      approval_required: "پێش چالاککردنی بیرخستنەوەکان پەسەندکردنی پەیامەکانی کلینیک پێویستە.",
     },
     notices: {
       language_saved: "زمانی ڕووکار نوێکرایەوە.",
@@ -64,6 +70,9 @@ const settingsResultCopy: Record<UiLocale, { errors: Record<string, string>; not
       clinic_invalid: "ناڤێ کلینیکێ بپشکنە و جارەکا دی هەول بدە.",
       doctor_invalid: "زانیاریێن دکتۆری بپشکنە و جارەکا دی هەول بدە.",
       save_failed: "ئەڤ ڕێکخستنە نەهاتە پاراستن. پەرەیێ نوێ بکە و جارەکا دی هەول بدە.",
+      interval_invalid: "ماوەیەکا پشتگیری‌کری یا وادەیان هەلبژێرە.",
+      reminders_invalid: "دەم و زمانێ بیرخستنەوەیێ بپشکنە و جارەکا دی هەول بدە.",
+      approval_required: "بەری چالاککرنا بیرخستنەوەیان پەسەندکرنا پەیامێن کلینیکێ پێدڤییە.",
     },
     notices: {
       language_saved: "زمانێ ڕووکارێ هاتە نوێکرن.",
@@ -80,6 +89,9 @@ const settingsResultCopy: Record<UiLocale, { errors: Record<string, string>; not
       clinic_invalid: "راجع اسم العيادة وحاول مرة ثانية.",
       doctor_invalid: "راجع معلومات الطبيب وحاول مرة ثانية.",
       save_failed: "تعذر حفظ هذا الإعداد. حدّث الصفحة وحاول مرة ثانية.",
+      interval_invalid: "اختر مدة مدعومة بين المواعيد.",
+      reminders_invalid: "راجع توقيت التذكير ولغته وحاول مرة ثانية.",
+      approval_required: "يلزم اعتماد رسائل العيادة قبل تفعيل التذكيرات.",
     },
     notices: {
       language_saved: "تم تحديث لغة الواجهة.",
