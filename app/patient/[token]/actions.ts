@@ -1,9 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
 import { setPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+function patientMutationReturnUrl(token: string, formData: FormData, failed = false) {
+  const params = new URLSearchParams();
+  const returnLanguage = String(formData.get("return_lang") ?? "");
+  if (returnLanguage === "ku" || returnLanguage === "bd" || returnLanguage === "ar" || returnLanguage === "en") {
+    params.set("lang", returnLanguage);
+  }
+  if (formData.get("return_view") === "reminder") params.set("view", "reminder");
+  if (failed) params.set("error", "update_failed");
+  const query = params.toString();
+  return query ? `/patient/${token}?${query}` : `/patient/${token}`;
+}
+
+function patientMutationFailureUrl(token: string, formData: FormData) {
+  return patientMutationReturnUrl(token, formData, true);
+}
 
 async function patientMutationAdmin(token: string) {
   if (!isPatientToken(token)) return null;
@@ -26,11 +43,13 @@ async function patientMutationAdmin(token: string) {
   return { admin, tokenHash };
 }
 
-export async function updatePatientAppointment(token: string, status: string) {
-  if (!["confirmed", "cancelled"].includes(status)) return;
+export async function updatePatientAppointment(token: string, status: string, formData: FormData) {
+  if (!["confirmed", "cancelled"].includes(status)) {
+    redirect(patientMutationFailureUrl(token, formData));
+  }
 
   const context = await patientMutationAdmin(token);
-  if (!context) return;
+  if (!context) redirect(patientMutationFailureUrl(token, formData));
 
   const { error } = await context.admin.rpc("patient_update_appointment", {
     p_token_hash: context.tokenHash,
@@ -38,17 +57,18 @@ export async function updatePatientAppointment(token: string, status: string) {
   });
   if (error) {
     console.error("Atlas patient appointment update failed", { code: error.code });
-    return;
+    redirect(patientMutationFailureUrl(token, formData));
   }
 
   revalidatePath(`/patient/${token}`);
+  redirect(patientMutationReturnUrl(token, formData));
 }
 
-export async function updateEarlierSlotPreference(token: string, enabled: boolean) {
-  if (typeof enabled !== "boolean") return;
+export async function updateEarlierSlotPreference(token: string, enabled: boolean, formData: FormData) {
+  if (typeof enabled !== "boolean") redirect(patientMutationFailureUrl(token, formData));
 
   const context = await patientMutationAdmin(token);
-  if (!context) return;
+  if (!context) redirect(patientMutationFailureUrl(token, formData));
 
   const { updated, error } = await setPatientEarlierSlotPreference(
     context.admin,
@@ -59,8 +79,9 @@ export async function updateEarlierSlotPreference(token: string, enabled: boolea
     console.error("Atlas earlier-slot preference update failed", {
       code: error?.code ?? "not_updated",
     });
-    return;
+    redirect(patientMutationFailureUrl(token, formData));
   }
 
   revalidatePath(`/patient/${token}`);
+  redirect(patientMutationReturnUrl(token, formData));
 }
