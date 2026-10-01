@@ -88,3 +88,11 @@ test("main appointment creation persists the selected phone contact relationship
   assert.doesNotMatch(actions, /contactRelationship: "patient"/);
 });
 
+test("appointment edits fail closed when the contact relationship is missing", async () => {
+  const actions = await read("app/dashboard/instant-actions.ts");
+
+  assert.match(actions, /function requiredContactRelationship\(value: FormDataEntryValue \| null\)/);
+  assert.match(actions, /if \(value === null\) return null/);
+  assert.match(actions, /updateAppointmentDetailsInline[\s\S]*requiredContactRelationship\(formData\.get\("contact_relationship"\)\)/);
+  assert.match(actions, /createAppointmentInline[\s\S]*contactRelationship\(formData\.get\("contact_relationship"\)\)/);
+});

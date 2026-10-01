@@ -41,6 +41,11 @@ function contactRelationship(value: FormDataEntryValue | null): AppointmentConta
   return contactRelationships.has(relationship) ? relationship : null;
 }
 
+function requiredContactRelationship(value: FormDataEntryValue | null): AppointmentContactRelationship | null {
+  if (value === null) return null;
+  return contactRelationship(value);
+}
+
 export async function getAppointmentContactRelationshipInline(
   clinicId: string,
   id: string,
@@ -252,7 +257,7 @@ export async function updateAppointmentDetailsInline(
   const rawPatientName = String(formData.get("patient_name") ?? "");
   const patientName = cleanDisplayName(rawPatientName);
   const patientPhone = normalizeIraqiMobile(String(formData.get("patient_phone") ?? ""));
-  const relationship = contactRelationship(formData.get("contact_relationship"));
+  const relationship = requiredContactRelationship(formData.get("contact_relationship"));
   const doctorId = String(formData.get("doctor_id") ?? "");
   const appointmentAt = parseBaghdadDateTime(String(formData.get("appointment_at") ?? ""));
   const reminderLanguage = String(formData.get("reminder_language") ?? "ku");
