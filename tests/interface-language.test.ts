@@ -38,3 +38,16 @@ test("settings load failures stay in the selected Atlas language", () => {
   assert.match(settings, /error=\{copy\.loadFailed\}/);
   assert.match(settings, /role="alert">\{error\}<\/p>/);
 });
+
+
+test("dashboard clinic load failures stay in the selected Atlas language", () => {
+  const dashboard = read("app/dashboard/page.tsx");
+
+  assert.match(dashboard, /dashboardErrorCopy: Record<UiLocale/);
+  assert.match(dashboard, /Atlas could not load this clinic\./);
+  assert.match(dashboard, /Atlas نەیتوانی ئەم کلینیکە بار بکات\./);
+  assert.match(dashboard, /Atlas نەشیا ڤێ کلینیکێ بار بکەت\./);
+  assert.match(dashboard, /تعذر على Atlas تحميل هذه العيادة\./);
+  assert.match(dashboard, /<DashboardError locale=\{locale\} \/>/);
+  assert.match(dashboard, /function DashboardError\(\{ locale \}: \{ locale: UiLocale \}\)/);
+});
