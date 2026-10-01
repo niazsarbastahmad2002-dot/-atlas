@@ -89,3 +89,12 @@ test("history and activity controls stay in the selected Atlas language", async 
   assert.match(historyClient, /aria-label=\{t\.filter\}/);
   assert.match(historyClient, /aria-label=\{t\.sort\}/);
 });
+
+
+test("activity state details localize appointment status values", async () => {
+  const activityPage = await read("app/dashboard/activity/page.tsx");
+  assert.match(activityPage, /activityStatusLabel: Record<UiLocale/);
+  assert.match(activityPage, /no_show: "نەهات"/);
+  assert.match(activityPage, /no_show: "لم يحضر"/);
+  assert.match(activityPage, /activityStatusLabel\[locale\]\[status\] \?\? status\.replaceAll/);
+});
