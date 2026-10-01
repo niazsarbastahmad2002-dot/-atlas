@@ -90,6 +90,15 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
           const value = await getAppointmentContactRelationshipInline(clinicId, appointmentId);
           if (!disposed && value && field.select.isConnected) {
             field.select.value = value;
+            field.select.dataset.atlasInitialRelationship = value;
+            field.select.addEventListener("change", () => {
+              if (field.select.value === field.select.dataset.atlasInitialRelationship) return;
+              const consent = form.querySelector<HTMLInputElement>('input[name="reminder_consent"]');
+              if (consent) {
+                consent.checked = false;
+                consent.dispatchEvent(new Event("change", { bubbles: true }));
+              }
+            });
             loaded = true;
           }
         }
