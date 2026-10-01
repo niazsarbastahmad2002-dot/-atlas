@@ -157,7 +157,6 @@ test("patient mutation failures return to a localized visible error instead of f
   const patientPage = source("app/patient/[token]/page.tsx");
   const patientActions = source("app/patient/[token]/actions.ts");
 
-  assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string; error\?: string \}>/);
   assert.match(patientPage, /const actionFailed = query\.error === "update_failed"/);
   assert.match(patientPage, /role="alert">\{text\.actionFailed\}<\/p>/);
   assert.match(patientPage, /actionFailed: "Could not save your change\. Try again\."/);
@@ -165,12 +164,17 @@ test("patient mutation failures return to a localized visible error instead of f
   assert.match(patientPage, /actionFailed: "گۆڕین نەهاتە پاراستن\. دووبارە هەول بدە\."/);
   assert.match(patientPage, /actionFailed: "ما انحفظ التغيير\. حاول مرة ثانية\."/);
   assert.equal((patientPage.match(/name="return_view"/g) ?? []).length, 4);
+  assert.equal((patientPage.match(/name="return_lang"/g) ?? []).length, 4);
 
-  assert.match(patientActions, /function patientMutationFailureUrl\(token: string, formData: FormData\)/);
+  assert.match(patientActions, /function patientMutationReturnUrl\(token: string, formData: FormData, failed = false\)/);
   assert.match(patientActions, /formData\.get\("return_view"\) === "reminder"/);
-  assert.match(patientActions, /new URLSearchParams\(\{ error: "update_failed" \}\)/);
+  assert.match(patientActions, /formData\.get\("return_lang"\)/);
+  assert.match(patientActions, /returnLanguage === "ku" \|\| returnLanguage === "bd" \|\| returnLanguage === "ar" \|\| returnLanguage === "en"/);
+  assert.match(patientActions, /if \(failed\) params\.set\("error", "update_failed"\)/);
+  assert.match(patientActions, /function patientMutationFailureUrl\(token: string, formData: FormData\)/);
   assert.match(patientActions, /updatePatientAppointment\(token: string, status: string, formData: FormData\)/);
   assert.match(patientActions, /updateEarlierSlotPreference\(token: string, enabled: boolean, formData: FormData\)/);
   assert.match(patientActions, /if \(!context\) redirect\(patientMutationFailureUrl\(token, formData\)\)/);
+  assert.equal((patientActions.match(/redirect\(patientMutationReturnUrl\(token, formData\)\)/g) ?? []).length, 2);
 });
 
