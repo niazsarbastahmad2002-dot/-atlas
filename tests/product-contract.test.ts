@@ -81,7 +81,7 @@ test("unavailable patient links keep a localized fallback language", () => {
   assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string \}>/);
   assert.match(patientPage, /const fallbackLocale = patientLocale\(query\.lang \?\? "en"\)/);
   assert.match(shareButton, /url\.searchParams\.set\("lang", reminderLanguage\)/);
-  assert.match(shareButton, /\}, \[reminderLanguage, state\.link\]\);/);
+  assert.match(shareButton, /const initialLink = useMemo\(\(\) => \{[\s\S]*?\}, \[reminderLanguage, state\.link\]\);/);
   assert.match(patientPage, /<Unavailable locale=\{fallbackLocale\} \/>/);
   for (const phrase of [
     "This link is unavailable.",
