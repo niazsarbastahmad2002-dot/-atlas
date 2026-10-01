@@ -183,10 +183,12 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           const nameInput = form.querySelector<HTMLInputElement>('#patient_name');
           const phoneInput = form.querySelector<HTMLInputElement>('#patient_phone');
           const consentInput = form.querySelector<HTMLInputElement>('#reminder_consent');
+          const relationshipInput = form.querySelector<HTMLSelectElement>('select[name="contact_relationship"]');
           const idempotencyInput = form.querySelector<HTMLInputElement>('input[name="idempotency_key"]');
           if (nameInput) nameInput.value = "";
           if (phoneInput) phoneInput.value = "";
           if (consentInput) consentInput.checked = false;
+          if (relationshipInput) relationshipInput.value = "";
           if (idempotencyInput && typeof crypto.randomUUID === "function") idempotencyInput.value = crypto.randomUUID();
           toast.success(Boolean(result.duplicate));
           if (button) button.textContent = `✓ ${result.duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`;
