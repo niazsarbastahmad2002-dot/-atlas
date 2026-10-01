@@ -135,3 +135,21 @@ test("patient queue numbers use the patient language digits", () => {
   assert.ok(patientPage.includes("<strong>#{queuePosition}</strong>"));
   assert.ok(patientPage.includes("`${aheadCount} ${ahead === 1 ? text.ahead : text.aheadMany}.`"));
 });
+
+test("patient appointment mutations disable their controls while an update is pending", () => {
+  const patientPage = source("app/patient/[token]/page.tsx");
+  const patientButton = source("app/patient/[token]/patient-submit-button.tsx");
+
+  assert.match(patientButton, /useFormStatus\(\)/);
+  assert.match(patientButton, /disabled=\{pending\}/);
+  assert.match(patientButton, /aria-disabled=\{pending\}/);
+  assert.match(patientButton, /formAction=\{formAction\}/);
+  assert.match(patientPage, /updating: "Updating…"/);
+  assert.match(patientPage, /updating: "نوێ دەکرێتەوە…"/);
+  assert.match(patientPage, /updating: "دهێتە نوێکرن…"/);
+  assert.match(patientPage, /updating: "جارٍ التحديث…"/);
+  assert.match(patientPage, /className="patient-actions" role="group" aria-label=\{text\.responseActions\}/);
+  assert.match(patientPage, /formAction=\{updatePatientAppointment\.bind\(null, token, "confirmed"\)\}/);
+  assert.match(patientPage, /formAction=\{updatePatientAppointment\.bind\(null, token, "cancelled"\)\}/);
+});
+
