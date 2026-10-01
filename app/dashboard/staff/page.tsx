@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SubmitButton } from "@/app/components/submit-button";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
@@ -47,6 +48,7 @@ type StaffCopy = {
   expires: string;
   revokeInvite: string;
   noActiveInvites: string;
+  working: string;
 };
 
 const copy: Record<UiLocale, StaffCopy> = {
@@ -81,6 +83,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     expires: "Expires",
     revokeInvite: "Revoke invitation",
     noActiveInvites: "No active manual invitations.",
+    working: "Working…",
   },
   ku: {
     title: "دەسەڵاتی کلینیک",
@@ -113,6 +116,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     expires: "بەسەر دەچێت",
     revokeInvite: "بانگهێشت هەڵبوەشێنەوە",
     noActiveInvites: "هیچ بانگهێشتی دەستی چالاک نییە.",
+    working: "چاوەڕێ بکە…",
   },
   bd: {
     title: "دەستهەلاتا کلینیکێ",
@@ -145,6 +149,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     expires: "دێ بەسەر چیت",
     revokeInvite: "بانگهێشتێ هەلوەشینە",
     noActiveInvites: "چ بانگهێشتا دەستی یا چالاک نینە.",
+    working: "چاڤەڕێ بە…",
   },
   ar: {
     title: "صلاحيات العيادة",
@@ -177,6 +182,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     expires: "تنتهي",
     revokeInvite: "إلغاء الدعوة",
     noActiveInvites: "ماكو دعوات يدوية فعالة.",
+    working: "جارٍ التنفيذ…",
   },
 };
 
@@ -425,7 +431,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                   <span className="field-help">{text.expires}: {formatStaffInviteExpiry(invitation.expires_at, locale)}</span>
                 </div>
                 <form action={revokeManualStaffInvitation.bind(null, clinic.id, invitation.invitation_id)}>
-                  <button className="danger-link" type="submit">{text.revokeInvite}</button>
+                  <SubmitButton className="danger-link" pendingLabel={text.working}>{text.revokeInvite}</SubmitButton>
                 </form>
               </article>
             )) : <p className="field-help">{text.noActiveInvites}</p>}
@@ -448,7 +454,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                     <span className="field-help">{text.legacyPending}</span>
                   </div>
                   <form action={cancelPendingInvitation.bind(null, clinic.id, pending.user_id)}>
-                    <button className="danger-link" type="submit">{text.remove}</button>
+                    <SubmitButton className="danger-link" pendingLabel={text.working}>{text.remove}</SubmitButton>
                   </form>
                 </article>
               );
@@ -479,10 +485,10 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                           <option value="">{text.chooseDoctor}</option>
                           {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
                         </select>
-                        <button type="submit">{text.saveRole}</button>
+                        <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
                       </form>
                       <form action={removeStaffMember.bind(null, clinic.id, member.user_id)}>
-                        <button className="danger-link" type="submit">{text.remove}</button>
+                        <SubmitButton className="danger-link" pendingLabel={text.working}>{text.remove}</SubmitButton>
                       </form>
                     </div>
                   )}
@@ -507,7 +513,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                   <input type="checkbox" name="confirm_transfer" value="yes" required />
                   <span>{text.transferConfirm}</span>
                 </label>
-                <button className="button button-small" type="submit">{text.transferButton}</button>
+                <SubmitButton className="button button-small" pendingLabel={text.working}>{text.transferButton}</SubmitButton>
               </form>
             ) : <p className="field-help">{text.transferEmpty}</p>}
           </div>
