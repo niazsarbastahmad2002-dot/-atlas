@@ -78,7 +78,7 @@ test("unavailable patient links keep a localized fallback language", () => {
   const patientPage = source("app/patient/[token]/page.tsx");
   const shareButton = source("app/dashboard/patient-link-button.tsx");
 
-  assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string \}>/);
+  assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string; error\?: string \}>/);
   assert.match(patientPage, /const fallbackLocale = patientLocale\(query\.lang \?\? "en"\)/);
   assert.match(shareButton, /url\.searchParams\.set\("lang", reminderLanguage\)/);
   assert.match(shareButton, /\}, \[reminderLanguage, state\.link\]\);/);
