@@ -40,14 +40,15 @@ const dayCopy: Record<UiLocale, {
 
 const contactRelationshipCopy: Record<UiLocale, {
   label: string;
+  choose: string;
   patient: string;
   guardian: string;
   caregiver: string;
 }> = {
-  en: { label: "Whose phone is this?", patient: "Patient", guardian: "Parent / guardian", caregiver: "Relative / caregiver" },
-  ku: { label: "ئەم ژمارەیە هی کێیە؟", patient: "نەخۆش", guardian: "دایک، باوک / سەرپەرشت", caregiver: "خزم / چاودێر" },
-  bd: { label: "ئەڤ ژمارە یا کێیە؟", patient: "نەخۆش", guardian: "دایک، باب / سەرپەرشت", caregiver: "خزم / چاڤدێر" },
-  ar: { label: "رقم من هذا؟", patient: "المريض", guardian: "الأب / الأم / ولي الأمر", caregiver: "قريب / مقدم رعاية" },
+  en: { label: "Whose phone is this?", choose: "Choose phone owner", patient: "Patient", guardian: "Parent / guardian", caregiver: "Relative / caregiver" },
+  ku: { label: "ئەم ژمارەیە هی کێیە؟", choose: "خاوەنی ژمارەکە هەڵبژێرە", patient: "نەخۆش", guardian: "دایک، باوک / سەرپەرشت", caregiver: "خزم / چاودێر" },
+  bd: { label: "ئەڤ ژمارە یا کێیە؟", choose: "خودانێ ژمارەیێ هەلبژێرە", patient: "نەخۆش", guardian: "دایک، باب / سەرپەرشت", caregiver: "خزم / چاڤدێر" },
+  ar: { label: "رقم من هذا؟", choose: "اختَر صاحب الرقم", patient: "المريض", guardian: "الأب / الأم / ولي الأمر", caregiver: "قريب / مقدم رعاية" },
 };
 
 const dashboardErrorCopy: Record<UiLocale, { title: string; help: string }> = {
@@ -261,7 +262,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <label htmlFor="patient_name">{t.patientName}</label><input id="patient_name" name="patient_name" autoComplete="name" minLength={2} maxLength={120} required />
           <label htmlFor="patient_phone">{t.iraqiMobile}</label><input id="patient_phone" name="patient_phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={24} pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\(\)\-]{9,16}" placeholder="0750 000 0000" aria-describedby="phone-help" dir="ltr" required /><p className="field-help" id="phone-help">{t.phoneHelp}</p>
           <label htmlFor="contact_relationship">{contactRelationship.label}</label>
-          <select id="contact_relationship" name="contact_relationship" defaultValue="patient" required>
+          <select id="contact_relationship" name="contact_relationship" defaultValue="" required>
+            <option value="" disabled>{contactRelationship.choose}</option>
             <option value="patient">{contactRelationship.patient}</option>
             <option value="parent_guardian">{contactRelationship.guardian}</option>
             <option value="relative_caregiver">{contactRelationship.caregiver}</option>
