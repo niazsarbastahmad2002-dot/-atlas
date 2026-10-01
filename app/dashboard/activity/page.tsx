@@ -117,10 +117,10 @@ const activityStatusLabel: Record<UiLocale, Record<string, string>> = {
 };
 
 const changedFieldLabel: Record<UiLocale, Record<string, string>> = {
-  en: { patient_name: "Patient name", patient_phone: "Patient phone", doctor: "Doctor", reminder_consent: "Reminder consent", reminder_language: "Reminder language" },
-  ku: { patient_name: "ناوی نەخۆش", patient_phone: "ژمارەی مۆبایلی نەخۆش", doctor: "پزیشک", reminder_consent: "ڕەزامەندی بیرخستنەوە", reminder_language: "زمانی بیرخستنەوە" },
-  bd: { patient_name: "ناڤێ نەخۆشی", patient_phone: "ژمارا موبایلا نەخۆشی", doctor: "دکتۆر", reminder_consent: "ڕەزامەندیا بیرخستنەوەیێ", reminder_language: "زمانێ بیرخستنەوەیێ" },
-  ar: { patient_name: "اسم المريض", patient_phone: "رقم هاتف المريض", doctor: "الطبيب", reminder_consent: "موافقة التذكير", reminder_language: "لغة التذكير" },
+  en: { patient_name: "Patient name", patient_phone: "Patient phone", contact_relationship: "Phone owner relationship", doctor: "Doctor", reminder_consent: "Reminder consent", reminder_language: "Reminder language" },
+  ku: { patient_name: "ناوی نەخۆش", patient_phone: "ژمارەی مۆبایلی نەخۆش", contact_relationship: "پەیوەندی خاوەنی ژمارە", doctor: "پزیشک", reminder_consent: "ڕەزامەندی بیرخستنەوە", reminder_language: "زمانی بیرخستنەوە" },
+  bd: { patient_name: "ناڤێ نەخۆشی", patient_phone: "ژمارا موبایلا نەخۆشی", contact_relationship: "پەیوەندیا خودانێ ژمارەیێ", doctor: "دکتۆر", reminder_consent: "ڕەزامەندیا بیرخستنەوەیێ", reminder_language: "زمانێ بیرخستنەوەیێ" },
+  ar: { patient_name: "اسم المريض", patient_phone: "رقم هاتف المريض", contact_relationship: "صلة صاحب الرقم", doctor: "الطبيب", reminder_consent: "موافقة التذكير", reminder_language: "لغة التذكير" },
 };
 
 const roleLabel: Record<UiLocale, Record<string, string>> = {
