@@ -26,10 +26,10 @@ test("removing clinic staff requires confirmation before the pending submit", as
     read("app/dashboard/staff/confirm-submit-button.tsx"),
   ]);
 
-  assert.ok(page.includes('removeConfirm: "Remove {person} from this clinic?'));
-  assert.ok(page.includes('removeConfirm: "{person} لەم کلینیکە لاببرێت?'));
-  assert.ok(page.includes('removeConfirm: "{person} ژ ڤێ کلینیکێ بهێتە لابرن?'));
-  assert.ok(page.includes('removeConfirm: "إزالة {person} من هذه العيادة?'));
+  assert.ok(page.includes('removeConfirm: "Remove {person} from this clinic'));
+  assert.ok(page.includes('removeConfirm: "{person} لەم کلینیکە لاببرێت'));
+  assert.ok(page.includes('removeConfirm: "{person} ژ ڤێ کلینیکێ بهێتە لابرن'));
+  assert.ok(page.includes('removeConfirm: "إزالة {person} من هذه العيادة'));
   assert.match(button, /useFormStatus\(\)/);
   assert.match(button, /disabled=\{pending\}/);
   assert.match(button, /window\.confirm\(confirmMessage\)/);
