@@ -96,3 +96,21 @@ test("appointment edits fail closed when the contact relationship is missing", a
   assert.match(actions, /updateAppointmentDetailsInline[\s\S]*requiredContactRelationship\(formData\.get\("contact_relationship"\)\)/);
   assert.match(actions, /createAppointmentInline[\s\S]*contactRelationship\(formData\.get\("contact_relationship"\)\)/);
 });
+
+test("new appointment booking renders and requires explicit phone ownership", async () => {
+  const [page, actions, instantActions] = await Promise.all([
+    read("app/dashboard/page.tsx"),
+    read("app/dashboard/actions.ts"),
+    read("app/dashboard/instant-actions.ts"),
+  ]);
+
+  assert.match(page, /<select id="contact_relationship" name="contact_relationship" defaultValue="patient" required>/);
+  assert.match(page, /<option value="patient">\{contactRelationship\.patient\}<\/option>/);
+  assert.match(page, /<option value="parent_guardian">\{contactRelationship\.guardian\}<\/option>/);
+  assert.match(page, /<option value="relative_caregiver">\{contactRelationship\.caregiver\}<\/option>/);
+  assert.match(actions, /function appointmentContactRelationship\(value: FormDataEntryValue \| null\)[\s\S]*if \(value === null\) return null/);
+  assert.match(instantActions, /function contactRelationship\(value: FormDataEntryValue \| null\)[\s\S]*if \(value === null\) return null/);
+  assert.doesNotMatch(actions, /value \?\? "patient"/);
+  assert.doesNotMatch(instantActions, /value \?\? "patient"/);
+});
+
