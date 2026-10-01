@@ -118,7 +118,7 @@ test("permanent history deletion is limited to removed records visible in the cu
   assert.match(historyClient, /if \(!canDelete \|\| pending \|\| selectedVisible\.length === 0\) return/);
   assert.match(historyClient, /const ids = selectedVisible/);
   assert.match(historyClient, /canDelete && selectedVisible\.length > 0/);
-  assert.match(historyClient, /\{selectedVisible\.length\} \{t\.selected\}/);
+  assert.match(historyClient, /localizeDigits\(selectedVisible\.length, locale\)/);
   assert.doesNotMatch(historyClient, /const ids = \[\.\.\.selected\]/);
 });
 
@@ -130,3 +130,12 @@ test("history phone search accepts Arabic and Persian digits", async () => {
   assert.ok(historyClient.includes("normalizeHistorySearch(query.trim())"));
   assert.ok(historyClient.includes("normalizeHistorySearch(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(needle)"));
 });
+
+test("history selected-record count uses the selected Atlas digit style", async () => {
+  const historyClient = await read("app/dashboard/history/history-client.tsx");
+
+  assert.match(historyClient, /import \{ localizeDigits \} from "@\/lib\/i18n\/format"/);
+  assert.match(historyClient, /\{localizeDigits\(selectedVisible\.length, locale\)\} \{t\.selected\}/);
+  assert.doesNotMatch(historyClient, /<strong>\{selectedVisible\.length\} \{t\.selected\}<\/strong>/);
+});
+
