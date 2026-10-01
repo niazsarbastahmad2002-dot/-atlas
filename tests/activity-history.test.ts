@@ -65,3 +65,36 @@ test("clinic cascade deletion skips orphan activity while manual staff removal s
   assert.equal(/create policy|drop policy|alter policy/i.test(migration), false);
   assert.equal(/delete_atlas_account|clinic_members_delete|clinics_delete/.test(migration), false);
 });
+
+
+test("history and activity controls stay in the selected Atlas language", async () => {
+  const [activityPage, historyPage, historyClient] = await Promise.all([
+    read("app/dashboard/activity/page.tsx"),
+    read("app/dashboard/history/page.tsx"),
+    read("app/dashboard/history/history-client.tsx"),
+  ]);
+
+  assert.match(activityPage, /loadFailed: "مێژووی چالاکی بار نەبوو\."/);
+  assert.match(activityPage, /loadFailed: "تعذر تحميل سجل النشاط\."/);
+  assert.match(activityPage, /<label htmlFor="clinic-activity">\{t\.clinic\}<\/label>/);
+  assert.match(activityPage, />\{t\.open\}<\/button>/);
+
+  assert.match(historyPage, /loadFailed: "مێژووی وادەکان بار نەبوو\."/);
+  assert.match(historyPage, /loadFailed: "تعذر تحميل سجل المواعيد\."/);
+  assert.match(historyPage, /<label htmlFor="clinic-history">\{t\.clinic\}<\/label>/);
+  assert.match(historyPage, />\{t\.open\}<\/button>/);
+
+  assert.match(historyClient, /filter: "پاڵاوتنی مێژوو"/);
+  assert.match(historyClient, /sort: "ترتيب السجل"/);
+  assert.match(historyClient, /aria-label=\{t\.filter\}/);
+  assert.match(historyClient, /aria-label=\{t\.sort\}/);
+});
+
+
+test("activity state details localize appointment status values", async () => {
+  const activityPage = await read("app/dashboard/activity/page.tsx");
+  assert.match(activityPage, /activityStatusLabel: Record<UiLocale/);
+  assert.match(activityPage, /no_show: "نەهات"/);
+  assert.match(activityPage, /no_show: "لم يحضر"/);
+  assert.match(activityPage, /activityStatusLabel\[locale\]\[status\] \?\? status\.replaceAll/);
+});
