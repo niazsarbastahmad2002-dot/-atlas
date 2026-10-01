@@ -18,6 +18,23 @@ export async function deleteArchivedAppointments(
   }
 
   const supabase = await createClient();
+  const { data: eligibleRows, error: eligibilityError } = await supabase
+    .from("appointments")
+    .select("id")
+    .eq("clinic_id", clinicId)
+    .in("id", uniqueIds)
+    .not("voided_at", "is", null);
+
+  if (eligibilityError) {
+    if (eligibilityError.code === "42501") return { ok: false, error: "not_allowed" };
+    console.error("Atlas history permanent delete preflight failed", { code: eligibilityError.code });
+    return { ok: false, error: "failed" };
+  }
+
+  if ((eligibleRows?.length ?? 0) !== uniqueIds.length) {
+    return { ok: false, error: "not_allowed" };
+  }
+
   const { data, error } = await supabase
     .from("appointments")
     .delete()
@@ -32,7 +49,7 @@ export async function deleteArchivedAppointments(
     return { ok: false, error: "failed" };
   }
 
-  if ((data?.length ?? 0) !== uniqueIds.length) return { ok: false, error: "not_allowed" };
+  if ((data?.length ?? 0) !== uniqueIds.length) return { ok: false, error: "failed" };
 
   revalidatePath("/dashboard/history");
   revalidatePath("/dashboard");
