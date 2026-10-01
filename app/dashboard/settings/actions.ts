@@ -141,6 +141,19 @@ export async function setDoctorActive(clinicId: string, doctorId: string, active
   }
 
   const { supabase } = await managementContext(clinicId);
+  if (!active) {
+    const { data: assignedReceptionist, error: assignmentError } = await supabase
+      .from("clinic_members")
+      .select("user_id")
+      .eq("clinic_id", clinicId)
+      .eq("role", "receptionist")
+      .eq("assigned_doctor_id", doctorId)
+      .limit(1)
+      .maybeSingle();
+    if (assignmentError) redirect(settingsUrl(clinicId, "error", "save_failed"));
+    if (assignedReceptionist) redirect(settingsUrl(clinicId, "error", "doctor_has_receptionist"));
+  }
+
   const { data, error } = await supabase
     .from("doctors")
     .update({ active })
