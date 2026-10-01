@@ -143,7 +143,7 @@ export function PatientLinkButton({
     } catch {
       return state.link;
     }
-  }, [state.link]);
+  }, [reminderLanguage, state.link]);
 
   const whatsappUrl = useMemo(() => {
     if (!initialLink || !state.patientPhone) return null;
