@@ -40,6 +40,7 @@ test("receptionist invite links stay bound to the doctor selected when they were
   assert.match(form, /const \[selectedDoctorId, setSelectedDoctorId\] = useState\(""\)/);
   assert.match(form, /const currentInviteUrl = !pending && state\.assignedDoctorId === selectedDoctorId \? state\.url : undefined/);
   assert.match(form, /value=\{selectedDoctorId\}/);
+  assert.match(form, /disabled=\{pending \|\| doctors\.length === 0\}/);
   assert.match(form, /setSelectedDoctorId\(event\.target\.value\)/);
   assert.match(form, /state\.status !== "success" \|\| currentInviteUrl/);
   assert.doesNotMatch(form, /navigator\.clipboard\.writeText\(state\.url\)/);
