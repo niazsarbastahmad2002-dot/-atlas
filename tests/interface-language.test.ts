@@ -60,6 +60,11 @@ test("settings action results stay in the selected Atlas language", () => {
   assert.match(settings, /doctor_archived: "دکتۆر ژ وادەیێن نوو هاتە لابرن/);
   assert.match(settings, /save_failed: "تعذر حفظ هذا الإعداد/);
   assert.match(settings, /language_saved: "تم تحديث لغة الواجهة/);
+  for (const code of ["manager_required", "language_invalid", "clinic_invalid", "doctor_invalid", "save_failed", "interval_invalid", "reminders_invalid", "approval_required"]) {
+    assert.match(settings, new RegExp(`${code}:`));
+  }
+  assert.match(settings, /approval_required: "پێش چالاککردنی بیرخستنەوەکان/);
+  assert.match(settings, /reminders_invalid: "راجع توقيت التذكير ولغته/);
   assert.match(settings, /const resultCopy = settingsResultCopy\[locale\]/);
   assert.match(settings, /resultCopy\.errors\[params\.error\]/);
   assert.match(settings, /resultCopy\.notices\[params\.notice\]/);
