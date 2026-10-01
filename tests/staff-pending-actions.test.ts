@@ -31,7 +31,10 @@ test("removing clinic staff requires confirmation before the pending submit", as
   assert.ok(page.includes('removeConfirm: "{person} ژ ڤێ کلینیکێ بهێتە لابرن'));
   assert.ok(page.includes('removeConfirm: "إزالة {person} من هذه العيادة'));
   assert.match(button, /useFormStatus\(\)/);
-  assert.match(button, /disabled=\{pending\}/);
+  assert.match(button, /const \[hydrated, setHydrated\] = useState\(false\)/);
+  assert.match(button, /useEffect\(\(\) => \{[\s\S]*setHydrated\(true\)/);
+  assert.match(button, /const disabled = pending \|\| !hydrated/);
+  assert.match(button, /disabled=\{disabled\}/);
   assert.match(button, /window\.confirm\(confirmMessage\)/);
   assert.match(button, /event\.preventDefault\(\)/);
 });
