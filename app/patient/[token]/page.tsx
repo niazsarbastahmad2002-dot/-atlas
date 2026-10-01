@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 type PatientPageProps = {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ view?: string; lang?: string }>;
+  searchParams: Promise<{ view?: string; lang?: string; error?: string }>;
 };
 
 type PatientAppointment = {
@@ -68,6 +68,7 @@ const patientCopy = {
     earlierJoined: "You’re on the earlier-slot list.",
     earlierLeave: "Leave earlier-slot list",
     updating: "Updating…",
+    actionFailed: "Could not save your change. Try again.",
     privacy: "This page is private to this appointment.",
     unavailableEyebrow: "Private appointment link",
     unavailableTitle: "This link is unavailable.",
@@ -106,6 +107,7 @@ const patientCopy = {
     earlierJoined: "تۆ لە لیستی مەوعیدی زووتریت.",
     earlierLeave: "لە لیستی زووتر دەرچم",
     updating: "نوێ دەکرێتەوە…",
+    actionFailed: "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
     unavailableEyebrow: "بەستەری تایبەتی مەوعید",
     unavailableTitle: "ئەم بەستەرە بەردەست نییە.",
@@ -144,6 +146,7 @@ const patientCopy = {
     earlierJoined: "تو د لیستا مەوعیدێن زووتر دای.",
     earlierLeave: "ژ لیستا زووتر دەربکەڤم",
     updating: "دهێتە نوێکرن…",
+    actionFailed: "گۆڕین نەهاتە پاراستن. دووبارە هەول بدە.",
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
     unavailableEyebrow: "لینکێ تایبەت یێ وادەیێ",
     unavailableTitle: "ئەڤ لینکە بەردەست نینە.",
@@ -182,6 +185,7 @@ const patientCopy = {
     earlierJoined: "إنت بقائمة المواعيد الأبكر.",
     earlierLeave: "شيلوني من قائمة الأبكر",
     updating: "جارٍ التحديث…",
+    actionFailed: "ما انحفظ التغيير. حاول مرة ثانية.",
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
     unavailableEyebrow: "رابط موعد خاص",
     unavailableTitle: "هذا الرابط غير متاح.",
@@ -256,6 +260,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const isConfirmed = status === "confirmed";
   const isActive = isPending || isConfirmed;
   const reminderView = query.view === "reminder";
+  const actionFailed = query.error === "update_failed";
   const ahead = appointment.appointments_ahead ?? 0;
   const queuePosition = appointment.queue_position ? localizeDigits(appointment.queue_position, locale) : null;
   const aheadCount = localizeDigits(ahead, locale);
@@ -313,6 +318,8 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           ) : null}
         </section>
 
+        {actionFailed ? <p className="notice notice-error patient-action-error" role="alert">{text.actionFailed}</p> : null}
+
         {isActive && queuePosition ? (
           <div className="patient-order-card" aria-label={`${text.order} ${queuePosition}`}>
             <div><span>{text.order}</span><strong>#{queuePosition}</strong></div>
@@ -325,6 +332,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <strong>{text.earlierTitle}</strong>
             <p>{wantsEarlierSlot ? text.earlierJoined : text.earlierHelp}</p>
             <form>
+              <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <PatientSubmitButton
                 formAction={updateEarlierSlotPreference.bind(null, token, !wantsEarlierSlot)}
                 pendingLabel={text.updating}
@@ -340,6 +348,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           <div className="patient-initial-response">
             <h2>{text.confirmTitle}</h2>
             <form>
+              <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -362,6 +371,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           <div className="patient-response-block">
             <h2>{text.question}</h2>
             <form className="patient-actions" role="group" aria-label={text.responseActions}>
+              <input type="hidden" name="return_view" value="reminder" />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -385,6 +395,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <strong>{statusMessage}</strong>
             {isConfirmed ? (
               <form>
+                <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
                 <PatientSubmitButton
                   formAction={updatePatientAppointment.bind(null, token, "cancelled")}
                   pendingLabel={text.updating}
@@ -416,6 +427,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-detail-block > strong { color: var(--ink); font-size: clamp(24px,6vw,32px); line-height: 1.25; }
           .patient-detail-block > .patient-detail-secondary { font-size: clamp(17px,4vw,21px); font-weight: 790; }
           .patient-contact-block a { width: fit-content; color: var(--accent); font-size: clamp(19px,4.5vw,24px); font-weight: 850; text-decoration: none; }
+          .patient-action-error { margin: 0 0 18px; }
           .patient-order-card { margin: 0 0 22px; border: 1px solid #cfe7dd; border-radius: 17px; padding: 17px 19px; background: #effaf6; }
           .patient-order-card > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
           .patient-order-card span { color: var(--muted); font-size: 12px; font-weight: 780; }
