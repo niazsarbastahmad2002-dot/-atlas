@@ -14,8 +14,8 @@ test("production staff invitation carries the sender interface language through 
   assert.match(action, /\?lang=\$\{encodeURIComponent\(inviteLocale\)\}/);
   assert.match(page, /searchParams/);
   assert.match(page, /isUiLocale\(requestedLang\)/);
-  assert.match(page, /finish\?lang=\$\{encodeURIComponent\(locale\)\}/);
-  assert.match(auth, /finish\?lang=\$\{encodeURIComponent\(locale\)\}/);
+  assert.match(page, /const finishPath = `\/join\/\$\{encodeURIComponent\(token\)\}\/finish\?lang=\$\{encodeURIComponent\(locale\)\}`/);
+  assert.match(auth, /const returnPath = `\/join\/\$\{encodeURIComponent\(token\)\}\?lang=\$\{encodeURIComponent\(locale\)\}`/);
   assert.match(finish, /uiLocaleCookie/);
   assert.match(finish, /requestUrl\.searchParams\.get\("lang"\)/);
   assert.match(finish, /response\.cookies\.set\(uiLocaleCookie, locale/);
