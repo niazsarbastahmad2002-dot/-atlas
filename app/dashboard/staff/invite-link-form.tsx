@@ -131,7 +131,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
             setShareError("");
           }}
           required
-          disabled={doctors.length === 0}
+          disabled={pending || doctors.length === 0}
         >
           <option value="" disabled>{t.choose}</option>
           {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
