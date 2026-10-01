@@ -131,20 +131,23 @@ test("each new appointment requires a fresh phone owner choice after confirmed s
 });
 
 test("editing a phone or its owner requires fresh reminder consent", async () => {
-  const [editor, enhancer] = await Promise.all([
+  const [page, editor, enhancer] = await Promise.all([
+    read("app/dashboard/page.tsx"),
     read("app/dashboard/appointment-editor.tsx"),
     read("app/dashboard/appointment-contact-relationship.tsx"),
   ]);
 
+  assert.match(page, /patient_phone, contact_relationship, doctor_id/);
+  assert.match(page, /contactRelationship=\{appointment\.contact_relationship as "patient" \| "parent_guardian" \| "relative_caregiver"\}/);
   assert.match(editor, /normalizeIraqiMobile, type AppointmentMutationFailure/);
   assert.match(editor, /const \[editConsent, setEditConsent\] = useState\(reminderConsent\)/);
-  assert.match(editor, /const originalPhone = normalizeIraqiMobile\(patientPhone\)/);
-  assert.match(editor, /const currentPhone = normalizeIraqiMobile\(event\.currentTarget\.value\)/);
-  assert.match(editor, /if \(currentPhone !== originalPhone\) setEditConsent\(false\)/);
+  assert.match(editor, /const \[editRelationship, setEditRelationship\] = useState<ContactRelationship>\(contactRelationship\)/);
+  assert.match(editor, /onChange=\{\(event\) => \{[\s\S]*currentPhone && originalPhone && currentPhone !== originalPhone[\s\S]*setEditConsent\(false\)/);
+  assert.match(editor, /name="contact_relationship"[\s\S]*value=\{editRelationship\}/);
+  assert.match(editor, /if \(next !== contactRelationship\) setEditConsent\(false\)/);
   assert.match(editor, /checked=\{editConsent\}/);
-  assert.match(enhancer, /dataset\.atlasInitialRelationship = value/);
-  assert.match(enhancer, /field\.select\.value === field\.select\.dataset\.atlasInitialRelationship/);
-  assert.match(enhancer, /consent\.checked = false/);
-  assert.match(enhancer, /dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
+  assert.match(enhancer, /form\.querySelector\('select\[name="contact_relationship"\]'\)[\s\S]*replaceConsentCopy\(form, locale\)[\s\S]*return/);
+  assert.doesNotMatch(enhancer, /atlasInitialRelationship/);
+  assert.doesNotMatch(enhancer, /consent\.checked = false/);
 });
 
