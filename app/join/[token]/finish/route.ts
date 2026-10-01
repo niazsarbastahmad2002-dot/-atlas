@@ -14,8 +14,8 @@ function validToken(token: string) {
   return /^[A-Za-z0-9_-]{43}$/.test(token);
 }
 
-function redirectWithLocale(destination: URL, locale: string | null) {
-  const response = NextResponse.redirect(destination);
+function redirectWithLocale(destination: URL, locale: string | null, status: 303 | 307 = 307) {
+  const response = NextResponse.redirect(destination, status);
   if (isUiLocale(locale)) {
     response.cookies.set(uiLocaleCookie, locale, {
       path: "/",
@@ -28,6 +28,14 @@ function redirectWithLocale(destination: URL, locale: string | null) {
   return response;
 }
 
+function inviteDestination(requestUrl: URL, token: string, locale: string | null) {
+  const destination = new URL(`/join/${encodeURIComponent(token)}`, requestUrl.origin);
+  if (isUiLocale(locale)) destination.searchParams.set("lang", locale);
+  return destination;
+}
+
+// GET is intentionally read-only. Old auth callbacks, browser prefetchers, and
+// link scanners may visit this URL, but only an explicit POST may redeem access.
 export async function GET(request: Request, { params }: Context) {
   const requestUrl = new URL(request.url);
   const inviteLocale = requestUrl.searchParams.get("lang");
@@ -35,13 +43,26 @@ export async function GET(request: Request, { params }: Context) {
   if (!validToken(token)) {
     return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale);
   }
+  return redirectWithLocale(inviteDestination(requestUrl, token, inviteLocale), inviteLocale);
+}
+
+export async function POST(request: Request, { params }: Context) {
+  const requestUrl = new URL(request.url);
+  const inviteLocale = requestUrl.searchParams.get("lang");
+  const { token } = await params;
+  if (!validToken(token)) {
+    return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale, 303);
+  }
+
+  const origin = request.headers.get("origin");
+  if (origin && origin !== requestUrl.origin) {
+    return redirectWithLocale(inviteDestination(requestUrl, token, inviteLocale), inviteLocale, 303);
+  }
 
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
-    const destination = new URL(`/join/${encodeURIComponent(token)}`, requestUrl.origin);
-    if (isUiLocale(inviteLocale)) destination.searchParams.set("lang", inviteLocale);
-    return redirectWithLocale(destination, inviteLocale);
+    return redirectWithLocale(inviteDestination(requestUrl, token, inviteLocale), inviteLocale, 303);
   }
 
   const admin = createAdminClient();
@@ -54,11 +75,11 @@ export async function GET(request: Request, { params }: Context) {
 
   if (error || typeof data !== "string") {
     console.error("Atlas receptionist invite redemption failed", { code: error?.code ?? "invalid_invite" });
-    return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale);
+    return redirectWithLocale(new URL("/login?error=invalid_invite", requestUrl.origin), inviteLocale, 303);
   }
 
   const destination = new URL("/dashboard", requestUrl.origin);
   destination.searchParams.set("clinic", data);
   destination.searchParams.set("notice", "joined_clinic");
-  return redirectWithLocale(destination, inviteLocale);
+  return redirectWithLocale(destination, inviteLocale, 303);
 }

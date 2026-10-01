@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { isUiLocale, uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { JoinClinicAuth } from "./join-auth";
+import { JoinConfirmForm } from "./join-confirm-form";
 import { JoinLanguagePicker } from "./join-language-picker";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ type Preview = { clinic_id: string; clinic_name: string; doctor_name: string; ex
 type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
 type Rpc = (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
 
-const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doctor: string; invalid: string; back: string; language: string }> = {
+const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doctor: string; invalid: string; back: string; language: string; join: string; joining: string }> = {
   en: {
     eyebrow: "Clinic invitation",
     title: "Join this clinic",
@@ -27,6 +27,8 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     invalid: "This invitation is expired, already used, or no longer valid.",
     back: "Open Atlas",
     language: "Choose your language",
+    join: "Join clinic",
+    joining: "Joining…",
   },
   ku: {
     eyebrow: "بانگهێشتی کلینیک",
@@ -36,6 +38,8 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     invalid: "ئەم بانگهێشتە بەسەرچووە، پێشتر بەکارهاتووە یان چیتر دروست نییە.",
     back: "Atlas بکەرەوە",
     language: "زمانەکەت هەڵبژێرە",
+    join: "بچۆ ناو کلینیک",
+    joining: "دەچیتە ناو کلینیک…",
   },
   bd: {
     eyebrow: "بانگهێشتا کلینیکێ",
@@ -45,6 +49,8 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     invalid: "ئەڤ بانگهێشتە بەسەرچووە، پێشتر هاتییە بکارئینان یان ئیدی دروست نینە.",
     back: "Atlas ڤەکە",
     language: "زمانێ خۆ هەلبژێرە",
+    join: "بچۆ ناڤ کلینیکێ",
+    joining: "دچیتە ناڤ کلینیکێ…",
   },
   ar: {
     eyebrow: "دعوة العيادة",
@@ -54,6 +60,8 @@ const copy: Record<UiLocale, { eyebrow: string; title: string; help: string; doc
     invalid: "هذه الدعوة انتهت أو استُخدمت أو لم تعد صالحة.",
     back: "فتح Atlas",
     language: "اختار لغتك",
+    join: "الانضمام للعيادة",
+    joining: "جارٍ الانضمام…",
   },
 };
 
@@ -104,7 +112,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
 
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
-  if (userData.user) redirect(`/join/${encodeURIComponent(token)}/finish?lang=${encodeURIComponent(locale)}`);
+  const finishPath = `/join/${encodeURIComponent(token)}/finish?lang=${encodeURIComponent(locale)}`;
 
   return (
     <main className="center-page" dir={localeMeta.direction} lang={localeMeta.language}>
@@ -117,7 +125,11 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
           <strong>{preview.clinic_name}</strong><br />
           {t.doctor}: {preview.doctor_name}
         </div>
-        <JoinClinicAuth token={token} locale={locale} />
+        {userData.user ? (
+          <JoinConfirmForm action={finishPath} label={t.join} pendingLabel={t.joining} />
+        ) : (
+          <JoinClinicAuth token={token} locale={locale} />
+        )}
       </section>
     </main>
   );

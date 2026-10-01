@@ -22,7 +22,7 @@ const copy = {
     code: "Verification code",
     paste: "Paste code",
     sent: "We sent a one-time code to",
-    verify: "Verify and join clinic",
+    verify: "Verify number",
     verifying: "Verifying…",
     resend: "Resend code",
     another: "Use another number",
@@ -43,7 +43,7 @@ const copy = {
     code: "کۆدی پشتڕاستکردنەوە",
     paste: "کۆد دابنێ",
     sent: "کۆدێکی یەکجارەمان نارد بۆ",
-    verify: "پشتڕاست بکەوە و بچۆ ناو کلینیک",
+    verify: "ژمارەکە پشتڕاست بکەرەوە",
     verifying: "پشتڕاست دەکرێتەوە…",
     resend: "کۆد دووبارە بنێرە",
     another: "ژمارەیەکی تر بەکاربهێنە",
@@ -64,7 +64,7 @@ const copy = {
     code: "کۆدێ پشتڕاستکرنێ",
     paste: "کۆد دابنێ",
     sent: "مە کۆدەکێ ئێکجارە هنارت بۆ",
-    verify: "پشتڕاست بکە و بچۆ ناڤ کلینیکێ",
+    verify: "ژمارەیێ پشتڕاست بکە",
     verifying: "دهێتە پشتڕاستکرن…",
     resend: "کۆد دووبارە بهنێرە",
     another: "ژمارەکا دی بکاربینە",
@@ -85,7 +85,7 @@ const copy = {
     code: "رمز التحقق",
     paste: "لصق الرمز",
     sent: "أرسلنا رمزاً لمرة واحدة إلى",
-    verify: "تحقق وانضم للعيادة",
+    verify: "تحقق من الرقم",
     verifying: "جارٍ التحقق…",
     resend: "إعادة إرسال الرمز",
     another: "استخدام رقم آخر",
@@ -138,7 +138,7 @@ export function JoinClinicAuth({ token, locale }: {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
-  const finishPath = `/join/${encodeURIComponent(token)}/finish?lang=${encodeURIComponent(locale)}`;
+  const returnPath = `/join/${encodeURIComponent(token)}?lang=${encodeURIComponent(locale)}`;
 
   async function passkey() {
     if (busy) return;
@@ -151,7 +151,7 @@ export function JoinClinicAuth({ token, locale }: {
         setError(t.failed);
         return;
       }
-      window.location.replace(finishPath);
+      window.location.replace(returnPath);
     } catch {
       setError(t.failed);
     } finally {
@@ -226,7 +226,7 @@ export function JoinClinicAuth({ token, locale }: {
         return;
       }
       void supabase.auth.updateUser({ data: { atlas_locale: locale } });
-      window.location.replace(finishPath);
+      window.location.replace(returnPath);
     } catch {
       setError(t.failed);
     } finally {
