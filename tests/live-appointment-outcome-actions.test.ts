@@ -37,3 +37,9 @@ test("appointment remove controls identify the patient for assistive technology"
   const actions = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
   assert.ok(actions.includes('aria-label={`${workflow.remove}: ${patientName}`}'));
 });
+
+test("prepared patient sharing resets after the appointment revision changes", () => {
+  const actions = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
+  assert.ok(actions.includes('key={`${appointmentId}:${revision}`}'));
+});
+

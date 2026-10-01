@@ -242,7 +242,7 @@ export function AppointmentActions({
         </select>
       </div>
 
-      <PatientLinkButton clinicId={clinicId} appointmentId={appointmentId} patientName={patientName} locale={locale} reminderLanguage={reminderLanguage} />
+      <PatientLinkButton key={`${appointmentId}:${revision}`} clinicId={clinicId} appointmentId={appointmentId} patientName={patientName} locale={locale} reminderLanguage={reminderLanguage} />
 
       <button
         className="appointment-remove-action"
