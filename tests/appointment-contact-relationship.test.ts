@@ -130,3 +130,21 @@ test("each new appointment requires a fresh phone owner choice after confirmed s
   assert.match(polish, /if \(relationshipInput\) relationshipInput\.value = ""/);
 });
 
+test("editing a phone or its owner requires fresh reminder consent", async () => {
+  const [editor, enhancer] = await Promise.all([
+    read("app/dashboard/appointment-editor.tsx"),
+    read("app/dashboard/appointment-contact-relationship.tsx"),
+  ]);
+
+  assert.match(editor, /normalizeIraqiMobile, type AppointmentMutationFailure/);
+  assert.match(editor, /const \[editConsent, setEditConsent\] = useState\(reminderConsent\)/);
+  assert.match(editor, /const originalPhone = normalizeIraqiMobile\(patientPhone\)/);
+  assert.match(editor, /const currentPhone = normalizeIraqiMobile\(event\.currentTarget\.value\)/);
+  assert.match(editor, /if \(currentPhone !== originalPhone\) setEditConsent\(false\)/);
+  assert.match(editor, /checked=\{editConsent\}/);
+  assert.match(enhancer, /dataset\.atlasInitialRelationship = value/);
+  assert.match(enhancer, /field\.select\.value === field\.select\.dataset\.atlasInitialRelationship/);
+  assert.match(enhancer, /consent\.checked = false/);
+  assert.match(enhancer, /dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
+});
+
