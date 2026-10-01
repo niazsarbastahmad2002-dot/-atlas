@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { localizeDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { deleteArchivedAppointments } from "./actions";
 
@@ -233,7 +234,7 @@ export function HistoryClient({
       {feedback ? <p className="notice notice-error history-feedback" role="alert">{feedback}</p> : null}
 
       {canDelete && selectedVisible.length > 0 ? (
-        <div className="history-selection-bar"><strong>{selectedVisible.length} {t.selected}</strong><div><button className="button button-ghost button-small" type="button" disabled={pending} onClick={() => setSelected(new Set())}>{t.clear}</button><button className="button button-danger button-small" type="button" disabled={pending} onClick={permanentlyDelete}>{pending ? t.deleting : t.delete}</button></div></div>
+        <div className="history-selection-bar"><strong>{localizeDigits(selectedVisible.length, locale)} {t.selected}</strong><div><button className="button button-ghost button-small" type="button" disabled={pending} onClick={() => setSelected(new Set())}>{t.clear}</button><button className="button button-danger button-small" type="button" disabled={pending} onClick={permanentlyDelete}>{pending ? t.deleting : t.delete}</button></div></div>
       ) : null}
     </section>
   );
