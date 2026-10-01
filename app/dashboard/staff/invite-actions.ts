@@ -12,6 +12,7 @@ export type InviteLinkState = {
   status: "idle" | "success" | "error";
   message: string;
   url?: string;
+  assignedDoctorId?: string;
 };
 
 type RpcResult = { data: unknown; error: { message?: string; code?: string } | null };
@@ -112,5 +113,6 @@ export async function createReceptionistInviteLink(
     status: "success",
     message: successMessage(inviteLocale),
     url: `${atlasPublicOrigin()}/join/${token}?lang=${encodeURIComponent(inviteLocale)}`,
+    assignedDoctorId: doctorId,
   };
 }
