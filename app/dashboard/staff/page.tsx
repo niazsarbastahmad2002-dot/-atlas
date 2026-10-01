@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SubmitButton } from "@/app/components/submit-button";
+import { ConfirmSubmitButton } from "./confirm-submit-button";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
@@ -34,6 +35,7 @@ type StaffCopy = {
   protected: string;
   saveRole: string;
   remove: string;
+  removeConfirm: string;
   backSettings: string;
   ownerRequired: string;
   ownerRequiredHelp: string;
@@ -69,6 +71,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     protected: "The clinic administrator can see every doctor and cannot be removed here.",
     saveRole: "Save access",
     remove: "Remove",
+    removeConfirm: "Remove {person} from this clinic? They will lose clinic access immediately.",
     backSettings: "Back to settings",
     ownerRequired: "Administration access required.",
     ownerRequiredHelp: "Receptionists use their assigned doctor's schedule. Only clinic administration can change membership.",
@@ -102,6 +105,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     protected: "بەڕێوەبەری کلینیک هەموو دکتۆرەکان دەبینێت و لێرە ناتوانرێت لاببرێت.",
     saveRole: "دەسەڵات پاشەکەوت بکە",
     remove: "لابردن",
+    removeConfirm: "{person} لەم کلینیکە لاببرێت؟ دەسەڵاتی کلینیکەکەی دەستبەجێ کۆتایی دێت.",
     backSettings: "گەڕانەوە بۆ ڕێکخستنەکان",
     ownerRequired: "دەسەڵاتی بەڕێوەبردن پێویستە.",
     ownerRequiredHelp: "ستافی ڕیسێپشن خشتەی دکتۆری دیاریکراوی خۆی بەکاردەهێنێت. تەنها بەڕێوەبەری کلینیک ئەندامێتی دەگۆڕێت.",
@@ -135,6 +139,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     protected: "بەڕێڤەبەرێ کلینیکێ هەمی دکتۆران دبینیت و ل ڤێرێ ناهێتە لابرن.",
     saveRole: "دەستهەلاتێ بپارێزە",
     remove: "لابرن",
+    removeConfirm: "{person} ژ ڤێ کلینیکێ بهێتە لابرن؟ دەستهەلاتا کلینیکێ دێ دەستبەجێ بڕێت.",
     backSettings: "ڤەگەرە بۆ ڕێکخستن",
     ownerRequired: "دەستهەلاتا بەڕێڤەبرنێ پێدڤییە.",
     ownerRequiredHelp: "ستافێ ڕیسێپشنێ خشتەیا دکتۆرێ خۆ بکار دئینیت. تەنێ بەڕێڤەبەرێ کلینیکێ ئەندامەتیێ دگوهەریت.",
@@ -168,6 +173,7 @@ const copy: Record<UiLocale, StaffCopy> = {
     protected: "مسؤول العيادة يشوف كل الأطباء وما ينشال من هنا.",
     saveRole: "حفظ الصلاحية",
     remove: "إزالة",
+    removeConfirm: "إزالة {person} من هذه العيادة؟ ستنتهي صلاحية الوصول للعيادة فوراً.",
     backSettings: "العودة إلى الإعدادات",
     ownerRequired: "صلاحية الإدارة مطلوبة.",
     ownerRequiredHelp: "موظف الاستقبال يستخدم جدول طبيبه المحدد فقط. إدارة العيادة وحدها تغيّر العضوية.",
@@ -488,7 +494,13 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                         <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
                       </form>
                       <form action={removeStaffMember.bind(null, clinic.id, member.user_id)}>
-                        <SubmitButton className="danger-link" pendingLabel={text.working}>{text.remove}</SubmitButton>
+                        <ConfirmSubmitButton
+                          className="danger-link"
+                          pendingLabel={text.working}
+                          confirmMessage={text.removeConfirm.replace("{person}", member.identity)}
+                        >
+                          {text.remove}
+                        </ConfirmSubmitButton>
                       </form>
                     </div>
                   )}
