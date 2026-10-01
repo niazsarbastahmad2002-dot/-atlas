@@ -13,8 +13,8 @@ test("clinic access administration disables consequential submit buttons while p
   assert.match(page, /working: "چاڤەڕێ بە…"/);
   assert.match(page, /working: "جارٍ التنفيذ…"/);
 
-  assert.match(page, /revokeManualStaffInvitation[\s\S]*<SubmitButton className="danger-link" pendingLabel=\{text\.working\}>\{text\.revokeInvite\}<\/SubmitButton>/);
-  assert.match(page, /cancelPendingInvitation[\s\S]*<SubmitButton className="danger-link" pendingLabel=\{text\.working\}>\{text\.remove\}<\/SubmitButton>/);
+  assert.match(page, /revokeManualStaffInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{text\.revokeInviteConfirm\.replace\("\{doctor\}", invitation\.doctor_name\)\}/);
+  assert.match(page, /cancelPendingInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{text\.removePendingConfirm\}/);
   assert.match(page, /updateStaffRole[\s\S]*<SubmitButton className="" pendingLabel=\{text\.working\}>\{text\.saveRole\}<\/SubmitButton>/);
   assert.match(page, /removeStaffMember[\s\S]*<ConfirmSubmitButton[\s\S]*className="danger-link"[\s\S]*pendingLabel=\{text\.working\}[\s\S]*confirmMessage=\{text\.removeConfirm\.replace\("\{person\}", member\.identity\)\}/);
   assert.match(page, /transferClinicAdministrator[\s\S]*<SubmitButton className="button button-small" pendingLabel=\{text\.working\}>\{text\.transferButton\}<\/SubmitButton>/);
@@ -37,5 +37,14 @@ test("removing clinic staff requires confirmation before the pending submit", as
   assert.match(button, /disabled=\{disabled\}/);
   assert.match(button, /window\.confirm\(confirmMessage\)/);
   assert.match(button, /event\.preventDefault\(\)/);
+});
+
+test("revoking active or pending clinic invitations requires confirmation", async () => {
+  const page = await read("app/dashboard/staff/page.tsx");
+
+  assert.ok(page.includes('revokeInviteConfirm: "Revoke this invitation for {doctor}?'));
+  assert.ok(page.includes('removePendingConfirm: "Remove this pending invitation?'));
+  assert.match(page, /revokeManualStaffInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*pendingLabel=\{text\.working\}[\s\S]*confirmMessage=\{text\.revokeInviteConfirm\.replace\("\{doctor\}", invitation\.doctor_name\)\}/);
+  assert.match(page, /cancelPendingInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*pendingLabel=\{text\.working\}[\s\S]*confirmMessage=\{text\.removePendingConfirm\}/);
 });
 
