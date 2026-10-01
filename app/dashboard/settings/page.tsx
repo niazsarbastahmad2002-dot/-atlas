@@ -398,8 +398,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   <div className="doctor-row-meta">
                     <span>{t.doctorAvailable}</span>
                     <div className="compact-actions">
-                      {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><button type="submit">{t.moveUp}</button></form> : null}
-                      {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><button type="submit">{t.moveDown}</button></form> : null}
+                      {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveUp}</SubmitButton></form> : null}
+                      {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveDown}</SubmitButton></form> : null}
                       <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}>
                         <ConfirmSubmitButton
                           className="danger-link"

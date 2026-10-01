@@ -33,3 +33,12 @@ test("removing a doctor from new scheduling requires confirmation", async () => 
   assert.doesNotMatch(page, /setDoctorActive\.bind\(null, clinic\.id, doctor\.id, false\)\}><button className="danger-link"/);
 });
 
+test("doctor reorder buttons lock while their server action is pending", async () => {
+  const page = await read("app/dashboard/settings/page.tsx");
+
+  assert.match(page, /moveDoctor\.bind\(null, clinic\.id, doctor\.id, "up"\)\}><SubmitButton className="" pendingLabel=\{t\.saving\}>\{t\.moveUp\}<\/SubmitButton>/);
+  assert.match(page, /moveDoctor\.bind\(null, clinic\.id, doctor\.id, "down"\)\}><SubmitButton className="" pendingLabel=\{t\.saving\}>\{t\.moveDown\}<\/SubmitButton>/);
+  assert.doesNotMatch(page, /moveDoctor\.bind\(null, clinic\.id, doctor\.id, "up"\)\}><button type="submit">/);
+  assert.doesNotMatch(page, /moveDoctor\.bind\(null, clinic\.id, doctor\.id, "down"\)\}><button type="submit">/);
+});
+
