@@ -5,12 +5,13 @@ import test from "node:test";
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("appointments distinguish the patient from the phone contact without creating contact profiles", async () => {
-  const [migration, actions, enhancer, layout, activity] = await Promise.all([
+  const [migration, actions, page, editor, activity, ui] = await Promise.all([
     read("supabase/migrations/20260824124126_appointment_contact_relationship.sql"),
     read("app/dashboard/instant-actions.ts"),
-    read("app/dashboard/appointment-contact-relationship.tsx"),
-    read("app/dashboard/layout.tsx"),
+    read("app/dashboard/page.tsx"),
+    read("app/dashboard/appointment-editor.tsx"),
     read("app/dashboard/activity/page.tsx"),
+    read("lib/i18n/ui.ts"),
   ]);
 
   assert.match(migration, /add column if not exists contact_relationship text not null default 'patient'/);
@@ -22,16 +23,14 @@ test("appointments distinguish the patient from the phone contact without creati
 
   assert.match(actions, /formData\.get\("contact_relationship"\)/);
   assert.match(actions, /contact_relationship: relationship/);
-  assert.match(actions, /getAppointmentContactRelationshipInline/);
-
-  assert.match(enhancer, /Whose phone is this\?/);
-  assert.match(enhancer, /Parent \/ guardian/);
-  assert.match(enhancer, /Relative \/ caregiver/);
-  assert.match(enhancer, /This phone’s owner agreed to WhatsApp reminders/);
-  assert.match(enhancer, /select\.name = "contact_relationship"/);
-  assert.match(layout, /AppointmentContactRelationshipEnhancer/);
+  assert.match(page, /name="contact_relationship"/);
+  assert.match(editor, /name="contact_relationship"/);
   assert.match(activity, /event\.actor_type === "contact"/);
   assert.match(activity, /Patient contact/);
+  assert.match(ui, /This phone’s owner agreed to receive a WhatsApp appointment reminder/);
+  assert.match(ui, /خاوەنی ئەم ژمارەیە ڕازییە بیرخستنەوەی وادە لە واتسئاپ وەربگرێت/);
+  assert.match(ui, /خودانێ ڤێ ژمارەیێ ڕازییە بیرخستنەوەیا وادەیێ ل واتسئاپێ وەربگریت/);
+  assert.match(ui, /وافق صاحب الرقم على استلام تذكير بالموعد عبر واتساب/);
 
   assert.equal(migration.includes("create table public.patient_contacts"), false);
   assert.equal(migration.includes("contact_name"), false);
@@ -53,29 +52,17 @@ test("generated appointment types include the contact relationship without clien
   assert.doesNotMatch(actions, /\(supabase as any\)/);
 });
 
-
-test("appointment editing never defaults the contact relationship after a load failure", async () => {
-  const enhancer = await read("app/dashboard/appointment-contact-relationship.tsx");
-
-  assert.match(enhancer, /let loaded = false/);
-  assert.match(enhancer, /if \(loaded\) \{[\s\S]*save\.disabled = false/);
-  assert.match(enhancer, /field\.select\.disabled = true/);
-  assert.match(enhancer, /error\.setAttribute\("role", "alert"\)/);
-  assert.match(enhancer, /Could not load whose phone this is/);
-});
-
-test("appointment contact relationship reads are explicitly scoped to the active clinic", async () => {
-  const [actions, enhancer] = await Promise.all([
+test("appointment editing uses the relationship from the clinic-scoped schedule row", async () => {
+  const [page, actions, layout] = await Promise.all([
+    read("app/dashboard/page.tsx"),
     read("app/dashboard/instant-actions.ts"),
-    read("app/dashboard/appointment-contact-relationship.tsx"),
+    read("app/dashboard/layout.tsx"),
   ]);
 
-  assert.match(actions, /getAppointmentContactRelationshipInline\(\s*clinicId: string,\s*id: string/);
-  assert.match(actions, /if \(!isUuid\(clinicId\) \|\| !isUuid\(id\)\) return null/);
-  assert.match(actions, /\.select\("contact_relationship"\)[\s\S]*\.eq\("clinic_id", clinicId\)[\s\S]*\.eq\("id", id\)/);
-  assert.match(enhancer, /form\.closest<HTMLElement>\("\[data-atlas-clinic\]"\)\?\.dataset\.atlasClinic/);
-  assert.match(enhancer, /if \(appointmentId && clinicId\)/);
-  assert.match(enhancer, /getAppointmentContactRelationshipInline\(clinicId, appointmentId\)/);
+  assert.match(page, /from\("appointments"\)\.select\("id, patient_name, patient_phone, contact_relationship,[\s\S]*\.eq\("clinic_id", clinic\.id\)/);
+  assert.match(page, /contactRelationship=\{appointment\.contact_relationship as "patient" \| "parent_guardian" \| "relative_caregiver"\}/);
+  assert.doesNotMatch(actions, /getAppointmentContactRelationshipInline/);
+  assert.doesNotMatch(layout, /AppointmentContactRelationshipEnhancer/);
 });
 
 test("main appointment creation persists the selected phone contact relationship", async () => {
@@ -116,25 +103,20 @@ test("new appointment booking renders and requires explicit phone ownership", as
 });
 
 test("each new appointment requires a fresh phone owner choice after confirmed save", async () => {
-  const [enhancer, polish] = await Promise.all([
-    read("app/dashboard/appointment-contact-relationship.tsx"),
+  const [page, polish] = await Promise.all([
+    read("app/dashboard/page.tsx"),
     read("app/dashboard/dashboard-client-polish.tsx"),
   ]);
 
-  assert.match(enhancer, /createRelationshipField\(locale, "contact_relationship", ""\)/);
-  assert.match(enhancer, /select\.required = true/);
-  assert.match(enhancer, /prompt\.value = ""/);
-  assert.match(enhancer, /prompt\.disabled = true/);
-  assert.doesNotMatch(enhancer, /setTimeout\([\s\S]*700/);
+  assert.match(page, /name="contact_relationship" defaultValue="" required/);
   assert.match(polish, /relationshipInput = form\.querySelector<HTMLSelectElement>\('select\[name="contact_relationship"\]'\)/);
   assert.match(polish, /if \(relationshipInput\) relationshipInput\.value = ""/);
 });
 
 test("editing a phone or its owner requires fresh reminder consent", async () => {
-  const [page, editor, enhancer] = await Promise.all([
+  const [page, editor] = await Promise.all([
     read("app/dashboard/page.tsx"),
     read("app/dashboard/appointment-editor.tsx"),
-    read("app/dashboard/appointment-contact-relationship.tsx"),
   ]);
 
   assert.match(page, /patient_phone, contact_relationship, doctor_id/);
@@ -146,8 +128,4 @@ test("editing a phone or its owner requires fresh reminder consent", async () =>
   assert.match(editor, /name="contact_relationship"[\s\S]*value=\{editRelationship\}/);
   assert.match(editor, /if \(next !== contactRelationship\) setEditConsent\(false\)/);
   assert.match(editor, /checked=\{editConsent\}/);
-  assert.match(enhancer, /form\.querySelector\('select\[name="contact_relationship"\]'\)[\s\S]*replaceConsentCopy\(form, locale\)[\s\S]*return/);
-  assert.doesNotMatch(enhancer, /atlasInitialRelationship/);
-  assert.doesNotMatch(enhancer, /consent\.checked = false/);
 });
-
