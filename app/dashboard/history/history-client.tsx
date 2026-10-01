@@ -38,6 +38,8 @@ const copy = {
     empty: "No history matches this view.",
     failed: "Atlas could not delete those records. Refresh and try again.",
     notAllowed: "Only clinic administration can permanently delete removed records.",
+    filter: "History filter",
+    sort: "History sort",
   },
   ku: {
     search: "بە ناوی نەخۆش، ژمارە یان پزیشک بگەڕێ",
@@ -60,6 +62,8 @@ const copy = {
     empty: "هیچ تۆمارێک لەم دیمەنەدا نییە.",
     failed: "Atlas نەیتوانی ئەم تۆمارانە بسڕێتەوە. پەڕەکە نوێ بکەرەوە و دووبارە هەوڵ بدە.",
     notAllowed: "تەنها بەڕێوەبردنی کلینیک دەتوانێت تۆماری لابراو بۆ هەمیشە بسڕێتەوە.",
+    filter: "پاڵاوتنی مێژوو",
+    sort: "ڕیزکردنی مێژوو",
   },
   bd: {
     search: "ب ناڤێ نەخۆشی، ژمارە یان دکتۆر بگەڕێ",
@@ -82,6 +86,8 @@ const copy = {
     empty: "چ تۆمار ل ڤێ دیمەنێ نینن.",
     failed: "Atlas نەشیا ئەڤ تۆمارە ژێببەت. پەرەیێ نوێ بکە و دووبارە هەول بدە.",
     notAllowed: "تەنێ بەڕێڤەبرنا کلینیکێ دشێت تۆمارێن لابری بۆ هەمیشە ژێببەت.",
+    filter: "پاڵاوتنا مێژوویێ",
+    sort: "ڕێزکرنا مێژوویێ",
   },
   ar: {
     search: "ابحث باسم المريض أو الرقم أو الطبيب",
@@ -104,6 +110,8 @@ const copy = {
     empty: "لا يوجد سجل يطابق هذا العرض.",
     failed: "تعذر على Atlas حذف هذه السجلات. حدّث الصفحة وحاول مرة أخرى.",
     notAllowed: "يمكن لإدارة العيادة فقط حذف السجلات نهائياً.",
+    filter: "تصفية السجل",
+    sort: "ترتيب السجل",
   },
 } as const;
 
@@ -187,10 +195,10 @@ export function HistoryClient({
     <section className="history-card">
       <div className="history-toolbar">
         <input aria-label={t.search} placeholder={t.search} value={query} onChange={(event) => setQuery(event.target.value)} />
-        <select aria-label="History filter" value={filter} onChange={(event) => setFilter(event.target.value as "all" | "removed")}>
+        <select aria-label={t.filter} value={filter} onChange={(event) => setFilter(event.target.value as "all" | "removed")}>
           <option value="all">{t.all}</option><option value="removed">{t.removed}</option>
         </select>
-        <select aria-label="History sort" value={sort} onChange={(event) => setSort(event.target.value as "newest" | "oldest")}>
+        <select aria-label={t.sort} value={sort} onChange={(event) => setSort(event.target.value as "newest" | "oldest")}>
           <option value="newest">{t.newest}</option><option value="oldest">{t.oldest}</option>
         </select>
       </div>
