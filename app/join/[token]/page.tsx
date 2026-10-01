@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import Link from "next/link";
-import { SubmitButton } from "@/app/components/submit-button";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { isUiLocale, uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { JoinClinicAuth } from "./join-auth";
+import { JoinConfirmForm } from "./join-confirm-form";
 import { JoinLanguagePicker } from "./join-language-picker";
 
 export const dynamic = "force-dynamic";
@@ -126,9 +126,7 @@ export default async function JoinClinicPage({ params, searchParams }: PageProps
           {t.doctor}: {preview.doctor_name}
         </div>
         {userData.user ? (
-          <form method="post" action={finishPath}>
-            <SubmitButton pendingLabel={t.joining}>{t.join}</SubmitButton>
-          </form>
+          <JoinConfirmForm action={finishPath} label={t.join} pendingLabel={t.joining} />
         ) : (
           <JoinClinicAuth token={token} locale={locale} />
         )}
