@@ -252,6 +252,8 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const isActive = isPending || isConfirmed;
   const reminderView = query.view === "reminder";
   const ahead = appointment.appointments_ahead ?? 0;
+  const queuePosition = appointment.queue_position ? localizeDigits(appointment.queue_position, locale) : null;
+  const aheadCount = localizeDigits(ahead, locale);
   const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
   let wantsEarlierSlot = false;
   if (isActive) {
@@ -306,10 +308,10 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           ) : null}
         </section>
 
-        {isActive && appointment.queue_position ? (
-          <div className="patient-order-card" aria-label={`${text.order} ${appointment.queue_position}`}>
-            <div><span>{text.order}</span><strong>#{appointment.queue_position}</strong></div>
-            <p>{ahead === 0 ? text.first : `${ahead} ${ahead === 1 ? text.ahead : text.aheadMany}.`}</p>
+        {isActive && queuePosition ? (
+          <div className="patient-order-card" aria-label={`${text.order} ${queuePosition}`}>
+            <div><span>{text.order}</span><strong>#{queuePosition}</strong></div>
+            <p>{ahead === 0 ? text.first : `${aheadCount} ${ahead === 1 ? text.ahead : text.aheadMany}.`}</p>
           </div>
         ) : null}
 

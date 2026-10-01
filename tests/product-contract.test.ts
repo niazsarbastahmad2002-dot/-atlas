@@ -126,3 +126,12 @@ test("manual WhatsApp appointment shares use the patient reminder language", () 
   assert.doesNotMatch(shareButton, /appointmentText\(state\.appointmentAt, locale\)/);
 });
 
+test("patient queue numbers use the patient language digits", () => {
+  const patientPage = source("app/patient/[token]/page.tsx");
+
+  assert.ok(patientPage.includes("const queuePosition = appointment.queue_position ? localizeDigits(appointment.queue_position, locale) : null;"));
+  assert.ok(patientPage.includes("const aheadCount = localizeDigits(ahead, locale);"));
+  assert.ok(patientPage.includes('aria-label={`${text.order} ${queuePosition}`}'));
+  assert.ok(patientPage.includes("<strong>#{queuePosition}</strong>"));
+  assert.ok(patientPage.includes("`${aheadCount} ${ahead === 1 ? text.ahead : text.aheadMany}.`"));
+});
