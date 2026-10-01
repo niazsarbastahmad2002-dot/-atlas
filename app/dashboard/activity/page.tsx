@@ -109,6 +109,13 @@ const copy: Record<UiLocale, Copy> = {
   },
 };
 
+const activityStatusLabel: Record<UiLocale, Record<string, string>> = {
+  en: { pending: "Pending", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "No-show" },
+  ku: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراوە", cancelled: "هەڵوەشێنراوەتەوە", completed: "تەواوبوو", no_show: "نەهات" },
+  bd: { pending: "چاڤەڕێ", confirmed: "پشتڕاستکری", cancelled: "هەلوەشاندی", completed: "تەمام", no_show: "نەهات" },
+  ar: { pending: "قيد الانتظار", confirmed: "مؤكد", cancelled: "ملغي", completed: "مكتمل", no_show: "لم يحضر" },
+};
+
 const roleLabel: Record<UiLocale, Record<string, string>> = {
   en: { owner: "Clinic administrator", manager: "Manager", receptionist: "Receptionist" },
   ku: { owner: "بەڕێوەبەری کلینیک", manager: "بەڕێوەبەر", receptionist: "ستافی ڕیسێپشن" },
@@ -127,7 +134,7 @@ function shortId(value: string | null) {
 function stateText(state: SafeState, locale: UiLocale) {
   if (!state) return null;
   const status = typeof state.status === "string" ? state.status : null;
-  if (status) return status.replaceAll("_", " ");
+  if (status) return activityStatusLabel[locale][status] ?? status.replaceAll("_", " ");
   const role = typeof state.role === "string" ? state.role : null;
   if (role) return roleLabel[locale][role] ?? role;
   const appointmentAt = typeof state.appointment_at === "string" ? state.appointment_at : null;
