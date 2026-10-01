@@ -63,3 +63,18 @@ test("appointment editing never defaults the contact relationship after a load f
   assert.match(enhancer, /error\.setAttribute\("role", "alert"\)/);
   assert.match(enhancer, /Could not load whose phone this is/);
 });
+
+test("appointment contact relationship reads are explicitly scoped to the active clinic", async () => {
+  const [actions, enhancer] = await Promise.all([
+    read("app/dashboard/instant-actions.ts"),
+    read("app/dashboard/appointment-contact-relationship.tsx"),
+  ]);
+
+  assert.match(actions, /getAppointmentContactRelationshipInline\(\s*clinicId: string,\s*id: string/);
+  assert.match(actions, /if \(!isUuid\(clinicId\) \|\| !isUuid\(id\)\) return null/);
+  assert.match(actions, /\.select\("contact_relationship"\)[\s\S]*\.eq\("clinic_id", clinicId\)[\s\S]*\.eq\("id", id\)/);
+  assert.match(enhancer, /form\.closest<HTMLElement>\("\[data-atlas-clinic\]"\)\?\.dataset\.atlasClinic/);
+  assert.match(enhancer, /if \(appointmentId && clinicId\)/);
+  assert.match(enhancer, /getAppointmentContactRelationshipInline\(clinicId, appointmentId\)/);
+});
+
