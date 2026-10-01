@@ -5,15 +5,15 @@ import type { UiLocale } from "@/lib/i18n/ui";
 import { getAppointmentContactRelationshipInline } from "./instant-actions";
 
 const copy = {
-  en: { label: "Whose phone is this?", patient: "Patient", guardian: "Parent / guardian", caregiver: "Relative / caregiver", consent: "This phone’s owner agreed to WhatsApp reminders", loadFailed: "Could not load whose phone this is. Close and reopen the appointment to try again." },
-  ku: { label: "ئەم ژمارەیە هی کێیە؟", patient: "نەخۆش", guardian: "دایک، باوک / سەرپەرشت", caregiver: "خزم / چاودێر", consent: "خاوەنی ئەم ژمارەیە ڕازییە بیرخستنەوەی واتسئاپ وەربگرێت", loadFailed: "نەتوانرا خاوەنی ژمارەکە بار بکرێت. وادەکە دابخە و دووبارە بیکەرەوە." },
-  bd: { label: "ئەڤ ژمارە یا کێیە؟", patient: "نەخۆش", guardian: "دایک، باب / سەرپەرشت", caregiver: "خزم / چاڤدێر", consent: "خودانێ ڤێ ژمارەیێ ڕازییە بیرخستنەوەیا واتسئاپێ وەربگریت", loadFailed: "خودانێ ژمارەیێ نەهاتە بارکرن. وادەیێ داخە و دووبارە ڤەکە." },
-  ar: { label: "رقم من هذا؟", patient: "المريض", guardian: "الأب / الأم / ولي الأمر", caregiver: "قريب / مقدم رعاية", consent: "صاحب هذا الرقم وافق على استلام تذكيرات واتساب", loadFailed: "تعذر تحميل صاحب رقم الهاتف. أغلق الموعد وافتحه مرة أخرى للمحاولة." },
+  en: { label: "Whose phone is this?", choose: "Choose phone owner", patient: "Patient", guardian: "Parent / guardian", caregiver: "Relative / caregiver", consent: "This phone’s owner agreed to WhatsApp reminders", loadFailed: "Could not load whose phone this is. Close and reopen the appointment to try again." },
+  ku: { label: "ئەم ژمارەیە هی کێیە؟", choose: "خاوەنی ژمارەکە هەڵبژێرە", patient: "نەخۆش", guardian: "دایک، باوک / سەرپەرشت", caregiver: "خزم / چاودێر", consent: "خاوەنی ئەم ژمارەیە ڕازییە بیرخستنەوەی واتسئاپ وەربگرێت", loadFailed: "نەتوانرا خاوەنی ژمارەکە بار بکرێت. وادەکە دابخە و دووبارە بیکەرەوە." },
+  bd: { label: "ئەڤ ژمارە یا کێیە؟", choose: "خودانێ ژمارەیێ هەلبژێرە", patient: "نەخۆش", guardian: "دایک، باب / سەرپەرشت", caregiver: "خزم / چاڤدێر", consent: "خودانێ ڤێ ژمارەیێ ڕازییە بیرخستنەوەیا واتسئاپێ وەربگریت", loadFailed: "خودانێ ژمارەیێ نەهاتە بارکرن. وادەیێ داخە و دووبارە ڤەکە." },
+  ar: { label: "رقم من هذا؟", choose: "اختَر صاحب الرقم", patient: "المريض", guardian: "الأب / الأم / ولي الأمر", caregiver: "قريب / مقدم رعاية", consent: "صاحب هذا الرقم وافق على استلام تذكيرات واتساب", loadFailed: "تعذر تحميل صاحب رقم الهاتف. أغلق الموعد وافتحه مرة أخرى للمحاولة." },
 } as const;
 
 type Relationship = "patient" | "parent_guardian" | "relative_caregiver";
 
-function createRelationshipField(locale: UiLocale, id: string, initial: Relationship = "patient") {
+function createRelationshipField(locale: UiLocale, id: string, initial: Relationship | "" = "patient") {
   const t = copy[locale];
   const label = document.createElement("label");
   label.htmlFor = id;
@@ -23,6 +23,15 @@ function createRelationshipField(locale: UiLocale, id: string, initial: Relation
   select.id = id;
   select.name = "contact_relationship";
   select.dataset.atlasContactRelationship = "select";
+  select.required = true;
+  if (initial === "") {
+    const prompt = document.createElement("option");
+    prompt.value = "";
+    prompt.textContent = t.choose;
+    prompt.disabled = true;
+    prompt.selected = true;
+    select.append(prompt);
+  }
   const options: Array<[Relationship, string]> = [["patient", t.patient], ["parent_guardian", t.guardian], ["relative_caregiver", t.caregiver]];
   for (const [value, text] of options) {
     const option = document.createElement("option");
@@ -57,7 +66,7 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
       const phone = form.querySelector<HTMLInputElement>('input[name="patient_phone"]');
       if (phone && !form.querySelector('select[name="contact_relationship"]')) {
         const help = phone.nextElementSibling?.classList.contains("field-help") ? phone.nextElementSibling : null;
-        const field = createRelationshipField(locale, "contact_relationship");
+        const field = createRelationshipField(locale, "contact_relationship", "");
         (help ?? phone).after(field.label, field.select);
       }
       replaceConsentCopy(form, locale);
@@ -111,7 +120,7 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
         const name = form.querySelector<HTMLInputElement>('input[name="patient_name"]');
         const phone = form.querySelector<HTMLInputElement>('input[name="patient_phone"]');
         const select = form.querySelector<HTMLSelectElement>('select[name="contact_relationship"]');
-        if (select && !name?.value && !phone?.value) select.value = "patient";
+        if (select && !name?.value && !phone?.value) select.value = "";
       }, 700);
     };
 
