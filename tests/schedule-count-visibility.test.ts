@@ -6,8 +6,8 @@ const source = readFileSync(new URL("../app/dashboard/page.tsx", import.meta.url
 
 test("schedule card labels its appointment count instead of showing a tiny unlabeled number", () => {
   assert.match(source, /className="schedule-count-box"/);
-  assert.match(source, /<span>\\{days\\.appointments\\}<\\/span><strong>\\{localizeDigits\\(visibleRows\\.length, locale\\)\\}<\\/strong>/);
-  assert.match(source, /aria-label=\\{`\\$\\{days\\.appointments\\}: \\$\\{localizeDigits\\(visibleRows\\.length, locale\\)\\}`\\}/);
+  assert.ok(source.includes("<span>{days.appointments}</span><strong>{localizeDigits(visibleRows.length, locale)}</strong>"));
+  assert.ok(source.includes('aria-label={`${days.appointments}: ${localizeDigits(visibleRows.length, locale)}`}'));
   assert.doesNotMatch(source, /className="count-pill">\{visibleRows\.length\}/);
 });
 
