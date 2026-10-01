@@ -98,3 +98,15 @@ test("activity state details localize appointment status values", async () => {
   assert.match(activityPage, /no_show: "لم يحضر"/);
   assert.match(activityPage, /activityStatusLabel\[locale\]\[status\] \?\? status\.replaceAll/);
 });
+
+test("activity detail field names stay in the selected Atlas language", async () => {
+  const activityPage = await read("app/dashboard/activity/page.tsx");
+  assert.match(activityPage, /changedFieldLabel: Record<UiLocale/);
+  assert.match(activityPage, /patient_name: "ناوی نەخۆش"/);
+  assert.match(activityPage, /patient_phone: "ژمارا موبایلا نەخۆشی"/);
+  assert.match(activityPage, /contact_relationship: "پەیوەندی خاوەنی ژمارە"/);
+  assert.match(activityPage, /contact_relationship: "صلة صاحب الرقم"/);
+  assert.match(activityPage, /reminder_language: "لغة التذكير"/);
+  assert.match(activityPage, /changedFieldLabel\[locale\]\[item\] \?\? item\.replaceAll/);
+});
+
