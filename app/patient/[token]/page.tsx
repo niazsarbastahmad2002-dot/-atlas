@@ -333,6 +333,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <p>{wantsEarlierSlot ? text.earlierJoined : text.earlierHelp}</p>
             <form>
               <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
+              <input type="hidden" name="return_lang" value={locale} />
               <PatientSubmitButton
                 formAction={updateEarlierSlotPreference.bind(null, token, !wantsEarlierSlot)}
                 pendingLabel={text.updating}
@@ -349,6 +350,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <h2>{text.confirmTitle}</h2>
             <form>
               <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
+              <input type="hidden" name="return_lang" value={locale} />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -372,6 +374,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <h2>{text.question}</h2>
             <form className="patient-actions" role="group" aria-label={text.responseActions}>
               <input type="hidden" name="return_view" value="reminder" />
+              <input type="hidden" name="return_lang" value={locale} />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -396,6 +399,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             {isConfirmed ? (
               <form>
                 <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
+              <input type="hidden" name="return_lang" value={locale} />
                 <PatientSubmitButton
                   formAction={updatePatientAppointment.bind(null, token, "cancelled")}
                   pendingLabel={text.updating}
