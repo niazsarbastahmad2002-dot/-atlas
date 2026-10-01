@@ -25,6 +25,9 @@ type Copy = {
   you: string;
   empty: string;
   privacy: string;
+  clinic: string;
+  open: string;
+  loadFailed: string;
 };
 
 const copy: Record<UiLocale, Copy> = {
@@ -43,6 +46,9 @@ const copy: Record<UiLocale, Copy> = {
     you: "You",
     empty: "No activity has been recorded yet.",
     privacy: "Activity history stores operational IDs and small status/permission changes. It does not copy patient names, phone numbers, messages, or appointment notes into the log.",
+    clinic: "Clinic",
+    open: "Open",
+    loadFailed: "Activity history could not load.",
   },
   ku: {
     eyebrow: "بەڕێوەبردنی کلینیک",
@@ -59,6 +65,9 @@ const copy: Record<UiLocale, Copy> = {
     you: "تۆ",
     empty: "هێشتا هیچ چالاکییەک تۆمار نەکراوە.",
     privacy: "مێژووی چالاکی تەنها ناسنامە و گۆڕانکارییە کەمەکانی دۆخ و دەسەڵات هەڵدەگرێت. ناوی نەخۆش، ژمارەی مۆبایل، نامە یان تێبینی وادە دووبارە ناکاتەوە.",
+    clinic: "کلینیک",
+    open: "کردنەوە",
+    loadFailed: "مێژووی چالاکی بار نەبوو.",
   },
   bd: {
     eyebrow: "بەڕێڤەبرنا کلینیکێ",
@@ -75,6 +84,9 @@ const copy: Record<UiLocale, Copy> = {
     you: "تو",
     empty: "هێشتا چ چالاکی نەهاتییە تۆمارکرن.",
     privacy: "مێژوویا چالاکیێ تەنێ ناسنامە و گوهۆڕینێن بچووک یێن بار و دەستهەلاتێ دپارێزیت. ناڤێ نەخۆشی، ژمارا موبایلێ، نامە یان تێبینیێن وادەیان دووبارە ناکەت.",
+    clinic: "کلینیک",
+    open: "ڤەکە",
+    loadFailed: "مێژوویا چالاکیێ نەهاتە بارکرن.",
   },
   ar: {
     eyebrow: "إدارة العيادة",
@@ -91,6 +103,9 @@ const copy: Record<UiLocale, Copy> = {
     you: "أنت",
     empty: "ماكو نشاط مسجل لحد الآن.",
     privacy: "سجل النشاط يحتفظ بالمعرّفات التشغيلية وتغييرات الحالة والصلاحية الصغيرة فقط. ما ينسخ أسماء المرضى أو أرقامهم أو الرسائل أو ملاحظات المواعيد إلى السجل.",
+    clinic: "العيادة",
+    open: "فتح",
+    loadFailed: "تعذر تحميل سجل النشاط.",
   },
 };
 
@@ -224,7 +239,7 @@ export default async function ActivityPage({ searchParams }: Props) {
   ]);
 
   if (eventsError) {
-    return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">Activity history could not load.</p><Link className="button" href={`/dashboard/history?clinic=${clinic.id}`}>{t.back}</Link></section></main>;
+    return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">{t.loadFailed}</p><Link className="button" href={`/dashboard/history?clinic=${clinic.id}`}>{t.back}</Link></section></main>;
   }
 
   const roleByUser = new Map((members ?? []).map((member) => [member.user_id, member.role]));
@@ -238,9 +253,9 @@ export default async function ActivityPage({ searchParams }: Props) {
 
       {clinics.length > 1 ? (
         <form className="clinic-switcher history-clinic-switcher" method="get">
-          <label htmlFor="clinic-activity">Clinic</label>
+          <label htmlFor="clinic-activity">{t.clinic}</label>
           <select id="clinic-activity" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-          <button className="button button-ghost button-small" type="submit">Open</button>
+          <button className="button button-ghost button-small" type="submit">{t.open}</button>
         </form>
       ) : null}
 
