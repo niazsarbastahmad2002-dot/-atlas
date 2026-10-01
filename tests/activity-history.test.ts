@@ -122,3 +122,16 @@ test("permanent history deletion is limited to removed records visible in the cu
   assert.doesNotMatch(historyClient, /const ids = \[\.\.\.selected\]/);
 });
 
+test("permanent history deletion validates the full removed set before deleting", async () => {
+  const historyActions = await read("app/dashboard/history/actions.ts");
+
+  assert.match(historyActions, /data: eligibleRows, error: eligibilityError/);
+  assert.match(historyActions, /\.select\("id"\)[\s\S]*\.eq\("clinic_id", clinicId\)[\s\S]*\.in\("id", uniqueIds\)[\s\S]*\.not\("voided_at", "is", null\)/);
+  assert.match(historyActions, /if \(\(eligibleRows\?\.length \?\? 0\) !== uniqueIds\.length\)[\s\S]*not_allowed/);
+  assert.ok(
+    historyActions.indexOf("data: eligibleRows") < historyActions.indexOf('.delete()'),
+    "eligibility preflight must run before the destructive delete",
+  );
+  assert.match(historyActions, /if \(\(data\?\.length \?\? 0\) !== uniqueIds\.length\) return \{ ok: false, error: "failed" \}/);
+});
+
