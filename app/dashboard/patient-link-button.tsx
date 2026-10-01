@@ -119,6 +119,7 @@ export function PatientLinkButton({
   reminderLanguage: UiLocale;
 }) {
   const t = copy[locale];
+  const patientMessage = copy[reminderLanguage];
   const shareLabel = `${t.shareAppointment}: ${patientName}`;
   const [state, action, pending] = useActionState(
     createPatientAccessLink,
@@ -148,13 +149,13 @@ export function PatientLinkButton({
     if (!initialLink || !state.patientPhone) return null;
     const digits = state.patientPhone.replace(/\D/g, "");
     if (!digits) return null;
-    const lines: string[] = [t.title];
-    if (state.doctorName) lines.push(`${t.doctor}: ${state.doctorName}`);
-    const when = appointmentText(state.appointmentAt, locale);
-    if (when) lines.push(`${t.time}: ${when}`);
-    lines.push("", `${t.details}:`, initialLink);
+    const lines: string[] = [patientMessage.title];
+    if (state.doctorName) lines.push(`${patientMessage.doctor}: ${state.doctorName}`);
+    const when = appointmentText(state.appointmentAt, reminderLanguage);
+    if (when) lines.push(`${patientMessage.time}: ${when}`);
+    lines.push("", `${patientMessage.details}:`, initialLink);
     return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join("\n"))}`;
-  }, [initialLink, locale, state.appointmentAt, state.doctorName, state.patientPhone, t]);
+  }, [initialLink, patientMessage, reminderLanguage, state.appointmentAt, state.doctorName, state.patientPhone]);
 
   async function copyLink() {
     if (!initialLink) return;
