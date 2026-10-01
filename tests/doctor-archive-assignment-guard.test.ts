@@ -20,3 +20,20 @@ test("an assigned receptionist blocks doctor archival until access is reassigned
   assert.match(page, /doctor_has_receptionist: "هێشتا ستافەکێ ڕیسێپشنێ/);
   assert.match(page, /doctor_has_receptionist: "ما زال موظف استقبال/);
 });
+
+test("future active appointments also block doctor archival", async () => {
+  const [actions, page] = await Promise.all([
+    read("app/dashboard/settings/actions.ts"),
+    read("app/dashboard/settings/page.tsx"),
+  ]);
+
+  assert.match(actions, /\.from\("appointments"\)[\s\S]*\.eq\("clinic_id", clinicId\)[\s\S]*\.eq\("doctor_id", doctorId\)[\s\S]*\.in\("status", \["pending", "confirmed"\]\)[\s\S]*\.gte\("appointment_at", new Date\(\)\.toISOString\(\)\)[\s\S]*\.limit\(1\)[\s\S]*\.maybeSingle\(\)/);
+  assert.match(actions, /if \(appointmentError\) redirect\(settingsUrl\(clinicId, "error", "save_failed"\)\)/);
+  assert.match(actions, /if \(futureAppointment\) redirect\(settingsUrl\(clinicId, "error", "doctor_has_future_appointments"\)\)/);
+
+  assert.match(page, /doctor_has_future_appointments: "This doctor still has future appointments/);
+  assert.match(page, /doctor_has_future_appointments: "هێشتا وادەی داهاتوو/);
+  assert.match(page, /doctor_has_future_appointments: "هێشتا وادەیێن داهاتی/);
+  assert.match(page, /doctor_has_future_appointments: "ما زالت هناك مواعيد مستقبلية/);
+});
+
