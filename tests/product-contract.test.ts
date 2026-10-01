@@ -113,3 +113,16 @@ test("patient appointment response accessibility follows the patient language", 
   assert.match(patientPage, /role="group" aria-label=\{text\.responseActions\}/);
   assert.doesNotMatch(patientPage, /aria-label="Patient appointment response"/);
 });
+
+test("manual WhatsApp appointment shares use the patient reminder language", () => {
+  const shareButton = source("app/dashboard/patient-link-button.tsx");
+
+  assert.match(shareButton, /const patientMessage = copy\[reminderLanguage\]/);
+  assert.match(shareButton, /const lines: string\[\] = \[patientMessage\.title\]/);
+  assert.match(shareButton, /patientMessage\.doctor/);
+  assert.match(shareButton, /appointmentText\(state\.appointmentAt, reminderLanguage\)/);
+  assert.match(shareButton, /patientMessage\.time/);
+  assert.match(shareButton, /patientMessage\.details/);
+  assert.doesNotMatch(shareButton, /appointmentText\(state\.appointmentAt, locale\)/);
+});
+
