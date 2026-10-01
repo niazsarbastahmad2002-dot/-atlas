@@ -38,6 +38,19 @@ const dayCopy: Record<UiLocale, {
   ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد", quickDates: "أيام سريعة", doctorSchedules: "جداول الأطباء" },
 };
 
+const contactRelationshipCopy: Record<UiLocale, {
+  label: string;
+  choose: string;
+  patient: string;
+  guardian: string;
+  caregiver: string;
+}> = {
+  en: { label: "Whose phone is this?", choose: "Choose phone owner", patient: "Patient", guardian: "Parent / guardian", caregiver: "Relative / caregiver" },
+  ku: { label: "ئەم ژمارەیە هی کێیە؟", choose: "خاوەنی ژمارەکە هەڵبژێرە", patient: "نەخۆش", guardian: "دایک، باوک / سەرپەرشت", caregiver: "خزم / چاودێر" },
+  bd: { label: "ئەڤ ژمارە یا کێیە؟", choose: "خودانێ ژمارەیێ هەلبژێرە", patient: "نەخۆش", guardian: "دایک، باب / سەرپەرشت", caregiver: "خزم / چاڤدێر" },
+  ar: { label: "رقم من هذا؟", choose: "اختَر صاحب الرقم", patient: "المريض", guardian: "الأب / الأم / ولي الأمر", caregiver: "قريب / مقدم رعاية" },
+};
+
 const dashboardErrorCopy: Record<UiLocale, { title: string; help: string }> = {
   en: {
     title: "Atlas could not load this clinic.",
@@ -119,6 +132,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const t = uiText(locale);
   const days = dayCopy[locale];
   const summary = summaryCopy[locale];
+  const contactRelationship = contactRelationshipCopy[locale];
   const messageError = getDashboardMessage(params.error);
   const notice = getDashboardMessage(params.notice);
   const supabase = await createClient();
@@ -247,6 +261,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <form action={createAppointment} className="stack-form appointment-form" key={`${clinic.id}:${selectedDay}:${selectedDoctor?.id ?? "none"}`}><input type="hidden" name="clinic_id" value={clinic.id} /><input type="hidden" name="return_day" value={selectedDay} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
           <label htmlFor="patient_name">{t.patientName}</label><input id="patient_name" name="patient_name" autoComplete="name" minLength={2} maxLength={120} required />
           <label htmlFor="patient_phone">{t.iraqiMobile}</label><input id="patient_phone" name="patient_phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={24} pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\(\)\-]{9,16}" placeholder="0750 000 0000" aria-describedby="phone-help" dir="ltr" required /><p className="field-help" id="phone-help">{t.phoneHelp}</p>
+          <label htmlFor="contact_relationship">{contactRelationship.label}</label>
+          <select id="contact_relationship" name="contact_relationship" defaultValue="" required>
+            <option value="" disabled>{contactRelationship.choose}</option>
+            <option value="patient">{contactRelationship.patient}</option>
+            <option value="parent_guardian">{contactRelationship.guardian}</option>
+            <option value="relative_caregiver">{contactRelationship.caregiver}</option>
+          </select>
           <label htmlFor="doctor_id">{t.doctor}</label><input id="doctor_id" name="doctor_id" type="hidden" value={selectedDoctor?.id ?? ""} /><div className="composer-doctor-lock" aria-label={`${t.doctor}: ${selectedDoctor?.name ?? t.chooseDoctor}`}><strong>{selectedDoctor?.name ?? t.chooseDoctor}</strong><span aria-hidden="true">✓</span></div>
           <AppointmentTimeField key={`time:${selectedDay}:${selectedDoctor?.id ?? "none"}`} intervalMinutes={clinic.appointment_interval_minutes} min={minimumInput} max={maximumInput} initialDate={selectedDay} occupiedByDoctor={occupiedByDoctor} timeZoneLabel={t.erbilTime} locale={locale} />
           <label htmlFor="reminder_language">{t.reminderLanguage}</label><select id="reminder_language" name="reminder_language" defaultValue={defaultReminderLanguage}>{Object.entries(reminderLanguageLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
