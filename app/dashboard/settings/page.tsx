@@ -5,6 +5,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
+import { ConfirmSubmitButton } from "../staff/confirm-submit-button";
 import { DoctorWorkflowCard } from "../doctor-workflow-card";
 import { PasskeyManager } from "./passkey-manager";
 import { PhoneNumberManager } from "./phone-number-manager";
@@ -132,6 +133,7 @@ const settingsCopy: Record<UiLocale, {
   readOnlyClinic: string;
   phonePending: string;
   support: string;
+  archiveDoctorConfirm: string;
   loadFailed: string;
 }> = {
   en: {
@@ -159,6 +161,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "Clinic administration manages the clinic name.",
     phonePending: "Phone not verified yet",
     support: "Help & legal",
+    archiveDoctorConfirm: "Remove {doctor} from new scheduling? Existing appointment history will stay preserved.",
     loadFailed: "The clinic settings could not load. Go back to the schedule and try again.",
   },
   ku: {
@@ -186,6 +189,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "بەڕێوەبەری کلینیک ناوی کلینیک بەڕێوە دەبات.",
     phonePending: "ژمارەی مۆبایل هێشتا پشتڕاست نەکراوەتەوە",
     support: "یارمەتی و یاسایی",
+    archiveDoctorConfirm: "{doctor} لە وادە نوێکان لاببرێت؟ مێژووی وادەکانی پێشوو پارێزراو دەمێنێتەوە.",
     loadFailed: "ڕێکخستنەکانی کلینیک بار نەبوون. بگەڕێوە بۆ خشتەی وادەکان و دووبارە هەوڵ بدەوە.",
   },
   bd: {
@@ -213,6 +217,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "بەڕێڤەبرنا کلینیکێ ناڤێ کلینیکێ بەڕێڤە دبەت.",
     phonePending: "ژمارا موبایلێ هێشتا نەهاتییە پشتڕاستکرن",
     support: "هاریکاری و یاسایی",
+    archiveDoctorConfirm: "{doctor} ژ وادەیێن نوو بهێتە لابرن؟ مێژوویا وادەیێن پێشوو دێ پاراستی بمینیت.",
     loadFailed: "ڕێکخستنێن کلینیکێ بار نەبوون. ڤەگەڕە خشتەیا وادەیان و جارەکا دی هەول بدە.",
   },
   ar: {
@@ -240,6 +245,7 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "تدير إدارة العيادة اسم العيادة.",
     phonePending: "رقم الهاتف غير موثق بعد",
     support: "المساعدة والقانوني",
+    archiveDoctorConfirm: "إزالة {doctor} من المواعيد الجديدة؟ سيبقى سجل المواعيد السابقة محفوظاً.",
     loadFailed: "تعذر تحميل إعدادات العيادة. ارجع إلى جدول المواعيد وحاول مرة ثانية.",
   },
 };
@@ -394,7 +400,15 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     <div className="compact-actions">
                       {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><button type="submit">{t.moveUp}</button></form> : null}
                       {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><button type="submit">{t.moveDown}</button></form> : null}
-                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}><button className="danger-link" type="submit">{t.archive}</button></form>
+                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}>
+                        <ConfirmSubmitButton
+                          className="danger-link"
+                          pendingLabel={t.saving}
+                          confirmMessage={copy.archiveDoctorConfirm.replace("{doctor}", doctor.name)}
+                        >
+                          {t.archive}
+                        </ConfirmSubmitButton>
+                      </form>
                     </div>
                   </div>
                 </article>

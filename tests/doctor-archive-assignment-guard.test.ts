@@ -20,3 +20,16 @@ test("an assigned receptionist blocks doctor archival until access is reassigned
   assert.match(page, /doctor_has_receptionist: "هێشتا ستافەکێ ڕیسێپشنێ/);
   assert.match(page, /doctor_has_receptionist: "ما زال موظف استقبال/);
 });
+
+test("removing a doctor from new scheduling requires confirmation", async () => {
+  const page = await read("app/dashboard/settings/page.tsx");
+
+  assert.match(page, /import \{ ConfirmSubmitButton \} from "\.\.\/staff\/confirm-submit-button"/);
+  assert.match(page, /archiveDoctorConfirm: "Remove \{doctor\} from new scheduling\?/);
+  assert.match(page, /archiveDoctorConfirm: "\{doctor\} لە وادە نوێکان لاببرێت/);
+  assert.match(page, /archiveDoctorConfirm: "\{doctor\} ژ وادەیێن نوو بهێتە لابرن/);
+  assert.match(page, /archiveDoctorConfirm: "إزالة \{doctor\} من المواعيد الجديدة/);
+  assert.match(page, /setDoctorActive\.bind\(null, clinic\.id, doctor\.id, false\)[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{copy\.archiveDoctorConfirm\.replace\("\{doctor\}", doctor\.name\)\}/);
+  assert.doesNotMatch(page, /setDoctorActive\.bind\(null, clinic\.id, doctor\.id, false\)\}><button className="danger-link"/);
+});
+
