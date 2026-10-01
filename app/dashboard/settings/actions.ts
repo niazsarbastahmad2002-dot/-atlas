@@ -152,6 +152,18 @@ export async function setDoctorActive(clinicId: string, doctorId: string, active
       .maybeSingle();
     if (assignmentError) redirect(settingsUrl(clinicId, "error", "save_failed"));
     if (assignedReceptionist) redirect(settingsUrl(clinicId, "error", "doctor_has_receptionist"));
+
+    const { data: futureAppointment, error: appointmentError } = await supabase
+      .from("appointments")
+      .select("id")
+      .eq("clinic_id", clinicId)
+      .eq("doctor_id", doctorId)
+      .in("status", ["pending", "confirmed"])
+      .gte("appointment_at", new Date().toISOString())
+      .limit(1)
+      .maybeSingle();
+    if (appointmentError) redirect(settingsUrl(clinicId, "error", "save_failed"));
+    if (futureAppointment) redirect(settingsUrl(clinicId, "error", "doctor_has_future_appointments"));
   }
 
   const { data, error } = await supabase
