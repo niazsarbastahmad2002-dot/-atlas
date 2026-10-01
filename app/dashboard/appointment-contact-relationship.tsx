@@ -76,9 +76,13 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
       if (decorated.has(form)) return;
       decorated.add(form);
       const appointmentId = appointmentIdFromEditor(form);
-      const clinicId = form.closest<HTMLElement>("[data-atlas-clinic]")?.dataset.atlasClinic ?? null;
       const phone = form.querySelector<HTMLInputElement>('input[name="patient_phone"]');
       if (!phone) return;
+      if (form.querySelector('select[name="contact_relationship"]')) {
+        replaceConsentCopy(form, locale);
+        return;
+      }
+      const clinicId = form.closest<HTMLElement>("[data-atlas-clinic]")?.dataset.atlasClinic ?? null;
       const field = createRelationshipField(locale, `edit-contact-${appointmentId ?? Math.random().toString(36).slice(2)}`);
       phone.after(field.label, field.select);
       replaceConsentCopy(form, locale);
@@ -90,15 +94,6 @@ export function AppointmentContactRelationshipEnhancer({ locale }: { locale: UiL
           const value = await getAppointmentContactRelationshipInline(clinicId, appointmentId);
           if (!disposed && value && field.select.isConnected) {
             field.select.value = value;
-            field.select.dataset.atlasInitialRelationship = value;
-            field.select.addEventListener("change", () => {
-              if (field.select.value === field.select.dataset.atlasInitialRelationship) return;
-              const consent = form.querySelector<HTMLInputElement>('input[name="reminder_consent"]');
-              if (consent) {
-                consent.checked = false;
-                consent.dispatchEvent(new Event("change", { bubbles: true }));
-              }
-            });
             loaded = true;
           }
         }
