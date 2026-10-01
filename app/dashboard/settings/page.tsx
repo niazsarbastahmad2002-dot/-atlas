@@ -24,20 +24,71 @@ type SettingsPageProps = {
   searchParams: Promise<{ clinic?: string; error?: string; notice?: string }>;
 };
 
-const errorCopy: Record<string, string> = {
-  manager_required: "Clinic administration is required to change this setting.",
-  language_invalid: "Choose a supported interface language.",
-  clinic_invalid: "Check the clinic name and try again.",
-  doctor_invalid: "Check the doctor details and try again.",
-  save_failed: "That setting could not be saved. Refresh and try again.",
-};
-
-const noticeCopy: Record<string, string> = {
-  language_saved: "Interface language updated.",
-  clinic_saved: "Clinic details updated.",
-  doctor_saved: "Doctor settings updated.",
-  doctor_archived: "Doctor removed from new appointments. Existing appointment history is preserved.",
-  doctor_restored: "Doctor restored.",
+const settingsResultCopy: Record<UiLocale, { errors: Record<string, string>; notices: Record<string, string> }> = {
+  en: {
+    errors: {
+      manager_required: "Clinic administration is required to change this setting.",
+      language_invalid: "Choose a supported interface language.",
+      clinic_invalid: "Check the clinic name and try again.",
+      doctor_invalid: "Check the doctor details and try again.",
+      save_failed: "That setting could not be saved. Refresh and try again.",
+    },
+    notices: {
+      language_saved: "Interface language updated.",
+      clinic_saved: "Clinic details updated.",
+      doctor_saved: "Doctor settings updated.",
+      doctor_archived: "Doctor removed from new appointments. Existing appointment history is preserved.",
+      doctor_restored: "Doctor restored.",
+    },
+  },
+  ku: {
+    errors: {
+      manager_required: "بۆ گۆڕینی ئەم ڕێکخستنە دەسەڵاتی بەڕێوەبردنی کلینیک پێویستە.",
+      language_invalid: "زمانێکی پشتگیریکراوی ڕووکار هەڵبژێرە.",
+      clinic_invalid: "ناوی کلینیک بپشکنە و دووبارە هەوڵ بدەوە.",
+      doctor_invalid: "زانیاری پزیشک بپشکنە و دووبارە هەوڵ بدەوە.",
+      save_failed: "ئەم ڕێکخستنە پاشەکەوت نەکرا. پەڕەکە نوێ بکەرەوە و دووبارە هەوڵ بدەوە.",
+    },
+    notices: {
+      language_saved: "زمانی ڕووکار نوێکرایەوە.",
+      clinic_saved: "زانیاری کلینیک نوێکرایەوە.",
+      doctor_saved: "ڕێکخستنەکانی پزیشک نوێکرانەوە.",
+      doctor_archived: "پزیشک لە وادە نوێکان لابرا. مێژووی وادەکانی پێشوو پارێزراوە.",
+      doctor_restored: "پزیشک گەڕێندرایەوە.",
+    },
+  },
+  bd: {
+    errors: {
+      manager_required: "بۆ گوهارتنا ڤێ ڕێکخستنێ دەستهەلاتا بەڕێڤەبرنا کلینیکێ پێدڤییە.",
+      language_invalid: "زمانەکێ پشتگیری‌کری یێ ڕووکارێ هەلبژێرە.",
+      clinic_invalid: "ناڤێ کلینیکێ بپشکنە و جارەکا دی هەول بدە.",
+      doctor_invalid: "زانیاریێن دکتۆری بپشکنە و جارەکا دی هەول بدە.",
+      save_failed: "ئەڤ ڕێکخستنە نەهاتە پاراستن. پەرەیێ نوێ بکە و جارەکا دی هەول بدە.",
+    },
+    notices: {
+      language_saved: "زمانێ ڕووکارێ هاتە نوێکرن.",
+      clinic_saved: "زانیاریێن کلینیکێ هاتنە نوێکرن.",
+      doctor_saved: "ڕێکخستنێن دکتۆری هاتنە نوێکرن.",
+      doctor_archived: "دکتۆر ژ وادەیێن نوو هاتە لابرن. مێژوویا وادەیێن پێشوو پاراستییە.",
+      doctor_restored: "دکتۆر هاتە ڤەگەراندن.",
+    },
+  },
+  ar: {
+    errors: {
+      manager_required: "تحتاج صلاحية إدارة العيادة لتغيير هذا الإعداد.",
+      language_invalid: "اختر لغة واجهة مدعومة.",
+      clinic_invalid: "راجع اسم العيادة وحاول مرة ثانية.",
+      doctor_invalid: "راجع معلومات الطبيب وحاول مرة ثانية.",
+      save_failed: "تعذر حفظ هذا الإعداد. حدّث الصفحة وحاول مرة ثانية.",
+    },
+    notices: {
+      language_saved: "تم تحديث لغة الواجهة.",
+      clinic_saved: "تم تحديث بيانات العيادة.",
+      doctor_saved: "تم تحديث إعدادات الطبيب.",
+      doctor_archived: "تمت إزالة الطبيب من المواعيد الجديدة. تم الاحتفاظ بسجل المواعيد السابقة.",
+      doctor_restored: "تمت إعادة الطبيب.",
+    },
+  },
 };
 
 const settingsCopy: Record<UiLocale, {
@@ -221,8 +272,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const isOwner = clinic.owner_id === userData.user.id || membership?.role === "owner";
   const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
   const archivedDoctors = (doctors ?? []).filter((doctor) => !doctor.active);
-  const errorMessage = params.error ? errorCopy[params.error] : null;
-  const noticeMessage = params.notice ? noticeCopy[params.notice] : null;
+  const resultCopy = settingsResultCopy[locale];
+  const errorMessage = params.error ? resultCopy.errors[params.error] : null;
+  const noticeMessage = params.notice ? resultCopy.notices[params.notice] : null;
 
   return (
     <main className={`settings-page shell ${canManage ? "is-administration" : "is-reception"}`}>
