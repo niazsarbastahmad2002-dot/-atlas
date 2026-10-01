@@ -38,6 +38,25 @@ const dayCopy: Record<UiLocale, {
   ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد", quickDates: "أيام سريعة", doctorSchedules: "جداول الأطباء" },
 };
 
+const dashboardErrorCopy: Record<UiLocale, { title: string; help: string }> = {
+  en: {
+    title: "Atlas could not load this clinic.",
+    help: "Refresh once. If it continues, check the clinic connection before entering any patient details.",
+  },
+  ku: {
+    title: "Atlas نەیتوانی ئەم کلینیکە بار بکات.",
+    help: "جارێک پەڕەکە نوێ بکەرەوە. ئەگەر بەردەوام بوو، پێش نووسینی زانیاری نەخۆش پەیوەندی کلینیکەکە بپشکنە.",
+  },
+  bd: {
+    title: "Atlas نەشیا ڤێ کلینیکێ بار بکەت.",
+    help: "جارەکێ پەڕێ نوو بکە. ئەگەر بەردەوام بوو، بەری داخلكرنا زانیاریێن نەخۆشی پەیوەندیا کلینیکێ بپشکنە.",
+  },
+  ar: {
+    title: "تعذر على Atlas تحميل هذه العيادة.",
+    help: "حدّث الصفحة مرة واحدة. إذا استمرت المشكلة، تحقق من اتصال العيادة قبل إدخال أي بيانات للمريض.",
+  },
+};
+
 const summaryCopy: Record<UiLocale, {
   all: string;
   notConfirmed: string;
@@ -107,7 +126,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   if (userError || !userData.user) redirect("/login");
 
   const { data: clinics, error: clinicsError } = await supabase.from("clinics").select("id, name, owner_id, appointment_interval_minutes").order("created_at", { ascending: true });
-  if (clinicsError) return <DashboardError />;
+  if (clinicsError) return <DashboardError locale={locale} />;
   if (!clinics?.length) {
     return <main className="center-page"><section className="auth-card setup-card"><div className="app-brand setup-brand"><span className="app-brand-mark" aria-hidden="true">A</span><span>Atlas</span></div><div className="eyebrow">{t.firstSetup}</div><h1>{t.clinicSetup}</h1><p className="quiet">{t.useSynthetic}</p>{messageError ? <p className="notice notice-error" role="alert">{messageError}</p> : null}<form action={createClinic} className="stack-form"><label htmlFor="name">{t.clinicName}</label><input id="name" name="name" minLength={2} maxLength={120} autoComplete="organization" required /><SubmitButton pendingLabel={t.saving}>{t.createWorkspace}</SubmitButton></form></section></main>;
   }
@@ -273,4 +292,4 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 }
 
 function Stat({ label, value, tone }: { label: string; value: number; tone: "total" | "pending" | "confirmed" | "completed" | "no-show" | "cancelled" }) { return <article className={`stat schedule-stat schedule-stat-${tone}`}><span>{label}</span><strong>{value}</strong></article>; }
-function DashboardError() { return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>Atlas could not load this clinic.</h1><p className="quiet">Refresh once. If it continues, check the clinic connection before entering any patient details.</p></section></main>; }
+function DashboardError({ locale }: { locale: UiLocale }) { const copy = dashboardErrorCopy[locale]; return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{copy.title}</h1><p className="quiet">{copy.help}</p></section></main>; }
