@@ -22,3 +22,17 @@ test("sign-in does not grant clinic access without an explicit clinic or invitat
   assert.doesNotMatch(activation, /from\("clinics"\)\.insert/);
   assert.doesNotMatch(activation, /owner_id:\s*userData\.user\.id/);
 });
+
+test("settings APIs fail closed without explicit clinic ownership or membership", () => {
+  const doctorWorkflow = source("app/api/settings/doctor-workflow/route.ts");
+  const reminders = source("app/api/settings/reminders/route.ts");
+
+  for (const api of [doctorWorkflow, reminders]) {
+    assert.match(api, /const hasClinicAccess = clinic\.owner_id === userData\.user\.id/);
+    assert.match(api, /membership\?\.role === "owner"/);
+    assert.match(api, /membership\?\.role === "manager"/);
+    assert.match(api, /membership\?\.role === "receptionist"/);
+    assert.match(api, /if \(!hasClinicAccess\) return null/);
+  }
+});
+

@@ -41,6 +41,11 @@ async function context(clinicId: string, requestedDoctorId?: string | null) {
   ]);
 
   if (!clinic || !Array.isArray(doctors) || doctors.length === 0) return null;
+  const hasClinicAccess = clinic.owner_id === userData.user.id
+    || membership?.role === "owner"
+    || membership?.role === "manager"
+    || membership?.role === "receptionist";
+  if (!hasClinicAccess) return null;
   const administrative = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   const assignedDoctorId = membership?.role === "receptionist" ? membership.assigned_doctor_id : null;
   const wanted = administrative && requestedDoctorId && doctors.some((doctor: any) => doctor.id === requestedDoctorId)
