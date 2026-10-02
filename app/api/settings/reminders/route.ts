@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 const allowedLeadMinutes = new Set([30, 60, 120, 240, 360, 720, 1440, 2880, 10080]);
-const reminderLanguages = new Set(["ku", "ar", "en"]);
+const reminderLanguages = new Set(["ku", "bd", "ar", "en"]);
 
 async function context(clinicId: string) {
   if (!isUuid(clinicId)) return null;
