@@ -62,8 +62,10 @@ async function appointmentClinicContext(clinicId: string) {
       .maybeSingle(),
   ]);
 
-  if (clinicError || membershipError || !clinic) return null;
-  const hasClinicAccess = clinic.owner_id === userData.user.id
+  if (clinicError || !clinic) return null;
+  const isClinicOwner = clinic.owner_id === userData.user.id;
+  if (!isClinicOwner && membershipError) return null;
+  const hasClinicAccess = isClinicOwner
     || membership?.role === "owner"
     || membership?.role === "manager"
     || membership?.role === "receptionist";
