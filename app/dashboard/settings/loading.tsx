@@ -1,6 +1,6 @@
 export default function SettingsLoading() {
   return (
-    <main className="settings-page shell" aria-busy="true">
+    <main className="settings-page shell" aria-busy="true" data-atlas-loading="settings">
       <div className="settings-grid" aria-hidden="true">
         <section className="settings-card skeleton" style={{ minHeight: 180 }} />
         <section className="settings-card skeleton" style={{ minHeight: 260 }} />
