@@ -1,6 +1,6 @@
 export default function DashboardLoading() {
   return (
-    <main className="workspace-page shell" aria-busy="true" aria-label="Loading schedule">
+    <main className="workspace-page shell" aria-busy="true">
       <section className="stats workspace-stats schedule-summary" aria-hidden="true">
         {Array.from({ length: 6 }, (_, index) => (
           <article className="stat schedule-stat skeleton" key={index} />
