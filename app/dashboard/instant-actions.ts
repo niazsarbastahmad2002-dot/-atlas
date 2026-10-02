@@ -47,6 +47,31 @@ function requiredContactRelationship(value: FormDataEntryValue | null): Appointm
   return contactRelationship(value);
 }
 
+async function appointmentClinicContext(clinicId: string) {
+  const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return null;
+
+  const [{ data: clinic, error: clinicError }, { data: membership, error: membershipError }] = await Promise.all([
+    supabase.from("clinics").select("id, owner_id").eq("id", clinicId).maybeSingle(),
+    supabase
+      .from("clinic_members")
+      .select("role")
+      .eq("clinic_id", clinicId)
+      .eq("user_id", userData.user.id)
+      .maybeSingle(),
+  ]);
+
+  if (clinicError || membershipError || !clinic) return null;
+  const hasClinicAccess = clinic.owner_id === userData.user.id
+    || membership?.role === "owner"
+    || membership?.role === "manager"
+    || membership?.role === "receptionist";
+  if (!hasClinicAccess) return null;
+
+  return { supabase, userId: userData.user.id };
+}
+
 export async function createAppointmentInline(formData: FormData): Promise<InlineAppointmentResult> {
   const clinicId = String(formData.get("clinic_id") ?? "");
   const idempotencyKey = String(formData.get("idempotency_key") ?? "");
@@ -73,7 +98,9 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     return { ok: false, reason: "invalid" };
   }
 
-  const supabase = await createClient();
+  const context = await appointmentClinicContext(clinicId);
+  if (!context) return { ok: false, reason: "invalid" };
+  const { supabase } = context;
   const { data: doctor, error: doctorError } = await supabase
     .from("doctors")
     .select("id, name")
@@ -188,7 +215,9 @@ export async function updateAppointmentStatusInline(
   }
 
   const action = statusAction(status);
-  const supabase = await createClient();
+  const context = await appointmentClinicContext(clinicId);
+  if (!context) return { ok: false, reason: "invalid" };
+  const { supabase } = context;
   const { data, error } = await supabase
     .from("appointments")
     .update({ status })
@@ -261,7 +290,9 @@ export async function updateAppointmentDetailsInline(
     || !reminderLanguages.has(reminderLanguage)
   ) return { ok: false, reason: "invalid" };
 
-  const supabase = await createClient();
+  const context = await appointmentClinicContext(clinicId);
+  if (!context) return { ok: false, reason: "invalid" };
+  const { supabase } = context;
   const { data: doctor, error: doctorError } = await supabase
     .from("doctors")
     .select("id, name")
@@ -345,10 +376,9 @@ export async function archiveAppointmentInline(
     return { ok: false, reason: "invalid" };
   }
 
-  const supabase = await createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (userError || !userId) return { ok: false, reason: "invalid" };
+  const context = await appointmentClinicContext(clinicId);
+  if (!context) return { ok: false, reason: "invalid" };
+  const { supabase, userId } = context;
 
   const { data, error } = await supabase
     .from("appointments")
