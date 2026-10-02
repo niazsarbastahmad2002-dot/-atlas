@@ -28,6 +28,9 @@ test("retired invitation recovery preserves language without flashing English-on
 
   assert.match(invite, /new URLSearchParams\(window\.location\.search\)/);
   assert.match(invite, /currentParams\.get\("lang"\)/);
+  assert.match(invite, /isUiLocale\(lang\)/);
   assert.match(invite, /destination\.searchParams\.set\("lang", lang\)/);
+  assert.match(invite, /fetch\("\/api\/ui-language"/);
+  assert.match(invite, /JSON\.stringify\(\{ locale: lang \}\)/);
   assert.doesNotMatch(invite, /This invitation needs to be replaced|Ask the clinic administrator/);
 });
