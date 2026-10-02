@@ -15,6 +15,14 @@ function isNameInput(target: EventTarget | null): target is HTMLInputElement {
     && (target.id === "clinic_name" || (target.name === "doctor_name" && target.closest(".doctor-name-form") !== null));
 }
 
+function submitControlForm(target: EventTarget | null) {
+  const element = target instanceof Element ? target : null;
+  const control = element?.closest<HTMLButtonElement | HTMLInputElement>(
+    'button[type="submit"], input[type="submit"]',
+  );
+  return control?.form ?? null;
+}
+
 export function SettingsDraftReset({ locale }: { locale: UiLocale }) {
   useEffect(() => {
     const committed = new WeakMap<HTMLInputElement, string>();
@@ -31,9 +39,7 @@ export function SettingsDraftReset({ locale }: { locale: UiLocale }) {
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      const target = event.target instanceof Element ? event.target : null;
-      const button = target?.closest<HTMLButtonElement>('button[type="submit"]');
-      confirmingForm = button?.form ?? null;
+      confirmingForm = submitControlForm(event.target);
       window.setTimeout(() => { confirmingForm = null; }, 0);
     };
 
@@ -41,7 +47,8 @@ export function SettingsDraftReset({ locale }: { locale: UiLocale }) {
       if (!isNameInput(event.target)) return;
       const input = event.target;
       prepare(input);
-      if (input.form && input.form === confirmingForm) return;
+      const keyboardSubmitForm = submitControlForm(event.relatedTarget);
+      if (input.form && (input.form === confirmingForm || input.form === keyboardSubmitForm)) return;
       const saved = committed.get(input);
       if (saved !== undefined && input.value !== saved) input.value = saved;
     };
