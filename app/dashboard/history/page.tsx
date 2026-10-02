@@ -39,7 +39,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
     .eq("clinic_id", clinic.id).order("appointment_at", { ascending: false }).limit(1000);
 
   if (appointmentsError) {
-    return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">{t.loadFailed}</p><Link className="button" href="/dashboard/settings">{t.back}</Link></section></main>;
+    return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">{t.loadFailed}</p><Link className="button" href={`/dashboard/settings?${new URLSearchParams({ clinic: clinic.id })}`}>{t.back}</Link></section></main>;
   }
 
   const rows = (appointments ?? []).map((appointment) => ({
