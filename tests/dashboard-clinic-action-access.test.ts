@@ -10,11 +10,11 @@ test("dashboard clinic actions require explicit clinic ownership or membership",
   assert.match(actions, /async function authorizeClinic\(clinicId: string\)/);
   assert.match(actions, /from\("clinics"\)[\s\S]*select\("id, owner_id"\)/);
   assert.match(actions, /from\("clinic_members"\)[\s\S]*\.eq\("user_id", userId\)/);
-  assert.match(actions, /const hasClinicAccess = clinic\?\.owner_id === userId/);
+  assert.match(actions, /const isClinicOwner = clinic\.owner_id === userId/);\n  assert.match(actions, /if \(!isClinicOwner && membershipError\)/);\n  assert.match(actions, /const hasClinicAccess = isClinicOwner/);
   assert.match(actions, /membership\?\.role === "owner"/);
   assert.match(actions, /membership\?\.role === "manager"/);
   assert.match(actions, /membership\?\.role === "receptionist"/);
-  assert.match(actions, /clinicError \|\| membershipError \|\| !clinic \|\| !hasClinicAccess/);
+  assert.match(actions, /if \(clinicError \|\| !clinic\)/);\n  assert.match(actions, /if \(!hasClinicAccess\)/);
   assert.match(actions, /redirect\(dashboardUrl\("error", "clinic_unavailable"\)\)/);
 });
 
