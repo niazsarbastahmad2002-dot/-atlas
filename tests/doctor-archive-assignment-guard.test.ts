@@ -50,3 +50,10 @@ test("removed doctor count follows the selected Atlas digit style", async () => 
   assert.doesNotMatch(page, /\{copy\.removedDoctors\} \(\{archivedDoctors\.length\}\)/);
 });
 
+test("doctor restore locks while the server action is pending", async () => {
+  const page = await read("app/dashboard/settings/page.tsx");
+
+  assert.match(page, /setDoctorActive\.bind\(null, clinic\.id, doctor\.id, true\)[\s\S]*<SubmitButton className="button button-ghost button-small" pendingLabel=\{t\.saving\}>\{t\.restore\}<\/SubmitButton>/);
+  assert.doesNotMatch(page, /setDoctorActive\.bind\(null, clinic\.id, doctor\.id, true\)\}><button className="button button-ghost button-small" type="submit">/);
+});
+
