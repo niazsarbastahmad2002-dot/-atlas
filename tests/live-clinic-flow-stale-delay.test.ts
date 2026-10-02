@@ -10,4 +10,8 @@ test("stale clinic timing accepts a cleared delay from another device", () => {
     /saved\.delayMinutes === null \|\| typeof saved\.delayMinutes === "number" \? saved\.delayMinutes : current\.delayMinutes/,
   );
   assert.match(source, /response\.status === 409 && saved\.error === "stale"/);
+  assert.match(
+    source,
+    /saved\.timingUpdatedAt === null \|\| typeof saved\.timingUpdatedAt === "string" \? saved\.timingUpdatedAt : current\.timingUpdatedAt/,
+  );
 });
