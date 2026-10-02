@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { createClient } from "@/lib/supabase/server";
 
-const reminderLanguages = new Set(["ku", "ar", "en"]);
+const reminderLanguages = new Set(["ku", "bd", "ar", "en"]);
 
 function remindersUrl(clinicId: string, key: "error" | "notice", value: string) {
   const params = new URLSearchParams({ [key]: value });
