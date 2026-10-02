@@ -71,6 +71,13 @@ test("expired or consumed legacy auth link shows recovery language with phone si
   await expect(page.getByRole("button", { name: "Send verification code" })).toBeVisible();
 });
 
+test("retired clinic invitation recovery preserves Sorani without consuming its fragment", async ({ page }) => {
+  await page.goto("/auth/invite?lang=ku#access_token=retired&refresh_token=retired");
+  await expect(page).toHaveURL(/\/login\?error=invalid_invite&lang=ku$/);
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator(".login-notice[role='alert']")).toContainText("بانگهێشتی کلینیکەکە چیتر دروست نییە");
+});
+
 test("signed-out state confirms logout without technical jargon", async ({ page }) => {
   await page.goto("/login?notice=signed_out");
   await expect(page.getByRole("status")).toContainText("signed out safely");
