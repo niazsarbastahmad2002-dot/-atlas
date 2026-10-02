@@ -102,8 +102,10 @@ export function InterfaceLanguageControl({
   }
 
   async function applyTheme(nextTheme: UiTheme) {
-    if (themePending) return;
+    if (themePending || nextTheme === theme) return;
+    const previousTheme = theme;
     setThemeError(null);
+    setTheme(nextTheme);
     setThemePending(true);
     try {
       const response = await fetch("/api/ui-theme", {
@@ -118,6 +120,7 @@ export function InterfaceLanguageControl({
       setTheme(nextTheme);
       window.location.reload();
     } catch {
+      setTheme(previousTheme);
       setThemePending(false);
       setThemeError(appearance.failure);
     }
@@ -167,7 +170,6 @@ export function InterfaceLanguageControl({
           onChange={(event) => {
             const nextTheme = event.currentTarget.value;
             if (!isUiTheme(nextTheme)) return;
-            setTheme(nextTheme);
             void applyTheme(nextTheme);
           }}
         >
