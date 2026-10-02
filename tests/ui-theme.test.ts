@@ -31,3 +31,13 @@ test("appearance preference is site-wide, persisted, and can override browser-fo
   assert.match(css, /data-theme="dark"/);
   assert.match(css, /prefers-color-scheme: dark/);
 });
+
+
+test("failed appearance saves restore the previously active theme", () => {
+  const control = read("app/dashboard/settings/interface-language-control.tsx");
+
+  assert.match(control, /const previousTheme = theme/);
+  assert.match(control, /setTheme\(nextTheme\)/);
+  assert.match(control, /catch \{[\s\S]*setTheme\(previousTheme\)/);
+  assert.match(control, /if \(themePending \|\| nextTheme === theme\) return/);
+});
