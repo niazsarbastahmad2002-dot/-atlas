@@ -8,8 +8,10 @@ test("dashboard scroll continuity cannot fail the receptionist workflow when ses
   assert.match(source, /function readSavedScroll\(\)/);
   assert.match(source, /function writeSavedScroll\(saved: SavedScroll\)/);
   assert.match(source, /function clearSavedScroll\(\)/);
-  assert.match(source, /writeSavedScroll\(\{/);
   assert.match(source, /const raw = readSavedScroll\(\)/);
   assert.match(source, /clearSavedScroll\(\)/);
-  assert.doesNotMatch(source, /window\.sessionStorage\.setItem\(storageKey[\s\S]*rememberScroll/);
+
+  const rememberScroll = source.match(/function rememberScroll\(event: SubmitEvent\) \{[\s\S]*?\n    \}/)?.[0] ?? "";
+  assert.match(rememberScroll, /writeSavedScroll\(\{/);
+  assert.doesNotMatch(rememberScroll, /sessionStorage\./);
 });
