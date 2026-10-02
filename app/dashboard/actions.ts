@@ -49,12 +49,27 @@ async function authenticatedUserId() {
 
 async function authorizeClinic(clinicId: string) {
   const { supabase, userId } = await authenticatedUserId();
-  const { data, error } = await supabase
-    .from("clinics")
-    .select("id")
-    .eq("id", clinicId)
-    .maybeSingle();
-  if (error || !data) redirect(dashboardUrl("error", "clinic_unavailable"));
+  const [{ data: clinic, error: clinicError }, { data: membership, error: membershipError }] = await Promise.all([
+    supabase
+      .from("clinics")
+      .select("id, owner_id")
+      .eq("id", clinicId)
+      .maybeSingle(),
+    supabase
+      .from("clinic_members")
+      .select("role")
+      .eq("clinic_id", clinicId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+
+  const hasClinicAccess = clinic?.owner_id === userId
+    || membership?.role === "owner"
+    || membership?.role === "manager"
+    || membership?.role === "receptionist";
+  if (clinicError || membershipError || !clinic || !hasClinicAccess) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
   return { supabase, userId };
 }
 
