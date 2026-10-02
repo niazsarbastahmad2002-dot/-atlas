@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 const CANONICAL_ATLAS_ORIGIN = "https://atlasclinic.dpdns.org";
 const LEGACY_PRODUCTION_ORIGIN = "https://atlasdemofixed.vercel.app";
+const EMAIL_LOCALES = new Set(["en", "ku", "bd", "ar"]);
 
 function authFragment() {
   const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -27,6 +28,10 @@ export function EmailAuthFragmentBridge() {
 
     const callback = new URL("/auth/email/callback", callbackOrigin());
     callback.searchParams.set("next", "/dashboard/select-clinic");
+    const locale = new URLSearchParams(window.location.search).get("atlas_email_locale");
+    if (locale && EMAIL_LOCALES.has(locale)) {
+      callback.searchParams.set("atlas_email_locale", locale);
+    }
     callback.hash = fragment;
 
     // Do not leave Supabase session tokens in the current page history.

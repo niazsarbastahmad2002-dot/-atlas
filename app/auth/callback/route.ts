@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { uiLocaleCookie } from "@/lib/i18n/ui-server";
 import { safeAuthDestination } from "@/lib/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,6 +11,8 @@ export async function GET(request: Request) {
   const authError = requestUrl.searchParams.get("error");
   const requestedNext = requestUrl.searchParams.get("next");
   const next = safeAuthDestination(requestedNext);
+  const localeCandidate = requestUrl.searchParams.get("atlas_email_locale");
+  const requestedLocale = localeCandidate && EMAIL_LOCALES.has(localeCandidate) ? localeCandidate : null;
 
   // Supabase's server-side OTP sender currently returns an implicit-flow
   // fragment after verification. Fragments never reach a server route, so
@@ -22,9 +25,8 @@ export async function GET(request: Request) {
       requestedNext === "/dashboard/select-clinic" ? requestedNext : next,
     );
 
-    const locale = requestUrl.searchParams.get("atlas_email_locale");
-    if (locale && EMAIL_LOCALES.has(locale)) {
-      emailCallbackUrl.searchParams.set("atlas_email_locale", locale);
+    if (requestedLocale) {
+      emailCallbackUrl.searchParams.set("atlas_email_locale", requestedLocale);
     }
 
     return NextResponse.redirect(emailCallbackUrl);
@@ -39,12 +41,31 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (!error) {
+    if (requestedLocale) {
+      const { error: localeError } = await supabase.auth.updateUser({
+        data: { atlas_ui_language: requestedLocale },
+      });
+      if (localeError) {
+        console.warn("Atlas verified email locale save failed", { message: localeError.message });
+      }
+    }
+
     // Supabase exposes a generic provider refresh token here, but an account
     // can link multiple providers. Native Apple authorization is stored only
     // through Atlas's provider-specific, subject-bound exchange endpoint.
     const activationUrl = new URL("/auth/activate", requestUrl.origin);
     activationUrl.searchParams.set("next", next);
-    return NextResponse.redirect(activationUrl);
+    const response = NextResponse.redirect(activationUrl);
+    if (requestedLocale) {
+      response.cookies.set(uiLocaleCookie, requestedLocale, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      });
+    }
+    return response;
   }
 
   const errorUrl = new URL("/login", requestUrl.origin);

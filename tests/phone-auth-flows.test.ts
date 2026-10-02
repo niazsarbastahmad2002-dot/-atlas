@@ -87,7 +87,8 @@ test("temporary email fallback safely recreates a deleted account while SMS is u
   assert.match(legacy, /rate_limited/);
   assert.match(legacy, /not_authorized/);
   assert.match(route, /admin\.auth\.admin\.createUser/);
-  assert.match(route, /user_metadata: \{ atlas_ui_language: locale \}/);
+  assert.doesNotMatch(route, /user_metadata: \{ atlas_ui_language: locale \}/);
+  assert.match(route, /app_metadata: \{ atlas_temporary_email_bootstrap: true \}/);
   assert.match(route, /admin\.auth\.signInWithOtp/);
   assert.match(route, /shouldCreateUser: false/);
   assert.match(route, /over_email_send_rate_limit/);

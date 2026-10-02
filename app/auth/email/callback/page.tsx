@@ -48,6 +48,15 @@ export default function EmailAuthCallbackPage() {
         const locale = requestedLocale
           ?? (typeof metadataLocale === "string" && EMAIL_LOCALES.has(metadataLocale) ? metadataLocale : "en");
 
+        if (requestedLocale && requestedLocale !== metadataLocale) {
+          const { error: localeError } = await supabase.auth.updateUser({
+            data: { atlas_ui_language: requestedLocale },
+          });
+          if (localeError) {
+            console.warn("Atlas verified email locale save failed", { message: localeError.message });
+          }
+        }
+
         await fetch("/api/ui-language", {
           method: "POST",
           headers: { "content-type": "application/json" },
