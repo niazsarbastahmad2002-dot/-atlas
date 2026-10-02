@@ -59,7 +59,8 @@ test("global email fragment bridge never consumes retired clinic invitation frag
 
   assert.match(bridge, /window\.location\.pathname === "\/auth\/invite"/);
   assert.match(invite, /window\.history\.replaceState/);
-  assert.match(invite, /window\.location\.replace\("\/login\?error=invalid_invite"\)/);
+  assert.match(invite, /destination\.searchParams\.set\("error", "invalid_invite"\)/);
+  assert.match(invite, /window\.location\.replace\(destination\.pathname \+ destination\.search\)/);
   assert.doesNotMatch(invite, /auth\.setSession|auth\.getSession|\/auth\/activate/);
 });
 
