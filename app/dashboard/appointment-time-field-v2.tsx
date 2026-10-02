@@ -136,7 +136,15 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
           if ([5, 10, 15, 20, 30].includes(value)) setInterval(value);
           const language = data?.defaultReminderLanguage;
           const languageSelect = form.querySelector<HTMLSelectElement>('select[name="reminder_language"]');
-          if (languageSelect && ["ku", "bd", "ar", "en"].includes(language)) languageSelect.value = language;
+          const savedLanguage = clinic?.value
+            ? window.localStorage.getItem(`atlas:last-reminder-language:${clinic.value}`)
+            : null;
+          const preferredLanguage = savedLanguage && languageSelect?.querySelector(`option[value="${savedLanguage}"]`)
+            ? savedLanguage
+            : language;
+          if (languageSelect && ["ku", "bd", "ar", "en"].includes(preferredLanguage)) {
+            languageSelect.value = preferredLanguage;
+          }
         })
         .catch(() => undefined);
     };
