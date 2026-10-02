@@ -169,7 +169,7 @@ export function LiveClinicFlow({
       if (response.status === 409 && saved.error === "stale") {
         setFlow((current) => current ? {
           ...current,
-          delayMinutes: typeof saved.delayMinutes === "number" ? saved.delayMinutes : current.delayMinutes,
+          delayMinutes: saved.delayMinutes === null || typeof saved.delayMinutes === "number" ? saved.delayMinutes : current.delayMinutes,
           timingUpdatedAt: saved.timingUpdatedAt ?? current.timingUpdatedAt,
         } : current);
         setError("stale");
