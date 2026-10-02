@@ -9,6 +9,11 @@ test("continuity snapshot stays RLS-bound and deliberately minimal", () => {
 
   assert.match(route, /createClient\(\)/);
   assert.doesNotMatch(route, /createAdminClient|service_role|SUPABASE_SERVICE_ROLE_KEY/);
+  assert.ok(
+    route.indexOf('const hasClinicAccess = clinic.owner_id === userData.user.id')
+      < route.indexOf('.from("appointments")'),
+    "continuity access must be verified before appointment data is loaded",
+  );
   assert.match(route, /\.from\("appointments"\)/);
   assert.match(route, /select\("id, patient_name, doctor_id, doctor_name, appointment_at, created_at, status"\)/);
   assert.doesNotMatch(route, /patient_phone|reminder_consent|reminder_language|message_content|access_token/);
