@@ -36,3 +36,13 @@ test("settings APIs fail closed without explicit clinic ownership or membership"
   }
 });
 
+test("clinic live flow fails closed without explicit clinic ownership or membership", () => {
+  const liveFlow = source("app/api/clinic-live-flow/route.ts");
+
+  assert.match(liveFlow, /const hasClinicAccess = clinic\.owner_id === userData\.user\.id/);
+  assert.match(liveFlow, /membership\?\.role === "owner"/);
+  assert.match(liveFlow, /membership\?\.role === "manager"/);
+  assert.match(liveFlow, /membership\?\.role === "receptionist"/);
+  assert.match(liveFlow, /if \(!hasClinicAccess\) return null/);
+});
+
