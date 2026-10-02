@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
 import { ConfirmSubmitButton } from "../staff/confirm-submit-button";
 import { DoctorWorkflowCard } from "../doctor-workflow-card";
+import { SettingsDraftReset } from "../settings-draft-reset";
 import { PasskeyManager } from "./passkey-manager";
 import { PhoneNumberManager } from "./phone-number-manager";
 import { InterfaceLanguageControl } from "./interface-language-control";
@@ -301,6 +302,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   return (
     <main className={`settings-page shell ${canManage ? "is-administration" : "is-reception"}`}>
+      <SettingsDraftReset locale={locale} />
       <header className="page-heading settings-heading">
         <div>
           <div className="eyebrow">{t.interface}</div>
