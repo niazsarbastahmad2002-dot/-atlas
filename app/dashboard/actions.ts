@@ -63,11 +63,18 @@ async function authorizeClinic(clinicId: string) {
       .maybeSingle(),
   ]);
 
-  const hasClinicAccess = clinic?.owner_id === userId
+  if (clinicError || !clinic) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
+  const isClinicOwner = clinic.owner_id === userId;
+  if (!isClinicOwner && membershipError) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
+  const hasClinicAccess = isClinicOwner
     || membership?.role === "owner"
     || membership?.role === "manager"
     || membership?.role === "receptionist";
-  if (clinicError || membershipError || !clinic || !hasClinicAccess) {
+  if (!hasClinicAccess) {
     redirect(dashboardUrl("error", "clinic_unavailable"));
   }
   return { supabase, userId };
