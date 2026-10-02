@@ -19,6 +19,15 @@ test("retired legacy staff invitation links cannot consume a session or auto-joi
   const invite = await read("app/auth/invite/page.tsx");
 
   assert.match(invite, /window\.history\.replaceState/);
-  assert.match(invite, /\/login\?error=invalid_invite/);
+  assert.match(invite, /destination\.searchParams\.set\("error", "invalid_invite"\)/);
   assert.doesNotMatch(invite, /createClient|auth\.setSession|auth\.getSession|\/auth\/activate/);
+});
+
+test("retired invitation recovery preserves language without flashing English-only copy", async () => {
+  const invite = await read("app/auth/invite/page.tsx");
+
+  assert.match(invite, /new URLSearchParams\(window\.location\.search\)/);
+  assert.match(invite, /currentParams\.get\("lang"\)/);
+  assert.match(invite, /destination\.searchParams\.set\("lang", lang\)/);
+  assert.doesNotMatch(invite, /This invitation needs to be replaced|Ask the clinic administrator/);
 });
