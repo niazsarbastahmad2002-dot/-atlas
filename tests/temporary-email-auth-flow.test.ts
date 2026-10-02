@@ -43,6 +43,9 @@ test("legacy SiteURL magic links are bridged onto the canonical Atlas email call
   assert.match(bridge, /access_token/);
   assert.match(bridge, /refresh_token/);
   assert.match(bridge, /\/auth\/email\/callback/);
+  assert.match(bridge, /atlas_email_locale/);
+  assert.match(bridge, /EMAIL_LOCALES\.has\(locale\)/);
+  assert.match(bridge, /callback\.searchParams\.set\("atlas_email_locale", locale\)/);
   assert.match(bridge, /window\.history\.replaceState/);
   assert.match(bridge, /window\.location\.replace/);
   assert.match(callback, /data\.user\?\.user_metadata\?\.atlas_ui_language/);
