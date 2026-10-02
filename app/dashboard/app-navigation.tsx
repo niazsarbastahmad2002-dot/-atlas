@@ -11,6 +11,38 @@ import { flushSettingWrites, hasPendingSettingWrite, needsFreshSettingNavigation
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
 
+const navigationCopy: Record<UiLocale, {
+  navigation: string;
+  mobileNavigation: string;
+  askAtlas: string;
+  beta: string;
+}> = {
+  en: {
+    navigation: "Atlas navigation",
+    mobileNavigation: "Atlas mobile navigation",
+    askAtlas: "Ask Atlas",
+    beta: "Beta",
+  },
+  ku: {
+    navigation: "ڕێنوێنی Atlas",
+    mobileNavigation: "ڕێنوێنی مۆبایلی Atlas",
+    askAtlas: "لە Atlas بپرسە",
+    beta: "تاقیکردنەوە",
+  },
+  bd: {
+    navigation: "ڕێنیشاندانا Atlas",
+    mobileNavigation: "ڕێنیشاندانا موبایلا Atlas",
+    askAtlas: "ژ Atlas بپرسە",
+    beta: "تاقیکرنەوە",
+  },
+  ar: {
+    navigation: "التنقل في Atlas",
+    mobileNavigation: "تنقل Atlas على الهاتف",
+    askAtlas: "اسأل Atlas",
+    beta: "تجريبي",
+  },
+};
+
 function CalendarIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -131,6 +163,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
   const [scheduleHref, setScheduleHref] = useState("/dashboard");
   const [settingsHref, setSettingsHref] = useState("/dashboard/settings");
   const t = uiText(locale);
+  const nav = navigationCopy[locale];
   const onSettings = visiblePath.startsWith("/dashboard/settings")
     || visiblePath.startsWith("/dashboard/reminders")
     || visiblePath.startsWith("/dashboard/staff")
@@ -226,11 +259,11 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
             <span className="app-brand-mark" aria-hidden="true">A</span>
             <span className="app-brand-word">Atlas</span>
           </Link>
-          <nav className="app-top-actions" aria-label="Atlas navigation">
+          <nav className="app-top-actions" aria-label={nav.navigation}>
             <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onMouseEnter={warm(scheduleHref)} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} title={t.schedule}>
               <CalendarIcon /><span className="icon-button-label">{t.schedule}</span>
             </Link>
-            <Link className={`icon-button ${onAssistant ? "is-active" : ""}`} href={assistantHref} prefetch={true} scroll={true} onPointerDown={warm(assistantHref)} onMouseEnter={warm(assistantHref)} onClick={go(assistantHref, "topbar")} aria-label="Ask Atlas" title="Atlas AI">
+            <Link className={`icon-button ${onAssistant ? "is-active" : ""}`} href={assistantHref} prefetch={true} scroll={true} onPointerDown={warm(assistantHref)} onMouseEnter={warm(assistantHref)} onClick={go(assistantHref, "topbar")} aria-label={nav.askAtlas} title="Atlas AI">
               <SparkleIcon /><span className="icon-button-label">Atlas AI</span>
             </Link>
             <Link className={`icon-button ${onSettings ? "is-active" : ""}`} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onMouseEnter={warm(settingsHref)} onClick={go(settingsHref, "topbar")} aria-label={t.openSettings} title={t.settings}>
@@ -251,14 +284,14 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           <div className="atlas-ai-launcher shell">
             <Link href={assistantHref} prefetch={true} onPointerDown={warm(assistantHref)}>
               <SparkleIcon />
-              <span>Ask Atlas</span>
-              <small>Beta</small>
+              <span>{nav.askAtlas}</span>
+              <small>{nav.beta}</small>
             </Link>
           </div>
         </>
       ) : null}
 
-      <nav className="app-bottom-nav" aria-label="Atlas mobile navigation">
+      <nav className="app-bottom-nav" aria-label={nav.mobileNavigation}>
         <Link className={onSchedule ? "is-active" : ""} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "bottom_nav")}>
           <CalendarIcon /><span>{t.schedule}</span>
         </Link>
