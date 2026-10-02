@@ -7,6 +7,7 @@ const storageKey = "atlas:dashboard-scroll";
 
 type SavedScroll = {
   path: string;
+  search: string;
   y: number;
   at: number;
 };
@@ -25,6 +26,7 @@ export function DashboardScrollContinuity() {
 
       const saved: SavedScroll = {
         path: window.location.pathname,
+        search: window.location.search,
         y: window.scrollY,
         at: Date.now(),
       };
@@ -47,9 +49,15 @@ export function DashboardScrollContinuity() {
       return;
     }
 
-    // Only restore a recent same-page form submission. Cross-page navigation should
-    // still land naturally at the top of the destination screen.
-    if (saved.path !== pathname || Date.now() - saved.at > 15_000) {
+    const currentSearch = searchKey ? `?${searchKey}` : "";
+    // Only restore a recent submission in the exact same schedule context.
+    // A doctor/day/clinic change shares the /dashboard pathname but must land
+    // naturally instead of inheriting the previous schedule's scroll position.
+    if (
+      saved.path !== pathname
+      || saved.search !== currentSearch
+      || Date.now() - saved.at > 15_000
+    ) {
       window.sessionStorage.removeItem(storageKey);
       return;
     }
