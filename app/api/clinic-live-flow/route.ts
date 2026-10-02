@@ -32,6 +32,12 @@ async function flowContext(clinicId: string | null, requestedDoctorId: string | 
   ]);
   if (!Array.isArray(doctors) || !doctors.length) return null;
 
+  const hasClinicAccess = clinic.owner_id === userData.user.id
+    || membership?.role === "owner"
+    || membership?.role === "manager"
+    || membership?.role === "receptionist";
+  if (!hasClinicAccess) return null;
+
   const administrative = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   const assignedDoctorId = membership?.role === "receptionist" ? membership.assigned_doctor_id : null;
   const doctorId = administrative && requestedDoctorId && doctors.some((doctor: any) => doctor.id === requestedDoctorId)
