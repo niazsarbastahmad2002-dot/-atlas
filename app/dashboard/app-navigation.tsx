@@ -171,6 +171,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
   const onAssistant = visiblePath.startsWith("/dashboard/assistant");
   const onSchedule = visiblePath === "/dashboard";
   const assistantHref = assistantHrefFrom(scheduleHref, searchParams.get("clinic"));
+  const liveFlowKey = [searchParams.get("clinic") ?? "", searchParams.get("doctor") ?? "", searchParams.get("day") ?? ""].join("|");
 
   useEffect(() => {
     setVisiblePath(pathname);
@@ -276,6 +277,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       {onSchedule ? (
         <>
           <LiveClinicFlow
+            key={liveFlowKey}
             locale={locale}
             clinicId={searchParams.get("clinic")}
             doctorId={searchParams.get("doctor")}
