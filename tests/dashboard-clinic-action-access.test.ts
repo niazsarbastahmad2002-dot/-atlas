@@ -4,6 +4,13 @@ import test from "node:test";
 
 const source = () => readFileSync(new URL("../app/dashboard/actions.ts", import.meta.url), "utf8");
 
+function actionBlock(actions: string, name: string) {
+  const start = actions.indexOf(`export async function ${name}`);
+  assert.ok(start >= 0, `${name} must exist`);
+  const nextExport = actions.indexOf("export async function ", start + 1);
+  return actions.slice(start, nextExport >= 0 ? nextExport : actions.length);
+}
+
 test("dashboard clinic actions require explicit clinic ownership or membership", () => {
   const actions = source();
 
@@ -21,22 +28,24 @@ test("dashboard clinic actions require explicit clinic ownership or membership",
   assert.match(actions, /redirect\(dashboardUrl\("error", "clinic_unavailable"\)\)/);
 });
 
-test("appointment and doctor server actions keep using the guarded clinic context", () => {
+test("clinic administration actions require owner or manager access", () => {
   const actions = source();
-  for (const name of [
-    "updateClinicInterval",
-    "createDoctor",
-    "updateDoctor",
-    "setDoctorActive",
-    "moveDoctor",
-    "createAppointment",
-    "updateAppointmentStatus",
-    "archiveAppointment",
-  ]) {
-    const start = actions.indexOf(`export async function ${name}`);
-    assert.ok(start >= 0, `${name} must exist`);
-    const nextExport = actions.indexOf("export async function ", start + 1);
-    const block = actions.slice(start, nextExport >= 0 ? nextExport : actions.length);
-    assert.match(block, /authorizeClinic\(clinicId\)/, `${name} must use authorizeClinic`);
+
+  assert.match(actions, /const canManage = isClinicOwner[\s\S]*membership\?\.role === "owner"[\s\S]*membership\?\.role === "manager"/);
+  assert.match(actions, /async function authorizeClinicManagement\(clinicId: string\)/);
+  assert.match(actions, /if \(!context\.canManage\)/);
+
+  for (const name of ["updateClinicInterval", "createDoctor", "updateDoctor", "setDoctorActive", "moveDoctor"]) {
+    assert.match(actionBlock(actions, name), /authorizeClinicManagement\(clinicId\)/, `${name} must require manager access`);
+  }
+});
+
+test("appointment server actions allow real clinic members through the guarded clinic context", () => {
+  const actions = source();
+
+  for (const name of ["createAppointment", "updateAppointmentStatus", "archiveAppointment"]) {
+    const block = actionBlock(actions, name);
+    assert.match(block, /authorizeClinic\(clinicId\)/, `${name} must use clinic membership authorization`);
+    assert.doesNotMatch(block, /authorizeClinicManagement\(clinicId\)/, `${name} must remain available to receptionists`);
   }
 });
