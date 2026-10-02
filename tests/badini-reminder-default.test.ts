@@ -20,3 +20,13 @@ test("reminder settings API accepts Badini like the rest of Atlas", () => {
   assert.doesNotMatch(source, /new Set\(\["ku", "ar", "en"\]\)/);
 });
 
+test("legacy reminder settings action also accepts Badini", () => {
+  const source = readFileSync(
+    new URL("../app/dashboard/reminders/actions.ts", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /const reminderLanguages = new Set\(\["ku", "bd", "ar", "en"\]\)/);
+  assert.doesNotMatch(source, /new Set\(\["ku", "ar", "en"\]\)/);
+});
+
