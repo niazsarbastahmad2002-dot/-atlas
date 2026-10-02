@@ -7,9 +7,25 @@ const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.
 test("Atlas AI and navigation chrome use the selected interface language", () => {
   const navigation = source("app/dashboard/app-navigation.tsx");
 
-  for (const locale of ["en", "ku", "bd", "ar"]) {
-    assert.match(navigation, new RegExp(`${locale}: \\{[\\s\\S]*navigation:[\\s\\S]*mobileNavigation:[\\s\\S]*askAtlas:[\\s\\S]*beta:`));
+  for (const expected of [
+    'navigation: "Atlas navigation"',
+    'askAtlas: "Ask Atlas"',
+    'navigation: "ڕێنوێنی Atlas"',
+    'mobileNavigation: "ڕێنوێنی مۆبایلی Atlas"',
+    'askAtlas: "لە Atlas بپرسە"',
+    'beta: "تاقیکردنەوە"',
+    'navigation: "ڕێنیشاندانا Atlas"',
+    'mobileNavigation: "ڕێنیشاندانا موبایلا Atlas"',
+    'askAtlas: "ژ Atlas بپرسە"',
+    'beta: "تاقیکرنەوە"',
+    'navigation: "التنقل في Atlas"',
+    'mobileNavigation: "تنقل Atlas على الهاتف"',
+    'askAtlas: "اسأل Atlas"',
+    'beta: "تجريبي"',
+  ]) {
+    assert.ok(navigation.includes(expected), `missing localized navigation copy: ${expected}`);
   }
+
   assert.match(navigation, /aria-label=\{nav\.navigation\}/);
   assert.match(navigation, /aria-label=\{nav\.askAtlas\}/);
   assert.match(navigation, /<span>\{nav\.askAtlas\}<\/span>/);
