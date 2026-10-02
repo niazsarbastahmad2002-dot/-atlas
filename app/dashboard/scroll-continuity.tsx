@@ -6,11 +6,20 @@ import { usePathname, useSearchParams } from "next/navigation";
 const storageKey = "atlas:dashboard-scroll";
 
 type SavedScroll = {
-  path: string;
-  search: string;
+  scheduleKey: string;
   y: number;
   at: number;
 };
+
+function scheduleContextKey(pathname: string, search: string) {
+  const params = new URLSearchParams(search);
+  return [
+    pathname,
+    params.get("clinic") ?? "",
+    params.get("doctor") ?? "",
+    params.get("day") ?? "",
+  ].join("|");
+}
 
 export function DashboardScrollContinuity() {
   const pathname = usePathname();
@@ -25,8 +34,7 @@ export function DashboardScrollContinuity() {
       if (form.dataset.resetScroll === "true") return;
 
       const saved: SavedScroll = {
-        path: window.location.pathname,
-        search: window.location.search,
+        scheduleKey: scheduleContextKey(window.location.pathname, window.location.search),
         y: window.scrollY,
         at: Date.now(),
       };
@@ -49,13 +57,11 @@ export function DashboardScrollContinuity() {
       return;
     }
 
-    const currentSearch = searchKey ? `?${searchKey}` : "";
-    // Only restore a recent submission in the exact same schedule context.
-    // A doctor/day/clinic change shares the /dashboard pathname but must land
-    // naturally instead of inheriting the previous schedule's scroll position.
+    const currentScheduleKey = scheduleContextKey(pathname, searchKey);
+    // Keep scroll through save/error feedback redirects, but never carry it
+    // between clinic, doctor, or day schedules that share /dashboard.
     if (
-      saved.path !== pathname
-      || saved.search !== currentSearch
+      saved.scheduleKey !== currentScheduleKey
       || Date.now() - saved.at > 15_000
     ) {
       window.sessionStorage.removeItem(storageKey);
