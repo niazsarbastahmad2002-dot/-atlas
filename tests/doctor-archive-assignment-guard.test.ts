@@ -42,3 +42,11 @@ test("doctor reorder buttons lock while their server action is pending", async (
   assert.doesNotMatch(page, /moveDoctor\.bind\(null, clinic\.id, doctor\.id, "down"\)\}><button type="submit">/);
 });
 
+test("removed doctor count follows the selected Atlas digit style", async () => {
+  const page = await read("app/dashboard/settings/page.tsx");
+
+  assert.match(page, /import \{ localizeDigits \} from "@\/lib\/i18n\/format"/);
+  assert.match(page, /\{copy\.removedDoctors\} \(\{localizeDigits\(archivedDoctors\.length, locale\)\}\)/);
+  assert.doesNotMatch(page, /\{copy\.removedDoctors\} \(\{archivedDoctors\.length\}\)/);
+});
+

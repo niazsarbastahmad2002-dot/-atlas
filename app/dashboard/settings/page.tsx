@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
+import { localizeDigits } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
@@ -417,7 +418,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
             {archivedDoctors.length ? (
               <details className="settings-disclosure">
-                <summary>{copy.removedDoctors} ({archivedDoctors.length})</summary>
+                <summary>{copy.removedDoctors} ({localizeDigits(archivedDoctors.length, locale)})</summary>
                 <div className="doctor-settings-list">
                   {archivedDoctors.map((doctor) => (
                     <article className="doctor-settings-row is-archived" key={doctor.id}>
