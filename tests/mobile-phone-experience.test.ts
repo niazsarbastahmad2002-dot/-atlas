@@ -80,7 +80,7 @@ test("appointment search resets only when the schedule context changes", () => {
 test("mobile locale changes rebuild enhanced appointment controls with fresh localized listeners", () => {
   const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
 
-  assert.match(enhancer, /useRef\("")/);
+  assert.match(enhancer, /useRef\(""\)/);
   assert.match(enhancer, /let query = queryRef\.current/);
   assert.match(enhancer, /queryRef\.current = query/);
   assert.match(enhancer, /atlas-phone-appointment-search, \.atlas-phone-search-meta, \.atlas-phone-search-empty/);
