@@ -46,3 +46,13 @@ test("clinic live flow fails closed without explicit clinic ownership or members
   assert.match(liveFlow, /if \(!hasClinicAccess\) return null/);
 });
 
+test("continuity snapshot fails closed without explicit clinic ownership or membership", () => {
+  const snapshot = source("app/api/continuity/snapshot/route.ts");
+
+  assert.match(snapshot, /const hasClinicAccess = clinic\.owner_id === userData\.user\.id/);
+  assert.match(snapshot, /membership\?\.role === "owner"/);
+  assert.match(snapshot, /membership\?\.role === "manager"/);
+  assert.match(snapshot, /membership\?\.role === "receptionist"/);
+  assert.match(snapshot, /if \(!hasClinicAccess\) \{[\s\S]*clear: true[\s\S]*status: 403/);
+});
+
