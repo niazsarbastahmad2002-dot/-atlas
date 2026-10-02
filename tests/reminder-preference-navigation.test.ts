@@ -8,7 +8,7 @@ test("reminder language memory follows the currently rendered clinic form", () =
   const memory = source("app/dashboard/preference-memory.tsx");
 
   assert.match(memory, /function clinicIdFor/);
-  assert.match(memory, /languageSelect\.form\?\.querySelector/);
+  assert.match(memory, /select\.form\?\.querySelector/);
   assert.match(memory, /document\.addEventListener\("change", saveLanguage\)/);
   assert.match(memory, /new MutationObserver\(prepare\)/);
   assert.match(memory, /attributeFilter: \["value"\]/);
