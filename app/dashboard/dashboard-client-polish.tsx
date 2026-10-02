@@ -222,7 +222,8 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     const schedulePolish = () => { if (frame) return; frame = window.requestAnimationFrame(() => { frame = 0; polish(); }); };
     polish();
     const observer = new MutationObserver(schedulePolish);
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    const observerRoot = document.querySelector(".app-shell") ?? document.body;
+    observer.observe(observerRoot, { childList: true, subtree: true, characterData: true });
     return () => { observer.disconnect(); if (frame) window.cancelAnimationFrame(frame); };
   }, [locale, router]);
 
