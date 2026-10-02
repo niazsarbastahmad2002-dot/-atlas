@@ -122,3 +122,15 @@ test("emergency export tools stay out of everyday clinic settings", () => {
   assert.match(settings, /className="settings-export-form"/);
   assert.match(simplicity, /\.settings-export-form\s*\{\s*display:\s*none;/);
 });
+
+test("continuity snapshot never substitutes another clinic for an explicit unavailable clinic", () => {
+  const route = source("app/api/continuity/snapshot/route.ts");
+  const component = source("app/dashboard/continuity-mode.tsx");
+
+  assert.match(route, /if \(requestedClinicId && !isUuid\(requestedClinicId\)\)[\s\S]*clear: true[\s\S]*clinic_invalid/);
+  assert.match(route, /const clinic = requestedClinicId[\s\S]*clinics\.find\(\(candidate\) => candidate\.id === requestedClinicId\)[\s\S]*: clinics\[0\]/);
+  assert.match(route, /if \(!clinic\)[\s\S]*clear: true[\s\S]*clinic_unavailable/);
+  assert.doesNotMatch(route, /clinics\.find\(\(candidate\) => candidate\.id === requestedClinicId\) \?\? clinics\[0\]/);
+  assert.match(component, /if \(body\?\.clear === true\)[\s\S]*clearBrowserContinuityCache\(\)/);
+});
+
