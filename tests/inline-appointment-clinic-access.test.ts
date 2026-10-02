@@ -11,7 +11,9 @@ test("inline appointment mutations require explicit clinic ownership or membersh
   assert.match(action, /supabase\.auth\.getUser\(\)/);
   assert.match(action, /from\("clinics"\)\.select\("id, owner_id"\)/);
   assert.match(action, /from\("clinic_members"\)[\s\S]*\.eq\("user_id", userData\.user\.id\)/);
-  assert.match(action, /const isClinicOwner = clinic\.owner_id === userData\.user\.id/);\n  assert.match(action, /if \(!isClinicOwner && membershipError\) return null/);\n  assert.match(action, /const hasClinicAccess = isClinicOwner/);
+  assert.match(action, /const isClinicOwner = clinic\.owner_id === userData\.user\.id/);
+  assert.match(action, /if \(!isClinicOwner && membershipError\) return null/);
+  assert.match(action, /const hasClinicAccess = isClinicOwner/);
   assert.match(action, /membership\?\.role === "owner"/);
   assert.match(action, /membership\?\.role === "manager"/);
   assert.match(action, /membership\?\.role === "receptionist"/);
