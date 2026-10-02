@@ -9,9 +9,9 @@ test("sign-in does not grant clinic access without an explicit clinic or invitat
   const dashboard = source("app/dashboard/page.tsx");
   const actions = source("app/dashboard/actions.ts");
 
-  assert.match(activation, /readPendingStaffInvitations/);
-  assert.match(activation, /invitation\.clinic_id/);
-  assert.match(activation, /role: "receptionist"/);
+  assert.match(activation, /supabase\.auth\.getUser\(\)/);
+  assert.match(activation, /Clinic membership is never granted as a side effect of signing in/);
+  assert.doesNotMatch(activation, /readPendingStaffInvitations|clinic_members|role: "receptionist"|\.upsert\(|createAdminClient/);
 
   assert.match(dashboard, /if \(!clinics\?\.length\)/);
   assert.match(dashboard, /form action=\{createClinic\}/);
