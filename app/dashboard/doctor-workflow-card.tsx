@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatLeadTime, formatMinutes } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { queueSettingWrite } from "./setting-write-barrier";
@@ -173,6 +173,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   const [language, setLanguage] = useState("ku");
   const [retryDoctorId, setRetryDoctorId] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "saving" | "saved" | "load-failed" | "save-failed">("loading");
+  const loadRequestRef = useRef(0);
 
   const apply = (data: Workflow) => {
     setWorkflow(data);
@@ -188,6 +189,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   };
 
   const load = async (doctorId = "") => {
+    const requestId = ++loadRequestRef.current;
     setState("loading");
     const params = new URLSearchParams({ clinic_id: clinicId });
     const requested = doctorId || rememberedDoctorId();
@@ -195,8 +197,11 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
     try {
       const response = await fetch(`/api/settings/doctor-workflow?${params}`, { credentials: "same-origin", cache: "no-store" });
       if (!response.ok) throw new Error("load_failed");
-      apply(await response.json() as Workflow);
+      const next = await response.json() as Workflow;
+      if (requestId !== loadRequestRef.current) return;
+      apply(next);
     } catch {
+      if (requestId !== loadRequestRef.current) return;
       setRetryDoctorId(requested);
       setState("load-failed");
     }
