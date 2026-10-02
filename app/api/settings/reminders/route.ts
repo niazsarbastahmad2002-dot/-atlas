@@ -26,6 +26,12 @@ async function context(clinicId: string) {
   ]);
 
   if (!clinic) return null;
+  const hasClinicAccess = clinic.owner_id === userData.user.id
+    || membership?.role === "owner"
+    || membership?.role === "manager"
+    || membership?.role === "receptionist";
+  if (!hasClinicAccess) return null;
+
   const canManage = clinic.owner_id === userData.user.id
     || membership?.role === "owner"
     || membership?.role === "manager";
