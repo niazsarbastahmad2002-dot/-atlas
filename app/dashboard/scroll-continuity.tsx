@@ -6,10 +6,20 @@ import { usePathname, useSearchParams } from "next/navigation";
 const storageKey = "atlas:dashboard-scroll";
 
 type SavedScroll = {
-  path: string;
+  scheduleKey: string;
   y: number;
   at: number;
 };
+
+function scheduleContextKey(pathname: string, search: string) {
+  const params = new URLSearchParams(search);
+  return [
+    pathname,
+    params.get("clinic") ?? "",
+    params.get("doctor") ?? "",
+    params.get("day") ?? "",
+  ].join("|");
+}
 
 export function DashboardScrollContinuity() {
   const pathname = usePathname();
@@ -24,7 +34,7 @@ export function DashboardScrollContinuity() {
       if (form.dataset.resetScroll === "true") return;
 
       const saved: SavedScroll = {
-        path: window.location.pathname,
+        scheduleKey: scheduleContextKey(window.location.pathname, window.location.search),
         y: window.scrollY,
         at: Date.now(),
       };
@@ -47,9 +57,13 @@ export function DashboardScrollContinuity() {
       return;
     }
 
-    // Only restore a recent same-page form submission. Cross-page navigation should
-    // still land naturally at the top of the destination screen.
-    if (saved.path !== pathname || Date.now() - saved.at > 15_000) {
+    const currentScheduleKey = scheduleContextKey(pathname, searchKey);
+    // Keep scroll through save/error feedback redirects, but never carry it
+    // between clinic, doctor, or day schedules that share /dashboard.
+    if (
+      saved.scheduleKey !== currentScheduleKey
+      || Date.now() - saved.at > 15_000
+    ) {
       window.sessionStorage.removeItem(storageKey);
       return;
     }
