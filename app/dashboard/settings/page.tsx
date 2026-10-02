@@ -423,7 +423,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   {archivedDoctors.map((doctor) => (
                     <article className="doctor-settings-row is-archived" key={doctor.id}>
                       <strong>{doctor.name}</strong>
-                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, true)}><button className="button button-ghost button-small" type="submit">{t.restore}</button></form>
+                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, true)}><SubmitButton className="button button-ghost button-small" pendingLabel={t.saving}>{t.restore}</SubmitButton></form>
                     </article>
                   ))}
                 </div>
