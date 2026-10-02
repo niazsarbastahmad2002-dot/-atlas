@@ -170,7 +170,7 @@ export function LiveClinicFlow({
         setFlow((current) => current ? {
           ...current,
           delayMinutes: saved.delayMinutes === null || typeof saved.delayMinutes === "number" ? saved.delayMinutes : current.delayMinutes,
-          timingUpdatedAt: saved.timingUpdatedAt ?? current.timingUpdatedAt,
+          timingUpdatedAt: saved.timingUpdatedAt === null || typeof saved.timingUpdatedAt === "string" ? saved.timingUpdatedAt : current.timingUpdatedAt,
         } : current);
         setError("stale");
         return;
