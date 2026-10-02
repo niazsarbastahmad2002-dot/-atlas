@@ -60,21 +60,40 @@ export async function GET(request: Request) {
     });
   }
 
+  const { data: membership, error: membershipError } = await supabase
+    .from("clinic_members")
+    .select("role, assigned_doctor_id")
+    .eq("clinic_id", clinic.id)
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+
+  if (membershipError) {
+    return NextResponse.json({ error: "snapshot_unavailable" }, {
+      status: 503,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
+  const hasClinicAccess = clinic.owner_id === userData.user.id
+    || membership?.role === "owner"
+    || membership?.role === "manager"
+    || membership?.role === "receptionist";
+  if (!hasClinicAccess) {
+    return NextResponse.json({ clear: true }, {
+      status: 403,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   const now = new Date();
   const today = baghdadDate.format(now);
   const dayStart = new Date(`${today}T00:00:00+03:00`).toISOString();
   const dayEnd = new Date(`${shiftBaghdadDay(today, 1)}T00:00:00+03:00`).toISOString();
 
   const [
-    { data: membership, error: membershipError },
     { data: appointments, error: appointmentError },
     { data: doctors, error: doctorsError },
   ] = await Promise.all([
-    supabase.from("clinic_members")
-      .select("role, assigned_doctor_id")
-      .eq("clinic_id", clinic.id)
-      .eq("user_id", userData.user.id)
-      .maybeSingle(),
     supabase.from("appointments")
       .select("id, patient_name, doctor_id, doctor_name, appointment_at, created_at, status")
       .eq("clinic_id", clinic.id)
@@ -92,7 +111,7 @@ export async function GET(request: Request) {
       .order("name", { ascending: true }),
   ]);
 
-  if (membershipError || appointmentError || doctorsError) {
+  if (appointmentError || doctorsError) {
     return NextResponse.json({ error: "snapshot_unavailable" }, {
       status: 503,
       headers: { "Cache-Control": "no-store" },
