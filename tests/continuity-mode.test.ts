@@ -134,3 +134,12 @@ test("continuity snapshot never substitutes another clinic for an explicit unava
   assert.match(component, /if \(body\?\.clear === true\)[\s\S]*clearBrowserContinuityCache\(\)/);
 });
 
+test("continuity access is verified before patient data is loaded", () => {
+  const route = source("app/api/continuity/snapshot/route.ts");
+
+  const guard = route.indexOf("const hasClinicAccess = clinic.owner_id === userData.user.id");
+  const appointments = route.indexOf('.from("appointments")');
+  assert.ok(guard >= 0);
+  assert.ok(appointments > guard);
+});
+
