@@ -7,7 +7,8 @@ test("appointment form applies Badini doctor reminder defaults", () => {
     new URL("../app/dashboard/appointment-time-field-v2.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(source, /\["ku", "bd", "ar", "en"\]\.includes\(language\)/);
+  assert.match(source, /const preferredLanguage = savedLanguage/);
+  assert.match(source, /\["ku", "bd", "ar", "en"\]\.includes\(preferredLanguage\)/);
 });
 
 test("reminder settings API accepts Badini like the rest of Atlas", () => {
