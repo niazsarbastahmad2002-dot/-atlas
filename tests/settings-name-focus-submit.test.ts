@@ -6,6 +6,10 @@ const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.
 
 test("settings name draft is preserved when keyboard focus moves to submit", () => {
   const reset = source("app/dashboard/settings-draft-reset.tsx");
+  const settings = source("app/dashboard/settings/page.tsx");
+
+  assert.match(settings, /SettingsDraftReset/);
+  assert.match(settings, /<SettingsDraftReset locale=\{locale\} \/>/);
 
   assert.match(reset, /function submitControlForm/);
   assert.match(reset, /button\[type="submit"\], input\[type="submit"\]/);
