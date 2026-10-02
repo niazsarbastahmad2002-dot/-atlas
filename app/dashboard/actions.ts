@@ -77,7 +77,18 @@ async function authorizeClinic(clinicId: string) {
   if (!hasClinicAccess) {
     redirect(dashboardUrl("error", "clinic_unavailable"));
   }
-  return { supabase, userId };
+  const canManage = isClinicOwner
+    || membership?.role === "owner"
+    || membership?.role === "manager";
+  return { supabase, userId, canManage };
+}
+
+async function authorizeClinicManagement(clinicId: string) {
+  const context = await authorizeClinic(clinicId);
+  if (!context.canManage) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
+  return context;
 }
 
 export async function createClinic(formData: FormData) {
@@ -109,7 +120,7 @@ export async function updateClinicInterval(formData: FormData) {
     redirect(dashboardUrl("error", "clinic_settings_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data, error } = await supabase
     .from("clinics")
     .update({ appointment_interval_minutes: interval })
@@ -135,7 +146,7 @@ export async function createDoctor(formData: FormData) {
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase, userId } = await authorizeClinic(clinicId);
+  const { supabase, userId } = await authorizeClinicManagement(clinicId);
   const { data: lastDoctor } = await supabase
     .from("doctors")
     .select("display_order")
@@ -172,7 +183,7 @@ export async function updateDoctor(formData: FormData) {
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data, error } = await supabase
     .from("doctors")
     .update({ name })
@@ -195,7 +206,7 @@ export async function setDoctorActive(clinicId: string, doctorId: string, active
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data, error } = await supabase
     .from("doctors")
     .update({ active })
@@ -218,7 +229,7 @@ export async function moveDoctor(clinicId: string, doctorId: string, direction: 
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data: doctors, error: readError } = await supabase
     .from("doctors")
     .select("id, name, display_order")
