@@ -53,13 +53,15 @@ test("legacy SiteURL magic links are bridged onto the canonical Atlas email call
 });
 
 
-test("global email fragment bridge never intercepts clinic invitation fragments", async () => {
+test("global email fragment bridge never consumes retired clinic invitation fragments", async () => {
   const bridge = await read("app/components/email-auth-fragment-bridge.tsx");
   const invite = await read("app/auth/invite/page.tsx");
 
   assert.match(bridge, /window\.location\.pathname === "\/auth\/invite"/);
-  assert.match(invite, /window\.location\.hash/);
-  assert.match(invite, /window\.location\.replace\("\/auth\/activate"\)/);
+  assert.match(invite, /window\.history\.replaceState/);
+  assert.match(invite, /destination\.searchParams\.set\("error", "invalid_invite"\)/);
+  assert.match(invite, /window\.location\.replace\(destination\.pathname \+ destination\.search\)/);
+  assert.doesNotMatch(invite, /auth\.setSession|auth\.getSession|\/auth\/activate/);
 });
 
 test("code-based email verification saves locale only after session exchange", async () => {

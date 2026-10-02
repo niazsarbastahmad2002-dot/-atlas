@@ -1,51 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect } from "react";
+import { isUiLocale } from "@/lib/i18n/ui";
 
 export default function ReceptionistInvitePage() {
-  const [message, setMessage] = useState("Opening Atlas…");
-
   useEffect(() => {
-    let cancelled = false;
+    // This legacy email-era invitation route is intentionally retired.
+    // Never consume its auth fragment or grant clinic access automatically.
+    async function recover() {
+      const currentParams = new URLSearchParams(window.location.search);
+      const lang = currentParams.get("lang");
+      const destination = new URL("/login", window.location.origin);
+      destination.searchParams.set("error", "invalid_invite");
 
-    async function finishInvitation() {
-      try {
-        const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-        const accessToken = params.get("access_token");
-        const refreshToken = params.get("refresh_token");
-        const supabase = createClient();
-
-        if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+      if (isUiLocale(lang)) {
+        destination.searchParams.set("lang", lang);
+        try {
+          await fetch("/api/ui-language", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ locale: lang }),
           });
-          if (error) throw error;
-        } else {
-          const { data } = await supabase.auth.getSession();
-          if (!data.session) throw new Error("missing_invitation_session");
-        }
-
-        if (!cancelled) window.location.replace("/auth/activate");
-      } catch {
-        if (!cancelled) {
-          setMessage("This Atlas invitation is no longer valid. Ask the clinic to send a fresh invitation.");
-          window.setTimeout(() => window.location.replace("/login?error=invalid_link"), 1800);
+        } catch {
+          // The validated query parameter still keeps the recovery copy localized.
         }
       }
+
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      window.location.replace(destination.pathname + destination.search);
     }
 
-    void finishInvitation();
-    return () => { cancelled = true; };
+    void recover();
   }, []);
 
   return (
     <main className="center-page">
-      <section className="auth-card">
+      <section className="auth-card" aria-label="Atlas">
         <div className="app-brand"><span className="app-brand-mark">A</span><span>Atlas</span></div>
-        <h1>{message}</h1>
-        <p className="quiet">Your clinic access will open automatically.</p>
       </section>
     </main>
   );
