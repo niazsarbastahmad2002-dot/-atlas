@@ -12,3 +12,10 @@ test("reminder preference refreshes when the active clinic form changes", () => 
   assert.match(source, /localStorage\.getItem/);
   assert.match(source, /localStorage\.setItem/);
 });
+
+test("doctor workflow defaults do not overwrite a remembered clinic language", () => {
+  const timeField = readFileSync(new URL("../app/dashboard/appointment-time-field-v2.tsx", import.meta.url), "utf8");
+  assert.match(timeField, /atlas:last-reminder-language/);
+  assert.match(timeField, /rememberedLanguage/);
+  assert.match(timeField, /!\["ku", "bd", "ar", "en"\]\.includes\(rememberedLanguage \?\? ""\)/);
+});
