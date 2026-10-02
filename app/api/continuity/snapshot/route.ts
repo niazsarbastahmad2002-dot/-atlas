@@ -44,9 +44,21 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const requestedClinicId = url.searchParams.get("clinic");
   const requestedDoctorId = url.searchParams.get("doctor");
-  const clinic = requestedClinicId && isUuid(requestedClinicId)
-    ? clinics.find((candidate) => candidate.id === requestedClinicId) ?? clinics[0]
+  if (requestedClinicId && !isUuid(requestedClinicId)) {
+    return NextResponse.json({ clear: true, error: "clinic_invalid" }, {
+      status: 400,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+  const clinic = requestedClinicId
+    ? clinics.find((candidate) => candidate.id === requestedClinicId)
     : clinics[0];
+  if (!clinic) {
+    return NextResponse.json({ clear: true, error: "clinic_unavailable" }, {
+      status: 404,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
 
   const now = new Date();
   const today = baghdadDate.format(now);
