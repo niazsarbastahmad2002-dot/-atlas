@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   MIN_PHONE_SEARCH_DIGITS,
   nameMatchScore,
@@ -93,9 +93,11 @@ function currentScheduleKey() {
 }
 
 export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
+  const queryRef = useRef("");
+
   useEffect(() => {
     const text = copy[locale];
-    let query = "";
+    let query = queryRef.current;
     let composing = false;
     let lastScheduleKey = currentScheduleKey();
     let prepareFrame = 0;
@@ -292,6 +294,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         const currentList = () => panel.querySelector<HTMLElement>(".polished-appointment-list");
         const commitInput = () => {
           query = input.value;
+          queryRef.current = query;
           const activeList = currentList();
           if (activeList) applyFilter(activeList);
         };
@@ -307,6 +310,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         });
         clear.addEventListener("click", () => {
           query = "";
+          queryRef.current = "";
           input.value = "";
           const activeList = currentList();
           if (activeList) applyFilter(activeList);
@@ -344,6 +348,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       if (nextKey === lastScheduleKey) return;
       lastScheduleKey = nextKey;
       query = "";
+      queryRef.current = "";
       composing = false;
       document.querySelectorAll<HTMLInputElement>(".atlas-phone-appointment-search input").forEach((input) => {
         input.value = "";
@@ -378,6 +383,17 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       observer.disconnect();
       if (prepareFrame) window.cancelAnimationFrame(prepareFrame);
       document.removeEventListener("change", onChange);
+      document.querySelectorAll(".atlas-phone-appointment-search, .atlas-phone-search-meta, .atlas-phone-search-empty").forEach((node) => node.remove());
+      document.querySelectorAll<HTMLElement>(".appointment-row.is-atlas-phone-managed").forEach((row) => {
+        row.querySelector(".atlas-phone-appointment-summary")?.remove();
+        row.classList.remove(
+          "is-atlas-phone-managed",
+          "is-atlas-phone-expanded",
+          "is-atlas-phone-search-hidden",
+          "is-atlas-phone-search-match",
+          "is-atlas-phone-search-focus",
+        );
+      });
     };
   }, [locale]);
 
