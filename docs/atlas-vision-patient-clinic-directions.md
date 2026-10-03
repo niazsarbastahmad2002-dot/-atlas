@@ -7,13 +7,13 @@ A valid private appointment link can now show directions when the clinic has exp
 - The patient page never reads directory tables directly.
 - A dedicated service-role-only RPC validates the private appointment token.
 - Anonymous and ordinary authenticated clients cannot execute the location RPC.
-- The RPC returns only the clinic's intentionally publishable location fields.
+- The RPC returns only the clinic's intentionally publishable address fields.
 - An unpublished clinic directory draft is never exposed through a patient link.
 - The location RPC is optional enrichment: an error or missing location never makes the appointment page unavailable.
 
 ## Directions
 
-Atlas prefers published latitude/longitude when both are present and otherwise falls back to the published address/area/city string.
+Atlas only shows Directions when the clinic has published a specific street/address value. Area and city add context, but a city-only profile does not produce a directions action. Coordinates are deliberately excluded from this patient RPC until Atlas has an atomic clinic UI for keeping coordinates synchronized with address edits.
 
 The UI opens Google Maps with the standard cross-platform Maps URL format using `api=1` and a destination parameter. No Maps JavaScript API, API key, SDK, billing integration, or location tracking is added.
 
