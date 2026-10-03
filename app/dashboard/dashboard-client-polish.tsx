@@ -190,6 +190,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           if (consentInput) consentInput.checked = false;
           if (relationshipInput) relationshipInput.value = "";
           if (idempotencyInput && typeof crypto.randomUUID === "function") idempotencyInput.value = crypto.randomUUID();
+          document.dispatchEvent(new Event("atlas:appointment-saved"));
           toast.success(Boolean(result.duplicate));
           if (button) button.textContent = `✓ ${result.duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`;
           if (destination) router.push(destination); else router.refresh();
