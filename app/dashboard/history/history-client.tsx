@@ -157,8 +157,9 @@ export function HistoryClient({
       .filter((row) => {
         if (!needle) return true;
         if (normalizeHistorySearch(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(needle)) return true;
+        const phoneQuery = /^[0-9+().\-\s]+$/.test(needle);
         const digits = needle.replace(/[^0-9]/g, "");
-        return digits.length >= 4 && row.patientPhone.replace(/[^0-9]/g, "").includes(digits);
+        return phoneQuery && digits.length >= 4 && row.patientPhone.replace(/[^0-9]/g, "").includes(digits);
       })
       .sort((a, b) => sort === "newest"
         ? new Date(b.appointmentAt).getTime() - new Date(a.appointmentAt).getTime()
