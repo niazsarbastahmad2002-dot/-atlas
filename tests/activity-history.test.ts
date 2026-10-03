@@ -139,3 +139,15 @@ test("history selected-record count uses the selected Atlas digit style", async 
   assert.doesNotMatch(historyClient, /<strong>\{selectedVisible\.length\} \{t\.selected\}<\/strong>/);
 });
 
+
+
+test("history deletion freezes the visible selection until the delete finishes", async () => {
+  const historyClient = await read("app/dashboard/history/history-client.tsx");
+
+  assert.match(historyClient, /<section className="history-card" aria-busy=\{pending\}>/);
+  assert.match(historyClient, /placeholder=\{t\.search\} value=\{query\} disabled=\{pending\}/);
+  assert.match(historyClient, /aria-label=\{t\.filter\} value=\{filter\} disabled=\{pending\}/);
+  assert.match(historyClient, /aria-label=\{t\.sort\} value=\{sort\} disabled=\{pending\}/);
+  assert.match(historyClient, /history-select-all"><input type="checkbox" disabled=\{pending\}/);
+  assert.match(historyClient, /type="checkbox" disabled=\{pending\} checked=\{selected\.has\(row\.id\)\}/);
+});
