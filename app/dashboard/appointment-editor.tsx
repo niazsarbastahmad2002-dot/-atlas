@@ -166,8 +166,27 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
 
   useEffect(() => {
     const refreshNow = () => setNow(Date.now());
-    const timer = window.setInterval(refreshNow, 30_000);
-    return () => window.clearInterval(timer);
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
+      window.clearInterval(timer);
+      timer = null;
+    };
+    const syncVisibility = () => {
+      if (document.hidden) {
+        stop();
+        return;
+      }
+      refreshNow();
+      if (timer === null) timer = window.setInterval(refreshNow, 30_000);
+    };
+
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
   }, []);
 
   useEffect(() => {
