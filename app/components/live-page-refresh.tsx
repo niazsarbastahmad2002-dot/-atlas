@@ -12,6 +12,19 @@ function scheduleFormIsBusy() {
   return Boolean(name || phone || (active instanceof HTMLInputElement && form.contains(active)) || form.querySelector("[data-atlas-editor-open='true']"));
 }
 
+function reserveSafariStallReload(now: number) {
+  const key = "atlas:safari-stall-reload";
+  try {
+    const previous = Number(window.sessionStorage.getItem(key) ?? 0);
+    if (now - previous < 60_000) return false;
+    window.sessionStorage.setItem(key, String(now));
+    return true;
+  } catch {
+    // Without storage Atlas cannot safely throttle full-page recovery reloads.
+    return false;
+  }
+}
+
 export function LivePageRefresh() {
   const pathname = usePathname();
   const router = useRouter();
@@ -42,11 +55,7 @@ export function LivePageRefresh() {
     const timer = window.setTimeout(() => {
       const loading = document.querySelector('main[aria-busy="true"][data-atlas-loading="schedule"]');
       if (!loading) return;
-      const key = "atlas:safari-stall-reload";
-      const now = Date.now();
-      const previous = Number(sessionStorage.getItem(key) ?? 0);
-      if (now - previous < 60_000) return;
-      sessionStorage.setItem(key, String(now));
+      if (!reserveSafariStallReload(Date.now())) return;
       window.location.reload();
     }, 8_000);
     return () => window.clearTimeout(timer);
