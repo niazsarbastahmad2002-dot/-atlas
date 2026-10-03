@@ -39,3 +39,12 @@ test("full availability is mobile-first and preserves 48px slot targets", () => 
 test("full availability page is noindex to avoid duplicate dynamic search pages", () => {
   assert.match(page, /robots: \{ index: false, follow: true \}/);
 });
+
+
+test("doctor profile links to the full public availability page with a 48px action", () => {
+  const profile = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");
+
+  assert.match(profile, /\/care\/\$\{clinicSlug\}\/\$\{doctorSlug\}\/times/);
+  assert.match(profile, /atlas-care-availability-actions/);
+  assert.match(profile, /atlas-care-availability-actions \.button\{min-height:48px/);
+});
