@@ -65,3 +65,11 @@ test("public doctor search safely rejects repeated query parameters", () => {
   assert.match(page, /q\?: string \| string\[\]/);
   assert.match(page, /if \(typeof value !== "string"\) return ""/);
 });
+
+
+test("public clinic cards use theme-aware Atlas surfaces", () => {
+  const clinic = source("app/care/[clinicSlug]/page.tsx");
+
+  assert.match(clinic, /background:var\(--surface\)/);
+  assert.doesNotMatch(clinic, /background:#fff/);
+});
