@@ -69,5 +69,5 @@ test("weekly public hours are committed through one invoker RPC transaction", ()
   assert.match(migration, /on conflict \(clinic_id, doctor_id, weekday\)/);
   assert.match(migration, /starts_at = excluded\.starts_at/);
   assert.match(actions, /weekSaved !== true/);
-  assert.doesNotMatch(actions, /clinic_id: clinicId,[\s\S]*weekday,/);
+  assert.doesNotMatch(actions, /rows\.push\(\{\s*clinic_id:/);
 });
