@@ -13,6 +13,7 @@ import { formatBaghdadDateTime, formatBaghdadDay, uiLocaleMeta, uiText, type UiL
 import { getDashboardMessage } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
+import { ClinicSetupNameInput } from "./clinic-setup-name-input";
 import { createAppointment, createClinic } from "./actions";
 import { AppointmentActions } from "./appointment-actions";
 import { AppointmentEditor } from "./appointment-editor";
@@ -145,7 +146,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: clinics, error: clinicsError } = await supabase.from("clinics").select("id, name, owner_id, appointment_interval_minutes").order("created_at", { ascending: true });
   if (clinicsError) return <DashboardError locale={locale} />;
   if (!clinics?.length) {
-    return <main className="center-page"><section className="auth-card setup-card"><div className="app-brand setup-brand"><span className="app-brand-mark" aria-hidden="true">A</span><span>Atlas</span></div><div className="eyebrow">{t.firstSetup}</div><h1>{t.clinicSetup}</h1><p className="quiet">{t.useSynthetic}</p>{messageError ? <p className="notice notice-error" role="alert">{messageError}</p> : null}<form action={createClinic} className="stack-form"><label htmlFor="name">{t.clinicName}</label><input id="name" name="name" minLength={2} maxLength={120} autoComplete="organization" required /><SubmitButton pendingLabel={t.saving}>{t.createWorkspace}</SubmitButton></form></section></main>;
+    return <main className="center-page"><section className="auth-card setup-card"><div className="app-brand setup-brand"><span className="app-brand-mark" aria-hidden="true">A</span><span>Atlas</span></div><div className="eyebrow">{t.firstSetup}</div><h1>{t.clinicSetup}</h1><p className="quiet">{t.useSynthetic}</p>{messageError ? <p className="notice notice-error" role="alert">{messageError}</p> : null}<form action={createClinic} className="stack-form"><label htmlFor="name">{t.clinicName}</label><ClinicSetupNameInput id="name" name="name" minLength={2} maxLength={120} autoComplete="organization" required /><SubmitButton pendingLabel={t.saving}>{t.createWorkspace}</SubmitButton></form></section></main>;
   }
 
   const requestedClinic = params.clinic && isUuid(params.clinic) ? params.clinic : null;
