@@ -5,6 +5,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
+import { ShareProfileButton } from "@/app/care/share-profile-button";
 import { saveClinicDirectoryProfile, saveDoctorDirectoryProfile } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,11 @@ const copy: Record<UiLocale, {
   preview: string;
   availability: string;
   availabilityHelp: string;
+  share: string;
+  copied: string;
+  whatsapp: string;
+  shareClinicText: string;
+  shareDoctorText: string;
 }> = {
   en: {
     eyebrow: "Public presence",
@@ -78,6 +84,11 @@ const copy: Record<UiLocale, {
     preview: "Open public profile",
     availability: "Online booking hours",
     availabilityHelp: "Define which hours may later appear as real self-booking slots.",
+    share: "Share",
+    copied: "Link copied",
+    whatsapp: "WhatsApp",
+    shareClinicText: "Clinic profile and doctors on Atlas.",
+    shareDoctorText: "Doctor profile and live appointment times on Atlas.",
   },
   ku: {
     eyebrow: "پڕۆفایلی گشتی",
@@ -111,6 +122,11 @@ const copy: Record<UiLocale, {
     preview: "کردنەوەی پڕۆفایلی گشتی",
     availability: "کاتەکانی مەوعیدی ئۆنلاین",
     availabilityHelp: "دیاری بکە کام کاتانە بتوانن وەک کاتی ڕاستەقینەی مەوعیدی خۆکار پیشان بدرێن.",
+    share: "هاوبەشکردن",
+    copied: "بەستەر کۆپی کرا",
+    whatsapp: "WhatsApp",
+    shareClinicText: "پڕۆفایلی کلینیک و پزیشکەکان لە Atlas.",
+    shareDoctorText: "پڕۆفایلی پزیشک و کاتە بەردەستە ڕاستەقینەکان لە Atlas.",
   },
   bd: {
     eyebrow: "پڕۆفایلا گشتی",
@@ -144,6 +160,11 @@ const copy: Record<UiLocale, {
     preview: "پڕۆفایلا گشتی بکەڤە",
     availability: "دەمێن وادەیێ ئۆنلاین",
     availabilityHelp: "دیار بکە کیژ دەمان دەتوانن وەک دەمێ ڕاستەقینە یێ وادەیا خۆکار دیار بن.",
+    share: "پارڤەکرن",
+    copied: "لینک هاتە کۆپیکرن",
+    whatsapp: "WhatsApp",
+    shareClinicText: "پڕۆفایلا کلینیکێ و دکتۆر ل Atlas.",
+    shareDoctorText: "پڕۆفایلا دکتۆری و دەمێن ڕاستەقینە یێن بەردەست ل Atlas.",
   },
   ar: {
     eyebrow: "الظهور العام",
@@ -177,6 +198,11 @@ const copy: Record<UiLocale, {
     preview: "فتح الملف العام",
     availability: "ساعات الحجز عبر الإنترنت",
     availabilityHelp: "حدد الساعات التي يمكن أن تظهر لاحقاً كأوقات حجز ذاتي حقيقية.",
+    share: "مشاركة",
+    copied: "تم نسخ الرابط",
+    whatsapp: "WhatsApp",
+    shareClinicText: "ملف العيادة والأطباء على Atlas.",
+    shareDoctorText: "ملف الطبيب والأوقات الحقيقية المتاحة على Atlas.",
   },
 };
 
@@ -262,6 +288,19 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
           <label className="public-profile-publish"><input type="checkbox" name="is_published" defaultChecked={clinicProfile?.is_published ?? false} /><span><strong>{t.publish}</strong><small>{t.publishClinicHelp}</small></span></label>
           <div className="public-profile-actions">
             <SubmitButton pendingLabel="…">{t.save}</SubmitButton>
+            {clinicProfile?.is_published ? (
+              <>
+                <Link className="button button-ghost" href={`/care/${clinicProfile.slug}`} target="_blank">{t.preview}</Link>
+                <ShareProfileButton
+                  title={clinicProfile.display_name}
+                  text={t.shareClinicText}
+                  shareLabel={t.share}
+                  copiedLabel={t.copied}
+                  whatsappLabel={t.whatsapp}
+                  path={`/care/${clinicProfile.slug}`}
+                />
+              </>
+            ) : null}
           </div>
         </form>
       </section>
@@ -290,7 +329,17 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
                   <div className="public-profile-actions">
                     <SubmitButton pendingLabel="…">{t.save}</SubmitButton>
                     {clinicProfile?.is_published && profile?.is_published ? (
-                      <Link className="button button-ghost" href={`/care/${clinicProfile.slug}/${profile.slug}`} target="_blank">{t.preview}</Link>
+                      <>
+                        <Link className="button button-ghost" href={`/care/${clinicProfile.slug}/${profile.slug}`} target="_blank">{t.preview}</Link>
+                        <ShareProfileButton
+                          title={`${profile.display_name} — ${clinicProfile.display_name}`}
+                          text={t.shareDoctorText}
+                          shareLabel={t.share}
+                          copiedLabel={t.copied}
+                          whatsappLabel={t.whatsapp}
+                          path={`/care/${clinicProfile.slug}/${profile.slug}`}
+                        />
+                      </>
                     ) : null}
                   </div>
                 </form>
@@ -301,7 +350,7 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
       </section>
 
       <style>{`
-        .public-profile-settings{padding-bottom:100px}.public-profile-availability-link{margin-bottom:14px}.public-profile-settings>.settings-card{margin-top:16px}.public-profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.public-profile-form>label{display:grid;gap:7px;color:var(--muted);font-size:11px;font-weight:780}.public-profile-wide,.public-profile-publish,.public-profile-actions{grid-column:1/-1}.public-profile-form textarea{resize:vertical;min-height:96px}.public-profile-publish{grid-template-columns:auto 1fr!important;align-items:start;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.public-profile-publish input{margin-top:3px}.public-profile-publish span{display:grid;gap:4px}.public-profile-publish strong{color:var(--ink)}.public-profile-publish small{font-weight:650;line-height:1.45}.public-profile-actions{display:flex;gap:8px;flex-wrap:wrap}.public-doctor-profile-list{display:grid;gap:10px}.public-doctor-profile>summary{justify-content:space-between}.public-doctor-profile>summary small{color:var(--accent)}@media(max-width:680px){.public-profile-form{grid-template-columns:1fr}}
+        .public-profile-settings{padding-bottom:100px}.public-profile-availability-link{margin-bottom:14px}.public-profile-settings>.settings-card{margin-top:16px}.public-profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.public-profile-form>label{display:grid;gap:7px;color:var(--muted);font-size:11px;font-weight:780}.public-profile-wide,.public-profile-publish,.public-profile-actions{grid-column:1/-1}.public-profile-form textarea{resize:vertical;min-height:96px}.public-profile-publish{grid-template-columns:auto 1fr!important;align-items:start;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.public-profile-publish input{margin-top:3px}.public-profile-publish span{display:grid;gap:4px}.public-profile-publish strong{color:var(--ink)}.public-profile-publish small{font-weight:650;line-height:1.45}.public-profile-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.public-profile-actions .atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap}.public-doctor-profile-list{display:grid;gap:10px}.public-doctor-profile>summary{justify-content:space-between}.public-doctor-profile>summary small{color:var(--accent)}@media(max-width:680px){.public-profile-form{grid-template-columns:1fr}}
       `}</style>
     </main>
   );
