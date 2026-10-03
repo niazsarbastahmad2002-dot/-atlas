@@ -37,7 +37,7 @@ test("patient reschedule mutates the existing appointment and keeps race protect
 });
 
 test("stable reschedule slot reads stay read-only after production fix", () => {
-  const fix = source("supabase/migrations/20261003203000_patient_reschedule_slots_read_only.sql");
+  const fix = source("supabase/migrations/20261003202856_patient_reschedule_slots_read_only.sql");
 
   assert.match(fix, /language plpgsql[\s\S]*stable[\s\S]*security definer/i);
   assert.doesNotMatch(fix, /update private\.patient_appointment_tokens/);
