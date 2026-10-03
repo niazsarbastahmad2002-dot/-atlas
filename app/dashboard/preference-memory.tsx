@@ -6,6 +6,22 @@ function clinicIdFor(select: HTMLSelectElement) {
   return select.form?.querySelector<HTMLInputElement>('input[name="clinic_id"]')?.value ?? "";
 }
 
+function readPreference(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writePreference(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Preference memory is optional; appointment entry must remain usable.
+  }
+}
+
 export function DashboardPreferenceMemory() {
   useEffect(() => {
     const applySavedLanguage = (languageSelect: HTMLSelectElement) => {
@@ -17,7 +33,7 @@ export function DashboardPreferenceMemory() {
       // patient under Dr B. Only the patient's reminder-language preference is
       // safe to remember independently.
       const languageKey = `atlas:last-reminder-language:${clinicId}`;
-      const savedLanguage = window.localStorage.getItem(languageKey);
+      const savedLanguage = readPreference(languageKey);
       if (savedLanguage && Array.from(languageSelect.options).some((option) => option.value === savedLanguage)) {
         languageSelect.value = savedLanguage;
       }
@@ -32,7 +48,7 @@ export function DashboardPreferenceMemory() {
       if (!(languageSelect instanceof HTMLSelectElement) || languageSelect.id !== "reminder_language") return;
       const clinicId = clinicIdFor(languageSelect);
       if (!clinicId || !languageSelect.value) return;
-      window.localStorage.setItem(`atlas:last-reminder-language:${clinicId}`, languageSelect.value);
+      writePreference(`atlas:last-reminder-language:${clinicId}`, languageSelect.value);
     };
 
     prepare();
