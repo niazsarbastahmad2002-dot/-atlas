@@ -143,3 +143,15 @@ test("continuity access is verified before patient data is loaded", () => {
   assert.ok(appointments > guard);
 });
 
+
+
+test("offline continuity disables interactive controls for keyboard and assistive input too", () => {
+  const component = source("app/dashboard/continuity-mode.tsx");
+
+  assert.match(component, /const disabledControls = new Map/);
+  assert.match(component, /control\.disabled = true/);
+  assert.match(component, /new MutationObserver\(lockOfflineControls\)/);
+  assert.match(component, /controlObserver\.observe\(document\.body, \{ childList: true, subtree: true \}\)/);
+  assert.match(component, /control\.disabled = wasDisabled/);
+  assert.match(component, /unlockOfflineControls\(\)/);
+});
