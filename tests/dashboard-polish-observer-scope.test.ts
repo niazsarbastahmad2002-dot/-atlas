@@ -30,4 +30,7 @@ test("dashboard localization preserves patient and clinic supplied text", () => 
   assert.match(page, /<dd data-atlas-user-content="true">\{appointment\.doctor_name\}<\/dd>/);
   assert.match(page, /<strong data-atlas-user-content="true">\{doctor\.name\}<\/strong>/);
   assert.match(page, /className="panel-subtitle" data-atlas-user-content=\{selectedDoctor \? "true" : undefined\}/);
+
+  const chooser = readFileSync(new URL("../app/dashboard/select-clinic/page.tsx", import.meta.url), "utf8");
+  assert.match(chooser, /<span data-atlas-user-content="true">\{clinic\.name\}<\/span>/);
 });
