@@ -46,3 +46,14 @@ test("public booking validates patient inputs before database insertion", () => 
   assert.match(migration, /p_reminder_language is null/);
   assert.match(migration, /p_reminder_consent is null/);
 });
+
+
+test("idempotent retries recover an existing booking before current publication checks", () => {
+  const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
+  const duplicateAt = migration.indexOf("if found then");
+  const availabilityAt = migration.indexOf("coalesce(v_clinic_published, false)");
+
+  assert.ok(duplicateAt > 0);
+  assert.ok(availabilityAt > duplicateAt);
+  assert.match(migration, /left join public\.clinic_public_booking_settings booking/);
+});
