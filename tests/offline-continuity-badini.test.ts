@@ -13,6 +13,6 @@ test("offline continuity distinguishes Badini from Sorani snapshots", () => {
 });
 
 test("offline continuity keeps Badini as an RTL Kurdish document language", () => {
-  assert.match(offline, /document\.documentElement\.lang = locale === "ku" \? "ckb" : locale/);
+  assert.match(offline, /document\.documentElement\.lang = locale === "ku" \? "ckb" : locale === "bd" \? "ku" : locale/);
   assert.match(offline, /document\.documentElement\.dir = locale === "en" \? "ltr" : "rtl"/);
 });
