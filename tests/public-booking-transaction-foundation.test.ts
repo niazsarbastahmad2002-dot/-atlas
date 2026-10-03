@@ -31,10 +31,21 @@ test("public booking is idempotent and audit-attributed without weakening patien
   const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
 
   assert.match(migration, /idempotency_key = p_idempotency_key/);
+  assert.match(migration, /on conflict \(clinic_id, idempotency_key\) do nothing/);
+  assert.match(migration, /if v_appointment_id is null then/);
   assert.match(migration, /'duplicate'::text/);
   assert.match(migration, /'idempotency_mismatch'::text/);
   assert.match(migration, /set_config\('atlas\.actor_type', 'patient', true\)/);
   assert.match(migration, /p_patient_phone !~ '\^\\\+9647\[0-9\]\{9\}\
 });
 /);
+});
+
+
+test("public booking validates nullable external inputs before database insertion", () => {
+  const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
+
+  assert.match(migration, /p_patient_phone is null/);
+  assert.match(migration, /p_reminder_language is null/);
+  assert.match(migration, /p_reminder_consent is null/);
 });
