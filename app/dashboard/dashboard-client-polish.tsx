@@ -167,9 +167,14 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         const patientName = String(formData.get("patient_name") ?? "").trim();
         if (!appointmentAt) { showFastSaveToast(locale, patientName, "").fail(false); return; }
         form.dataset.fastSaving = "true";
+        const inertBeforeSave = form.inert;
+        form.inert = true;
+        const controls = Array.from(form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input, select, textarea, button"));
+        const disabledBeforeSave = controls.map((control) => control.disabled);
         const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
         const originalLabel = button?.textContent ?? "";
-        if (button) { button.disabled = true; button.textContent = fastSaveCopy[locale].saving; }
+        controls.forEach((control) => { control.disabled = true; });
+        if (button) button.textContent = fastSaveCopy[locale].saving;
         const toast = showFastSaveToast(locale, patientName, appointmentAt);
         try {
           const result = await createAppointmentInline(formData);
@@ -197,7 +202,13 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         } catch { toast.fail(false); }
         finally {
           form.dataset.fastSaving = "false";
-          window.setTimeout(() => { if (button && button.isConnected) { button.disabled = false; button.textContent = originalLabel; } }, 120);
+          window.setTimeout(() => {
+            form.inert = inertBeforeSave;
+            controls.forEach((control, index) => {
+              if (control.isConnected) control.disabled = disabledBeforeSave[index] ?? false;
+            });
+            if (button?.isConnected) button.textContent = originalLabel;
+          }, 120);
         }
       }, true);
     };

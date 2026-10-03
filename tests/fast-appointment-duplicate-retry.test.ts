@@ -25,3 +25,16 @@ test("fast duplicate confirmation is localized across Atlas languages", () => {
   assert.match(client, /duplicate: "وادە پێشتر هاتیە زێدەکرن"/);
   assert.match(client, /duplicate: "الموعد مضاف مسبقاً"/);
 });
+
+
+test("fast appointment save locks the whole form and restores prior disabled states", () => {
+  const client = read("app/dashboard/dashboard-client-polish.tsx");
+
+  assert.ok(client.includes('"input, select, textarea, button"'));
+  assert.match(client, /const inertBeforeSave = form\.inert/);
+  assert.match(client, /form\.inert = true/);
+  assert.match(client, /const disabledBeforeSave = controls\.map\(\(control\) => control\.disabled\)/);
+  assert.match(client, /controls\.forEach\(\(control\) => \{ control\.disabled = true; \}\)/);
+  assert.match(client, /form\.inert = inertBeforeSave/);
+  assert.match(client, /control\.disabled = disabledBeforeSave\[index\] \?\? false/);
+});
