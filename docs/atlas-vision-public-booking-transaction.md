@@ -17,3 +17,8 @@ This layer prepares the final database write for patient self-booking without ex
 ## Deliberately dormant
 
 Production phone OTP and WhatsApp OTP are currently disabled. No public booking form or Book button should call this function until the server can prove ownership of the submitted phone number.
+
+
+## Retry behavior
+
+If Atlas created the appointment but the response was lost, an exact retry with the same idempotency key can recover that appointment even if the clinic disables public booking immediately afterward. A genuinely new booking still has to pass all current publication and availability checks.
