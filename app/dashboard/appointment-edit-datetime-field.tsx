@@ -21,6 +21,7 @@ type Props = {
   locale: UiLocale;
   label: string;
   timeZoneLabel: string;
+  disabled?: boolean;
 };
 
 const copy = {
@@ -72,7 +73,7 @@ function cleanNumericInput(value: string) {
   return toAsciiDigits(value).replace(/\D/g, "").slice(0, 2);
 }
 
-export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, locale, label, timeZoneLabel }: Props) {
+export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, locale, label, timeZoneLabel, disabled = false }: Props) {
   const t = copy[locale];
   const initialLocal = toBaghdadInputValue(new Date(appointmentAt));
   const initial = parseValue(initialLocal) ?? parseValue(min) ?? { date: min.slice(0, 10), hour12: 1, minute: 0, period: "pm" as DayPeriod };
@@ -138,6 +139,7 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
             aria-haspopup="dialog"
             aria-expanded={open}
             aria-label={t.date}
+            disabled={disabled}
             onClick={() => setOpen((value) => !value)}
           >
             <bdi dir="ltr" className="edit-datetime-value">{formatAppointmentDateValue(date)}</bdi>
@@ -153,6 +155,7 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
             aria-haspopup="dialog"
             aria-expanded={open}
             aria-label={label}
+            disabled={disabled}
             onClick={() => setOpen((value) => !value)}
           >
             <bdi dir="ltr" className="edit-datetime-value">{formatTimeValue(clock, locale)}</bdi>
@@ -164,9 +167,9 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
       {open ? (
         <div className="edit-datetime-popover" role="dialog" aria-label={`${t.date} / ${label}`} dir={locale === "en" ? "ltr" : "rtl"}>
           <div className="edit-calendar-heading">
-            <button type="button" aria-label={t.previous} onClick={() => setMonth((value) => shiftMonth(value, -1))}>‹</button>
+            <button type="button" aria-label={t.previous} disabled={disabled} onClick={() => setMonth((value) => shiftMonth(value, -1))}>‹</button>
             <strong>{formatMonthYear(month, locale)}</strong>
-            <button type="button" aria-label={t.next} onClick={() => setMonth((value) => shiftMonth(value, 1))}>›</button>
+            <button type="button" aria-label={t.next} disabled={disabled} onClick={() => setMonth((value) => shiftMonth(value, 1))}>›</button>
           </div>
           <div className="edit-calendar-weekdays" aria-hidden="true">
             {weekdays.map((weekday, index) => <span key={`${weekday}-${index}`}>{weekday}</span>)}
@@ -176,7 +179,7 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
               <button
                 key={cell.value}
                 type="button"
-                disabled={cell.disabled}
+                disabled={disabled || cell.disabled}
                 className={cell.value === date ? "is-selected" : ""}
                 onClick={() => { setDate(cell.value); setMonth(monthFromValue(cell.value)); }}
               >
@@ -188,8 +191,8 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
           <div className="edit-time-divider" />
           <div className="edit-custom-time-heading">{t.custom}</div>
           <div className="edit-period-toggle">
-            <button type="button" className={period === "am" ? "is-selected" : ""} onClick={() => setPeriod("am")}>{t.am}</button>
-            <button type="button" className={period === "pm" ? "is-selected" : ""} onClick={() => setPeriod("pm")}>{t.pm}</button>
+            <button type="button" className={period === "am" ? "is-selected" : ""} disabled={disabled} onClick={() => setPeriod("am")}>{t.am}</button>
+            <button type="button" className={period === "pm" ? "is-selected" : ""} disabled={disabled} onClick={() => setPeriod("pm")}>{t.pm}</button>
           </div>
           <div className="edit-custom-time" dir="ltr">
             <label>
@@ -201,6 +204,7 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
                 onChange={(event) => setHour(cleanNumericInput(event.target.value))}
                 onBlur={finishHour}
                 aria-label={t.hour}
+                disabled={disabled}
               />
             </label>
             <span className="edit-time-colon" aria-hidden="true">:</span>
@@ -213,11 +217,12 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
                 onChange={(event) => setMinute(cleanNumericInput(event.target.value))}
                 onBlur={finishMinute}
                 aria-label={t.minute}
+                disabled={disabled}
               />
             </label>
           </div>
           <div className="edit-time-preview" dir="ltr">{formatTimeValue(clock, locale)}</div>
-          <button className="edit-datetime-done" type="button" disabled={!valid} onClick={() => setOpen(false)}>{t.close}</button>
+          <button className="edit-datetime-done" type="button" disabled={disabled || !valid} onClick={() => setOpen(false)}>{t.close}</button>
         </div>
       ) : null}
 

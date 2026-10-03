@@ -249,6 +249,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
         type="button"
         onClick={toggleEditor}
         aria-expanded={open}
+        disabled={pending}
         aria-label={`${open ? t.close : t.edit}: ${patientName}`}
       >
         {open ? t.close : t.edit}
@@ -258,13 +259,14 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           <div className="appointment-edit-heading"><strong>{t.title}</strong></div>
 
           <label htmlFor={`edit-patient-${appointmentId}`}>{ui.patientName}</label>
-          <input id={`edit-patient-${appointmentId}`} name="patient_name" defaultValue={patientName} minLength={2} maxLength={120} required />
+          <input id={`edit-patient-${appointmentId}`} name="patient_name" defaultValue={patientName} disabled={pending} minLength={2} maxLength={120} required />
 
           <label htmlFor={`edit-phone-${appointmentId}`}>{ui.iraqiMobile}</label>
           <input
             id={`edit-phone-${appointmentId}`}
             name="patient_phone"
             type="tel"
+            disabled={pending}
             inputMode="tel"
             autoComplete="tel"
             defaultValue={patientPhone}
@@ -283,6 +285,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           <select
             id={`edit-contact-${appointmentId}`}
             name="contact_relationship"
+            disabled={pending}
             value={editRelationship}
             onChange={(event) => {
               const next = event.currentTarget.value as ContactRelationship;
@@ -305,7 +308,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
               </div>
             </>
           ) : (
-            <select id={`edit-doctor-${appointmentId}`} name="doctor_id" defaultValue={doctorId ?? ""} required>
+            <select id={`edit-doctor-${appointmentId}`} name="doctor_id" disabled={pending} defaultValue={doctorId ?? ""} required>
               <option value="">{ui.chooseDoctor}</option>
               {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
             </select>
@@ -319,10 +322,11 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
             locale={locale}
             label={ui.time}
             timeZoneLabel={ui.erbilTime}
+            disabled={pending}
           />
 
           <label htmlFor={`edit-language-${appointmentId}`}>{ui.reminderLanguage}</label>
-          <select id={`edit-language-${appointmentId}`} name="reminder_language" defaultValue={reminderLanguage}>
+          <select id={`edit-language-${appointmentId}`} name="reminder_language" disabled={pending} defaultValue={reminderLanguage}>
             <option value="ku">{reminderLanguageLabels[locale].ku}</option>
             <option value="bd">{reminderLanguageLabels[locale].bd}</option>
             <option value="ar">{reminderLanguageLabels[locale].ar}</option>
@@ -334,6 +338,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
               id={`edit-consent-${appointmentId}`}
               name="reminder_consent"
               type="checkbox"
+              disabled={pending}
               checked={editConsent}
               onChange={(event) => setEditConsent(event.currentTarget.checked)}
             />
