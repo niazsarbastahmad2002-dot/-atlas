@@ -160,3 +160,13 @@ test("offline continuity disables write controls while preserving local micropho
   assert.ok((ai.match(/data-atlas-offline-local-action/g) ?? []).length >= 4);
   assert.match(ai, /stopCapture\(navigator\.onLine===false\)/);
 });
+
+
+test("continuity cache cleanup still clears IndexedDB when localStorage is blocked", () => {
+  const component = source("app/dashboard/continuity-mode.tsx");
+  const guard = source("app/components/continuity-cache-guard.tsx");
+
+  assert.match(component, /function writeContinuityMarker\(value: "0" \| "1"\)[\s\S]*try \{[\s\S]*localStorage\.setItem[\s\S]*catch \{/);
+  assert.match(component, /clearBrowserContinuityCache\(\)[\s\S]*writeContinuityMarker\("0"\)[\s\S]*indexedDB/);
+  assert.match(guard, /localStorage\.setItem\(CONTINUITY_ACTIVE_MARKER, "0"\)[\s\S]*catch \{[\s\S]*if \(!\("indexedDB" in window\)\) return;[\s\S]*deleteDatabase\(CONTINUITY_DB\)/);
+});

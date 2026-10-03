@@ -9,7 +9,12 @@ const CONTINUITY_ACTIVE_MARKER = "atlas-continuity-active";
 function clearBrowserContinuity() {
   try {
     window.localStorage.setItem(CONTINUITY_ACTIVE_MARKER, "0");
-    if (!("indexedDB" in window)) return;
+  } catch {
+    // Marker storage is optional and must never block deletion of the protected cache.
+  }
+
+  if (!("indexedDB" in window)) return;
+  try {
     const request = window.indexedDB.deleteDatabase(CONTINUITY_DB);
     request.onerror = () => undefined;
     request.onblocked = () => undefined;
