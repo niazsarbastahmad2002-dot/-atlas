@@ -19,6 +19,27 @@ function escapeCalendarText(value: string) {
     .replace(/,/g, "\\,");
 }
 
+function foldCalendarLine(line: string) {
+  const encoder = new TextEncoder();
+  const parts: string[] = [];
+  let current = "";
+  let limit = 75;
+
+  for (const character of line) {
+    const candidate = current + character;
+    if (encoder.encode(candidate).length > limit && current) {
+      parts.push(current);
+      current = character;
+      limit = 74;
+    } else {
+      current = candidate;
+    }
+  }
+
+  parts.push(current);
+  return parts.join("\r\n ");
+}
+
 export function buildPatientCalendar(
   input: PatientCalendarInput,
   generatedAt = new Date(),
@@ -46,5 +67,5 @@ export function buildPatientCalendar(
     "END:VEVENT",
     "END:VCALENDAR",
     "",
-  ].join("\r\n");
+  ].map(foldCalendarLine).join("\r\n");
 }
