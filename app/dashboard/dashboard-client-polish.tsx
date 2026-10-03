@@ -138,6 +138,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
   useEffect(() => {
     const preparedInputs = new WeakSet<HTMLInputElement>();
     const preparedForms = new WeakSet<HTMLFormElement>();
+    const listenerCleanups: Array<() => void> = [];
     let frame = 0;
     const preparePhoneInput = (input: HTMLInputElement) => {
       if (preparedInputs.has(input)) return;
@@ -154,11 +155,12 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       };
       update();
       input.addEventListener("input", update);
+      listenerCleanups.push(() => input.removeEventListener("input", update));
     };
     const prepareAppointmentForm = (form: HTMLFormElement) => {
       if (preparedForms.has(form)) return;
       preparedForms.add(form);
-      form.addEventListener("submit", async (event) => {
+      const handleSubmit = async (event: SubmitEvent) => {
         event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
         if (form.dataset.fastSaving === "true") return;
         if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -210,7 +212,9 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
             if (button?.isConnected) button.textContent = originalLabel;
           }, 120);
         }
-      }, true);
+      };
+      form.addEventListener("submit", handleSubmit, true);
+      listenerCleanups.push(() => form.removeEventListener("submit", handleSubmit, true));
     };
     const polish = () => {
       document.querySelectorAll<HTMLInputElement>('.app-shell input[type="tel"]').forEach(preparePhoneInput);
@@ -236,7 +240,11 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     const observer = new MutationObserver(schedulePolish);
     const observerRoot = document.querySelector(".app-shell") ?? document.body;
     observer.observe(observerRoot, { childList: true, subtree: true, characterData: true });
-    return () => { observer.disconnect(); if (frame) window.cancelAnimationFrame(frame); };
+    return () => {
+      observer.disconnect();
+      listenerCleanups.forEach((cleanup) => cleanup());
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, [locale, router]);
 
   return (
