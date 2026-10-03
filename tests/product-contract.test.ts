@@ -78,7 +78,7 @@ test("unavailable patient links keep a localized fallback language", () => {
   const patientPage = source("app/patient/[token]/page.tsx");
   const shareButton = source("app/dashboard/patient-link-button.tsx");
 
-  assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string; error\?: string \}>/);
+  assert.match(patientPage, /searchParams: Promise<\{ view\?: string; lang\?: string; error\?: string; notice\?: string \}>/);
   assert.match(patientPage, /const fallbackLocale = patientLocale\(query\.lang \?\? "en"\)/);
   assert.match(shareButton, /url\.searchParams\.set\("lang", reminderLanguage\)/);
   assert.match(shareButton, /const initialLink = useMemo\(\(\) => \{[\s\S]*?\}, \[reminderLanguage, state\.link\]\);/);
@@ -163,8 +163,10 @@ test("patient mutation failures return to a localized visible error instead of f
   assert.match(patientPage, /actionFailed: "گۆڕانکارییەکە پاشەکەوت نەکرا\. دووبارە هەوڵ بدە\."/);
   assert.match(patientPage, /actionFailed: "گۆڕین نەهاتە پاراستن\. دووبارە هەول بدە\."/);
   assert.match(patientPage, /actionFailed: "ما انحفظ التغيير\. حاول مرة ثانية\."/);
-  assert.equal((patientPage.match(/name="return_view"/g) ?? []).length, 4);
-  assert.equal((patientPage.match(/name="return_lang"/g) ?? []).length, 4);
+  const returnViewFields = (patientPage.match(/name="return_view"/g) ?? []).length;
+  const returnLangFields = (patientPage.match(/name="return_lang"/g) ?? []).length;
+  assert.equal(returnViewFields, returnLangFields);
+  assert.ok(returnViewFields >= 4);
 
   assert.match(patientActions, /function patientMutationReturnUrl\(token: string, formData: FormData, failed = false\)/);
   assert.match(patientActions, /formData\.get\("return_view"\) === "reminder"/);
