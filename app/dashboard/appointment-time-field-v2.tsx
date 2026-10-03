@@ -161,8 +161,16 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     const closeOutside = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setDateOpen(false);
     };
+    const clearSavedDraft = () => {
+      setDateOpen(false);
+      setTouched(false);
+    };
     document.addEventListener("pointerdown", closeOutside);
-    return () => document.removeEventListener("pointerdown", closeOutside);
+    document.addEventListener("atlas:appointment-saved", clearSavedDraft);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("atlas:appointment-saved", clearSavedDraft);
+    };
   }, []);
 
   const occupied = useMemo(() => new Set(doctorId ? occupiedByDoctor[doctorId] ?? [] : []), [doctorId, occupiedByDoctor]);
@@ -292,7 +300,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   }, [date, minDate]);
 
   return (
-    <div className="atlas-time-v2" ref={rootRef}>
+    <div className="atlas-time-v2" ref={rootRef} data-atlas-time-draft={dateOpen || touched || date !== initial ? "true" : "false"}>
       <label>{text.date} <small>· {timeZoneLabel}</small></label>
       <div className="atlas-date-wrap">
         <button
