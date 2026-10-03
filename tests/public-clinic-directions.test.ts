@@ -9,7 +9,7 @@ const page = readFileSync(
 
 test("public clinic directions require a specific published address", () => {
   assert.match(page, /const directionsDestination = clinic\.address_text/);
-  assert.match(page, /\[clinic\.address_text, clinic\.area, clinic\.city\]/);
+  assert.match(page, /\[clinic\.address_text, clinic\.area, clinic\.city, clinic\.country_code\]/);
   assert.match(page, /directionsUrl \?/);
   assert.doesNotMatch(page, /latitude|longitude/);
 });
@@ -24,4 +24,9 @@ test("public clinic directions use a no-key Maps URL and safe external link", ()
 
 test("public clinic directions keep a mobile-friendly touch target", () => {
   assert.match(page, /atlas-clinic-directions-link\{display:inline-flex;width:fit-content;min-height:48px/);
+});
+
+
+test("public directions disambiguate the published address with country", () => {
+  assert.match(page, /clinic\.country_code/);
 });
