@@ -29,5 +29,10 @@ test("anonymous discovery can read only explicit published fields through bounde
   assert.match(migration, /grant execute on function public\.get_public_clinic_profile\(text\) to anon, authenticated/);
   assert.match(migration, /grant execute on function public\.list_public_doctors\(text\) to anon, authenticated/);
   assert.match(migration, /grant execute on function public\.get_public_doctor_profile\(text, text\) to anon, authenticated/);
+  assert.match(migration, /search_public_doctors/);
+  assert.match(migration, /limit greatest\(1, least\(coalesce\(p_limit, 20\), 30\)\)/);
+  assert.match(migration, /char_length\(p_query\) <= 80/);
+  assert.match(migration, /order by d\.display_name, c\.display_name, d\.slug/);
+  assert.match(migration, /grant execute on function public\.search_public_doctors\(text, text, text, integer\) to anon, authenticated/);
   assert.doesNotMatch(migration, /patient_name|patient_phone|appointment_at|appointment_status|reminder_/i);
 });
