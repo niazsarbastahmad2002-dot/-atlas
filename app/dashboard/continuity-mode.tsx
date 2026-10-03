@@ -255,15 +255,42 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
   }, [refreshSnapshot]);
 
   useEffect(() => {
+    const disabledControls = new Map<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement, boolean>();
+    let controlObserver: MutationObserver | null = null;
+
+    const lockOfflineControls = () => {
+      document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>(
+        ".app-content button, .app-content input, .app-content select, .app-content textarea, .live-clinic-flow button",
+      ).forEach((control) => {
+        if (!disabledControls.has(control)) disabledControls.set(control, control.disabled);
+        control.disabled = true;
+      });
+      if (!controlObserver) {
+        controlObserver = new MutationObserver(lockOfflineControls);
+        controlObserver.observe(document.body, { childList: true, subtree: true });
+      }
+    };
+
+    const unlockOfflineControls = () => {
+      controlObserver?.disconnect();
+      controlObserver = null;
+      disabledControls.forEach((wasDisabled, control) => {
+        if (control.isConnected) control.disabled = wasDisabled;
+      });
+      disabledControls.clear();
+    };
+
     const update = () => {
       const nextOffline = navigator.onLine === false;
       if (nextOffline) {
         wasOffline.current = true;
+        lockOfflineControls();
         setOffline(true);
         document.documentElement.dataset.atlasOffline = "true";
         return;
       }
 
+      unlockOfflineControls();
       setOffline(false);
       delete document.documentElement.dataset.atlasOffline;
       if (wasOffline.current) {
@@ -280,6 +307,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
     return () => {
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
+      unlockOfflineControls();
       delete document.documentElement.dataset.atlasOffline;
     };
   }, []);
