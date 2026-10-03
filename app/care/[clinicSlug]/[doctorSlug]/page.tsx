@@ -6,13 +6,9 @@ import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
+import { ShareProfileButton } from "../../share-profile-button";
 
 export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Doctor — Atlas",
-  description: "Published Atlas doctor profile.",
-};
 
 type DoctorProfilePageProps = {
   params: Promise<{ clinicSlug: string; doctorSlug: string }>;
@@ -30,6 +26,10 @@ const profileCopy: Record<UiLocale, {
   callToReserve: string;
   bookingHelp: string;
   bookTime: string;
+  share: string;
+  copied: string;
+  whatsapp: string;
+  shareText: string;
   back: string;
   unavailableTitle: string;
   unavailableHelp: string;
@@ -46,6 +46,10 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "Call clinic",
     bookingHelp: "Choose a time. Atlas will verify your Iraqi mobile number before the slot is reserved.",
     bookTime: "Book",
+    share: "Share profile",
+    copied: "Link copied",
+    whatsapp: "Share on WhatsApp",
+    shareText: "Doctor profile and live appointment times on Atlas.",
     back: "Back to doctor search",
     unavailableTitle: "This doctor profile is unavailable.",
     unavailableHelp: "It may be unpublished or the link may be incorrect.",
@@ -62,6 +66,10 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "پەیوەندی بە کلینیک",
     bookingHelp: "کاتێک هەڵبژێرە. Atlas پێش گرتنی کاتەکە ژمارەی مۆبایلی عێراقیت پشتڕاست دەکاتەوە.",
     bookTime: "مەوعید دابنێ",
+    share: "پڕۆفایل هاوبەش بکە",
+    copied: "بەستەر کۆپی کرا",
+    whatsapp: "لە WhatsApp هاوبەش بکە",
+    shareText: "پڕۆفایلی پزیشک و کاتە بەردەستە ڕاستەقینەکان لە Atlas.",
     back: "گەڕانەوە بۆ گەڕانی پزیشک",
     unavailableTitle: "ئەم پڕۆفایلەی پزیشک بەردەست نییە.",
     unavailableHelp: "لەوانەیە بڵاونەکرابێتەوە یان بەستەرەکە هەڵە بێت.",
@@ -78,6 +86,10 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "پەیوەندی ب کلینیکێ",
     bookingHelp: "دەمەکێ هەلبژێرە. Atlas بەری گرتنا دەمی ژمارا موبایلا عێراقێ یا تە پشتڕاست دکەت.",
     bookTime: "وادە دابنێ",
+    share: "پڕۆفایل پارڤە بکە",
+    copied: "لینک هاتە کۆپیکرن",
+    whatsapp: "ل WhatsApp پارڤە بکە",
+    shareText: "پڕۆفایلا دکتۆری و دەمێن ڕاستەقینە یێن بەردەست ل Atlas.",
     back: "ڤەگەڕە گەڕانا دکتۆران",
     unavailableTitle: "ئەڤ پڕۆفایلا دکتۆری بەردەست نینە.",
     unavailableHelp: "دبیت نەهاتبیتە بڵاوکرن یان لینک هەڵە بیت.",
@@ -94,6 +106,10 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "اتصل بالعيادة",
     bookingHelp: "اختر وقتاً. Atlas يتحقق من رقم موبايلك العراقي قبل حجز الوقت.",
     bookTime: "احجز",
+    share: "مشاركة الملف",
+    copied: "تم نسخ الرابط",
+    whatsapp: "مشاركة على WhatsApp",
+    shareText: "ملف الطبيب والأوقات الحقيقية المتاحة على Atlas.",
     back: "العودة إلى بحث الأطباء",
     unavailableTitle: "ملف هذا الطبيب غير متاح.",
     unavailableHelp: "قد يكون غير منشور أو أن الرابط غير صحيح.",
@@ -102,6 +118,55 @@ const profileCopy: Record<UiLocale, {
 
 function safeSlug(value: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length <= 80;
+}
+
+function metadataText(value: string, fallback: string) {
+  const text = value.trim().replace(/\s+/g, " ");
+  return (text || fallback).slice(0, 180);
+}
+
+export async function generateMetadata({ params }: DoctorProfilePageProps): Promise<Metadata> {
+  const { clinicSlug, doctorSlug } = await params;
+  const fallback: Metadata = {
+    title: "Doctor — Atlas",
+    description: "Published Atlas doctor profile.",
+    robots: { index: false, follow: false },
+  };
+
+  if (!safeSlug(clinicSlug) || !safeSlug(doctorSlug)) return fallback;
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("get_public_doctor_profile", {
+      p_clinic_slug: clinicSlug,
+      p_doctor_slug: doctorSlug,
+    });
+    const profile = Array.isArray(data) ? data[0] : undefined;
+    if (error || !profile) return fallback;
+
+    const title = `${profile.doctor_name} — ${profile.clinic_name} | Atlas`;
+    const description = metadataText(
+      profile.bio ?? "",
+      `${profile.specialty}${profile.subspecialty ? ` · ${profile.subspecialty}` : ""} — ${profile.clinic_name}`,
+    );
+    return {
+      title,
+      description,
+      openGraph: {
+        type: "website",
+        title,
+        description,
+      },
+      twitter: {
+        card: "summary",
+        title,
+        description,
+      },
+      robots: { index: true, follow: true },
+    };
+  } catch {
+    return fallback;
+  }
 }
 
 function baghdadSlotParts(value: string, locale: UiLocale) {
@@ -202,6 +267,13 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
           <strong>{profile.specialty}</strong>
           {profile.subspecialty ? <span>{profile.subspecialty}</span> : null}
         </div>
+        <ShareProfileButton
+          title={`${profile.doctor_name} — ${profile.clinic_name}`}
+          text={copy.shareText}
+          shareLabel={copy.share}
+          copiedLabel={copy.copied}
+          whatsappLabel={copy.whatsapp}
+        />
 
         {profile.bio ? <p className="hero-copy atlas-care-bio">{profile.bio}</p> : null}
 
@@ -251,7 +323,7 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
       </article>
 
       <style>{`
-        .atlas-care-profile-page{min-height:100dvh}.atlas-care-profile{max-width:720px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-profile h1{margin:8px 0 10px}.atlas-care-profile-specialty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--accent)}.atlas-care-profile-specialty span{color:var(--muted);font-size:12px}.atlas-care-bio{margin-top:22px}.atlas-care-profile-details{display:grid;gap:1px;margin:28px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-profile-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-profile-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-profile-details dd{margin:0;font-size:13px;font-weight:700}.atlas-care-profile-details a{color:var(--accent)}.atlas-care-availability{display:grid;gap:14px;margin:0 0 26px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-availability-heading{display:grid;gap:5px}.atlas-care-availability-heading h2{margin:0;font-size:17px}.atlas-care-availability-heading p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55}.atlas-care-availability-days{display:grid;gap:8px}.atlas-care-availability-day{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:12px;align-items:start;padding-top:9px;border-top:1px solid var(--line)}.atlas-care-availability-day:first-child{padding-top:0;border-top:0}.atlas-care-availability-day>strong{font-size:12px}.atlas-care-availability-day>div{display:flex;gap:6px;flex-wrap:wrap}.atlas-care-availability-day span{display:inline-flex;min-height:32px;align-items:center;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-care-slot-book{display:inline-flex;align-items:center;gap:6px;text-decoration:none}.atlas-care-slot-book span{color:var(--ink)}.atlas-care-slot-book small{color:var(--accent);font-size:10px;font-weight:850}.atlas-care-call{justify-self:start;text-decoration:none}.atlas-care-profile-back{text-decoration:none}@media(max-width:560px){.atlas-care-profile-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-availability-day{grid-template-columns:1fr}}
+        .atlas-care-profile-page{min-height:100dvh}.atlas-care-profile{max-width:720px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-profile h1{margin:8px 0 10px}.atlas-care-profile-specialty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--accent)}.atlas-care-profile-specialty span{color:var(--muted);font-size:12px}.atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.atlas-profile-share-actions .button{min-height:48px}.atlas-care-bio{margin-top:22px}.atlas-care-profile-details{display:grid;gap:1px;margin:28px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-profile-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-profile-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-profile-details dd{margin:0;font-size:13px;font-weight:700}.atlas-care-profile-details a{color:var(--accent)}.atlas-care-availability{display:grid;gap:14px;margin:0 0 26px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-availability-heading{display:grid;gap:5px}.atlas-care-availability-heading h2{margin:0;font-size:17px}.atlas-care-availability-heading p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55}.atlas-care-availability-days{display:grid;gap:8px}.atlas-care-availability-day{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:12px;align-items:start;padding-top:9px;border-top:1px solid var(--line)}.atlas-care-availability-day:first-child{padding-top:0;border-top:0}.atlas-care-availability-day>strong{font-size:12px}.atlas-care-availability-day>div{display:flex;gap:6px;flex-wrap:wrap}.atlas-care-availability-day span{display:inline-flex;min-height:32px;align-items:center;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-care-slot-book{display:inline-flex;align-items:center;gap:6px;text-decoration:none}.atlas-care-slot-book span{color:var(--ink)}.atlas-care-slot-book small{color:var(--accent);font-size:10px;font-weight:850}.atlas-care-call{justify-self:start;text-decoration:none}.atlas-care-profile-back{text-decoration:none}@media(max-width:560px){.atlas-care-profile-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-availability-day{grid-template-columns:1fr}}
       `}</style>
     </main>
   );
