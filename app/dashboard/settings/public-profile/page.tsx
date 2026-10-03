@@ -43,6 +43,8 @@ const copy: Record<UiLocale, {
   doctorArchived: string;
   saveFailed: string;
   preview: string;
+  availability: string;
+  availabilityHelp: string;
 }> = {
   en: {
     eyebrow: "Public presence",
@@ -74,6 +76,8 @@ const copy: Record<UiLocale, {
     doctorArchived: "Restore this doctor before publishing the profile.",
     saveFailed: "The public profile could not be saved.",
     preview: "Open public profile",
+    availability: "Online booking hours",
+    availabilityHelp: "Define which hours may later appear as real self-booking slots.",
   },
   ku: {
     eyebrow: "پڕۆفایلی گشتی",
@@ -105,6 +109,8 @@ const copy: Record<UiLocale, {
     doctorArchived: "پێش بڵاوکردنەوە ئەم پزیشکە بگەڕێنەوە.",
     saveFailed: "پڕۆفایلی گشتی پاشەکەوت نەکرا.",
     preview: "کردنەوەی پڕۆفایلی گشتی",
+    availability: "کاتەکانی مەوعیدی ئۆنلاین",
+    availabilityHelp: "دیاری بکە کام کاتانە بتوانن وەک کاتی ڕاستەقینەی مەوعیدی خۆکار پیشان بدرێن.",
   },
   bd: {
     eyebrow: "پڕۆفایلا گشتی",
@@ -136,6 +142,8 @@ const copy: Record<UiLocale, {
     doctorArchived: "بەری بڵاوکرنێ ڤی دکتۆری ڤەگەڕینە.",
     saveFailed: "پڕۆفایلا گشتی نەهاتە پاراستن.",
     preview: "پڕۆفایلا گشتی بکەڤە",
+    availability: "دەمێن وادەیێ ئۆنلاین",
+    availabilityHelp: "دیار بکە کیژ دەمان دەتوانن وەک دەمێ ڕاستەقینە یێ وادەیا خۆکار دیار بن.",
   },
   ar: {
     eyebrow: "الظهور العام",
@@ -167,6 +175,8 @@ const copy: Record<UiLocale, {
     doctorArchived: "أعد هذا الطبيب قبل نشر ملفه.",
     saveFailed: "تعذر حفظ الملف العام.",
     preview: "فتح الملف العام",
+    availability: "ساعات الحجز عبر الإنترنت",
+    availabilityHelp: "حدد الساعات التي يمكن أن تظهر لاحقاً كأوقات حجز ذاتي حقيقية.",
   },
 };
 
@@ -234,6 +244,11 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
           <div><h2>{t.clinicProfile}</h2><p>{t.clinicHelp}</p></div>
         </div>
 
+        <Link className="settings-link public-profile-availability-link" href={`/dashboard/settings/public-profile/availability?clinic=${clinic.id}`}>
+          <span className="settings-export-copy"><strong>{t.availability}</strong><small>{t.availabilityHelp}</small></span>
+          <span aria-hidden="true">→</span>
+        </Link>
+
         <form action={saveClinicDirectoryProfile} className="settings-form public-profile-form">
           <input type="hidden" name="clinic_id" value={clinic.id} />
           <label>{t.publicLink}<input name="slug" defaultValue={clinicProfile?.slug ?? ""} placeholder="atlas-clinic" pattern="[a-z0-9]+(-[a-z0-9]+)*" minLength={3} maxLength={80} required dir="ltr" /></label>
@@ -286,7 +301,7 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
       </section>
 
       <style>{`
-        .public-profile-settings{padding-bottom:100px}.public-profile-settings>.settings-card{margin-top:16px}.public-profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.public-profile-form>label{display:grid;gap:7px;color:var(--muted);font-size:11px;font-weight:780}.public-profile-wide,.public-profile-publish,.public-profile-actions{grid-column:1/-1}.public-profile-form textarea{resize:vertical;min-height:96px}.public-profile-publish{grid-template-columns:auto 1fr!important;align-items:start;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.public-profile-publish input{margin-top:3px}.public-profile-publish span{display:grid;gap:4px}.public-profile-publish strong{color:var(--ink)}.public-profile-publish small{font-weight:650;line-height:1.45}.public-profile-actions{display:flex;gap:8px;flex-wrap:wrap}.public-doctor-profile-list{display:grid;gap:10px}.public-doctor-profile>summary{justify-content:space-between}.public-doctor-profile>summary small{color:var(--accent)}@media(max-width:680px){.public-profile-form{grid-template-columns:1fr}}
+        .public-profile-settings{padding-bottom:100px}.public-profile-availability-link{margin-bottom:14px}.public-profile-settings>.settings-card{margin-top:16px}.public-profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.public-profile-form>label{display:grid;gap:7px;color:var(--muted);font-size:11px;font-weight:780}.public-profile-wide,.public-profile-publish,.public-profile-actions{grid-column:1/-1}.public-profile-form textarea{resize:vertical;min-height:96px}.public-profile-publish{grid-template-columns:auto 1fr!important;align-items:start;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.public-profile-publish input{margin-top:3px}.public-profile-publish span{display:grid;gap:4px}.public-profile-publish strong{color:var(--ink)}.public-profile-publish small{font-weight:650;line-height:1.45}.public-profile-actions{display:flex;gap:8px;flex-wrap:wrap}.public-doctor-profile-list{display:grid;gap:10px}.public-doctor-profile>summary{justify-content:space-between}.public-doctor-profile>summary small{color:var(--accent)}@media(max-width:680px){.public-profile-form{grid-template-columns:1fr}}
       `}</style>
     </main>
   );
