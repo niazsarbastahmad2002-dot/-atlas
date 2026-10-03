@@ -80,3 +80,13 @@ test("receptionist schedule counts use the selected Atlas digit system", () => {
   assert.equal((dashboard.match(/<Stat [^>]*locale=\{locale\}/g) ?? []).length, 6);
 });
 
+
+
+test("language and appearance writes cannot race each other", () => {
+  const control = read("app/dashboard/settings/interface-language-control.tsx");
+
+  assert.match(control, /const preferencePending = pending \|\| themePending/);
+  assert.match(control, /async function applyLanguage[\s\S]*if \(preferencePending\) return/);
+  assert.match(control, /async function applyTheme[\s\S]*if \(preferencePending \|\| nextTheme === theme\) return/);
+  assert.ok((control.match(/disabled=\{preferencePending\}/g) ?? []).length >= 2);
+});
