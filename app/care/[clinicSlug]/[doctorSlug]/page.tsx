@@ -26,6 +26,7 @@ const profileCopy: Record<UiLocale, {
   callToReserve: string;
   bookingHelp: string;
   bookTime: string;
+  allTimes: string;
   share: string;
   copied: string;
   whatsapp: string;
@@ -46,6 +47,7 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "Call clinic",
     bookingHelp: "Choose a time. Atlas will verify your Iraqi mobile number before the slot is reserved.",
     bookTime: "Book",
+    allTimes: "See all times",
     share: "Share profile",
     copied: "Link copied",
     whatsapp: "Share on WhatsApp",
@@ -66,6 +68,7 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "پەیوەندی بە کلینیک",
     bookingHelp: "کاتێک هەڵبژێرە. Atlas پێش گرتنی کاتەکە ژمارەی مۆبایلی عێراقیت پشتڕاست دەکاتەوە.",
     bookTime: "مەوعید دابنێ",
+    allTimes: "هەموو کاتەکان ببینە",
     share: "پڕۆفایل هاوبەش بکە",
     copied: "بەستەر کۆپی کرا",
     whatsapp: "لە WhatsApp هاوبەش بکە",
@@ -86,6 +89,7 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "پەیوەندی ب کلینیکێ",
     bookingHelp: "دەمەکێ هەلبژێرە. Atlas بەری گرتنا دەمی ژمارا موبایلا عێراقێ یا تە پشتڕاست دکەت.",
     bookTime: "وادە دابنێ",
+    allTimes: "هەمی دەمێن ببینە",
     share: "پڕۆفایل پارڤە بکە",
     copied: "لینک هاتە کۆپیکرن",
     whatsapp: "ل WhatsApp پارڤە بکە",
@@ -106,6 +110,7 @@ const profileCopy: Record<UiLocale, {
     callToReserve: "اتصل بالعيادة",
     bookingHelp: "اختر وقتاً. Atlas يتحقق من رقم موبايلك العراقي قبل حجز الوقت.",
     bookTime: "احجز",
+    allTimes: "عرض كل الأوقات",
     share: "مشاركة الملف",
     copied: "تم نسخ الرابط",
     whatsapp: "مشاركة على WhatsApp",
@@ -315,7 +320,10 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
                 </div>
               ))}
             </div>
-            {phone ? <a className="button atlas-care-call" href={`tel:${profile.public_phone}`}>{copy.callToReserve}</a> : null}
+            <div className="atlas-care-availability-actions">
+              <Link className="button button-ghost" href={`/care/${clinicSlug}/${doctorSlug}/times`}>{copy.allTimes}</Link>
+              {phone ? <a className="button atlas-care-call" href={`tel:${profile.public_phone}`}>{copy.callToReserve}</a> : null}
+            </div>
           </section>
         ) : null}
 
@@ -323,7 +331,7 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
       </article>
 
       <style>{`
-        .atlas-care-profile-page{min-height:100dvh}.atlas-care-profile{max-width:720px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-profile h1{margin:8px 0 10px}.atlas-care-profile-specialty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--accent)}.atlas-care-profile-specialty span{color:var(--muted);font-size:12px}.atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.atlas-profile-share-actions .button{min-height:48px}.atlas-care-bio{margin-top:22px}.atlas-care-profile-details{display:grid;gap:1px;margin:28px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-profile-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-profile-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-profile-details dd{margin:0;font-size:13px;font-weight:700}.atlas-care-profile-details a{color:var(--accent)}.atlas-care-availability{display:grid;gap:14px;margin:0 0 26px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-availability-heading{display:grid;gap:5px}.atlas-care-availability-heading h2{margin:0;font-size:17px}.atlas-care-availability-heading p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55}.atlas-care-availability-days{display:grid;gap:8px}.atlas-care-availability-day{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:12px;align-items:start;padding-top:9px;border-top:1px solid var(--line)}.atlas-care-availability-day:first-child{padding-top:0;border-top:0}.atlas-care-availability-day>strong{font-size:12px}.atlas-care-availability-day>div{display:flex;gap:6px;flex-wrap:wrap}.atlas-care-availability-day span{display:inline-flex;min-height:32px;align-items:center;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-care-slot-book{display:inline-flex;align-items:center;gap:6px;text-decoration:none}.atlas-care-slot-book span{color:var(--ink)}.atlas-care-slot-book small{color:var(--accent);font-size:10px;font-weight:850}.atlas-care-call{justify-self:start;text-decoration:none}.atlas-care-profile-back{text-decoration:none}@media(max-width:560px){.atlas-care-profile-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-availability-day{grid-template-columns:1fr}}
+        .atlas-care-profile-page{min-height:100dvh}.atlas-care-profile{max-width:720px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-profile h1{margin:8px 0 10px}.atlas-care-profile-specialty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--accent)}.atlas-care-profile-specialty span{color:var(--muted);font-size:12px}.atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.atlas-profile-share-actions .button{min-height:48px}.atlas-care-bio{margin-top:22px}.atlas-care-profile-details{display:grid;gap:1px;margin:28px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-profile-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-profile-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-profile-details dd{margin:0;font-size:13px;font-weight:700}.atlas-care-profile-details a{color:var(--accent)}.atlas-care-availability{display:grid;gap:14px;margin:0 0 26px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-availability-heading{display:grid;gap:5px}.atlas-care-availability-heading h2{margin:0;font-size:17px}.atlas-care-availability-heading p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55}.atlas-care-availability-days{display:grid;gap:8px}.atlas-care-availability-day{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:12px;align-items:start;padding-top:9px;border-top:1px solid var(--line)}.atlas-care-availability-day:first-child{padding-top:0;border-top:0}.atlas-care-availability-day>strong{font-size:12px}.atlas-care-availability-day>div{display:flex;gap:6px;flex-wrap:wrap}.atlas-care-availability-day span{display:inline-flex;min-height:32px;align-items:center;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-care-slot-book{display:inline-flex;align-items:center;gap:6px;text-decoration:none}.atlas-care-slot-book span{color:var(--ink)}.atlas-care-slot-book small{color:var(--accent);font-size:10px;font-weight:850}.atlas-care-availability-actions{display:flex;gap:8px;flex-wrap:wrap}.atlas-care-availability-actions .button{min-height:48px;text-decoration:none}.atlas-care-call{justify-self:start;text-decoration:none}.atlas-care-profile-back{text-decoration:none}@media(max-width:560px){.atlas-care-profile-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-availability-day{grid-template-columns:1fr}}
       `}</style>
     </main>
   );

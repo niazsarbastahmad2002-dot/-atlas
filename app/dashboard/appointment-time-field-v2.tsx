@@ -22,10 +22,10 @@ type Props = {
 type Period = "am" | "pm";
 
 const copy = {
-  en: { date: "Appointment date", time: "Appointment time", am: "AM", pm: "PM", hour: "Hour", minute: "Minute", custom: "Custom time", quick: "Available times", selected: "Selected", booked: "That exact time is already booked for this doctor.", doctor: "Choose a doctor first", invalid: "Choose a valid future time", previous: "Previous month", next: "Next month" },
-  ku: { date: "بەرواری وادە", time: "کاتی وادە", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", hour: "کاتژمێر", minute: "خولەک", custom: "کاتی تایبەت", quick: "کاتە بەردەستەکان", selected: "هەڵبژێردراو", booked: "ئەم کاتەی تەواو بۆ ئەم پزیشکە گیراوە.", doctor: "سەرەتا پزیشک هەڵبژێرە", invalid: "کاتێکی دروستی داهاتوو هەڵبژێرە", previous: "مانگی پێشوو", next: "مانگی داهاتوو" },
-  bd: { date: "ڕێکەفتا وادەیێ", time: "دەمێ وادەیێ", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", hour: "دەمژمێر", minute: "خولەک", custom: "دەمێ تایبەت", quick: "دەمێن بەردەست", selected: "هەلبژارتی", booked: "ئەڤ دەم بۆ ڤی دکتۆری هاتییە گرتن.", doctor: "سەرەتا دکتۆر هەلبژێرە", invalid: "دەمەکێ دروست یێ داهاتوو هەلبژێرە", previous: "مەها بەرێ", next: "مەها پاش" },
-  ar: { date: "تاريخ الموعد", time: "وقت الموعد", am: "صباحاً", pm: "مساءً", hour: "الساعة", minute: "الدقيقة", custom: "وقت مخصص", quick: "الأوقات المتاحة", selected: "المحدد", booked: "هذا الوقت محجوز بالفعل لهذا الطبيب.", doctor: "اختر الطبيب أولاً", invalid: "اختر وقتاً مستقبلياً صالحاً", previous: "الشهر السابق", next: "الشهر التالي" },
+  en: { date: "Appointment date", time: "Appointment time", am: "AM", pm: "PM", hour: "Hour", minute: "Minute", minuteUnit: "min", custom: "Custom time", quick: "Available times", selected: "Selected", booked: "That exact time is already booked for this doctor.", doctor: "Choose a doctor first", invalid: "Choose a valid future time", previous: "Previous month", next: "Next month" },
+  ku: { date: "بەرواری وادە", time: "کاتی وادە", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", hour: "کاتژمێر", minute: "خولەک", minuteUnit: "خولەک", custom: "کاتی تایبەت", quick: "کاتە بەردەستەکان", selected: "هەڵبژێردراو", booked: "ئەم کاتەی تەواو بۆ ئەم پزیشکە گیراوە.", doctor: "سەرەتا پزیشک هەڵبژێرە", invalid: "کاتێکی دروستی داهاتوو هەڵبژێرە", previous: "مانگی پێشوو", next: "مانگی داهاتوو" },
+  bd: { date: "ڕێکەفتا وادەیێ", time: "دەمێ وادەیێ", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", hour: "دەمژمێر", minute: "خولەک", minuteUnit: "خولەک", custom: "دەمێ تایبەت", quick: "دەمێن بەردەست", selected: "هەلبژارتی", booked: "ئەڤ دەم بۆ ڤی دکتۆری هاتییە گرتن.", doctor: "سەرەتا دکتۆر هەلبژێرە", invalid: "دەمەکێ دروست یێ داهاتوو هەلبژێرە", previous: "مەها بەرێ", next: "مەها پاش" },
+  ar: { date: "تاريخ الموعد", time: "وقت الموعد", am: "صباحاً", pm: "مساءً", hour: "الساعة", minute: "الدقيقة", minuteUnit: "دقيقة", custom: "وقت مخصص", quick: "الأوقات المتاحة", selected: "المحدد", booked: "هذا الوقت محجوز بالفعل لهذا الطبيب.", doctor: "اختر الطبيب أولاً", invalid: "اختر وقتاً مستقبلياً صالحاً", previous: "الشهر السابق", next: "الشهر التالي" },
 } as const;
 
 function pad(value: number) { return String(value).padStart(2, "0"); }
@@ -368,7 +368,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
         ) : null}
       </div>
 
-      <div className="atlas-time-heading"><strong>{text.time} · {interval} min</strong><button type="button" onClick={() => { setCustom((current) => !current); setSavedAdvance(false); setTouched(true); }}>{custom ? text.quick : text.custom}</button></div>
+      <div className="atlas-time-heading"><strong>{text.time} · {localizeDigits(interval, locale)} {text.minuteUnit}</strong><button type="button" onClick={() => { setCustom((current) => !current); setSavedAdvance(false); setTouched(true); }}>{custom ? text.quick : text.custom}</button></div>
       <div className="atlas-period-tabs" role="group" aria-label={text.time}>
         <button className={period === "am" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "am")}>{text.am}</button>
         <button className={period === "pm" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "pm")}>{text.pm}</button>
