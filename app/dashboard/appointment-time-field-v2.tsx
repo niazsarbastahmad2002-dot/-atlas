@@ -161,8 +161,16 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     const closeOutside = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setDateOpen(false);
     };
+    const clearSavedDraft = () => {
+      setDateOpen(false);
+      setTouched(false);
+    };
     document.addEventListener("pointerdown", closeOutside);
-    return () => document.removeEventListener("pointerdown", closeOutside);
+    document.addEventListener("atlas:appointment-saved", clearSavedDraft);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("atlas:appointment-saved", clearSavedDraft);
+    };
   }, []);
 
   const occupied = useMemo(() => new Set(doctorId ? occupiedByDoctor[doctorId] ?? [] : []), [doctorId, occupiedByDoctor]);
