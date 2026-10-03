@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type CarePageProps = {
-  searchParams: Promise<{ q?: string; city?: string; specialty?: string }>;
+  searchParams: Promise<{ q?: string | string[]; city?: string | string[]; specialty?: string | string[] }>;
 };
 
 const careCopy: Record<UiLocale, {
@@ -107,8 +107,9 @@ const careCopy: Record<UiLocale, {
   },
 };
 
-function bounded(value: string | undefined, max: number) {
-  const trimmed = value?.trim() ?? "";
+function bounded(value: string | string[] | undefined, max: number) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
   return trimmed.length <= max ? trimmed : trimmed.slice(0, max);
 }
 
