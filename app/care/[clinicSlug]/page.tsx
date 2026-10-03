@@ -17,6 +17,7 @@ const clinicCopy: Record<UiLocale, {
   doctors: string;
   location: string;
   contact: string;
+  directions: string;
   openDoctor: string;
   noDoctors: string;
   share: string;
@@ -32,6 +33,7 @@ const clinicCopy: Record<UiLocale, {
     doctors: "Doctors",
     location: "Location",
     contact: "Clinic contact",
+    directions: "Open directions",
     openDoctor: "View doctor",
     noDoctors: "No published doctors are listed yet.",
     share: "Share clinic",
@@ -47,6 +49,7 @@ const clinicCopy: Record<UiLocale, {
     doctors: "پزیشکەکان",
     location: "شوێن",
     contact: "پەیوەندی کلینیک",
+    directions: "ڕێگاکە بکەرەوە",
     openDoctor: "پڕۆفایلی پزیشک",
     noDoctors: "هێشتا هیچ پزیشکێکی بڵاوکراوە لیست نەکراوە.",
     share: "کلینیک هاوبەش بکە",
@@ -62,6 +65,7 @@ const clinicCopy: Record<UiLocale, {
     doctors: "دکتۆر",
     location: "جه",
     contact: "پەیوەندیا کلینیکێ",
+    directions: "ڕێکێ بکەڤە",
     openDoctor: "پڕۆفایلا دکتۆری",
     noDoctors: "هێشتا هیچ دکتۆرەکێ بڵاوکری نەهاتییە لیستکرن.",
     share: "کلینیک پارڤە بکە",
@@ -77,6 +81,7 @@ const clinicCopy: Record<UiLocale, {
     doctors: "الأطباء",
     location: "الموقع",
     contact: "رقم العيادة",
+    directions: "فتح الاتجاهات",
     openDoctor: "عرض الطبيب",
     noDoctors: "لا يوجد أطباء منشورون في القائمة حالياً.",
     share: "مشاركة العيادة",
@@ -156,6 +161,12 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
   if (clinicError || doctorsError || !clinic) return <Unavailable copy={copy} />;
 
   const location = [clinic.address_text, clinic.area, clinic.city].filter(Boolean).join(" · ");
+  const directionsDestination = clinic.address_text
+    ? [clinic.address_text, clinic.area, clinic.city].filter(Boolean).join(", ")
+    : "";
+  const directionsUrl = directionsDestination
+    ? `https://www.google.com/maps/dir/?${new URLSearchParams({ api: "1", destination: directionsDestination }).toString()}`
+    : null;
   const phone = clinic.public_phone
     ? (clinic.country_code === "IQ" ? formatIraqiMobile(clinic.public_phone) : clinic.public_phone)
     : null;
@@ -183,7 +194,19 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
 
         {(location || phone) ? (
           <dl className="atlas-care-clinic-details">
-            {location ? <div><dt>{copy.location}</dt><dd>{location}</dd></div> : null}
+            {location ? (
+              <div>
+                <dt>{copy.location}</dt>
+                <dd>
+                  <span>{location}</span>
+                  {directionsUrl ? (
+                    <a className="atlas-clinic-directions-link" href={directionsUrl} target="_blank" rel="noreferrer">
+                      {copy.directions}
+                    </a>
+                  ) : null}
+                </dd>
+              </div>
+            ) : null}
             {phone ? (
               <div>
                 <dt>{copy.contact}</dt>
@@ -214,7 +237,7 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
       </article>
 
       <style>{`
-        .atlas-care-clinic-page{min-height:100dvh}.atlas-care-clinic{max-width:760px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-clinic h1{margin:8px 0 10px}.atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.atlas-profile-share-actions .button{min-height:48px}.atlas-care-clinic-description{margin-top:18px}.atlas-care-clinic-details{display:grid;gap:1px;margin:26px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-clinic-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-clinic-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-clinic-details dd{margin:0;font-size:13px;font-weight:700}.atlas-care-clinic-details a{color:var(--accent)}.atlas-care-clinic-doctors{margin-top:28px}.atlas-care-clinic-doctors h2{font-size:17px}.atlas-care-clinic-doctor-list{display:grid;gap:9px}.atlas-care-clinic-doctor-list article{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}.atlas-care-clinic-doctor-list article>div{display:grid;gap:4px}.atlas-care-clinic-doctor-list span{color:var(--muted);font-size:11px}.atlas-care-clinic-doctor-list .button{text-decoration:none}.atlas-care-clinic-back{margin-top:26px;text-decoration:none}@media(max-width:560px){.atlas-care-clinic-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-clinic-doctor-list article{align-items:flex-start;flex-direction:column}}
+        .atlas-care-clinic-page{min-height:100dvh}.atlas-care-clinic{max-width:760px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-clinic h1{margin:8px 0 10px}.atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.atlas-profile-share-actions .button{min-height:48px}.atlas-care-clinic-description{margin-top:18px}.atlas-care-clinic-details{display:grid;gap:1px;margin:26px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-clinic-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-clinic-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-clinic-details dd{display:grid;gap:9px;margin:0;font-size:13px;font-weight:700}.atlas-care-clinic-details a{color:var(--accent)}.atlas-clinic-directions-link{display:inline-flex;width:fit-content;min-height:48px;align-items:center;text-decoration:none}.atlas-care-clinic-doctors{margin-top:28px}.atlas-care-clinic-doctors h2{font-size:17px}.atlas-care-clinic-doctor-list{display:grid;gap:9px}.atlas-care-clinic-doctor-list article{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}.atlas-care-clinic-doctor-list article>div{display:grid;gap:4px}.atlas-care-clinic-doctor-list span{color:var(--muted);font-size:11px}.atlas-care-clinic-doctor-list .button{text-decoration:none}.atlas-care-clinic-back{margin-top:26px;text-decoration:none}@media(max-width:560px){.atlas-care-clinic-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-clinic-doctor-list article{align-items:flex-start;flex-direction:column}}
       `}</style>
     </main>
   );
