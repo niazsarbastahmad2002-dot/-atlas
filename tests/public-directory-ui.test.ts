@@ -57,3 +57,11 @@ test("published clinics have a direct public profile route and doctors link back
   assert.match(search, /href=\{\`\/care\/\$\{doctor\.clinic_slug\}\`\}/);
   assert.match(doctor, /href=\{\`\/care\/\$\{profile\.clinic_slug\}\`\}/);
 });
+
+
+test("public doctor search safely rejects repeated query parameters", () => {
+  const page = source("app/care/page.tsx");
+
+  assert.match(page, /q\?: string \| string\[\]/);
+  assert.match(page, /if \(typeof value !== "string"\) return ""/);
+});
