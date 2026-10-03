@@ -8,9 +8,7 @@ returns table(
   clinic_slug text,
   address_text text,
   area text,
-  city text,
-  latitude double precision,
-  longitude double precision
+  city text
 )
 language sql
 stable
@@ -21,9 +19,7 @@ as $$
     profile.slug,
     profile.address_text,
     profile.area,
-    profile.city,
-    profile.latitude,
-    profile.longitude
+    profile.city
   from private.patient_appointment_tokens token
   join public.appointments appointment
     on appointment.id = token.appointment_id
