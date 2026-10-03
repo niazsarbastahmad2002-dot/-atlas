@@ -88,36 +88,50 @@ export function LivePageRefresh() {
     if (pathname !== "/dashboard") return;
 
     let timer: number | null = null;
+    const loadingSelector = 'main[aria-busy="true"][data-atlas-loading="schedule"]';
     const stop = () => {
       if (timer === null) return;
       window.clearTimeout(timer);
       timer = null;
     };
-    const checkStall = () => {
-      timer = null;
-      if (document.visibilityState !== "visible") return;
-      const loading = document.querySelector('main[aria-busy="true"][data-atlas-loading="schedule"]');
-      if (!loading) return;
-      if (!reserveSafariStallReload(Date.now())) return;
-      window.location.reload();
-    };
     const schedule = () => {
-      if (document.visibilityState !== "visible" || timer !== null) return;
-      timer = window.setTimeout(checkStall, 8_000);
+      if (
+        document.visibilityState !== "visible"
+        || timer !== null
+        || !document.querySelector(loadingSelector)
+      ) return;
+      timer = window.setTimeout(() => {
+        timer = null;
+        if (
+          document.visibilityState !== "visible"
+          || !document.querySelector(loadingSelector)
+          || !reserveSafariStallReload(Date.now())
+        ) return;
+        window.location.reload();
+      }, 8_000);
     };
-    const onVisibilityChange = () => {
-      if (document.visibilityState !== "visible") {
+    const sync = () => {
+      if (
+        document.visibilityState !== "visible"
+        || !document.querySelector(loadingSelector)
+      ) {
         stop();
         return;
       }
       schedule();
     };
 
-    schedule();
-    document.addEventListener("visibilitychange", onVisibilityChange);
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.querySelector(".app-shell") ?? document.body, {
+      childList: true,
+      subtree: true,
+    });
+    document.addEventListener("visibilitychange", sync);
     return () => {
       stop();
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", sync);
     };
   }, [pathname]);
 
