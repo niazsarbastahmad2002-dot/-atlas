@@ -18,17 +18,20 @@ test("dashboard live refresh preserves active receptionist appointment drafts", 
   assert.match(timeField, /data-atlas-time-draft=\{dateOpen \|\| touched \|\| date !== initial \? "true" : "false"\}/);
 });
 
-test("Safari stall recovery only reloads when its throttle can be stored safely", () => {
+test("Safari stall recovery follows later schedule loading states safely", () => {
   const refresh = read("app/components/live-page-refresh.tsx");
 
   assert.match(refresh, /function reserveSafariStallReload\(now: number\)/);
   assert.match(refresh, /window\.sessionStorage\.getItem\(key\)/);
   assert.match(refresh, /window\.sessionStorage\.setItem\(key, String\(now\)\)/);
   assert.match(refresh, /catch \{[\s\S]*return false;/);
-  assert.match(refresh, /if \(!reserveSafariStallReload\(Date\.now\(\)\)\) return;/);
-  assert.match(refresh, /const checkStall = \(\) => \{[\s\S]*document\.visibilityState !== "visible"/);
-  assert.match(refresh, /timer = window\.setTimeout\(checkStall, 8_000\)/);
+  assert.match(refresh, /const loadingSelector = 'main\[aria-busy="true"\]\[data-atlas-loading="schedule"\]'/);
+  assert.match(refresh, /new MutationObserver\(sync\)/);
+  assert.match(refresh, /observer\.observe\(document\.querySelector\("\.app-shell"\) \?\? document\.body/);
+  assert.match(refresh, /timer = window\.setTimeout\(\(\) => \{/);
+  assert.match(refresh, /!reserveSafariStallReload\(Date\.now\(\)\)/);
   assert.match(refresh, /window\.clearTimeout\(timer\)/);
+  assert.match(refresh, /observer\.disconnect\(\)/);
 });
 
 
