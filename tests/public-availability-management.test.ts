@@ -53,8 +53,21 @@ test("public availability writes never upsert immutable tenant keys", () => {
   assert.doesNotMatch(actions, /\.upsert\(/);
   assert.match(actions, /\.insert\(\{ clinic_id: clinicId, \.\.\.settingsPatch \}\)/);
   assert.match(actions, /\.update\(settingsPatch\)[\s\S]*\.eq\("clinic_id", clinicId\)/);
-  assert.match(actions, /const existingWeekdays = new Set/);
-  assert.match(actions, /\.insert\(insertRows\)/);
-  assert.match(actions, /\.update\(\{[\s\S]*starts_at: row\.starts_at[\s\S]*is_enabled: row\.is_enabled/);
+  assert.match(actions, /\.rpc\(\s*"save_doctor_public_booking_hours"/);
+  assert.doesNotMatch(actions, /for \(const row of rows/);
   assert.match(actions, /\.update\(\{ is_closed: isClosed \}\)/);
+});
+
+
+test("weekly public hours are committed through one invoker RPC transaction", () => {
+  const migration = source("supabase/migrations/20261003192820_public_availability_atomic_week.sql");
+  const actions = source("app/dashboard/settings/public-profile/availability/actions.ts");
+
+  assert.match(migration, /security invoker/i);
+  assert.match(migration, /jsonb_array_length\(p_hours\) <> 7/);
+  assert.match(migration, /count\(distinct x\.weekday\)/);
+  assert.match(migration, /on conflict \(clinic_id, doctor_id, weekday\)/);
+  assert.match(migration, /starts_at = excluded\.starts_at/);
+  assert.match(actions, /weekSaved !== true/);
+  assert.doesNotMatch(actions, /clinic_id: clinicId,[\s\S]*weekday,/);
 });
