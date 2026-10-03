@@ -39,5 +39,5 @@ test("failed appearance saves restore the previously active theme", () => {
   assert.match(control, /const previousTheme = theme/);
   assert.match(control, /setTheme\(nextTheme\)/);
   assert.match(control, /catch \{[\s\S]*setTheme\(previousTheme\)/);
-  assert.match(control, /if \(themePending \|\| nextTheme === theme\) return/);
+  assert.match(control, /if \(preferencePending \|\| nextTheme === theme\) return/);
 });
