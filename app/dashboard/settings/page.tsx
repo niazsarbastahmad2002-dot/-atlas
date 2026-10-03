@@ -120,6 +120,8 @@ const settingsCopy: Record<UiLocale, {
   administrationHelp: string;
   teamAccess: string;
   history: string;
+  publicPresence: string;
+  publicPresenceHelp: string;
   exportReadable: string;
   exportReadableHelp: string;
   exportCsv: string;
@@ -148,6 +150,8 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "Less-used owner tools stay here instead of competing with the daily schedule.",
     teamAccess: "Team access",
     history: "Appointment history",
+    publicPresence: "Public profile",
+    publicPresenceHelp: "Choose what patients may see in Atlas discovery. Nothing is published automatically.",
     exportReadable: "Readable clinic report",
     exportReadableHelp: "Open a clean report you can read, print, or save as PDF. Contains patient details — keep it private.",
     exportCsv: "Appointments spreadsheet (CSV)",
@@ -176,6 +180,8 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "ئامرازە کەم‌بەکارهاتووەکانی خاوەن کلینیک لێرە دەمێنن تا خشتەی ڕۆژانە سادە بێت.",
     teamAccess: "دەسەڵاتی ستاف",
     history: "مێژووی وادەکان",
+    publicPresence: "پڕۆفایلی گشتی",
+    publicPresenceHelp: "دیاری بکە نەخۆش چی لە Atlas ببینێت. هیچ شتێک بەخۆکار بڵاوناکرێتەوە.",
     exportReadable: "ڕاپۆرتی خوێندنەوەی کلینیک",
     exportReadableHelp: "ڕاپۆرتێکی پاک بکەرەوە بۆ خوێندنەوە، چاپکردن یان هەڵگرتن وەک PDF. زانیاری نەخۆش تێدایە — بە نهێنی هەڵیبگرە.",
     exportCsv: "خشتەی وادەکان (CSV)",
@@ -204,6 +210,8 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "ئامرازێن کێم‌بکارهاتی یێن خودانێ کلینیکێ ل ڤێرێ دمینن دا خشتەیا ڕۆژانە سادە بیت.",
     teamAccess: "دەستهەلاتا ستافی",
     history: "مێژوویا وادەیان",
+    publicPresence: "پڕۆفایلا گشتی",
+    publicPresenceHelp: "دیار بکە نەخۆش چ د Atlas دا ببینیت. هیچ تشت ب خۆکار ناهێتە بڵاوکرن.",
     exportReadable: "ڕاپۆرتا کلینیکێ یا خواندنێ",
     exportReadableHelp: "ڕاپۆرتەکا پاک بۆ خواندن، چاپکرن یان هەلگرتن وەک PDF. زانیاریێن نەخۆشان تێدانە — ب نهێنی هەلگرە.",
     exportCsv: "خشتەیا وادەیان (CSV)",
@@ -232,6 +240,8 @@ const settingsCopy: Record<UiLocale, {
     administrationHelp: "أدوات المالك الأقل استخداماً تبقى هنا حتى يظل الجدول اليومي بسيطاً.",
     teamAccess: "صلاحيات الفريق",
     history: "سجل المواعيد",
+    publicPresence: "الملف العام",
+    publicPresenceHelp: "اختر ما الذي يراه المرضى في اكتشاف Atlas. لا يتم نشر أي شيء تلقائياً.",
     exportReadable: "تقرير عيادة سهل القراءة",
     exportReadableHelp: "افتح تقريراً مرتباً للقراءة أو الطباعة أو الحفظ كـ PDF. يحتوي بيانات مرضى — احفظه بخصوصية.",
     exportCsv: "جدول المواعيد (CSV)",
@@ -366,6 +376,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           ) : (
             <div className="settings-readonly-clinic"><span>{t.clinicName}</span><strong>{clinic.name}</strong><small>{copy.readOnlyClinic}</small></div>
           )}
+          {canManage ? (
+            <Link className="settings-link settings-public-profile-link" href={`/dashboard/settings/public-profile?clinic=${clinic.id}`}>
+              <span className="settings-export-copy"><strong>{copy.publicPresence}</strong><small>{copy.publicPresenceHelp}</small></span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
         </section>
 
         <DoctorWorkflowCard clinicId={clinic.id} locale={locale} canManage={Boolean(canManage)} />
@@ -507,7 +523,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       </footer>
 
       <style>{`
-        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}.settings-link-list{display:grid;gap:8px}.settings-export-group{display:grid;gap:6px}.settings-export-form{margin:0}.settings-export-button{width:100%;font:inherit;text-align:inherit;cursor:pointer}.settings-export-copy{display:grid;gap:2px}.settings-export-copy strong{font:inherit}.settings-export-copy small{max-width:520px;color:var(--muted);font-size:10px;font-weight:650;line-height:1.35}.settings-disclosure{border-top:1px solid var(--line);padding-top:10px}.settings-disclosure>summary{min-height:42px;display:flex;align-items:center;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}.settings-utility-footer{display:flex;justify-content:center;gap:9px;padding:24px 0 110px;color:var(--muted);font-size:11px}.settings-utility-footer a{color:inherit}.doctor-settings-row.is-archived{display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-public-profile-link{margin-top:10px}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}.settings-link-list{display:grid;gap:8px}.settings-export-group{display:grid;gap:6px}.settings-export-form{margin:0}.settings-export-button{width:100%;font:inherit;text-align:inherit;cursor:pointer}.settings-export-copy{display:grid;gap:2px}.settings-export-copy strong{font:inherit}.settings-export-copy small{max-width:520px;color:var(--muted);font-size:10px;font-weight:650;line-height:1.35}.settings-disclosure{border-top:1px solid var(--line);padding-top:10px}.settings-disclosure>summary{min-height:42px;display:flex;align-items:center;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}.settings-utility-footer{display:flex;justify-content:center;gap:9px;padding:24px 0 110px;color:var(--muted);font-size:11px}.settings-utility-footer a{color:inherit}.doctor-settings-row.is-archived{display:flex;align-items:center;justify-content:space-between;gap:12px}
       `}</style>
     </main>
   );
