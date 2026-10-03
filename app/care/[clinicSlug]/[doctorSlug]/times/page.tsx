@@ -119,26 +119,69 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
   const supabase = await createClient();
   const launchEnabled = process.env.ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED === "true";
   const readinessPromise = launchEnabled ? getAtlasAuthReadiness() : Promise.resolve(null);
+  const slotPageSize = 200;
+  const maxSlotPages = 24;
   const [
     { data: profileData, error: profileError },
-    { data: slotData, error: slotError },
+    firstSlotPage,
     readiness,
   ] = await Promise.all([
     supabase.rpc("get_public_doctor_profile", {
       p_clinic_slug: clinicSlug,
       p_doctor_slug: doctorSlug,
     }),
-    supabase.rpc("list_public_doctor_slots_window", {
+    supabase.rpc("list_public_doctor_slots_page", {
       p_clinic_slug: clinicSlug,
       p_doctor_slug: doctorSlug,
       p_from_date: null,
       p_days: 14,
+      p_after: null,
+      p_limit: slotPageSize,
     }),
     readinessPromise,
   ]);
 
   const profile = Array.isArray(profileData) ? profileData[0] : undefined;
-  if (profileError || slotError || !profile) return <Unavailable copy={t} />;
+  if (profileError || firstSlotPage.error || !profile) return <Unavailable copy={t} />;
+
+  const slotData = [...(firstSlotPage.data ?? [])];
+  let pageRows = firstSlotPage.data ?? [];
+  let cursor = pageRows.at(-1)?.slot_at ?? null;
+  let slotLoadFailed = false;
+
+  for (let pageIndex = 1; pageRows.length === slotPageSize; pageIndex += 1) {
+    if (pageIndex >= maxSlotPages || !cursor) {
+      slotLoadFailed = true;
+      break;
+    }
+
+    const nextPage = await supabase.rpc("list_public_doctor_slots_page", {
+      p_clinic_slug: clinicSlug,
+      p_doctor_slug: doctorSlug,
+      p_from_date: null,
+      p_days: 14,
+      p_after: cursor,
+      p_limit: slotPageSize,
+    });
+    if (nextPage.error) {
+      slotLoadFailed = true;
+      break;
+    }
+
+    pageRows = nextPage.data ?? [];
+    if (!pageRows.length) break;
+
+    const nextCursor = pageRows.at(-1)?.slot_at ?? null;
+    if (!nextCursor || new Date(nextCursor).getTime() <= new Date(cursor).getTime()) {
+      slotLoadFailed = true;
+      break;
+    }
+
+    slotData.push(...pageRows);
+    cursor = nextCursor;
+  }
+
+  if (slotLoadFailed) return <Unavailable copy={t} />;
 
   const bookingReady = Boolean(
     launchEnabled
