@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { scheduleFormIsBusy } from "./schedule-form-busy";
 
 function baghdadDay(date: Date) {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -26,7 +27,7 @@ export function DashboardDayRollover({
 
     const refreshForNewClinicDay = () => {
       const liveDay = baghdadDay(new Date());
-      if (liveDay === todayAtRender) return;
+      if (liveDay === todayAtRender || scheduleFormIsBusy()) return;
 
       const url = new URL(window.location.href);
       url.searchParams.set("day", liveDay);

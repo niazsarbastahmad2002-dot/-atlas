@@ -6,12 +6,15 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 
 test("dashboard live refresh preserves active receptionist appointment drafts", () => {
   const refresh = read("app/components/live-page-refresh.tsx");
+  const busy = read("app/dashboard/schedule-form-busy.ts");
   const timeField = read("app/dashboard/appointment-time-field-v2.tsx");
 
-  assert.match(refresh, /select\[name="contact_relationship"\]/);
-  assert.match(refresh, /input\[name="reminder_consent"\]/);
-  assert.match(refresh, /data-atlas-time-draft="true"/);
-  assert.match(refresh, /active instanceof HTMLElement && form\.contains\(active\)/);
+  assert.match(refresh, /scheduleFormIsBusy/);
+  assert.match(busy, /form\.appointment-edit-form/);
+  assert.match(busy, /select\[name="contact_relationship"\]/);
+  assert.match(busy, /input\[name="reminder_consent"\]/);
+  assert.match(busy, /data-atlas-time-draft="true"/);
+  assert.match(busy, /active instanceof HTMLElement && form\.contains\(active\)/);
   assert.match(timeField, /data-atlas-time-draft=\{dateOpen \|\| touched \|\| date !== initial \? "true" : "false"\}/);
 });
 
