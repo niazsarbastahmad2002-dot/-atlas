@@ -112,8 +112,6 @@ export async function saveDoctorPublicBookingHours(formData: FormData) {
     }
 
     rows.push({
-      clinic_id: clinicId,
-      doctor_id: doctorId,
       weekday,
       starts_at: startsAt,
       ends_at: endsAt,
