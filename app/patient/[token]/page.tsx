@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { formatIraqiMobile } from "@/lib/appointments";
 import { localizeDigits } from "@/lib/i18n/format";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
+import { baghdadDateKey, patientDayFlowDelay } from "@/lib/patient-day-flow";
 import { getPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
@@ -51,6 +52,11 @@ const patientCopy = {
     first: "You’re first for this doctor.",
     ahead: "patient ahead of you",
     aheadMany: "patients ahead of you",
+    timingTitle: "Clinic timing",
+    timingOnTime: "Running on time",
+    timingLate: "About {minutes} min late",
+    timingEarly: "About {minutes} min early",
+    timingHelp: "Updated by reception. This is an estimate, not an exact wait time.",
     confirmTitle: "Confirm your appointment",
     confirmInitial: "Confirm appointment",
     cancelSmall: "Need to cancel?",
@@ -91,6 +97,11 @@ const patientCopy = {
     first: "تۆ یەکەم نەخۆشیت بۆ ئەم پزیشکە.",
     ahead: "نەخۆش لە پێشتە",
     aheadMany: "نەخۆش لە پێشتە",
+    timingTitle: "دۆخی کاتی کلینیک",
+    timingOnTime: "کلینیکەکە بە کاتە.",
+    timingLate: "نزیکەی {minutes} خولەک دواخراوە.",
+    timingEarly: "نزیکەی {minutes} خولەک زووترە.",
+    timingHelp: "ڕیسێپشن نوێی دەکاتەوە. ئەمە خەمڵاندنێکە، نە کاتی چاوەڕوانیی ورد.",
     confirmTitle: "کاتەکەت پشتڕاست بکەرەوە",
     confirmInitial: "پشتڕاستکردنەوەی کات",
     cancelSmall: "دەتەوێت هەڵیوەشێنیتەوە؟",
@@ -131,6 +142,11 @@ const patientCopy = {
     first: "تو یێ ئێکێ ی بۆ ڤی دکتۆری.",
     ahead: "نەخۆش بەری تەیە",
     aheadMany: "نەخۆش بەری تە نە",
+    timingTitle: "دەمێ کلینیکێ",
+    timingOnTime: "کلینیک ل سەر دەمی خۆیە.",
+    timingLate: "نێزیکی {minutes} خولەک پاشکەفتییە.",
+    timingEarly: "نێزیکی {minutes} خولەک زووترە.",
+    timingHelp: "ڕیسێپشن نوێ دکەتەوە. ئەڤە هەلسەنگاندنە، نە دەمێ چاوەڕوانییێ یێ ورد.",
     confirmTitle: "وادەیا خۆ پشتڕاست بکە",
     confirmInitial: "وادەیێ پشتڕاست بکە",
     cancelSmall: "دخوازیت هەلوەشێنیت؟",
@@ -171,6 +187,11 @@ const patientCopy = {
     first: "إنت أول واحد عند هذا الدكتور.",
     ahead: "مريض قبلك",
     aheadMany: "مرضى قبلك",
+    timingTitle: "وقت العيادة",
+    timingOnTime: "العيادة ماشية بالوقت.",
+    timingLate: "العيادة متأخرة تقريباً {minutes} دقيقة.",
+    timingEarly: "العيادة متقدمة تقريباً {minutes} دقيقة.",
+    timingHelp: "الاستقبال يحدّثها. هذا تقدير، مو وقت انتظار دقيق.",
     confirmTitle: "أكد موعدك",
     confirmInitial: "أكد الموعد",
     cancelSmall: "تريد تلغي الموعد؟",
@@ -222,6 +243,13 @@ function baghdadClock(date: Date, locale: PatientLocale) {
   };
 }
 
+function patientTimingText(delayMinutes: number, locale: PatientLocale) {
+  const text = patientCopy[locale];
+  if (delayMinutes === 0) return text.timingOnTime;
+  const minutes = localizeDigits(Math.abs(delayMinutes), locale);
+  return (delayMinutes > 0 ? text.timingLate : text.timingEarly).replace("{minutes}", minutes);
+}
+
 export default async function PatientAppointmentPage({ params, searchParams }: PatientPageProps) {
   const [{ token }, query] = await Promise.all([params, searchParams]);
   const fallbackLocale = patientLocale(query.lang ?? "en");
@@ -270,9 +298,22 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const aheadCount = localizeDigits(ahead, locale);
   const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
   let wantsEarlierSlot = false;
+  let clinicDelayMinutes: number | null = null;
   if (isActive) {
-    const { enabled } = await getPatientEarlierSlotPreference(admin, tokenHash);
+    const isAppointmentToday = baghdadDateKey(appointmentDate) === baghdadDateKey(new Date());
+    const earlierSlotPromise = getPatientEarlierSlotPreference(admin, tokenHash);
+    const timingPromise = isAppointmentToday
+      ? admin.rpc("patient_get_day_flow", { p_token_hash: tokenHash })
+      : null;
+
+    const { enabled } = await earlierSlotPromise;
     wantsEarlierSlot = enabled;
+
+    if (timingPromise) {
+      const { data: timingData, error: timingError } = await timingPromise;
+      const timing = Array.isArray(timingData) ? timingData[0] : undefined;
+      if (!timingError && timing) clinicDelayMinutes = patientDayFlowDelay(timing.delay_minutes);
+    }
   }
   const statusMessage = isConfirmed
     ? text.confirmed
@@ -328,6 +369,14 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         </section>
 
         {actionFailed ? <p className="notice notice-error patient-action-error" role="alert">{text.actionFailed}</p> : null}
+
+        {isActive && clinicDelayMinutes !== null ? (
+          <section className="patient-timing-card" aria-label={text.timingTitle}>
+            <span>{text.timingTitle}</span>
+            <strong>{patientTimingText(clinicDelayMinutes, locale)}</strong>
+            <p>{text.timingHelp}</p>
+          </section>
+        ) : null}
 
         {isActive && queuePosition ? (
           <div className="patient-order-card" aria-label={`${text.order} ${queuePosition}`}>
@@ -442,6 +491,10 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-detail-block > .patient-detail-secondary { font-size: clamp(17px,4vw,21px); font-weight: 790; }
           .patient-contact-block a { width: fit-content; color: var(--accent); font-size: clamp(19px,4.5vw,24px); font-weight: 850; text-decoration: none; }
           .patient-action-error { margin: 0 0 18px; }
+          .patient-timing-card { margin: 0 0 22px; border: 1px solid #cfe7dd; border-radius: 17px; padding: 17px 19px; background: #f5fcf9; }
+          .patient-timing-card > span { display: block; color: var(--muted); font-size: 11px; font-weight: 820; letter-spacing: .06em; text-transform: uppercase; }
+          .patient-timing-card > strong { display: block; margin-top: 7px; color: var(--accent); font-size: clamp(19px,4.5vw,24px); line-height: 1.35; }
+          .patient-timing-card > p { margin: 8px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.55; }
           .patient-order-card { margin: 0 0 22px; border: 1px solid #cfe7dd; border-radius: 17px; padding: 17px 19px; background: #effaf6; }
           .patient-order-card > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
           .patient-order-card span { color: var(--muted); font-size: 12px; font-weight: 780; }
