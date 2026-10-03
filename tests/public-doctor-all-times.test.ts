@@ -48,3 +48,16 @@ test("doctor profile links to the full public availability page with a 48px acti
   assert.match(profile, /atlas-care-availability-actions/);
   assert.match(profile, /atlas-care-availability-actions \.button\{min-height:48px/);
 });
+
+
+test("full doctor availability bypasses the lightweight 200-slot cap through a dedicated bounded RPC", () => {
+  const page = source("app/care/[clinicSlug]/[doctorSlug]/times/page.tsx");
+  const migration = source("supabase/migrations/20261003214000_public_full_availability_window.sql");
+
+  assert.match(page, /list_public_doctor_slots_window/);
+  assert.doesNotMatch(page, /rpc\("list_public_doctor_slots",/);
+  assert.match(migration, /least\(coalesce\(p_days, 14\), 14\)/);
+  assert.doesNotMatch(migration, /limit 200/i);
+  assert.match(migration, /grant execute[\s\S]*to anon, authenticated/i);
+  assert.doesNotMatch(migration, /patient_name|patient_phone|reminder_language/);
+});
