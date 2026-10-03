@@ -15,9 +15,9 @@ test("clinic access administration disables consequential submit buttons while p
 
   assert.match(page, /revokeManualStaffInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{text\.revokeInviteConfirm\.replace\("\{doctor\}", invitation\.doctor_name\)\}/);
   assert.match(page, /cancelPendingInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{text\.removePendingConfirm\}/);
-  assert.match(page, /updateStaffRole[\s\S]*<SubmitButton className="" pendingLabel=\{text\.working\}>\{text\.saveRole\}<\/SubmitButton>/);
+  assert.match(page, /updateStaffRole[\s\S]*<SubmitButton className="" pendingLabel=\{text\.working\} lockForm>\{text\.saveRole\}<\/SubmitButton>/);
   assert.match(page, /removeStaffMember[\s\S]*<ConfirmSubmitButton[\s\S]*className="danger-link"[\s\S]*pendingLabel=\{text\.working\}[\s\S]*confirmMessage=\{text\.removeConfirm\.replace\("\{person\}", member\.identity\)\}/);
-  assert.match(page, /transferClinicAdministrator[\s\S]*<SubmitButton className="button button-small" pendingLabel=\{text\.working\}>\{text\.transferButton\}<\/SubmitButton>/);
+  assert.match(page, /transferClinicAdministrator[\s\S]*<SubmitButton className="button button-small" pendingLabel=\{text\.working\} lockForm>\{text\.transferButton\}<\/SubmitButton>/);
 });
 
 test("removing clinic staff requires confirmation before the pending submit", async () => {
