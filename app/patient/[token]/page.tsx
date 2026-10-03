@@ -77,6 +77,7 @@ const patientCopy = {
     earlierLeave: "Leave earlier-slot list",
     rescheduleTitle: "Change your appointment time",
     rescheduleHelp: "Choose another live opening for the same doctor. Atlas checks the slot again before changing your appointment.",
+    rescheduleConfirm: "Change your appointment to {slot}?",
     rescheduled: "Your appointment time was changed.",
     slotTaken: "That time was just taken. Choose another open time.",
     rescheduleUnavailable: "That time is no longer available. Choose another open time.",
@@ -128,6 +129,7 @@ const patientCopy = {
     earlierLeave: "لە لیستی زووتر دەرچم",
     rescheduleTitle: "کاتی مەوعیدەکەت بگۆڕە",
     rescheduleHelp: "کاتێکی بەردەستی تری هەمان پزیشک هەڵبژێرە. Atlas پێش گۆڕینەکە کاتەکە دووبارە دەپشکنێت.",
+    rescheduleConfirm: "مەوعیدەکەت بگۆڕدرێت بۆ {slot}؟",
     rescheduled: "کاتی مەوعیدەکەت گۆڕدرا.",
     slotTaken: "ئەم کاتە تازە گیرا. کاتێکی بەردەستی تر هەڵبژێرە.",
     rescheduleUnavailable: "ئەم کاتە چیتر بەردەست نییە. کاتێکی تر هەڵبژێرە.",
@@ -179,6 +181,7 @@ const patientCopy = {
     earlierLeave: "ژ لیستا زووتر دەربکەڤم",
     rescheduleTitle: "دەمێ وادەیا خۆ بگوهۆڕە",
     rescheduleHelp: "دەمەکێ دی یێ بەردەست بۆ هەمان دکتۆری هەلبژێرە. Atlas بەری گوهۆڕینێ دەم جارەکا دی دپشکنیت.",
+    rescheduleConfirm: "وادەیا تە بگوهۆڕدرێت بۆ {slot}؟",
     rescheduled: "دەمێ وادەیا تە هاتە گوهۆڕین.",
     slotTaken: "ئەڤ دەمە نوو هاتە گرتن. دەمەکێ دی یێ بەردەست هەلبژێرە.",
     rescheduleUnavailable: "ئەڤ دەمە ئێدی بەردەست نینە. دەمەکێ دی هەلبژێرە.",
@@ -230,6 +233,7 @@ const patientCopy = {
     earlierLeave: "شيلوني من قائمة الأبكر",
     rescheduleTitle: "غيّر وقت موعدك",
     rescheduleHelp: "اختر وقتاً حقيقياً متاحاً عند نفس الطبيب. Atlas يفحص الوقت مرة ثانية قبل تغيير موعدك.",
+    rescheduleConfirm: "تغيير موعدك إلى {slot}؟",
     rescheduled: "تم تغيير وقت موعدك.",
     slotTaken: "هذا الوقت انحجز للتو. اختر وقتاً متاحاً آخر.",
     rescheduleUnavailable: "هذا الوقت لم يعد متاحاً. اختر وقتاً آخر.",
@@ -486,6 +490,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
                     formAction={reschedulePatientAppointment.bind(null, token, slot.slot_at)}
                     pendingLabel={text.updating}
                     className="button button-ghost patient-reschedule-slot"
+                    confirmMessage={text.rescheduleConfirm.replace("{slot}", rescheduleSlotLabel(slot.slot_at, locale))}
                   >
                     {rescheduleSlotLabel(slot.slot_at, locale)}
                   </PatientSubmitButton>
