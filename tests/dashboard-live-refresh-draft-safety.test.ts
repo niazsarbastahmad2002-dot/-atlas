@@ -26,6 +26,9 @@ test("Safari stall recovery only reloads when its throttle can be stored safely"
   assert.match(refresh, /window\.sessionStorage\.setItem\(key, String\(now\)\)/);
   assert.match(refresh, /catch \{[\s\S]*return false;/);
   assert.match(refresh, /if \(!reserveSafariStallReload\(Date\.now\(\)\)\) return;/);
+  assert.match(refresh, /const checkStall = \(\) => \{[\s\S]*document\.visibilityState !== "visible"/);
+  assert.match(refresh, /timer = window\.setTimeout\(checkStall, 8_000\)/);
+  assert.match(refresh, /window\.clearTimeout\(timer\)/);
 });
 
 
