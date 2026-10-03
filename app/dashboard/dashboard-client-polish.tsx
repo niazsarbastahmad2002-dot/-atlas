@@ -227,7 +227,8 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       while (walker.nextNode()) {
         const node = walker.currentNode as Text;
         const parent = node.parentElement;
-        if (!parent || ["SCRIPT", "STYLE"].includes(parent.tagName)) continue;
+        if (!parent || ["SCRIPT", "STYLE", "OPTION"].includes(parent.tagName)) continue;
+        if (parent.closest('[data-atlas-user-content="true"], [dir="ltr"], bdi')) continue;
         nodes.push(node);
       }
       for (const node of nodes) {
