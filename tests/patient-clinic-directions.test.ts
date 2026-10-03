@@ -27,17 +27,37 @@ test("patient location enrichment never makes the core appointment page depend o
   assert.doesNotMatch(page, /if \(locationError/);
 });
 
-test("patient directions require a specific published address and do not trust stale coordinates", () => {
+test("patient directions require an explicit published address and use a free Maps URL", () => {
   const page = source("app/patient/[token]/page.tsx");
-  const migration = source("supabase/migrations/20261003214500_patient_published_clinic_location.sql");
 
-  assert.match(page, /clinicLocation\?\.address_text/);
+  assert.match(page, /const clinicLocationText = clinicLocation\?\.address_text/);
+  assert.match(page, /\[clinicLocation\.address_text, clinicLocation\.area, clinicLocation\.city\]/);
+  assert.match(page, /const clinicDirectionsUrl = clinicLocationText/);
+  assert.doesNotMatch(page, /clinicLocation\.latitude|clinicLocation\.longitude/);
   assert.match(page, /https:\/\/www\.google\.com\/maps\/dir\//);
   assert.match(page, /new URLSearchParams\(\{ api: "1", destination: clinicLocationText \}\)/);
-  assert.doesNotMatch(page, /clinicLocation\.latitude|clinicLocation\.longitude/);
-  assert.doesNotMatch(migration, /latitude|longitude/);
   assert.doesNotMatch(page, /GOOGLE_MAPS_API_KEY|NEXT_PUBLIC_GOOGLE_MAPS|maps\/api\/js/);
   assert.match(page, /target="_blank"/);
   assert.match(page, /rel="noreferrer"/);
   assert.match(page, /patient-directions-link \{ width: 100%; min-height: 48px/);
+});
+
+test("changing published clinic location invalidates stale saved coordinates", () => {
+  const actions = source("app/dashboard/settings/public-profile/actions.ts");
+
+  assert.match(actions, /select\("clinic_id, address_text, area, city, latitude, longitude"\)/);
+  assert.match(actions, /const locationChanged = Boolean\(existing && \(/);
+  assert.match(actions, /\(existing\.address_text \?\? ""\) !== addressText/);
+  assert.match(actions, /\(existing\.area \?\? ""\) !== area/);
+  assert.match(actions, /\(existing\.city \?\? ""\) !== city/);
+  assert.match(actions, /latitude: locationChanged \? null/);
+  assert.match(actions, /longitude: locationChanged \? null/);
+});
+
+test("city-only public profiles never create a directions action", () => {
+  const page = source("app/patient/[token]/page.tsx");
+
+  assert.match(page, /clinicLocation\?\.address_text/);
+  assert.doesNotMatch(page, /\[clinicLocation\.area, clinicLocation\.city\]\.filter/);
+  assert.doesNotMatch(page, /: clinicLocationText;/);
 });
