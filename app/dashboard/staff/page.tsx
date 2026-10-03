@@ -513,7 +513,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                           <option value="">{text.chooseDoctor}</option>
                           {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
                         </select>
-                        <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
+                        <SubmitButton className="" pendingLabel={text.working} lockForm>{text.saveRole}</SubmitButton>
                       </form>
                       <form action={removeStaffMember.bind(null, clinic.id, member.user_id)}>
                         <ConfirmSubmitButton
@@ -547,7 +547,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                   <input type="checkbox" name="confirm_transfer" value="yes" required />
                   <span>{text.transferConfirm}</span>
                 </label>
-                <SubmitButton className="button button-small" pendingLabel={text.working}>{text.transferButton}</SubmitButton>
+                <SubmitButton className="button button-small" pendingLabel={text.working} lockForm>{text.transferButton}</SubmitButton>
               </form>
             ) : <p className="field-help">{text.transferEmpty}</p>}
           </div>
