@@ -20,3 +20,23 @@ Clinic: slug, public display name, description, country, city, area, address, co
 Doctor: clinic-scoped slug, public display name, specialty, subspecialty, bio.
 
 This draft intentionally does not add reviews, ratings, insurance, payments, clinical records, or marketplace ranking.
+
+
+## Rollout sequence
+
+1. Public clinic + doctor profiles, explicitly published by clinic management.
+2. Patient search by doctor, clinic, specialty, and city.
+3. Live availability read from Atlas scheduling source-of-truth; never copied into profile records.
+4. Patient self-booking with server-side conflict protection and the same clinic/doctor tenant boundary.
+5. Booking management from the private patient surface: confirm, cancel, calendar, timing, and later reschedule where clinic rules allow.
+
+## Deliberately deferred
+
+- ratings/reviews and any quality ranking;
+- sponsored ranking;
+- insurance matching until Atlas has reliable local data;
+- payments and financing;
+- prescriptions, diagnoses, medical records, or other EMR scope;
+- patient accounts unless they solve a concrete workflow better than private appointment links.
+
+The discovery surface should remain useful even before Atlas grows into any of those areas.
