@@ -128,7 +128,7 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
       p_clinic_slug: clinicSlug,
       p_doctor_slug: doctorSlug,
     }),
-    supabase.rpc("list_public_doctor_slots", {
+    supabase.rpc("list_public_doctor_slots_window", {
       p_clinic_slug: clinicSlug,
       p_doctor_slug: doctorSlug,
       p_from_date: null,
