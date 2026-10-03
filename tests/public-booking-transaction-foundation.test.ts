@@ -27,7 +27,7 @@ test("public booking reuses the public slot contract and core appointment table"
   assert.match(migration, /unique_violation[\s\S]*slot_taken/);
 });
 
-test("public booking is idempotent and audit-attributed without weakening patient privacy", () => {
+test("public booking is idempotent and audit-attributed", () => {
   const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
 
   assert.match(migration, /idempotency_key = p_idempotency_key/);
@@ -36,16 +36,13 @@ test("public booking is idempotent and audit-attributed without weakening patien
   assert.match(migration, /'duplicate'::text/);
   assert.match(migration, /'idempotency_mismatch'::text/);
   assert.match(migration, /set_config\('atlas\.actor_type', 'patient', true\)/);
-  assert.match(migration, /p_patient_phone !~ '\^\\\+9647\[0-9\]\{9\}\
-});
-/);
 });
 
-
-test("public booking validates nullable external inputs before database insertion", () => {
+test("public booking validates patient inputs before database insertion", () => {
   const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
 
   assert.match(migration, /p_patient_phone is null/);
+  assert.ok(migration.includes("p_patient_phone !~ '^\\+9647[0-9]{9}$'"));
   assert.match(migration, /p_reminder_language is null/);
   assert.match(migration, /p_reminder_consent is null/);
 });
