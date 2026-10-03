@@ -40,7 +40,7 @@ export function LivePageRefresh() {
   useEffect(() => {
     if (pathname !== "/dashboard") return;
     const timer = window.setTimeout(() => {
-      const loading = document.querySelector('main[aria-busy="true"][aria-label="Loading schedule"]');
+      const loading = document.querySelector('main[aria-busy="true"][data-atlas-loading="schedule"]');
       if (!loading) return;
       const key = "atlas:safari-stall-reload";
       const now = Date.now();
