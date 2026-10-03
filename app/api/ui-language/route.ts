@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { isUiLocale } from "@/lib/i18n/ui";
-import { uiLocaleCookie } from "@/lib/i18n/ui-server";
+import { isUiLocale, uiLocaleCookie } from "@/lib/i18n/ui";
 
 export async function POST(request: Request) {
   let body: unknown;
