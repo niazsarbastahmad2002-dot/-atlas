@@ -271,7 +271,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return <main className="workspace-page shell" data-atlas-selected-day={selectedDay} data-atlas-clinic={clinic.id} data-atlas-memory-valid={selectedFutureHasActiveSchedule ? "true" : "false"}>
     <DashboardDayRollover selectedDay={selectedDay} todayAtRender={today} />
-    <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{t.schedule}</div><h1>{clinic.name}</h1></div><LiveClinicClock locale={locale} /></header>
+    <header className="workspace-header"><div className="workspace-title-block"><div className="eyebrow">{t.schedule}</div><h1 data-atlas-user-content="true">{clinic.name}</h1></div><LiveClinicClock locale={locale} /></header>
     <nav className="schedule-date-shortcuts" aria-label={days.quickDates}>
       {quickDays.map((item) => <a className={item.day === selectedDay ? "is-selected" : ""} href={scheduleHref(clinic.id, item.day, selectedDoctorId)} key={item.day} aria-current={item.day === selectedDay ? "date" : undefined}>{item.label}</a>)}
     </nav>
