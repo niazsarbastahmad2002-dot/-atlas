@@ -142,8 +142,28 @@ export function AppointmentActions({
   const statusLabel = `${workflow.status}: ${patientName}`;
 
   useEffect(() => {
-    const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 30_000);
-    return () => window.clearInterval(timer);
+    const refreshClock = () => setClockTick((tick) => tick + 1);
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
+      window.clearInterval(timer);
+      timer = null;
+    };
+    const syncVisibility = () => {
+      if (document.hidden) {
+        stop();
+        return;
+      }
+      refreshClock();
+      if (timer === null) timer = window.setInterval(refreshClock, 30_000);
+    };
+
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
   }, []);
 
   useEffect(() => {

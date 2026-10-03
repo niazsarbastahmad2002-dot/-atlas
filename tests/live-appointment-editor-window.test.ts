@@ -8,7 +8,10 @@ test("appointment editor stops offering stale edits on long-open schedules", () 
     "utf8",
   );
   assert.match(source, /const \[now, setNow\] = useState\(\(\) => Date\.now\(\)\)/);
+  assert.match(source, /document\.hidden/);
   assert.match(source, /window\.setInterval\(refreshNow, 30_000\)/);
+  assert.match(source, /document\.addEventListener\("visibilitychange", syncVisibility\)/);
+  assert.match(source, /document\.removeEventListener\("visibilitychange", syncVisibility\)/);
   assert.match(source, /new Date\(appointmentAt\)\.getTime\(\) >= now - 60_000/);
   assert.match(source, /statusEditable && \(open \|\| withinEditWindow\)/);
 });
