@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LoginLanguagePicker } from "@/app/login/language-picker";
+import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
@@ -26,6 +27,7 @@ const careCopy: Record<UiLocale, {
   noResultsHelp: string;
   unavailable: string;
   clinic: string;
+  nextAvailable: string;
   openProfile: string;
   back: string;
 }> = {
@@ -45,6 +47,7 @@ const careCopy: Record<UiLocale, {
     noResultsHelp: "Try a broader search or remove one of the filters.",
     unavailable: "Public doctor search is temporarily unavailable.",
     clinic: "Clinic",
+    nextAvailable: "Next open time",
     openProfile: "View doctor",
     back: "Atlas home",
   },
@@ -64,6 +67,7 @@ const careCopy: Record<UiLocale, {
     noResultsHelp: "گەڕانەکە فراوانتر بکە یان یەکێک لە فلتەرەکان لاببە.",
     unavailable: "گەڕانی پزیشکی گشتی کاتێک بەردەست نییە.",
     clinic: "کلینیک",
+    nextAvailable: "نزیکترین کاتی بەردەست",
     openProfile: "پڕۆفایلی پزیشک",
     back: "گەڕانەوە بۆ Atlas",
   },
@@ -83,6 +87,7 @@ const careCopy: Record<UiLocale, {
     noResultsHelp: "گەڕانێ فراوانتر بکە یان فلتەرەکێ لاببە.",
     unavailable: "گەڕانا گشتی یا دکتۆران نوکە بەردەست نینە.",
     clinic: "کلینیک",
+    nextAvailable: "نێزیکترین دەمێ بەردەست",
     openProfile: "پڕۆفایلا دکتۆری",
     back: "ڤەگەڕە Atlas",
   },
@@ -102,6 +107,7 @@ const careCopy: Record<UiLocale, {
     noResultsHelp: "وسّع البحث أو احذف أحد الفلاتر.",
     unavailable: "البحث العام عن الأطباء غير متاح مؤقتاً.",
     clinic: "العيادة",
+    nextAvailable: "أقرب وقت متاح",
     openProfile: "عرض الطبيب",
     back: "العودة إلى Atlas",
   },
@@ -113,6 +119,28 @@ function bounded(value: string | string[] | undefined, max: number) {
   return trimmed.length <= max ? trimmed : trimmed.slice(0, max);
 }
 
+function nextAvailabilityLabel(value: string, locale: UiLocale) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const dateParts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baghdad",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date).map((part) => [part.type, part.value]));
+  const timeParts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Baghdad",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date).map((part) => [part.type, part.value]));
+
+  const dateKey = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+  const timeValue = `${timeParts.hour}:${timeParts.minute}`;
+  return `${formatLocalDateValue(dateKey, locale)} · ${formatTimeValue(timeValue, locale)}`;
+}
+
 export default async function CarePage({ searchParams }: CarePageProps) {
   const [params, locale] = await Promise.all([searchParams, getUiLocale()]);
   const copy = careCopy[locale];
@@ -122,7 +150,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
   const hasSearch = Boolean(query || city || specialty);
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("search_public_doctors", {
+  const { data, error } = await supabase.rpc("search_public_doctors_with_availability", {
     p_query: query || null,
     p_city: city || null,
     p_specialty: specialty || null,
@@ -177,6 +205,11 @@ export default async function CarePage({ searchParams }: CarePageProps) {
                 </div>
                 <p><b>{copy.clinic}:</b> <Link href={`/care/${doctor.clinic_slug}`}>{doctor.clinic_name}</Link></p>
                 {(doctor.city || doctor.area) ? <p>{[doctor.area, doctor.city].filter(Boolean).join(" · ")}</p> : null}
+                {doctor.next_available_at && nextAvailabilityLabel(doctor.next_available_at, locale) ? (
+                  <p className="atlas-care-next-opening">
+                    <b>{copy.nextAvailable}:</b> {nextAvailabilityLabel(doctor.next_available_at, locale)}
+                  </p>
+                ) : null}
                 <Link className="button button-ghost button-small" href={`/care/${doctor.clinic_slug}/${doctor.doctor_slug}`}>
                   {copy.openProfile}
                 </Link>
@@ -194,7 +227,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
       </section>
 
       <style>{`
-        .atlas-care-page{min-height:100dvh}.atlas-care-shell{max-width:880px;padding-top:clamp(34px,7vh,72px);padding-bottom:70px}.atlas-care-language{max-width:650px;margin-bottom:30px}.atlas-care-language>.eyebrow{margin-bottom:10px}.atlas-care-search{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end;margin:28px 0}.atlas-care-search label{display:grid;gap:7px}.atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}.atlas-care-search input{min-height:48px}.atlas-care-search .button{min-height:48px}.atlas-care-results{display:grid;gap:12px;margin-top:24px}.atlas-care-result{display:grid;gap:9px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-result>div{display:grid;gap:4px}.atlas-care-result strong{font-size:18px}.atlas-care-result span,.atlas-care-result p{color:var(--muted);font-size:12px;line-height:1.5}.atlas-care-result p{margin:0}.atlas-care-result .button{justify-self:start;text-decoration:none}.atlas-care-empty{margin-top:24px;padding:22px;border:1px dashed var(--line);border-radius:18px}.atlas-care-empty p{margin:7px 0 0;color:var(--muted)}.atlas-care-notice{margin-top:24px}.atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}@media(max-width:760px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search .button{width:100%}}
+        .atlas-care-page{min-height:100dvh}.atlas-care-shell{max-width:880px;padding-top:clamp(34px,7vh,72px);padding-bottom:70px}.atlas-care-language{max-width:650px;margin-bottom:30px}.atlas-care-language>.eyebrow{margin-bottom:10px}.atlas-care-search{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end;margin:28px 0}.atlas-care-search label{display:grid;gap:7px}.atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}.atlas-care-search input{min-height:48px}.atlas-care-search .button{min-height:48px}.atlas-care-results{display:grid;gap:12px;margin-top:24px}.atlas-care-result{display:grid;gap:9px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-result>div{display:grid;gap:4px}.atlas-care-result strong{font-size:18px}.atlas-care-result span,.atlas-care-result p{color:var(--muted);font-size:12px;line-height:1.5}.atlas-care-result p{margin:0}.atlas-care-next-opening{color:var(--accent)!important;font-weight:720}.atlas-care-result .button{justify-self:start;text-decoration:none}.atlas-care-empty{margin-top:24px;padding:22px;border:1px dashed var(--line);border-radius:18px}.atlas-care-empty p{margin:7px 0 0;color:var(--muted)}.atlas-care-notice{margin-top:24px}.atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}@media(max-width:760px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search .button{width:100%}}
       `}</style>
     </main>
   );
