@@ -292,7 +292,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   }, [date, minDate]);
 
   return (
-    <div className="atlas-time-v2" ref={rootRef}>
+    <div className="atlas-time-v2" ref={rootRef} data-atlas-time-draft={dateOpen || touched || date !== initial ? "true" : "false"}>
       <label>{text.date} <small>· {timeZoneLabel}</small></label>
       <div className="atlas-date-wrap">
         <button
