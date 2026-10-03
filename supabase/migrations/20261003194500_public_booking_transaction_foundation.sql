@@ -24,6 +24,10 @@ declare
   v_clinic_id uuid;
   v_doctor_id uuid;
   v_doctor_name text;
+  v_clinic_published boolean;
+  v_doctor_published boolean;
+  v_doctor_active boolean;
+  v_booking_enabled boolean;
   v_patient_name text := btrim(coalesce(p_patient_name, ''));
   v_existing public.appointments%rowtype;
   v_appointment_id uuid;
@@ -54,25 +58,29 @@ begin
   select
     c.clinic_id,
     d.doctor_id,
-    core_doctor.name
+    core_doctor.name,
+    c.is_published,
+    d.is_published,
+    core_doctor.active,
+    coalesce(booking.enabled, false)
   into
     v_clinic_id,
     v_doctor_id,
-    v_doctor_name
+    v_doctor_name,
+    v_clinic_published,
+    v_doctor_published,
+    v_doctor_active,
+    v_booking_enabled
   from public.clinic_directory_profiles c
   join public.doctor_directory_profiles d
     on d.clinic_id = c.clinic_id
   join public.doctors core_doctor
     on core_doctor.clinic_id = d.clinic_id
    and core_doctor.id = d.doctor_id
-   and core_doctor.active
-  join public.clinic_public_booking_settings booking
+  left join public.clinic_public_booking_settings booking
     on booking.clinic_id = c.clinic_id
-   and booking.enabled
   where c.slug = p_clinic_slug
     and d.slug = p_doctor_slug
-    and c.is_published
-    and d.is_published
   limit 1;
 
   if v_clinic_id is null or v_doctor_id is null then
@@ -100,6 +108,16 @@ begin
     else
       return query select 'idempotency_mismatch'::text, null::uuid;
     end if;
+    return;
+  end if;
+
+  if not (
+    coalesce(v_clinic_published, false)
+    and coalesce(v_doctor_published, false)
+    and coalesce(v_doctor_active, false)
+    and coalesce(v_booking_enabled, false)
+  ) then
+    return query select 'unavailable'::text, null::uuid;
     return;
   end if;
 
