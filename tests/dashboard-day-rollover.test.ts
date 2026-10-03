@@ -11,6 +11,8 @@ test("today's receptionist schedule advances after Baghdad midnight", () => {
 
   assert.match(source, /timeZone: "Asia\/Baghdad"/);
   assert.match(source, /if \(selectedDay !== todayAtRender\) return/);
+  assert.match(source, /scheduleFormIsBusy/);
+  assert.match(source, /liveDay === todayAtRender \|\| scheduleFormIsBusy\(\)/);
   assert.match(source, /window\.setInterval\(refreshForNewClinicDay, 30_000\)/);
   assert.match(source, /visibilitychange/);
   assert.match(source, /url\.searchParams\.set\("day", liveDay\)/);
