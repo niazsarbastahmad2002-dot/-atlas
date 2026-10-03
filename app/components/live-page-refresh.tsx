@@ -23,10 +23,31 @@ export function LivePageRefresh() {
 
   useEffect(() => {
     if (pathname.startsWith("/patient/")) {
-      const timer = window.setInterval(() => {
-        if (document.visibilityState === "visible") router.refresh();
-      }, 15_000);
-      return () => window.clearInterval(timer);
+      let timer: number | null = null;
+      const stop = () => {
+        if (timer === null) return;
+        window.clearInterval(timer);
+        timer = null;
+      };
+      const start = () => {
+        if (document.visibilityState !== "visible" || timer !== null) return;
+        timer = window.setInterval(() => router.refresh(), 15_000);
+      };
+      const onVisibilityChange = () => {
+        if (document.visibilityState !== "visible") {
+          stop();
+          return;
+        }
+        router.refresh();
+        start();
+      };
+
+      start();
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      return () => {
+        stop();
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      };
     }
 
     if (pathname !== "/dashboard") return;
@@ -34,11 +55,32 @@ export function LivePageRefresh() {
       if (document.visibilityState !== "visible" || scheduleFormIsBusy()) return;
       router.refresh();
     };
-    const timer = window.setInterval(refresh, 12_000);
-    window.addEventListener("focus", refresh);
-    return () => {
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
       window.clearInterval(timer);
+      timer = null;
+    };
+    const start = () => {
+      if (document.visibilityState !== "visible" || timer !== null) return;
+      timer = window.setInterval(refresh, 12_000);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") {
+        stop();
+        return;
+      }
+      refresh();
+      start();
+    };
+
+    start();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stop();
       window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [pathname, router]);
 
