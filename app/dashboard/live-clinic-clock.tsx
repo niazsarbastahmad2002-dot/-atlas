@@ -25,9 +25,28 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
 
   useEffect(() => {
     const update = () => setNow(new Date());
-    update();
-    const timer = window.setInterval(update, 1_000);
-    return () => window.clearInterval(timer);
+    let timer: number | null = null;
+
+    const stop = () => {
+      if (timer === null) return;
+      window.clearInterval(timer);
+      timer = null;
+    };
+    const syncVisibility = () => {
+      if (document.visibilityState !== "visible") {
+        stop();
+        return;
+      }
+      update();
+      if (timer === null) timer = window.setInterval(update, 1_000);
+    };
+
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
   }, []);
 
   const date = useMemo(() => new Intl.DateTimeFormat(dateLocale, {
