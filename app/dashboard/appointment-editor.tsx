@@ -165,20 +165,23 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   }, [contactRelationship, reminderConsent, revision]);
 
   useEffect(() => {
-    const refreshNow = () => setNow(Date.now());
+    const expiresAt = new Date(appointmentAt).getTime() + 60_000;
+    if (!Number.isFinite(expiresAt)) return;
+
     let timer: number | null = null;
     const stop = () => {
       if (timer === null) return;
-      window.clearInterval(timer);
+      window.clearTimeout(timer);
       timer = null;
     };
     const syncVisibility = () => {
-      if (document.hidden) {
-        stop();
-        return;
-      }
-      refreshNow();
-      if (timer === null) timer = window.setInterval(refreshNow, 30_000);
+      stop();
+      if (document.hidden) return;
+      const current = Date.now();
+      setNow(current);
+      const remaining = expiresAt - current;
+      if (remaining <= 0) return;
+      timer = window.setTimeout(syncVisibility, Math.min(remaining + 50, 2_147_000_000));
     };
 
     syncVisibility();
@@ -187,7 +190,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
       stop();
       document.removeEventListener("visibilitychange", syncVisibility);
     };
-  }, []);
+  }, [appointmentAt]);
 
   useEffect(() => {
     if (open && (

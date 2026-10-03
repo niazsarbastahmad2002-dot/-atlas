@@ -2,17 +2,21 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-test("appointment outcome controls refresh while receptionist leaves schedule open", () => {
+test("appointment outcome controls refresh only at availability boundaries", () => {
   const source = readFileSync(
     new URL("../app/dashboard/appointment-actions.tsx", import.meta.url),
     "utf8",
   );
+
   assert.match(source, /setClockTick/);
-  assert.match(source, /const refreshClock = \(\) => setClockTick\(\(tick\) => tick \+ 1\)/);
+  assert.match(source, /scheduledAt - 5 \* 60 \* 1000/);
+  assert.match(source, /scheduledAt \+ 5 \* 60 \* 1000/);
+  assert.match(source, /const nextBoundary = boundaries\.find/);
   assert.match(source, /document\.hidden/);
-  assert.match(source, /window\.setInterval\(refreshClock, 30_000\)/);
+  assert.match(source, /window\.setTimeout\(syncVisibility/);
+  assert.match(source, /window\.clearTimeout\(timer\)/);
+  assert.doesNotMatch(source, /window\.setInterval\(/);
   assert.match(source, /document\.addEventListener\("visibilitychange", syncVisibility\)/);
-  assert.match(source, /window\.clearInterval\(timer\)/);
   assert.match(source, /scheduledAt > Date\.now\(\) \+ 5 \* 60 \* 1000/);
 });
 
@@ -45,4 +49,3 @@ test("prepared patient sharing resets after the appointment revision changes", (
   const actions = readFileSync(new URL("../app/dashboard/appointment-actions.tsx", import.meta.url), "utf8");
   assert.ok(actions.includes('key={`${appointmentId}:${revision}`}'));
 });
-
