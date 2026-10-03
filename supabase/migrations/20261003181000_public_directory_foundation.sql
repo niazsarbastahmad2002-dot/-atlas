@@ -256,9 +256,13 @@ as $$
   from public.clinic_directory_profiles c
   join public.doctor_directory_profiles d
     on d.clinic_id = c.clinic_id
+  join public.doctors core
+    on core.clinic_id = d.clinic_id
+   and core.id = d.doctor_id
   where c.slug = p_clinic_slug
     and c.is_published
     and d.is_published
+    and core.active
   order by d.display_name, d.slug;
 $$;
 
@@ -305,10 +309,14 @@ as $$
   from public.clinic_directory_profiles c
   join public.doctor_directory_profiles d
     on d.clinic_id = c.clinic_id
+  join public.doctors core
+    on core.clinic_id = d.clinic_id
+   and core.id = d.doctor_id
   where c.slug = p_clinic_slug
     and d.slug = p_doctor_slug
     and c.is_published
     and d.is_published
+    and core.active
   limit 1;
 $$;
 
@@ -347,8 +355,12 @@ as $
   from public.clinic_directory_profiles c
   join public.doctor_directory_profiles d
     on d.clinic_id = c.clinic_id
+  join public.doctors core
+    on core.clinic_id = d.clinic_id
+   and core.id = d.doctor_id
   where c.is_published
     and d.is_published
+    and core.active
     and (
       p_query is null
       or btrim(p_query) = ''
