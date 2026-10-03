@@ -68,6 +68,20 @@
           footer: "داتای ئۆفلاین تەنها بۆ خشتەی ئەمڕۆی کلینیکە و خۆکارانە بەسەر دەچێت.",
           queue: "ڕیز",
         },
+        bd: {
+          offline: "ئۆفلاین · تەنێ بۆ دیتنێ",
+          eyebrow: "بەردەوامیا ڕیسێپشنێ",
+          loading: "دوماهیک خشتەیا پاراستی دهێتە ڤەکرن…",
+          synced: "دوماهیک هاوکاتکرن",
+          doctor: "دکتۆر",
+          appointments: "وادە",
+          notice: "د دەمێ ئۆفلاین دا هیچ گۆڕین ناهێتە هنارتن. دەمێ ئینتەرنێت ڤەدگەڕیت Atlas زانیاریێن نوو بار دکەتەوە.",
+          emptyTitle: "هیچ خشتەیەکا ئۆفلاین بەردەست نینە.",
+          emptyCopy: "ب ئینتەرنێتێ گرێبەدە و Atlas جارەکێ ڤەکە بۆ ئامادەکرنا ڤی ئامێری بۆ دیتنا ئۆفلاین.",
+          retry: "دووبارە گرێبەدە",
+          footer: "زانیاریێن ئۆفلاین تەنێ بۆ خشتەیا ئەڤرۆ یا کلینیکێیە و خودکار د بەسەر دچیت.",
+          queue: "ڕێز",
+        },
         ar: {
           offline: "بدون إنترنت · للعرض فقط",
           eyebrow: "استمرارية الاستقبال",
@@ -117,6 +131,8 @@
       function localeFor(envelope) {
         const language = String(envelope && envelope.locale || "").toLowerCase();
         if (language.startsWith("ar")) return "ar";
+        if (language === "ku" || language.startsWith("ku-")) return "bd";
+        if (language.startsWith("ckb")) return "ku";
         if (envelope && envelope.direction === "rtl") return "ku";
         return "en";
       }
@@ -125,6 +141,7 @@
         const labels = {
           en: { pending: "Pending", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled", no_show: "No show" },
           ku: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراو", completed: "تەواو", cancelled: "هەڵوەشاوە", no_show: "نەهات" },
+          bd: { pending: "چاڤەڕێ", confirmed: "پشتڕاستکری", completed: "تەمام بوو", cancelled: "هەلوەشیا", no_show: "نەهات" },
           ar: { pending: "قيد الانتظار", confirmed: "مؤكد", completed: "مكتمل", cancelled: "ملغي", no_show: "لم يحضر" },
         };
         return labels[locale][status] || status;
@@ -133,7 +150,7 @@
       function timeLabel(value, locale) {
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return "—";
-        return new Intl.DateTimeFormat(locale === "ar" ? "ar-IQ" : locale === "ku" ? "ckb-IQ" : "en", {
+        return new Intl.DateTimeFormat(locale === "ar" ? "ar-IQ" : locale === "ku" || locale === "bd" ? "ckb-IQ" : "en", {
           timeZone: "Asia/Baghdad",
           hour: "numeric",
           minute: "2-digit",
