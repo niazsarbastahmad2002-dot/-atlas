@@ -35,3 +35,13 @@ test("settings links managers to the separate public profile surface", () => {
   assert.match(settings, /\/dashboard\/settings\/public-profile\?clinic=/);
   assert.match(settings, /\{canManage \? \(/);
 });
+
+
+test("public contact phone is restricted before it can become a tel link", () => {
+  const actions = source("app/dashboard/settings/public-profile/actions.ts");
+  const migration = source("supabase/migrations/20261003181000_public_directory_foundation.sql");
+
+  assert.match(actions, /publicPhonePattern/);
+  assert.match(actions, /publicPhone && !publicPhonePattern\.test\(publicPhone\)/);
+  assert.match(migration, /clinic_directory_phone_check[\s\S]*public_phone ~ '\^\[\+\]\?\[0-9\(\) \.\-\]\{6,39\}\$'/);
+});
