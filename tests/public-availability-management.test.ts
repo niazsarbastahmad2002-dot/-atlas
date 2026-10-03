@@ -45,3 +45,16 @@ test("public profile settings link to the separate availability editor", () => {
   assert.match(page, /\/dashboard\/settings\/public-profile\/availability\?clinic=/);
   assert.match(page, /Online booking hours/);
 });
+
+
+test("public availability writes never upsert immutable tenant keys", () => {
+  const actions = source("app/dashboard/settings/public-profile/availability/actions.ts");
+
+  assert.doesNotMatch(actions, /\.upsert\(/);
+  assert.match(actions, /\.insert\(\{ clinic_id: clinicId, \.\.\.settingsPatch \}\)/);
+  assert.match(actions, /\.update\(settingsPatch\)[\s\S]*\.eq\("clinic_id", clinicId\)/);
+  assert.match(actions, /const existingWeekdays = new Set/);
+  assert.match(actions, /\.insert\(insertRows\)/);
+  assert.match(actions, /\.update\(\{[\s\S]*starts_at: row\.starts_at[\s\S]*is_enabled: row\.is_enabled/);
+  assert.match(actions, /\.update\(\{ is_closed: isClosed \}\)/);
+});
