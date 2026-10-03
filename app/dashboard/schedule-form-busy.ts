@@ -1,4 +1,5 @@
 export function scheduleFormIsBusy() {
+  if (document.querySelector("form.appointment-edit-form")) return true;
   const form = document.querySelector<HTMLFormElement>("form.appointment-form");
   if (!form) return false;
   const name = form.querySelector<HTMLInputElement>('input[name="patient_name"]')?.value.trim();
