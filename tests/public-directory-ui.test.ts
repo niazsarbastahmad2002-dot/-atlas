@@ -34,3 +34,12 @@ test("public directory draft includes all four Atlas interface languages", () =>
   }
   assert.match(search, /LoginLanguagePicker/);
 });
+
+
+test("Atlas home gives patients a direct path into discovery", () => {
+  const home = source("app/page.tsx");
+  assert.match(home, /href="\/care"/);
+  assert.match(home, /Looking for a doctor\? Find care/);
+  assert.match(home, /پزیشک دەگەڕێیت؟ پزیشک بدۆزەرەوە/);
+  assert.match(home, /تبحث عن طبيب؟ ابحث عن رعاية/);
+});
