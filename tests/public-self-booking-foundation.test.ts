@@ -49,3 +49,8 @@ test("self-booking never grants clinic membership or creates an auth user", () =
   assert.doesNotMatch(migration, /auth\.users/);
   assert.doesNotMatch(migration, /insert into auth\./);
 });
+
+
+test("verified phone identity is bound to the appointment phone inside PostgreSQL", () => {
+  assert.match(migration, /pg_catalog\.encode\(extensions\.digest\(p_patient_phone, 'sha256'\), 'hex'\) <> p_phone_hash/);
+});
