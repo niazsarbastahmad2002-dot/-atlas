@@ -2,12 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
 import { formatBaghdadDateTime, type UiLocale } from "@/lib/i18n/ui";
+import { localizeDigits } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<{ clinic?: string }> };
+const ACTIVITY_VIEW_LIMIT = 250;
 type SafeState = Record<string, unknown> | null;
 
 type Copy = {
@@ -28,6 +30,7 @@ type Copy = {
   clinic: string;
   open: string;
   loadFailed: string;
+  limited: string;
 };
 
 const copy: Record<UiLocale, Copy> = {
@@ -49,6 +52,7 @@ const copy: Record<UiLocale, Copy> = {
     clinic: "Clinic",
     open: "Open",
     loadFailed: "Activity history could not load.",
+    limited: "Showing the latest {count} activity events. Older events are not included in this view.",
   },
   ku: {
     eyebrow: "بەڕێوەبردنی کلینیک",
@@ -68,6 +72,7 @@ const copy: Record<UiLocale, Copy> = {
     clinic: "کلینیک",
     open: "کردنەوە",
     loadFailed: "مێژووی چالاکی بار نەبوو.",
+    limited: "نوێترین {count} ڕووداوی چالاکی پیشان دەدرێن. ڕووداوە کۆنترەکان لەم دیمەنەدا نین.",
   },
   bd: {
     eyebrow: "بەڕێڤەبرنا کلینیکێ",
@@ -87,6 +92,7 @@ const copy: Record<UiLocale, Copy> = {
     clinic: "کلینیک",
     open: "ڤەکە",
     loadFailed: "مێژوویا چالاکیێ نەهاتە بارکرن.",
+    limited: "نووترین {count} ڕوودانێن چالاکیێ دهێنە نیشاندان. ڕوودانێن کەڤنتر ل ڤێ دیمەنێ نینن.",
   },
   ar: {
     eyebrow: "إدارة العيادة",
@@ -106,6 +112,7 @@ const copy: Record<UiLocale, Copy> = {
     clinic: "العيادة",
     open: "فتح",
     loadFailed: "تعذر تحميل سجل النشاط.",
+    limited: "نعرض أحدث {count} حدث نشاط. الأحداث الأقدم غير مشمولة في هذا العرض.",
   },
 };
 
@@ -239,13 +246,13 @@ export default async function ActivityPage({ searchParams }: Props) {
   const canView = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   if (!canView) redirect(`/dashboard/settings?clinic=${clinic.id}`);
 
-  const [{ data: events, error: eventsError }, { data: members, error: membersError }] = await Promise.all([
+  const [{ data: events, error: eventsError, count: eventCount }, { data: members, error: membersError }] = await Promise.all([
     supabase
       .from("appointment_audit_events")
-      .select("id, actor_id, actor_type, action, entity_type, entity_id, from_status, to_status, before_state, after_state, occurred_at")
+      .select("id, actor_id, actor_type, action, entity_type, entity_id, from_status, to_status, before_state, after_state, occurred_at", { count: "exact" })
       .eq("clinic_id", clinic.id)
       .order("occurred_at", { ascending: false })
-      .limit(250),
+      .limit(ACTIVITY_VIEW_LIMIT),
     supabase
       .from("clinic_members")
       .select("user_id, role")
@@ -256,6 +263,7 @@ export default async function ActivityPage({ searchParams }: Props) {
     return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">{t.loadFailed}</p><Link className="button" href={`/dashboard/history?clinic=${clinic.id}`}>{t.back}</Link></section></main>;
   }
 
+  const activityTruncated = (eventCount ?? events?.length ?? 0) > ACTIVITY_VIEW_LIMIT;
   const roleByUser = new Map((members ?? []).map((member) => [member.user_id, member.role]));
 
   return (
@@ -273,6 +281,7 @@ export default async function ActivityPage({ searchParams }: Props) {
         </form>
       ) : null}
 
+      {activityTruncated ? <p className="notice history-limit-notice" role="status">{t.limited.replace("{count}", localizeDigits(ACTIVITY_VIEW_LIMIT, locale))}</p> : null}
       <section className="history-card activity-card">
         {(events ?? []).length === 0 ? <div className="history-empty">{t.empty}</div> : (events ?? []).map((event) => {
           const before = asState(event.before_state);
