@@ -86,13 +86,39 @@ export function LivePageRefresh() {
 
   useEffect(() => {
     if (pathname !== "/dashboard") return;
-    const timer = window.setTimeout(() => {
+
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
+      window.clearTimeout(timer);
+      timer = null;
+    };
+    const checkStall = () => {
+      timer = null;
+      if (document.visibilityState !== "visible") return;
       const loading = document.querySelector('main[aria-busy="true"][data-atlas-loading="schedule"]');
       if (!loading) return;
       if (!reserveSafariStallReload(Date.now())) return;
       window.location.reload();
-    }, 8_000);
-    return () => window.clearTimeout(timer);
+    };
+    const schedule = () => {
+      if (document.visibilityState !== "visible" || timer !== null) return;
+      timer = window.setTimeout(checkStall, 8_000);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") {
+        stop();
+        return;
+      }
+      schedule();
+    };
+
+    schedule();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [pathname]);
 
   return null;
