@@ -255,15 +255,48 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
   }, [refreshSnapshot]);
 
   useEffect(() => {
+    const disabledControls = new Map<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement, boolean>();
+    let controlObserver: MutationObserver | null = null;
+
+    const lockOfflineControls = () => {
+      document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>(
+        ".app-content button, .app-content input, .app-content select, .app-content textarea, .live-clinic-flow button",
+      ).forEach((control) => {
+        if (control.matches('[data-atlas-offline-local-action="true"]')) return;
+        if (!disabledControls.has(control)) disabledControls.set(control, control.disabled);
+        if (!control.disabled) control.disabled = true;
+      });
+      if (!controlObserver) {
+        controlObserver = new MutationObserver(lockOfflineControls);
+        controlObserver.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["disabled"],
+        });
+      }
+    };
+
+    const unlockOfflineControls = () => {
+      controlObserver?.disconnect();
+      controlObserver = null;
+      disabledControls.forEach((wasDisabled, control) => {
+        if (control.isConnected) control.disabled = wasDisabled;
+      });
+      disabledControls.clear();
+    };
+
     const update = () => {
       const nextOffline = navigator.onLine === false;
       if (nextOffline) {
         wasOffline.current = true;
+        lockOfflineControls();
         setOffline(true);
         document.documentElement.dataset.atlasOffline = "true";
         return;
       }
 
+      unlockOfflineControls();
       setOffline(false);
       delete document.documentElement.dataset.atlasOffline;
       if (wasOffline.current) {
@@ -280,6 +313,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
     return () => {
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
+      unlockOfflineControls();
       delete document.documentElement.dataset.atlasOffline;
     };
   }, []);
@@ -294,7 +328,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
         <span>{t.message} {t.lastSynced} {syncTimeLabel(lastSyncedAt, locale)}.</span>
       </div>
       <style>{`
-        .atlas-continuity-banner{position:sticky;top:0;z-index:80;display:flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:8px 14px;border-bottom:1px solid #d8caa2;background:#fff8e7;color:#5e4a12;font-size:11px;line-height:1.35;text-align:center}.atlas-continuity-banner strong{flex:0 0 auto;font-size:10px;letter-spacing:.08em}html[data-atlas-offline="true"] .app-content form,html[data-atlas-offline="true"] .app-content button,html[data-atlas-offline="true"] .live-clinic-flow button{pointer-events:none;opacity:.58}html[data-atlas-offline="true"] .app-content input,html[data-atlas-offline="true"] .app-content select,html[data-atlas-offline="true"] .app-content textarea{pointer-events:none}@media(max-width:680px){.atlas-continuity-banner{align-items:flex-start;flex-direction:column;gap:2px;text-align:start}}
+        .atlas-continuity-banner{position:sticky;top:0;z-index:80;display:flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:8px 14px;border-bottom:1px solid #d8caa2;background:#fff8e7;color:#5e4a12;font-size:11px;line-height:1.35;text-align:center}.atlas-continuity-banner strong{flex:0 0 auto;font-size:10px;letter-spacing:.08em}html[data-atlas-offline="true"] .app-content form,html[data-atlas-offline="true"] .app-content button:not([data-atlas-offline-local-action="true"]),html[data-atlas-offline="true"] .live-clinic-flow button:not([data-atlas-offline-local-action="true"]){pointer-events:none;opacity:.58}html[data-atlas-offline="true"] .app-content input,html[data-atlas-offline="true"] .app-content select,html[data-atlas-offline="true"] .app-content textarea{pointer-events:none}@media(max-width:680px){.atlas-continuity-banner{align-items:flex-start;flex-direction:column;gap:2px;text-align:start}}
       `}</style>
     </>
   );
