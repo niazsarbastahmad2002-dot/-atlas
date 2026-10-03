@@ -45,3 +45,14 @@ test("public contact phone is restricted before it can become a tel link", () =>
   assert.match(actions, /publicPhone && !publicPhonePattern\.test\(publicPhone\)/);
   assert.match(migration, /clinic_directory_phone_check[\s\S]*public_phone ~ '\^\[\+\]\?\[0-9\(\) \.\-\]\{6,39\}\$'/);
 });
+
+
+test("public profile saves never upsert immutable tenant keys", () => {
+  const actions = source("app/dashboard/settings/public-profile/actions.ts");
+
+  assert.doesNotMatch(actions, /\.upsert\(/);
+  assert.match(actions, /\.insert\(\{ clinic_id: clinicId, \.\.\.clinicPatch \}\)/);
+  assert.match(actions, /\.update\(clinicPatch\)[\s\S]*\.eq\("clinic_id", clinicId\)/);
+  assert.match(actions, /\.insert\(\{ clinic_id: clinicId, doctor_id: doctorId, \.\.\.doctorPatch \}\)/);
+  assert.match(actions, /\.update\(doctorPatch\)[\s\S]*\.eq\("doctor_id", doctorId\)/);
+});
