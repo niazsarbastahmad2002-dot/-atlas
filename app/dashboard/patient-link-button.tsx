@@ -173,7 +173,7 @@ export function PatientLinkButton({
   return (
     <div className="patient-link-control">
       {!state.link ? (
-        <form action={action}>
+        <form action={action} aria-busy={pending}>
           <input type="hidden" name="clinic_id" value={clinicId} />
           <input type="hidden" name="appointment_id" value={appointmentId} />
           <button type="submit" disabled={pending} aria-label={shareLabel} title={t.shareAppointment}>
