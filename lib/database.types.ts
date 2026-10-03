@@ -91,7 +91,7 @@ export type Database = {
       create_patient_access_token_server: { Args: { p_actor_id: string; p_appointment_id: string; p_expires_at: string; p_token_hash: string }; Returns: boolean }
       fail_whatsapp_reminder: { Args: { p_error_code: string; p_reminder_id: string; p_retryable: boolean; p_worker_id: string }; Returns: boolean }
       get_patient_appointment: { Args: { p_token_hash: string }; Returns: { appointment_at: string; appointment_interval_minutes: number; appointment_status: string; appointments_ahead: number; clinic_name: string; doctor_name: string; doctor_specialty: string; queue_position: number; receptionist_phone: string; reminder_language: string; token_expires_at: string }[] }
-      patient_update_appointment: { Args: { p_status: string; p_token_hash: string }; Returns: string }
+      patient_get_day_flow: { Args: { p_token_hash: string }; Returns: { delay_minutes: number; timing_updated_at: string }[] }\n      patient_update_appointment: { Args: { p_status: string; p_token_hash: string }; Returns: string }
       record_whatsapp_delivery_status: { Args: { p_error_code?: string; p_event_key: string; p_occurred_at: string; p_provider_message_id: string; p_status: string }; Returns: boolean }
       transfer_clinic_administrator: { Args: { p_actor_id: string; p_clinic_id: string; p_new_administrator_id: string }; Returns: boolean }
       validate_whatsapp_reminder_claim: { Args: { p_reminder_id: string; p_worker_id: string }; Returns: boolean }
