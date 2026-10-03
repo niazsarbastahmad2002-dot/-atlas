@@ -95,6 +95,9 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const [doctorId, setDoctorId] = useState("");
   const [interval, setInterval] = useState([5, 10, 15, 20, 30].includes(intervalMinutes) ? intervalMinutes : 15);
   const [date, setDate] = useState(initial);
+  const [savedDate, setSavedDate] = useState(initial);
+  const dateRef = useRef(initial);
+  dateRef.current = date;
   const [dateOpen, setDateOpen] = useState(false);
   const [month, setMonth] = useState(() => monthFromValue(initial));
   const [period, setPeriod] = useState<Period>("am");
@@ -187,6 +190,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     const clearSavedDraft = () => {
       setDateOpen(false);
       setTouched(false);
+      setSavedDate(dateRef.current);
     };
     document.addEventListener("pointerdown", closeOutside);
     document.addEventListener("atlas:appointment-saved", clearSavedDraft);
@@ -316,6 +320,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   useEffect(() => {
     if (date >= minDate) return;
     setDate(minDate);
+    setSavedDate((current) => current === date ? minDate : current);
     setMonth(monthFromValue(minDate));
     setDateOpen(false);
     setSavedAdvance(false);
@@ -323,7 +328,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   }, [date, minDate]);
 
   return (
-    <div className="atlas-time-v2" ref={rootRef} data-atlas-time-draft={dateOpen || touched || date !== initial ? "true" : "false"}>
+    <div className="atlas-time-v2" ref={rootRef} data-atlas-time-draft={dateOpen || touched || date !== savedDate ? "true" : "false"}>
       <label>{text.date} <small>· {timeZoneLabel}</small></label>
       <div className="atlas-date-wrap">
         <button
