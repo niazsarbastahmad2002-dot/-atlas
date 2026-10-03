@@ -59,9 +59,15 @@ export async function GET(_request: Request, { params }: CalendarRouteProps) {
     return unavailable();
   }
 
+  const doctorSpecialty = "doctor_specialty" in appointment
+    && typeof appointment.doctor_specialty === "string"
+    ? appointment.doctor_specialty
+    : null;
+
   const calendar = buildPatientCalendar({
     clinicName: appointment.clinic_name,
     doctorName: appointment.doctor_name,
+    doctorSpecialty,
     appointmentAt: appointment.appointment_at,
     uidSeed: tokenHash,
   });
