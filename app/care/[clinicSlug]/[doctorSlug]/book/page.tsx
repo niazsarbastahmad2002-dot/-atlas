@@ -192,14 +192,16 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
   );
 }
 
-function Unavailable({ copy, href }: { copy: typeof copy[UiLocale]; href: string }) {
+type BookingPageCopy = (typeof copy)[UiLocale];
+
+function Unavailable({ copy: t, href }: { copy: BookingPageCopy; href: string }) {
   return (
     <main className="center-page">
       <section className="auth-card">
         <div className="app-brand"><span className="app-brand-mark" aria-hidden="true">A</span><span className="app-brand-word">Atlas</span></div>
-        <h1>{copy.unavailableTitle}</h1>
-        <p>{copy.unavailableHelp}</p>
-        <Link className="button button-ghost" href={href}>{copy.back}</Link>
+        <h1>{t.unavailableTitle}</h1>
+        <p>{t.unavailableHelp}</p>
+        <Link className="button button-ghost" href={href}>{t.back}</Link>
       </section>
     </main>
   );
