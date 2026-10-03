@@ -88,12 +88,18 @@ test("mobile locale changes rebuild enhanced appointment controls with fresh loc
   assert.match(enhancer, /"is-atlas-phone-managed",[\s\S]*"is-atlas-phone-search-focus"/);
 });
 
-test("appointment-list observation is scoped and coalesced instead of watching all body text mutations", () => {
+test("appointment-list observation stays scoped and syncs live row content without observing its own chrome", () => {
   const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
-  assert.match(enhancer, /new MutationObserver\(schedulePrepare\)/);
+
+  assert.match(enhancer, /new MutationObserver\(\(records\) =>/);
+  assert.match(enhancer, /records\.some\(mutationNeedsPrepare\)/);
   assert.match(enhancer, /document\.querySelector\("\.app-content"\) \?\? document\.body/);
   assert.match(enhancer, /requestAnimationFrame/);
-  assert.doesNotMatch(enhancer, /characterData: true/);
+  assert.match(enhancer, /characterData: true/);
+  assert.match(enhancer, /attributes: true/);
+  assert.match(enhancer, /attributeFilter: \["class", "data-atlas-compact-time"\]/);
+  assert.match(enhancer, /atlas-phone-appointment-summary, \.atlas-phone-appointment-search, \.atlas-phone-search-meta, \.atlas-phone-search-empty/);
+  assert.match(enhancer, /target\?\.matches\("\.appointment-status-select"\)/);
 });
 
 test("saved appointment time advances from the just-booked slot using the active interval", () => {
