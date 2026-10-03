@@ -8,7 +8,7 @@ const page = source("app/care/[clinicSlug]/[doctorSlug]/times/page.tsx");
 
 test("full public availability uses the truthful bounded public slot window", () => {
   assert.match(page, /get_public_doctor_profile/);
-  assert.match(page, /list_public_doctor_slots_window/);
+  assert.match(page, /list_public_doctor_slots_page/);
   assert.match(page, /p_days: 14/);
   assert.doesNotMatch(page, /\.from\("appointments"\)/);
   assert.doesNotMatch(page, /service_role|createAdminClient/);
@@ -49,14 +49,20 @@ test("doctor profile links to the full public availability page with a 48px acti
 });
 
 
-test("full doctor availability bypasses the lightweight 200-slot cap through a dedicated bounded RPC", () => {
+test("full doctor availability walks bounded 200-slot cursor pages instead of truncating", () => {
   const page = source("app/care/[clinicSlug]/[doctorSlug]/times/page.tsx");
-  const migration = source("supabase/migrations/20261003214000_public_full_availability_window.sql");
+  const migration = source("supabase/migrations/20261003213445_paged_public_doctor_slots.sql");
 
-  assert.match(page, /list_public_doctor_slots_window/);
-  assert.doesNotMatch(page, /rpc\("list_public_doctor_slots",/);
-  assert.match(migration, /least\(coalesce\(p_days, 14\), 14\)/);
-  assert.doesNotMatch(migration, /limit 200/i);
+  assert.match(page, /list_public_doctor_slots_page/);
+  assert.match(page, /slotPageSize = 200/);
+  assert.match(page, /maxSlotPages = 24/);
+  assert.match(page, /p_after: cursor/);
+  assert.match(page, /pageRows\.length === slotPageSize/);
+  assert.match(page, /slotLoadFailed/);
+  assert.doesNotMatch(page, /list_public_doctor_slots_window/);
+  assert.match(migration, /p_after timestamptz default null/);
+  assert.match(migration, /p_after is null or candidates\.slot_at > p_after/);
+  assert.match(migration, /least\(coalesce\(p_limit, 200\), 200\)/);
   assert.match(migration, /grant execute[\s\S]*to anon, authenticated/i);
   assert.doesNotMatch(migration, /patient_name|patient_phone|reminder_language/);
 });
