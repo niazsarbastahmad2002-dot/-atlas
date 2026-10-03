@@ -44,6 +44,7 @@ const patientCopy = {
     specialty: "Specialty",
     contact: "Reception contact",
     dateTime: "Date & time",
+    calendar: "Add to calendar",
     am: "AM",
     pm: "PM",
     order: "Your order today",
@@ -83,6 +84,7 @@ const patientCopy = {
     specialty: "پسپۆڕی",
     contact: "ژمارەی ڕیسێپشن",
     dateTime: "ڕێکەوت و کات",
+    calendar: "زیادی بکە بۆ ڕۆژژمێر",
     am: "پێش نیوەڕۆ",
     pm: "دوای نیوەڕۆ",
     order: "ڕیزت بۆ ئەمڕۆ",
@@ -122,6 +124,7 @@ const patientCopy = {
     specialty: "تایبەتمەندی",
     contact: "ژمارا ڕیسێپشنێ",
     dateTime: "ڕێکەفت و کات",
+    calendar: "زێدە بکە بۆ ڕۆژژمێر",
     am: "بەری نیڤرۆ",
     pm: "پشتی نیڤرۆ",
     order: "ڕێزا تە یا ئەڤرۆ",
@@ -161,6 +164,7 @@ const patientCopy = {
     specialty: "الاختصاص",
     contact: "رقم السكرتير",
     dateTime: "التاريخ والوقت",
+    calendar: "أضف إلى التقويم",
     am: "صباحاً",
     pm: "مساءً",
     order: "ترتيبك اليوم",
@@ -297,6 +301,11 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <bdi dir="ltr">{time.clock}</bdi>
             <span>{time.period}</span>
           </div>
+          {isActive ? (
+            <a className="button button-ghost patient-calendar-link" href={`/patient/${token}/calendar.ics`}>
+              {text.calendar}
+            </a>
+          ) : null}
         </div>
 
         <section className="patient-doctor-card" aria-label={text.doctor}>
@@ -424,6 +433,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-time-value { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; margin-top: 18px; color: var(--accent); }
           .patient-time-value bdi { direction: ltr; font-size: clamp(34px,8vw,48px); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
           .patient-time-value span { font-size: clamp(16px,4vw,21px); font-weight: 820; }
+          .patient-calendar-link { width: 100%; min-height: 48px; margin-top: 20px; align-items: center; justify-content: center; color: var(--accent); text-decoration: none; }
           .patient-doctor-card { display: grid; gap: 0; margin: 0 0 22px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: #fff; }
           .patient-detail-block { display: grid; gap: 7px; padding: 17px 19px; }
           .patient-detail-block + .patient-detail-block { border-top: 1px solid var(--line); }
