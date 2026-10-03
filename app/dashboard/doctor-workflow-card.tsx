@@ -174,6 +174,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   const [retryDoctorId, setRetryDoctorId] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "saving" | "saved" | "load-failed" | "save-failed">("loading");
   const loadRequestRef = useRef(0);
+  const controlsBusy = state === "saving" || state === "loading";
 
   const apply = (data: Workflow) => {
     setWorkflow(data);
