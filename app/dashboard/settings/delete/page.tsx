@@ -158,7 +158,7 @@ export default async function DeleteClinicPage({ searchParams }: Props) {
             <span className="settings-card-icon" aria-hidden="true">!</span>
             <div>
               <div className="eyebrow">{copy.eyebrow}</div>
-              <h2>{clinic.name}</h2>
+              <h2 data-atlas-user-content="true">{clinic.name}</h2>
             </div>
           </div>
 
