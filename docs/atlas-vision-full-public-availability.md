@@ -12,3 +12,8 @@ The doctor profile keeps a compact preview, while a dedicated public times page 
 - When verified self-booking is eventually enabled, the same real slot becomes a link into the already-built booking verification flow.
 - The route is noindex/follow: it is useful to patients arriving from a doctor profile but does not create duplicate dynamic search pages.
 - Slot controls retain a 48px minimum touch target and collapse to two columns on smaller phones.
+
+
+## Complete-window data contract
+
+The dedicated full-schedule page does not use the lightweight 200-row slot RPC. It uses a separate bounded 14-day public window RPC so later dates cannot silently disappear when a doctor has a dense schedule. The RPC still exposes only open slot timestamps and the appointment interval, and the window is capped at 14 days.
