@@ -1,8 +1,9 @@
 "use client";
 
+import type { InputHTMLAttributes } from "react";
 import { useFormStatus } from "react-dom";
 
-type PendingTextInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "disabled"> & {
+type PendingTextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "disabled"> & {
   disabled?: boolean;
 };
 
