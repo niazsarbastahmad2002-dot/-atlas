@@ -26,6 +26,9 @@ test("Safari stall recovery only reloads when its throttle can be stored safely"
   assert.match(refresh, /window\.sessionStorage\.setItem\(key, String\(now\)\)/);
   assert.match(refresh, /catch \{[\s\S]*return false;/);
   assert.match(refresh, /if \(!reserveSafariStallReload\(Date\.now\(\)\)\) return;/);
+  assert.match(refresh, /const checkStall = \(\) => \{[\s\S]*document\.visibilityState !== "visible"/);
+  assert.match(refresh, /timer = window\.setTimeout\(checkStall, 8_000\)/);
+  assert.match(refresh, /window\.clearTimeout\(timer\)/);
 });
 
 
@@ -51,4 +54,15 @@ test("dashboard live refresh waits for active receptionist writes", () => {
   assert.match(busy, /form\.dataset\.fastSaving === "true"/);
   assert.match(liveFlow, /aria-busy=\{saving !== null\}/);
   assert.match(patientLink, /<form action=\{action\} aria-busy=\{pending\}>/);
+});
+
+
+test("live refresh timers pause while Atlas is hidden and resync on return", () => {
+  const refresh = read("app/components/live-page-refresh.tsx");
+
+  assert.match(refresh, /if \(pathname\.startsWith\("\/patient\/"\)\)[\s\S]*document\.visibilityState !== "visible"[\s\S]*window\.clearInterval\(timer\)/);
+  assert.match(refresh, /timer = window\.setInterval\(\(\) => router\.refresh\(\), 15_000\)/);
+  assert.match(refresh, /if \(pathname !== "\/dashboard"\) return;[\s\S]*document\.visibilityState !== "visible"[\s\S]*timer = window\.setInterval\(refresh, 12_000\)/);
+  assert.ok((refresh.match(/document\.addEventListener\("visibilitychange", onVisibilityChange\)/g) ?? []).length >= 2);
+  assert.ok((refresh.match(/document\.removeEventListener\("visibilitychange", onVisibilityChange\)/g) ?? []).length >= 2);
 });
