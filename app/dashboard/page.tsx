@@ -24,6 +24,8 @@ export const dynamic = "force-dynamic";
 
 const dayPattern = /^\d{4}-\d{2}-\d{2}$/;
 const DAILY_SCHEDULE_VIEW_LIMIT = 500;
+const OCCUPIED_SLOT_PAGE_SIZE = 500;
+const OCCUPIED_SLOT_VIEW_LIMIT = 5000;
 
 type DashboardPageProps = {
   searchParams: Promise<{ clinic?: string; day?: string; doctor?: string; error?: string; notice?: string }>;
@@ -158,6 +160,29 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const relativeDay = selectedDay === today ? days.today : selectedDay === yesterday ? days.yesterday : selectedDay === tomorrow ? days.tomorrow : null;
   const dayStart = new Date(`${selectedDay}T00:00:00+03:00`).toISOString();
   const dayEnd = new Date(`${shiftBaghdadDay(selectedDay, 1)}T00:00:00+03:00`).toISOString();
+  const bookingHorizonEnd = new Date(now + 2 * 365 * 24 * 60 * 60 * 1000);
+
+  const loadOccupiedAppointments = async () => {
+    const loaded: Array<{ id: string; doctor_id: string | null; appointment_at: string }> = [];
+    for (let from = 0; from < OCCUPIED_SLOT_VIEW_LIMIT; from += OCCUPIED_SLOT_PAGE_SIZE) {
+      const to = Math.min(from + OCCUPIED_SLOT_PAGE_SIZE - 1, OCCUPIED_SLOT_VIEW_LIMIT - 1);
+      const { data, error } = await supabase.from("appointments")
+        .select("id, doctor_id, appointment_at")
+        .eq("clinic_id", clinic.id)
+        .is("voided_at", null)
+        .in("status", ["pending", "confirmed"])
+        .gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString())
+        .lte("appointment_at", bookingHorizonEnd.toISOString())
+        .order("appointment_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to);
+      if (error) return { data: null, error };
+      const page = data ?? [];
+      loaded.push(...page);
+      if (page.length < OCCUPIED_SLOT_PAGE_SIZE) break;
+    }
+    return { data: loaded, error: null };
+  };
 
   const [
     { data: membership, error: membershipError },
@@ -169,7 +194,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   ] = await Promise.all([
     supabase.from("clinic_members").select("role, assigned_doctor_id").eq("clinic_id", clinic.id).eq("user_id", userData.user.id).maybeSingle(),
     supabase.from("appointments").select("id, patient_name, patient_phone, contact_relationship, doctor_id, doctor_name, appointment_at, created_at, status, reminder_status, reminder_language, reminder_consent, appointment_revision", { count: "exact" }).eq("clinic_id", clinic.id).is("voided_at", null).gte("appointment_at", dayStart).lt("appointment_at", dayEnd).order("appointment_at", { ascending: true }).order("created_at", { ascending: true }).order("id", { ascending: true }).limit(DAILY_SCHEDULE_VIEW_LIMIT),
-    supabase.from("appointments").select("doctor_id, appointment_at").eq("clinic_id", clinic.id).is("voided_at", null).in("status", ["pending", "confirmed"]).gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString()).order("appointment_at", { ascending: true }).limit(5000),
+    loadOccupiedAppointments(),
     supabase.from("clinic_reminder_settings").select("enabled, lead_minutes, second_lead_minutes, default_reminder_language").eq("clinic_id", clinic.id).maybeSingle(),
     (supabase as any).from("doctor_workflow_settings").select("doctor_id, default_reminder_language").eq("clinic_id", clinic.id),
     supabase.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinic.id).order("display_order", { ascending: true }).order("name", { ascending: true }),
@@ -178,7 +203,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const canMonitorDoctors = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   const rows = appointments ?? [];
-  const scheduleTruncated = (appointmentCount ?? rows.length) > DAILY_SCHEDULE_VIEW_LIMIT;
+  const scheduleTruncated = appointmentCount !== null && appointmentCount > rows.length;
   const doctorRows = doctors ?? [];
   const activeDoctors = doctorRows.filter((doctor) => doctor.active);
   const multiDoctor = canMonitorDoctors && activeDoctors.length > 1;
@@ -231,7 +256,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     || visibleRows.some((row) => row.status === "pending" || row.status === "confirmed");
   const canCreateOnSelectedDay = selectedDay >= today;
   const minimum = new Date(now + 5 * 60 * 1000); minimum.setSeconds(0, 0);
-  const maximum = new Date(now + 2 * 365 * 24 * 60 * 60 * 1000);
+  const maximum = bookingHorizonEnd;
   const minimumInput = toBaghdadInputValue(minimum);
   const maximumInput = toBaghdadInputValue(maximum);
   const occupiedByDoctor = (occupiedAppointments ?? []).reduce<Record<string, string[]>>((result, row) => { if (!row.doctor_id) return result; const values = result[row.doctor_id] ?? []; values.push(toBaghdadInputValue(new Date(row.appointment_at))); result[row.doctor_id] = values; return result; }, {});
@@ -257,7 +282,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     {clinics.length > 1 ? <form className="clinic-switcher workspace-switcher" method="get"><label htmlFor="clinic">{t.clinicWorkspace}</label><input type="hidden" name="day" value={selectedDay} /><select id="clinic" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select><button className="button button-ghost button-small" type="submit">{t.switch}</button></form> : null}
     {multiDoctor ? <nav className="doctor-schedule-tabs" aria-label={days.doctorSchedules}>{activeDoctors.map((doctor) => { const count = rows.filter((row) => row.doctor_id === doctor.id).length; const selected = doctor.id === selectedDoctor?.id; return <a href={scheduleHref(clinic.id, selectedDay, doctor.id)} className={selected ? "is-selected" : ""} aria-current={selected ? "page" : undefined} key={doctor.id}><strong>{doctor.name}</strong><span>{localizeDigits(count, locale)}</span></a>; })}</nav> : null}
     {messageError || selectionError ? <p className="notice notice-error workspace-notice" role="alert">{messageError ?? selectionError}</p> : null}{notice ? <p className="notice notice-success workspace-notice" role="status">{notice}</p> : null}
-    {scheduleTruncated ? <p className="notice workspace-notice" role="status">{days.limited.replaceAll("{count}", localizeDigits(DAILY_SCHEDULE_VIEW_LIMIT, locale))}</p> : null}
+    {scheduleTruncated ? <p className="notice workspace-notice" role="status">{days.limited.replaceAll("{count}", localizeDigits(rows.length, locale))}</p> : null}
     <section className="stats workspace-stats schedule-summary" aria-label={days.appointments}><Stat label={summary.all} value={visibleRows.length} tone="total" locale={locale} /><Stat label={summary.notConfirmed} value={pending} tone="pending" locale={locale} /><Stat label={summary.confirmed} value={confirmed} tone="confirmed" locale={locale} /><Stat label={summary.completed} value={completed} tone="completed" locale={locale} /><Stat label={summary.noShow} value={noShow} tone="no-show" locale={locale} /><Stat label={summary.cancelled} value={cancelled} tone="cancelled" locale={locale} /></section>
     <div className={`workspace-grid ${canCreateOnSelectedDay ? "" : "is-read-only-day"}`}>
       {canCreateOnSelectedDay ? <section className="panel appointment-composer" id="new-appointment"><div className="panel-heading composer-heading"><div><div className="eyebrow">{relativeDay ?? formatBaghdadDay(selectedDate, locale)}</div><h2>{t.newAppointment}</h2></div><span className="composer-shortcut" aria-hidden="true">+</span></div>
