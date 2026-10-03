@@ -34,5 +34,7 @@ test("public booking is idempotent and audit-attributed without weakening patien
   assert.match(migration, /'duplicate'::text/);
   assert.match(migration, /'idempotency_mismatch'::text/);
   assert.match(migration, /set_config\('atlas\.actor_type', 'patient', true\)/);
-  assert.match(migration, /p_patient_phone !~ '\^\\\\\+9647\[0-9\]\{9\}\$'/);
+  assert.match(migration, /p_patient_phone !~ '\^\\\+9647\[0-9\]\{9\}\
+});
+/);
 });
