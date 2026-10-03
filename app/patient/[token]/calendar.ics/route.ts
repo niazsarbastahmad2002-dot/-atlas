@@ -11,7 +11,6 @@ type CalendarRouteProps = {
 type PatientCalendarAppointment = {
   clinic_name: string;
   doctor_name: string;
-  doctor_specialty: string | null;
   appointment_at: string;
   appointment_status: string;
 };
@@ -63,7 +62,6 @@ export async function GET(_request: Request, { params }: CalendarRouteProps) {
   const calendar = buildPatientCalendar({
     clinicName: appointment.clinic_name,
     doctorName: appointment.doctor_name,
-    doctorSpecialty: appointment.doctor_specialty,
     appointmentAt: appointment.appointment_at,
     uidSeed: tokenHash,
   });
