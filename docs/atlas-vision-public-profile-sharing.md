@@ -10,6 +10,10 @@ Published clinic and doctor profiles are now designed to travel through the chan
 - If native sharing is unavailable, Atlas copies the public profile URL.
 - Shared URLs contain only the public care path. Query strings, patient tokens, appointment tokens, and workspace identifiers are not added.
 
+## Clinic staff distribution
+
+Published profiles can also be shared directly from Atlas public-profile settings. Staff do not need to open the patient-facing page first. Atlas only accepts explicit `/care/...` paths for this control, so a settings action cannot turn into an arbitrary external-link sharer.
+
 ## Link previews
 
 Clinic and doctor pages generate metadata from the same public-only RPCs that render the page.
