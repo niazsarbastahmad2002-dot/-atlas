@@ -13,3 +13,14 @@ test("live clinic clock always renders the Baghdad clinic timezone", () => {
   assert.match(clock, /baghdadHour < 12/);
   assert.doesNotMatch(clock, /now\.getHours\(\)/);
 });
+
+
+test("live clinic clock pauses in background and resyncs when Atlas becomes visible", () => {
+  const clock = source();
+
+  assert.match(clock, /document\.visibilityState !== "visible"/);
+  assert.match(clock, /document\.addEventListener\("visibilitychange", syncVisibility\)/);
+  assert.match(clock, /document\.removeEventListener\("visibilitychange", syncVisibility\)/);
+  assert.match(clock, /if \(timer === null\) timer = window\.setInterval\(update, 1_000\)/);
+  assert.match(clock, /window\.clearInterval\(timer\)/);
+});
