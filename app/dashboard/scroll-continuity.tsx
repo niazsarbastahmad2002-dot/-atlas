@@ -21,6 +21,30 @@ function scheduleContextKey(pathname: string, search: string) {
   ].join("|");
 }
 
+function readSavedScroll() {
+  try {
+    return window.sessionStorage.getItem(storageKey);
+  } catch {
+    return null;
+  }
+}
+
+function writeSavedScroll(saved: SavedScroll) {
+  try {
+    window.sessionStorage.setItem(storageKey, JSON.stringify(saved));
+  } catch {
+    // Scroll continuity is optional. Storage restrictions must never block a form action.
+  }
+}
+
+function clearSavedScroll() {
+  try {
+    window.sessionStorage.removeItem(storageKey);
+  } catch {
+    // Nothing else depends on this best-effort browser preference.
+  }
+}
+
 export function DashboardScrollContinuity() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -33,12 +57,11 @@ export function DashboardScrollContinuity() {
       if (!form.closest(".app-shell")) return;
       if (form.dataset.resetScroll === "true") return;
 
-      const saved: SavedScroll = {
+      writeSavedScroll({
         scheduleKey: scheduleContextKey(window.location.pathname, window.location.search),
         y: window.scrollY,
         at: Date.now(),
-      };
-      window.sessionStorage.setItem(storageKey, JSON.stringify(saved));
+      });
     }
 
     document.addEventListener("submit", rememberScroll, true);
@@ -46,14 +69,14 @@ export function DashboardScrollContinuity() {
   }, []);
 
   useEffect(() => {
-    const raw = window.sessionStorage.getItem(storageKey);
+    const raw = readSavedScroll();
     if (!raw) return;
 
     let saved: SavedScroll;
     try {
       saved = JSON.parse(raw) as SavedScroll;
     } catch {
-      window.sessionStorage.removeItem(storageKey);
+      clearSavedScroll();
       return;
     }
 
@@ -64,13 +87,13 @@ export function DashboardScrollContinuity() {
       saved.scheduleKey !== currentScheduleKey
       || Date.now() - saved.at > 15_000
     ) {
-      window.sessionStorage.removeItem(storageKey);
+      clearSavedScroll();
       return;
     }
 
     const frame = window.requestAnimationFrame(() => {
       window.scrollTo({ top: saved.y, left: 0, behavior: "instant" });
-      window.sessionStorage.removeItem(storageKey);
+      clearSavedScroll();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [pathname, searchKey]);
