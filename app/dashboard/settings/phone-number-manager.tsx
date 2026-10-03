@@ -43,7 +43,7 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
 };
 
-export function PhoneNumberManager({ locale, currentPhone }: { locale: UiLocale; currentPhone: string | null }) {
+export function PhoneNumberManager({ locale, currentPhone, clinicId }: { locale: UiLocale; currentPhone: string | null; clinicId: string }) {
   const copy = copyByLocale[locale];
 
   return (
@@ -62,7 +62,7 @@ export function PhoneNumberManager({ locale, currentPhone }: { locale: UiLocale;
           <strong>{copy.pending}</strong>
         )}
       </div>
-      <Link className="button button-ghost button-small" href="/dashboard/settings/phone">
+      <Link className="button button-ghost button-small" href={`/dashboard/settings/phone?${new URLSearchParams({ clinic: clinicId })}`}>
         {copy.change}
       </Link>
     </div>
