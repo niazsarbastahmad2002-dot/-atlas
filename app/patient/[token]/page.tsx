@@ -371,7 +371,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         {actionFailed ? <p className="notice notice-error patient-action-error" role="alert">{text.actionFailed}</p> : null}
 
         {isActive && clinicDelayMinutes !== null ? (
-          <section className="patient-timing-card" aria-label={text.timingTitle}>
+          <section className="patient-timing-card" aria-label={text.timingTitle} role="status" aria-live="polite" aria-atomic="true">
             <span>{text.timingTitle}</span>
             <strong>{patientTimingText(clinicDelayMinutes, locale)}</strong>
             <p>{text.timingHelp}</p>
