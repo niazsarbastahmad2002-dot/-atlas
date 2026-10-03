@@ -26,6 +26,9 @@ test("anonymous discovery can read only explicit published fields through bounde
   assert.match(migration, /get_public_clinic_profile[\s\S]*p\.is_published/);
   assert.match(migration, /list_public_doctors[\s\S]*c\.is_published[\s\S]*d\.is_published/);
   assert.match(migration, /get_public_doctor_profile[\s\S]*c\.is_published[\s\S]*d\.is_published/);
+  assert.match(migration, /list_public_doctors[\s\S]*join public\.doctors core[\s\S]*core\.active/);
+  assert.match(migration, /get_public_doctor_profile[\s\S]*join public\.doctors core[\s\S]*core\.active/);
+  assert.match(migration, /search_public_doctors[\s\S]*join public\.doctors core[\s\S]*core\.active/);
   assert.match(migration, /grant execute on function public\.get_public_clinic_profile\(text\) to anon, authenticated/);
   assert.match(migration, /grant execute on function public\.list_public_doctors\(text\) to anon, authenticated/);
   assert.match(migration, /grant execute on function public\.get_public_doctor_profile\(text, text\) to anon, authenticated/);
