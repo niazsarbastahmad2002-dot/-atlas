@@ -167,7 +167,8 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
   const onSettings = visiblePath.startsWith("/dashboard/settings")
     || visiblePath.startsWith("/dashboard/reminders")
     || visiblePath.startsWith("/dashboard/staff")
-    || visiblePath.startsWith("/dashboard/history");
+    || visiblePath.startsWith("/dashboard/history")
+    || visiblePath.startsWith("/dashboard/activity");
   const onAssistant = visiblePath.startsWith("/dashboard/assistant");
   const onSchedule = visiblePath === "/dashboard";
   const assistantHref = assistantHrefFrom(scheduleHref, searchParams.get("clinic"));
