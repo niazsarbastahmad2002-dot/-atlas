@@ -52,6 +52,15 @@ const CONTINUITY_STORE = "state";
 const CONTINUITY_DB_VERSION = 1;
 const CONTINUITY_ACTIVE_MARKER = "atlas-continuity-active";
 
+function writeContinuityMarker(value: "0" | "1") {
+  try {
+    window.localStorage.setItem(CONTINUITY_ACTIVE_MARKER, value);
+  } catch {
+    // The encrypted IndexedDB cache must remain usable/clearable even when
+    // localStorage is blocked by a restrictive or private browser.
+  }
+}
+
 function nativePost(value: unknown) {
   const nativeWindow = window as AtlasNativeWindow;
   nativeWindow.webkit?.messageHandlers?.atlasContinuity?.postMessage(value);
@@ -125,25 +134,28 @@ async function persistBrowserSnapshot(snapshot: ContinuitySnapshot) {
       iv: Array.from(iv),
       ciphertext: Array.from(new Uint8Array(encrypted)),
     });
-    window.localStorage.setItem(CONTINUITY_ACTIVE_MARKER, "1");
+    writeContinuityMarker("1");
   } finally {
     db.close();
   }
 }
 
 export async function clearBrowserContinuityCache() {
+  writeContinuityMarker("0");
+  if (!("indexedDB" in window)) return;
   try {
-    window.localStorage.setItem(CONTINUITY_ACTIVE_MARKER, "0");
-    if (!("indexedDB" in window)) return;
     const db = await openContinuityDb();
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction(CONTINUITY_STORE, "readwrite");
-      transaction.objectStore(CONTINUITY_STORE).clear();
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error ?? new Error("continuity_clear_failed"));
-      transaction.onabort = () => reject(transaction.error ?? new Error("continuity_clear_aborted"));
-    });
-    db.close();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction(CONTINUITY_STORE, "readwrite");
+        transaction.objectStore(CONTINUITY_STORE).clear();
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error ?? new Error("continuity_clear_failed"));
+        transaction.onabort = () => reject(transaction.error ?? new Error("continuity_clear_aborted"));
+      });
+    } finally {
+      db.close();
+    }
   } catch {
     // Clearing continuity data is best-effort in browsers that do not support
     // IndexedDB/CryptoKey persistence. No online Atlas behavior depends on it.
