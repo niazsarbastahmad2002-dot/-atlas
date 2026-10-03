@@ -24,3 +24,14 @@ test("Safari stall recovery only reloads when its throttle can be stored safely"
   assert.match(refresh, /catch \{[\s\S]*return false;/);
   assert.match(refresh, /if \(!reserveSafariStallReload\(Date\.now\(\)\)\) return;/);
 });
+
+
+test("successful inline appointment saves clear the time draft marker", () => {
+  const timeField = read("app/dashboard/appointment-time-field-v2.tsx");
+  const polish = read("app/dashboard/dashboard-client-polish.tsx");
+
+  assert.match(polish, /document\.dispatchEvent\(new Event\("atlas:appointment-saved"\)\)/);
+  assert.match(timeField, /document\.addEventListener\("atlas:appointment-saved", clearSavedDraft\)/);
+  assert.match(timeField, /const clearSavedDraft = \(\) => \{[\s\S]*setDateOpen\(false\);[\s\S]*setTouched\(false\);/);
+  assert.match(timeField, /document\.removeEventListener\("atlas:appointment-saved", clearSavedDraft\)/);
+});
