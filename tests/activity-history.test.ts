@@ -172,3 +172,16 @@ test("appointment history discloses when the bounded view omits older records", 
   assert.match(historyPage, /historyTruncated \? <p className="notice history-limit-notice"/);
   assert.match(historyPage, /localizeDigits\(HISTORY_VIEW_LIMIT, locale\)/);
 });
+
+
+test("activity history discloses when older audit events are outside the bounded view", async () => {
+  const activityPage = await read("app/dashboard/activity/page.tsx");
+
+  assert.match(activityPage, /const ACTIVITY_VIEW_LIMIT = 250/);
+  assert.match(activityPage, /count: eventCount/);
+  assert.match(activityPage, /\{ count: "exact" \}/);
+  assert.match(activityPage, /\.limit\(ACTIVITY_VIEW_LIMIT\)/);
+  assert.match(activityPage, /const activityTruncated = \(eventCount \?\? events\?\.length \?\? 0\) > ACTIVITY_VIEW_LIMIT/);
+  assert.match(activityPage, /activityTruncated \? <p className="notice history-limit-notice"/);
+  assert.match(activityPage, /localizeDigits\(ACTIVITY_VIEW_LIMIT, locale\)/);
+});
