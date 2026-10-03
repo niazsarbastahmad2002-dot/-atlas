@@ -49,7 +49,10 @@ begin
      or char_length(v_patient_name) not between 2 and 120
      or v_patient_name ~ '[[:cntrl:]]'
      or p_patient_phone is null
-     or p_patient_phone !~ '^\+9647[0-9]{9}
+     or p_patient_phone !~ '^\\+9647[0-9]{9}$'
+     or p_reminder_language is null
+     or p_reminder_language not in ('ku', 'bd', 'ar', 'en')
+     or p_reminder_consent is null then
     return query select 'invalid'::text, null::uuid;
     return;
   end if;
