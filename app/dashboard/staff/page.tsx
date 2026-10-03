@@ -444,7 +444,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             {activeManualInvites.length ? activeManualInvites.map((invitation) => (
               <article className="doctor-settings-row" key={invitation.invitation_id}>
                 <div className="patient-cell">
-                  <strong>{invitation.doctor_name}</strong>
+                  <strong data-atlas-user-content="true">{invitation.doctor_name}</strong>
                   <span className="field-help">{text.expires}: {formatStaffInviteExpiry(invitation.expires_at, locale)}</span>
                 </div>
                 <form action={revokeManualStaffInvitation.bind(null, clinic.id, invitation.invitation_id)}>
@@ -464,7 +464,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         <section className="settings-card">
           <div className="settings-card-heading">
             <span className="settings-card-icon" aria-hidden="true">👥</span>
-            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p>{clinic.name} · {localizeDigits(memberRows.length + pendingRows.length, locale)}</p></div>
+            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p><span data-atlas-user-content="true">{clinic.name}</span> · {localizeDigits(memberRows.length + pendingRows.length, locale)}</p></div>
           </div>
           <div className="doctor-settings-list">
             {pendingRows.map((pending) => {
@@ -473,7 +473,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                 <article className="doctor-settings-row" key={`pending-${pending.user_id}`}>
                   <div className="patient-cell">
                     <strong>{text.pending}</strong>
-                    <span>{assignedDoctor?.name ?? text.doctor}</span>
+                    {assignedDoctor ? <span data-atlas-user-content="true">{assignedDoctor.name}</span> : <span>{text.doctor}</span>}
                     <span className="field-help">{text.legacyPending}</span>
                   </div>
                   <form action={cancelPendingInvitation.bind(null, clinic.id, pending.user_id)}>
@@ -497,7 +497,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                 <article className="doctor-settings-row" key={member.user_id}>
                   <div className="patient-cell">
                     <strong dir="ltr">{member.identity}</strong>
-                    <span>{roleLabel}{assignedDoctor ? ` · ${assignedDoctor.name}` : ""}</span>
+                    <span>{roleLabel}{assignedDoctor ? <> · <span data-atlas-user-content="true">{assignedDoctor.name}</span></> : null}</span>
                   </div>
                   {protectedOwner ? (
                     <p className="field-help staff-protected-note">{text.protected}</p>
