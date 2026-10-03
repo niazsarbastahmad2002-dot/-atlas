@@ -37,15 +37,31 @@ export function DashboardDayRollover({
       window.location.replace(`${url.pathname}?${url.searchParams.toString()}`);
     };
 
-    refreshForNewClinicDay();
-    const timer = window.setInterval(refreshForNewClinicDay, 30_000);
-    const onVisibilityChange = () => {
-      if (!document.hidden) refreshForNewClinicDay();
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
+      window.clearInterval(timer);
+      timer = null;
     };
+    const start = () => {
+      if (document.visibilityState !== "visible" || timer !== null) return;
+      timer = window.setInterval(refreshForNewClinicDay, 30_000);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") {
+        stop();
+        return;
+      }
+      refreshForNewClinicDay();
+      start();
+    };
+
+    if (document.visibilityState === "visible") refreshForNewClinicDay();
+    start();
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
-      window.clearInterval(timer);
+      stop();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [selectedDay, todayAtRender]);
