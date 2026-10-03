@@ -515,8 +515,8 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                             <option value="">{text.chooseDoctor}</option>
                             {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
                           </select>
+                          <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
                         </PendingFormFields>
-                        <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
                       </form>
                       <form action={removeStaffMember.bind(null, clinic.id, member.user_id)}>
                         <ConfirmSubmitButton
