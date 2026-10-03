@@ -39,3 +39,14 @@ test("appointment edit date and time controls stack safely on narrow phones", ()
   assert.match(editField, /@media \(max-width: 560px\)/);
   assert.match(editField, /\.edit-datetime-fields \{ grid-template-columns: 1fr; \}/);
 });
+
+
+test("appointment composer interval label follows the active locale", () => {
+  const createField = readFileSync(new URL("../app/dashboard/appointment-time-field-v2.tsx", import.meta.url), "utf8");
+
+  assert.match(createField, /minuteUnit: "min"/);
+  assert.ok((createField.match(/minuteUnit: "خولەک"/g) ?? []).length >= 2);
+  assert.match(createField, /minuteUnit: "دقيقة"/);
+  assert.match(createField, /localizeDigits\(interval, locale\).*text\.minuteUnit/);
+  assert.doesNotMatch(createField, /\{interval\} min/);
+});
