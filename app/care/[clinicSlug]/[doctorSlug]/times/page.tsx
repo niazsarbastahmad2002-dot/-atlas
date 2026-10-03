@@ -226,7 +226,9 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
   );
 }
 
-function Unavailable({ copy: t }: { copy: (typeof copy)[UiLocale] }) {
+type TimesCopy = (typeof copy)[UiLocale];
+
+function Unavailable({ copy: t }: { copy: TimesCopy }) {
   return (
     <main className="center-page">
       <section className="auth-card">
