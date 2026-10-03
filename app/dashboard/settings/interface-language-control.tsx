@@ -73,6 +73,7 @@ export function InterfaceLanguageControl({
   const [themePending, setThemePending] = useState(false);
   const [themeError, setThemeError] = useState<string | null>(null);
   const appearance = appearanceCopy[locale];
+  const preferencePending = pending || themePending;
 
   useEffect(() => {
     const current = document.documentElement.dataset.theme;
@@ -80,7 +81,7 @@ export function InterfaceLanguageControl({
   }, []);
 
   async function applyLanguage(nextLocale: UiLocale) {
-    if (pending) return;
+    if (preferencePending) return;
     setError(null);
     if (nextLocale === locale) return;
 
@@ -102,7 +103,7 @@ export function InterfaceLanguageControl({
   }
 
   async function applyTheme(nextTheme: UiTheme) {
-    if (themePending || nextTheme === theme) return;
+    if (preferencePending || nextTheme === theme) return;
     const previousTheme = theme;
     setThemeError(null);
     setTheme(nextTheme);
@@ -134,7 +135,7 @@ export function InterfaceLanguageControl({
           id="locale"
           name="locale"
           value={selected}
-          disabled={pending}
+          disabled={preferencePending}
           onChange={(event) => {
             const nextLocale = event.currentTarget.value;
             if (!isUiLocale(nextLocale)) return;
@@ -149,7 +150,7 @@ export function InterfaceLanguageControl({
         <button
           className="button"
           type="button"
-          disabled={pending || selected === locale}
+          disabled={preferencePending || selected === locale}
           onClick={() => void applyLanguage(selected)}
         >
           {pending ? savingLabel : applyLabel}
@@ -166,7 +167,7 @@ export function InterfaceLanguageControl({
           id="atlas-theme"
           name="atlas-theme"
           value={theme}
-          disabled={themePending}
+          disabled={preferencePending}
           onChange={(event) => {
             const nextTheme = event.currentTarget.value;
             if (!isUiTheme(nextTheme)) return;
