@@ -25,6 +25,7 @@ test("dashboard localization preserves patient and clinic supplied text", () => 
 
   assert.match(polish, /\["SCRIPT", "STYLE", "OPTION"\]\.includes\(parent\.tagName\)/);
   assert.match(polish, /parent\.closest\('\[data-atlas-user-content="true"\], \[dir="ltr"\], bdi'\)/);
+  assert.match(page, /<h1 data-atlas-user-content="true">\{clinic\.name\}<\/h1>/);
   assert.match(page, /className="patient-cell" data-atlas-user-content="true"/);
   assert.match(page, /<dd data-atlas-user-content="true">\{appointment\.doctor_name\}<\/dd>/);
   assert.match(page, /<strong data-atlas-user-content="true">\{doctor\.name\}<\/strong>/);
