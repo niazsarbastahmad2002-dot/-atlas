@@ -44,3 +44,10 @@ test("core route prefetch pauses while Atlas is hidden and warms on return", () 
   assert.match(navigation, /document\.addEventListener\("visibilitychange", syncVisibility\)/);
   assert.match(navigation, /document\.removeEventListener\("visibilitychange", syncVisibility\)/);
 });
+
+
+test("activity history stays inside the Settings navigation section", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.match(navigation, /visiblePath\.startsWith\("\/dashboard\/activity"\)/);
+});
