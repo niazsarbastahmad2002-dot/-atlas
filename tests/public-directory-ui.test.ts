@@ -73,3 +73,16 @@ test("public clinic cards use theme-aware Atlas surfaces", () => {
   assert.match(clinic, /background:var\(--surface\)/);
   assert.doesNotMatch(clinic, /background:#fff/);
 });
+
+
+test("public care cards use theme-aware surfaces", () => {
+  for (const path of [
+    "app/care/page.tsx",
+    "app/care/[clinicSlug]/[doctorSlug]/page.tsx",
+    "app/care/[clinicSlug]/page.tsx",
+  ]) {
+    const page = source(path);
+    assert.doesNotMatch(page, /background:#fff/);
+    assert.match(page, /background:var\(--surface\)/);
+  }
+});
