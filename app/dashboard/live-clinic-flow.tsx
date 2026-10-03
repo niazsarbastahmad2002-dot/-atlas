@@ -137,13 +137,30 @@ export function LiveClinicFlow({
   }, [query]);
 
   useEffect(() => {
-    void load();
-    const timer = window.setInterval(() => { if (!document.hidden) void load(); }, 30_000);
-    const visible = () => { if (!document.hidden) void load(); };
-    document.addEventListener("visibilitychange", visible);
-    return () => {
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
       window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", visible);
+      timer = null;
+    };
+    const start = () => {
+      if (document.visibilityState !== "visible" || timer !== null) return;
+      timer = window.setInterval(() => void load(), 30_000);
+    };
+    const syncVisibility = () => {
+      if (document.visibilityState !== "visible") {
+        stop();
+        return;
+      }
+      void load();
+      start();
+    };
+
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", syncVisibility);
     };
   }, [load]);
 
