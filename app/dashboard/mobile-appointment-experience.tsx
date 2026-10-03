@@ -9,6 +9,7 @@ import {
   searchMode,
   type SearchMode,
 } from "@/lib/mobile-appointment-search";
+import { localizeDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 const copy = {
@@ -159,7 +160,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         setText(countNode, text.phoneHint);
       } else {
         const noun = visible === 1 ? text.appointment : text.appointments;
-        setText(countNode, `${visible} ${noun}`);
+        setText(countNode, `${localizeDigits(visible, locale)} ${noun}`);
       }
     };
 
