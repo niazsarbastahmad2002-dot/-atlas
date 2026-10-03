@@ -73,7 +73,7 @@ export default async function SelectClinicPage() {
         <div className="clinic-choice-list">
           {clinics.map((clinic) => (
             <Link className="clinic-choice" href={`/dashboard?clinic=${clinic.id}`} key={clinic.id}>
-              <span>{clinic.name}</span>
+              <span data-atlas-user-content="true">{clinic.name}</span>
               <strong>{t.open} →</strong>
             </Link>
           ))}
