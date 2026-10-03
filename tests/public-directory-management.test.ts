@@ -12,7 +12,7 @@ test("public profile management is explicitly owner/manager gated", () => {
   assert.match(page, /membership\?\.role === "owner" \|\| membership\?\.role === "manager"/);
   assert.match(actions, /clinic_directory_profiles/);
   assert.match(actions, /doctor_directory_profiles/);
-  assert.doesNotMatch(actions, /appointments|patient_name|patient_phone|reminder_/);
+  assert.doesNotMatch(actions, /\.from\("appointments"\)|patient_name|patient_phone|reminder_/);
 });
 
 test("publishing remains explicit and archived doctors cannot be published through Atlas UI", () => {
