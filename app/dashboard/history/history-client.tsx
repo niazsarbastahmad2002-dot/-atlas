@@ -228,8 +228,8 @@ export function HistoryClient({
             <div className="history-check">
               {canDelete && row.removed ? <input aria-label={`${t.patient}: ${row.patientName}`} type="checkbox" disabled={pending} checked={selected.has(row.id)} onChange={() => toggle(row.id)} /> : <span className="history-check-spacer" />}
             </div>
-            <div className="history-patient"><strong>{row.patientName}</strong><span dir="ltr">{row.patientPhone}</span></div>
-            <div><span className="history-label">{t.doctor}</span><strong>{row.doctorName}</strong></div>
+            <div className="history-patient"><strong data-atlas-user-content="true">{row.patientName}</strong><span dir="ltr">{row.patientPhone}</span></div>
+            <div><span className="history-label">{t.doctor}</span><strong data-atlas-user-content="true">{row.doctorName}</strong></div>
             <div><span className="history-label">{t.time}</span><strong>{row.displayTime}</strong></div>
             <div className="history-status"><span className={`status status-${row.removed ? "cancelled" : row.status}`}>{row.removed ? t.removedLabel : statusLabels[locale][row.status] ?? row.status}</span></div>
           </article>
