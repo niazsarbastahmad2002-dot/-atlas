@@ -36,6 +36,7 @@ test("private patient page shows bounded live clinic timing and refreshes automa
   assert.match(page, /کاتی کلینیک/);
   assert.match(page, /وقت العيادة/);
   assert.match(page, /estimate, not an exact wait time/);
+  assert.match(page, /role="status" aria-live="polite" aria-atomic="true"/);
   assert.match(refresh, /pathname\.startsWith\("\/patient\/"\)/);
   assert.match(refresh, /15_000/);
   assert.match(types, /patient_get_day_flow: \{ Args: \{ p_token_hash: string \}; Returns: \{ delay_minutes: number; timing_updated_at: string \}\[\] \}/);
