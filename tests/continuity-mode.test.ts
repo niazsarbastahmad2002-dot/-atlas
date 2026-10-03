@@ -145,13 +145,18 @@ test("continuity access is verified before patient data is loaded", () => {
 
 
 
-test("offline continuity disables interactive controls for keyboard and assistive input too", () => {
+test("offline continuity disables write controls while preserving local microphone stop actions", () => {
   const component = source("app/dashboard/continuity-mode.tsx");
+  const ai = source("app/dashboard/assistant/atlas-ai-client-v4.tsx");
 
   assert.match(component, /const disabledControls = new Map/);
-  assert.match(component, /control\.disabled = true/);
+  assert.match(component, /data-atlas-offline-local-action/);
+  assert.match(component, /if \(!control\.disabled\) control\.disabled = true/);
   assert.match(component, /new MutationObserver\(lockOfflineControls\)/);
-  assert.match(component, /controlObserver\.observe\(document\.body, \{ childList: true, subtree: true \}\)/);
+  assert.match(component, /attributes: true/);
+  assert.match(component, /attributeFilter: \["disabled"\]/);
   assert.match(component, /control\.disabled = wasDisabled/);
   assert.match(component, /unlockOfflineControls\(\)/);
+  assert.ok((ai.match(/data-atlas-offline-local-action/g) ?? []).length >= 4);
+  assert.match(ai, /stopCapture\(navigator\.onLine===false\)/);
 });
