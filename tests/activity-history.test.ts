@@ -151,3 +151,11 @@ test("history deletion freezes the visible selection until the delete finishes",
   assert.match(historyClient, /history-select-all"><input type="checkbox" disabled=\{pending\}/);
   assert.match(historyClient, /type="checkbox" disabled=\{pending\} checked=\{selected\.has\(row\.id\)\}/);
 });
+
+
+test("activity history does not mislabel staff when attribution lookup fails", async () => {
+  const activityPage = await read("app/dashboard/activity/page.tsx");
+
+  assert.match(activityPage, /\{ data: members, error: membersError \}/);
+  assert.match(activityPage, /if \(eventsError \|\| membersError\)/);
+});
