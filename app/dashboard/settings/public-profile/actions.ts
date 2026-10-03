@@ -85,27 +85,32 @@ export async function saveClinicDirectoryProfile(formData: FormData) {
   const { supabase } = await managementContext(clinicId);
   const { data: existing, error: existingError } = await supabase
     .from("clinic_directory_profiles")
-    .select("latitude, longitude")
+    .select("clinic_id, latitude, longitude")
     .eq("clinic_id", clinicId)
     .maybeSingle();
   if (existingError) failed(clinicId);
 
-  const { error } = await supabase
-    .from("clinic_directory_profiles")
-    .upsert({
-      clinic_id: clinicId,
-      slug,
-      display_name: displayName,
-      description: description || null,
-      country_code: countryCode,
-      city: city || null,
-      area: area || null,
-      address_text: addressText || null,
-      latitude: existing?.latitude ?? null,
-      longitude: existing?.longitude ?? null,
-      public_phone: publicPhone || null,
-      is_published: isPublished,
-    }, { onConflict: "clinic_id" });
+  const clinicPatch = {
+    slug,
+    display_name: displayName,
+    description: description || null,
+    country_code: countryCode,
+    city: city || null,
+    area: area || null,
+    address_text: addressText || null,
+    latitude: existing?.latitude ?? null,
+    longitude: existing?.longitude ?? null,
+    public_phone: publicPhone || null,
+    is_published: isPublished,
+  };
+  const { error } = existing
+    ? await supabase
+        .from("clinic_directory_profiles")
+        .update(clinicPatch)
+        .eq("clinic_id", clinicId)
+    : await supabase
+        .from("clinic_directory_profiles")
+        .insert({ clinic_id: clinicId, ...clinicPatch });
 
   if (error?.code === "23505") failed(clinicId, "slug_taken");
   if (error) failed(clinicId);
@@ -143,18 +148,31 @@ export async function saveDoctorDirectoryProfile(formData: FormData) {
   }
   if (isPublished && !doctor.active) failed(clinicId, "doctor_archived");
 
-  const { error } = await supabase
+  const { data: existingProfile, error: profileError } = await supabase
     .from("doctor_directory_profiles")
-    .upsert({
-      clinic_id: clinicId,
-      doctor_id: doctorId,
-      slug,
-      display_name: displayName,
-      specialty,
-      subspecialty: subspecialty || null,
-      bio: bio || null,
-      is_published: isPublished,
-    }, { onConflict: "clinic_id,doctor_id" });
+    .select("doctor_id")
+    .eq("clinic_id", clinicId)
+    .eq("doctor_id", doctorId)
+    .maybeSingle();
+  if (profileError) failed(clinicId);
+
+  const doctorPatch = {
+    slug,
+    display_name: displayName,
+    specialty,
+    subspecialty: subspecialty || null,
+    bio: bio || null,
+    is_published: isPublished,
+  };
+  const { error } = existingProfile
+    ? await supabase
+        .from("doctor_directory_profiles")
+        .update(doctorPatch)
+        .eq("clinic_id", clinicId)
+        .eq("doctor_id", doctorId)
+    : await supabase
+        .from("doctor_directory_profiles")
+        .insert({ clinic_id: clinicId, doctor_id: doctorId, ...doctorPatch });
 
   if (error?.code === "23505") failed(clinicId, "slug_taken");
   if (error) failed(clinicId);
