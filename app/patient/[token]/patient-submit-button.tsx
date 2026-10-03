@@ -8,6 +8,7 @@ type PatientSubmitButtonProps = {
   pendingLabel: string;
   className?: string;
   formAction: (formData: FormData) => void | Promise<void>;
+  confirmMessage?: string;
 };
 
 export function PatientSubmitButton({
@@ -15,6 +16,7 @@ export function PatientSubmitButton({
   pendingLabel,
   className,
   formAction,
+  confirmMessage,
 }: PatientSubmitButtonProps) {
   const { pending } = useFormStatus();
   return (
@@ -24,6 +26,9 @@ export function PatientSubmitButton({
       formAction={formAction}
       disabled={pending}
       aria-disabled={pending}
+      onClick={(event) => {
+        if (confirmMessage && !window.confirm(confirmMessage)) event.preventDefault();
+      }}
     >
       {pending ? pendingLabel : children}
     </button>
