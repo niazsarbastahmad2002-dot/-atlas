@@ -45,9 +45,44 @@ test("Atlas home gives patients a direct path into discovery", () => {
 });
 
 
+test("published clinics have a direct public profile route and doctors link back to it", () => {
+  const clinic = source("app/care/[clinicSlug]/page.tsx");
+  const search = source("app/care/page.tsx");
+  const doctor = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");
+
+  assert.match(clinic, /get_public_clinic_profile/);
+  assert.match(clinic, /list_public_doctors/);
+  assert.match(clinic, /safeSlug\(clinicSlug\)/);
+  assert.doesNotMatch(clinic, /\.from\("appointments"\)|patient_name|patient_phone|reminder_/);
+  assert.match(search, /href=\{\`\/care\/\$\{doctor\.clinic_slug\}\`\}/);
+  assert.match(doctor, /href=\{\`\/care\/\$\{profile\.clinic_slug\}\`\}/);
+});
+
+
 test("public doctor search safely rejects repeated query parameters", () => {
   const page = source("app/care/page.tsx");
 
   assert.match(page, /q\?: string \| string\[\]/);
   assert.match(page, /if \(typeof value !== "string"\) return ""/);
+});
+
+
+test("public clinic cards use theme-aware Atlas surfaces", () => {
+  const clinic = source("app/care/[clinicSlug]/page.tsx");
+
+  assert.match(clinic, /background:var\(--surface\)/);
+  assert.doesNotMatch(clinic, /background:#fff/);
+});
+
+
+test("public care cards use theme-aware surfaces", () => {
+  for (const path of [
+    "app/care/page.tsx",
+    "app/care/[clinicSlug]/[doctorSlug]/page.tsx",
+    "app/care/[clinicSlug]/page.tsx",
+  ]) {
+    const page = source(path);
+    assert.doesNotMatch(page, /background:#fff/);
+    assert.match(page, /background:var\(--surface\)/);
+  }
 });
