@@ -208,7 +208,7 @@ export function LiveClinicFlow({
   }
 
   return (
-    <section className="live-clinic-flow shell" aria-label={t.timing}>
+    <section className="live-clinic-flow shell" aria-label={t.timing} aria-busy={saving !== null}>
       <div className="live-clinic-timing">
         <div className="live-clinic-copy">
           <strong>{t.timing}</strong>
