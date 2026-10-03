@@ -62,14 +62,26 @@ export async function savePublicBookingSettings(formData: FormData) {
   ) fail(clinicId, "invalid");
 
   const { supabase } = await managementContext(clinicId);
-  const { error } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from("clinic_public_booking_settings")
-    .upsert({
-      clinic_id: clinicId,
-      enabled,
-      min_lead_minutes: minLeadMinutes,
-      booking_horizon_days: bookingHorizonDays,
-    }, { onConflict: "clinic_id" });
+    .select("clinic_id")
+    .eq("clinic_id", clinicId)
+    .maybeSingle();
+  if (readError) fail(clinicId);
+
+  const settingsPatch = {
+    enabled,
+    min_lead_minutes: minLeadMinutes,
+    booking_horizon_days: bookingHorizonDays,
+  };
+  const { error } = existing
+    ? await supabase
+        .from("clinic_public_booking_settings")
+        .update(settingsPatch)
+        .eq("clinic_id", clinicId)
+    : await supabase
+        .from("clinic_public_booking_settings")
+        .insert({ clinic_id: clinicId, ...settingsPatch });
 
   if (error) fail(clinicId);
   saved(clinicId);
@@ -109,10 +121,35 @@ export async function saveDoctorPublicBookingHours(formData: FormData) {
     });
   }
 
-  const { error } = await supabase
+  const { data: existingHours, error: hoursReadError } = await supabase
     .from("doctor_public_booking_hours")
-    .upsert(rows, { onConflict: "clinic_id,doctor_id,weekday" });
-  if (error) fail(clinicId);
+    .select("weekday")
+    .eq("clinic_id", clinicId)
+    .eq("doctor_id", doctorId);
+  if (hoursReadError) fail(clinicId);
+
+  const existingWeekdays = new Set((existingHours ?? []).map((row) => row.weekday));
+  const insertRows = rows.filter((row) => !existingWeekdays.has(row.weekday));
+  if (insertRows.length) {
+    const { error: insertError } = await supabase
+      .from("doctor_public_booking_hours")
+      .insert(insertRows);
+    if (insertError) fail(clinicId);
+  }
+
+  for (const row of rows.filter((candidate) => existingWeekdays.has(candidate.weekday))) {
+    const { error: updateError } = await supabase
+      .from("doctor_public_booking_hours")
+      .update({
+        starts_at: row.starts_at,
+        ends_at: row.ends_at,
+        is_enabled: row.is_enabled,
+      })
+      .eq("clinic_id", clinicId)
+      .eq("doctor_id", doctorId)
+      .eq("weekday", row.weekday);
+    if (updateError) fail(clinicId);
+  }
   saved(clinicId);
 }
 
@@ -139,14 +176,30 @@ export async function setDoctorPublicClosedDate(
     .maybeSingle();
   if (doctorError || !doctor) fail(clinicId, "doctor_unavailable");
 
-  const { error } = await supabase
+  const { data: existingDate, error: dateReadError } = await supabase
     .from("doctor_public_booking_closed_dates")
-    .upsert({
-      clinic_id: clinicId,
-      doctor_id: doctorId,
-      booking_date: bookingDate,
-      is_closed: isClosed,
-    }, { onConflict: "clinic_id,doctor_id,booking_date" });
+    .select("booking_date")
+    .eq("clinic_id", clinicId)
+    .eq("doctor_id", doctorId)
+    .eq("booking_date", bookingDate)
+    .maybeSingle();
+  if (dateReadError) fail(clinicId);
+
+  const { error } = existingDate
+    ? await supabase
+        .from("doctor_public_booking_closed_dates")
+        .update({ is_closed: isClosed })
+        .eq("clinic_id", clinicId)
+        .eq("doctor_id", doctorId)
+        .eq("booking_date", bookingDate)
+    : await supabase
+        .from("doctor_public_booking_closed_dates")
+        .insert({
+          clinic_id: clinicId,
+          doctor_id: doctorId,
+          booking_date: bookingDate,
+          is_closed: isClosed,
+        });
   if (error) fail(clinicId);
   saved(clinicId);
 }
