@@ -177,6 +177,7 @@ export function LiveClinicFlow({
           delayMinutes: saved.delayMinutes === null || typeof saved.delayMinutes === "number" ? saved.delayMinutes : current.delayMinutes,
           timingUpdatedAt: saved.timingUpdatedAt === null || typeof saved.timingUpdatedAt === "string" ? saved.timingUpdatedAt : current.timingUpdatedAt,
         } : current);
+        setLoadFailed(false);
         setError("stale");
         return;
       }
@@ -186,6 +187,7 @@ export function LiveClinicFlow({
         delayMinutes: saved.delayMinutes!,
         timingUpdatedAt: saved.timingUpdatedAt ?? current.timingUpdatedAt,
       } : current);
+      setLoadFailed(false);
     } catch {
       setError("failed");
     } finally {
