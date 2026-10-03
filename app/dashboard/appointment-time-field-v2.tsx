@@ -102,6 +102,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   const [minute, setMinute] = useState(0);
   const [custom, setCustom] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [dateEdited, setDateEdited] = useState(false);
   const [savedAdvance, setSavedAdvance] = useState(false);
 
   useEffect(() => {
@@ -187,6 +188,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     const clearSavedDraft = () => {
       setDateOpen(false);
       setTouched(false);
+      setDateEdited(false);
     };
     document.addEventListener("pointerdown", closeOutside);
     document.addEventListener("atlas:appointment-saved", clearSavedDraft);
@@ -311,6 +313,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     setDateOpen(false);
     setSavedAdvance(false);
     setTouched(false);
+    setDateEdited(true);
   };
 
   useEffect(() => {
@@ -323,7 +326,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
   }, [date, minDate]);
 
   return (
-    <div className="atlas-time-v2" ref={rootRef} data-atlas-time-draft={dateOpen || touched || date !== initial ? "true" : "false"}>
+    <div className="atlas-time-v2" ref={rootRef} data-atlas-time-draft={dateOpen || touched || dateEdited ? "true" : "false"}>
       <label>{text.date} <small>· {timeZoneLabel}</small></label>
       <div className="atlas-date-wrap">
         <button
