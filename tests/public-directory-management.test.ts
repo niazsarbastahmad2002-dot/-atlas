@@ -39,7 +39,7 @@ test("settings links managers to the separate public profile surface", () => {
 
 test("public contact phone is restricted before it can become a tel link", () => {
   const actions = source("app/dashboard/settings/public-profile/actions.ts");
-  const migration = source("supabase/migrations/20261003181000_public_directory_foundation.sql");
+  const migration = source("supabase/migrations/20261003190248_public_directory_foundation.sql");
 
   assert.match(actions, /publicPhonePattern/);
   assert.match(actions, /publicPhone && !publicPhonePattern\.test\(publicPhone\)/);
