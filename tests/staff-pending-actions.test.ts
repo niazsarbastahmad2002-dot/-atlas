@@ -48,3 +48,19 @@ test("revoking active or pending clinic invitations requires confirmation", asyn
   assert.match(page, /cancelPendingInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*pendingLabel=\{text\.working\}[\s\S]*confirmMessage=\{text\.removePendingConfirm\}/);
 });
 
+
+
+test("staff role and administrator transfer fields lock with their pending server action", async () => {
+  const [page, fields] = await Promise.all([
+    read("app/dashboard/staff/page.tsx"),
+    read("app/dashboard/staff/pending-form-fields.tsx"),
+  ]);
+
+  assert.match(page, /import \{ PendingFormFields \} from "\.\/pending-form-fields"/);
+  assert.ok((page.match(/<PendingFormFields>/g) ?? []).length >= 2);
+  assert.match(page, /updateStaffRole[\s\S]*<PendingFormFields>[\s\S]*name="role"[\s\S]*name="assigned_doctor_id"[\s\S]*<SubmitButton className="" pendingLabel=\{text\.working\}>\{text\.saveRole\}<\/SubmitButton>[\s\S]*<\/PendingFormFields>/);
+  assert.match(page, /transferClinicAdministrator[\s\S]*<PendingFormFields>[\s\S]*name="new_administrator_id"[\s\S]*name="confirm_transfer"[\s\S]*<\/PendingFormFields>/);
+  assert.match(fields, /useFormStatus\(\)/);
+  assert.match(fields, /disabled=\{pending\}/);
+  assert.match(fields, /aria-busy=\{pending\}/);
+});
