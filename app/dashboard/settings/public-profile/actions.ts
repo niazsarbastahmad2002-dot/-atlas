@@ -137,7 +137,10 @@ export async function saveDoctorDirectoryProfile(formData: FormData) {
     .eq("clinic_id", clinicId)
     .eq("id", doctorId)
     .maybeSingle();
-  if (doctorError || !doctor) failed(clinicId);
+  if (doctorError || !doctor) {
+    failed(clinicId);
+    return;
+  }
   if (isPublished && !doctor.active) failed(clinicId, "doctor_archived");
 
   const { error } = await supabase
