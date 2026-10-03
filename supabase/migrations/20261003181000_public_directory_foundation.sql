@@ -162,29 +162,21 @@ create or replace function private.touch_directory_profile()
 returns trigger
 language plpgsql
 set search_path = ''
-as $$
+as $
 begin
   new.updated_at := now();
 
   if tg_op = 'INSERT' then
-    if new.is_published then
-      new.published_at := coalesce(new.published_at, now());
-    else
-      new.published_at := null;
-    end if;
+    new.published_at := case when new.is_published then now() else null end;
   elsif new.is_published is distinct from old.is_published then
-    if new.is_published then
-      new.published_at := now();
-    else
-      new.published_at := null;
-    end if;
-  elsif not new.is_published then
-    new.published_at := null;
+    new.published_at := case when new.is_published then now() else null end;
+  else
+    new.published_at := old.published_at;
   end if;
 
   return new;
 end;
-$$;
+$;
 
 create trigger touch_clinic_directory_profile
 before insert or update on public.clinic_directory_profiles
