@@ -392,7 +392,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         }));
     });
   } catch {
-    return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
+    return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} clinicId={clinic.id} />;
   }
 
   const transferCandidates = memberRows.filter((member) => member.user_id !== clinic.owner_id && member.role !== "owner");
