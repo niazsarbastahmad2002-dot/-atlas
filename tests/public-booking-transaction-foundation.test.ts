@@ -5,7 +5,7 @@ import test from "node:test";
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("public booking finalization is service-role only", () => {
-  const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
+  const migration = source("supabase/migrations/20261003195530_public_booking_transaction_foundation.sql");
 
   assert.match(migration, /auth\.role\(\)\) <> 'service_role'/);
   assert.match(migration, /revoke all[\s\S]*from public, anon, authenticated/i);
@@ -14,7 +14,7 @@ test("public booking finalization is service-role only", () => {
 });
 
 test("public booking reuses the public slot contract and core appointment table", () => {
-  const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
+  const migration = source("supabase/migrations/20261003195530_public_booking_transaction_foundation.sql");
 
   assert.match(migration, /list_public_doctor_slots/);
   assert.match(migration, /booking\.enabled/);
@@ -28,7 +28,7 @@ test("public booking reuses the public slot contract and core appointment table"
 });
 
 test("public booking is idempotent and audit-attributed", () => {
-  const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
+  const migration = source("supabase/migrations/20261003195530_public_booking_transaction_foundation.sql");
 
   assert.match(migration, /idempotency_key = p_idempotency_key/);
   assert.match(migration, /on conflict \(clinic_id, idempotency_key\) do nothing/);
@@ -39,7 +39,7 @@ test("public booking is idempotent and audit-attributed", () => {
 });
 
 test("public booking validates patient inputs before database insertion", () => {
-  const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
+  const migration = source("supabase/migrations/20261003195530_public_booking_transaction_foundation.sql");
 
   assert.match(migration, /p_patient_phone is null/);
   assert.ok(migration.includes("p_patient_phone !~ '^\\+9647[0-9]{9}$'"));
@@ -49,7 +49,7 @@ test("public booking validates patient inputs before database insertion", () => 
 
 
 test("idempotent retries recover an existing booking before current publication checks", () => {
-  const migration = source("supabase/migrations/20261003194500_public_booking_transaction_foundation.sql");
+  const migration = source("supabase/migrations/20261003195530_public_booking_transaction_foundation.sql");
   const duplicateAt = migration.indexOf("if found then");
   const availabilityAt = migration.indexOf("coalesce(v_clinic_published, false)");
 
