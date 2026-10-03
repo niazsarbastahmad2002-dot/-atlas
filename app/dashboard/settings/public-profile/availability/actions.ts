@@ -121,35 +121,15 @@ export async function saveDoctorPublicBookingHours(formData: FormData) {
     });
   }
 
-  const { data: existingHours, error: hoursReadError } = await supabase
-    .from("doctor_public_booking_hours")
-    .select("weekday")
-    .eq("clinic_id", clinicId)
-    .eq("doctor_id", doctorId);
-  if (hoursReadError) fail(clinicId);
-
-  const existingWeekdays = new Set((existingHours ?? []).map((row) => row.weekday));
-  const insertRows = rows.filter((row) => !existingWeekdays.has(row.weekday));
-  if (insertRows.length) {
-    const { error: insertError } = await supabase
-      .from("doctor_public_booking_hours")
-      .insert(insertRows);
-    if (insertError) fail(clinicId);
-  }
-
-  for (const row of rows.filter((candidate) => existingWeekdays.has(candidate.weekday))) {
-    const { error: updateError } = await supabase
-      .from("doctor_public_booking_hours")
-      .update({
-        starts_at: row.starts_at,
-        ends_at: row.ends_at,
-        is_enabled: row.is_enabled,
-      })
-      .eq("clinic_id", clinicId)
-      .eq("doctor_id", doctorId)
-      .eq("weekday", row.weekday);
-    if (updateError) fail(clinicId);
-  }
+  const { data: weekSaved, error: weekError } = await supabase.rpc(
+    "save_doctor_public_booking_hours",
+    {
+      p_clinic_id: clinicId,
+      p_doctor_id: doctorId,
+      p_hours: rows,
+    },
+  );
+  if (weekError || weekSaved !== true) fail(clinicId);
   saved(clinicId);
 }
 
