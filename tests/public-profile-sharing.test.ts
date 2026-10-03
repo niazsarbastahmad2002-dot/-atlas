@@ -63,3 +63,15 @@ test("share controls are localized for Atlas public care languages", () => {
     assert.match(page, /مشاركة على WhatsApp/);
   }
 });
+
+
+test("clinic staff can share only explicit Atlas care paths from public profile settings", () => {
+  const share = source("app/care/share-profile-button.tsx");
+  const settings = source("app/dashboard/settings/public-profile/page.tsx");
+
+  assert.match(share, /path\?\.startsWith\("\/care\/"\)/);
+  assert.match(settings, /path=\{\`\/care\/\$\{clinicProfile\.slug\}\`\}/);
+  assert.match(settings, /path=\{\`\/care\/\$\{clinicProfile\.slug\}\/\$\{profile\.slug\}\`\}/);
+  assert.match(settings, /clinicProfile\?\.is_published/);
+  assert.match(settings, /profile\?\.is_published/);
+});
