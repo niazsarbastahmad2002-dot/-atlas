@@ -45,6 +45,8 @@ const patientCopy = {
     doctor: "Doctor",
     specialty: "Specialty",
     contact: "Reception contact",
+    location: "Clinic location",
+    directions: "Open directions",
     dateTime: "Date & time",
     calendar: "Add to calendar",
     am: "AM",
@@ -97,6 +99,8 @@ const patientCopy = {
     doctor: "پزیشک",
     specialty: "پسپۆڕی",
     contact: "ژمارەی ڕیسێپشن",
+    location: "شوێنی کلینیک",
+    directions: "ڕێگاکە بکەرەوە",
     dateTime: "ڕێکەوت و کات",
     calendar: "زیادی بکە بۆ ڕۆژژمێر",
     am: "پێش نیوەڕۆ",
@@ -149,6 +153,8 @@ const patientCopy = {
     doctor: "دکتۆر",
     specialty: "تایبەتمەندی",
     contact: "ژمارا ڕیسێپشنێ",
+    location: "جهێ کلینیکێ",
+    directions: "ڕێکێ بکەڤە",
     dateTime: "ڕێکەفت و کات",
     calendar: "زێدە بکە بۆ ڕۆژژمێر",
     am: "بەری نیڤرۆ",
@@ -201,6 +207,8 @@ const patientCopy = {
     doctor: "الدكتور",
     specialty: "الاختصاص",
     contact: "رقم السكرتير",
+    location: "موقع العيادة",
+    directions: "فتح الاتجاهات",
     dateTime: "التاريخ والوقت",
     calendar: "أضف إلى التقويم",
     am: "صباحاً",
@@ -328,11 +336,20 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   );
   if (limitError || allowed !== true) return <Unavailable locale={fallbackLocale} />;
 
-  const { data, error } = await admin.rpc("get_patient_appointment", {
-    p_token_hash: tokenHash,
-  });
+  const [
+    { data, error },
+    { data: locationData, error: locationError },
+  ] = await Promise.all([
+    admin.rpc("get_patient_appointment", {
+      p_token_hash: tokenHash,
+    }),
+    admin.rpc("patient_get_clinic_location", {
+      p_token_hash: tokenHash,
+    }),
+  ]);
   const appointment = Array.isArray(data) ? data[0] as PatientAppointment | undefined : undefined;
   if (error || !appointment) return <Unavailable locale={fallbackLocale} />;
+  const clinicLocation = !locationError && Array.isArray(locationData) ? locationData[0] : undefined;
 
   const locale = isPatientLocale(query.lang)
     ? query.lang
@@ -363,6 +380,15 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const queuePosition = appointment.queue_position ? localizeDigits(appointment.queue_position, locale) : null;
   const aheadCount = localizeDigits(ahead, locale);
   const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
+  const clinicLocationText = clinicLocation
+    ? [clinicLocation.address_text, clinicLocation.area, clinicLocation.city].filter(Boolean).join(" · ")
+    : "";
+  const clinicDestination = clinicLocation && clinicLocation.latitude !== null && clinicLocation.longitude !== null
+    ? `${clinicLocation.latitude},${clinicLocation.longitude}`
+    : clinicLocationText;
+  const clinicDirectionsUrl = clinicDestination
+    ? `https://www.google.com/maps/dir/?${new URLSearchParams({ api: "1", destination: clinicDestination }).toString()}`
+    : null;
   let wantsEarlierSlot = false;
   let clinicDelayMinutes: number | null = null;
   let rescheduleSlots: Array<{ slot_at: string; appointment_interval_minutes: number }> = [];
@@ -454,6 +480,20 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <div className="patient-detail-block patient-contact-block">
               <span>{text.contact}</span>
               <a href={`tel:${appointment.receptionist_phone}`} dir="ltr">{receptionPhone}</a>
+            </div>
+          ) : null}
+          {clinicDirectionsUrl ? (
+            <div className="patient-detail-block patient-location-block">
+              <span>{text.location}</span>
+              <strong className="patient-detail-secondary">{clinicLocationText || appointment.clinic_name}</strong>
+              <a
+                className="button button-ghost patient-directions-link"
+                href={clinicDirectionsUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {text.directions}
+              </a>
             </div>
           ) : null}
         </section>
@@ -608,6 +648,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-detail-block > strong { color: var(--ink); font-size: clamp(24px,6vw,32px); line-height: 1.25; }
           .patient-detail-block > .patient-detail-secondary { font-size: clamp(17px,4vw,21px); font-weight: 790; }
           .patient-contact-block a { width: fit-content; color: var(--accent); font-size: clamp(19px,4.5vw,24px); font-weight: 850; text-decoration: none; }
+          .patient-directions-link { width: 100%; min-height: 48px; margin-top: 4px; align-items: center; justify-content: center; color: var(--accent); text-decoration: none; }
           .patient-action-error { margin: 0 0 18px; }
           .patient-timing-card { margin: 0 0 22px; border: 1px solid #cfe7dd; border-radius: 17px; padding: 17px 19px; background: #f5fcf9; }
           .patient-timing-card > span { display: block; color: var(--muted); font-size: 11px; font-weight: 820; letter-spacing: .06em; text-transform: uppercase; }
