@@ -16,7 +16,10 @@ test("today's receptionist schedule advances after Baghdad midnight", () => {
   const busy = readFileSync(new URL("../app/dashboard/schedule-form-busy.ts", import.meta.url), "utf8");
   assert.match(busy, /form\.appointment-edit-form/);
   assert.match(source, /window\.setInterval\(refreshForNewClinicDay, 30_000\)/);
-  assert.match(source, /visibilitychange/);
+  assert.match(source, /document\.visibilityState !== "visible"/);
+  assert.match(source, /window\.clearInterval\(timer\)/);
+  assert.match(source, /document\.addEventListener\("visibilitychange", onVisibilityChange\)/);
+  assert.match(source, /document\.removeEventListener\("visibilitychange", onVisibilityChange\)/);
   assert.match(source, /url\.searchParams\.set\("day", liveDay\)/);
   assert.match(source, /url\.searchParams\.delete\("notice"\)/);
   assert.match(source, /window\.location\.replace/);
