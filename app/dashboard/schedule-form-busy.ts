@@ -1,7 +1,9 @@
 export function scheduleFormIsBusy() {
   if (document.querySelector("form.appointment-edit-form")) return true;
+  if (document.querySelector('.appointment-action-bar[aria-busy="true"], .live-clinic-flow[aria-busy="true"], .patient-link-control form[aria-busy="true"]')) return true;
   const form = document.querySelector<HTMLFormElement>("form.appointment-form");
   if (!form) return false;
+  if (form.dataset.fastSaving === "true") return true;
   const name = form.querySelector<HTMLInputElement>('input[name="patient_name"]')?.value.trim();
   const phone = form.querySelector<HTMLInputElement>('input[name="patient_phone"]')?.value.trim();
   const relationship = form.querySelector<HTMLSelectElement>('select[name="contact_relationship"]')?.value;
