@@ -376,10 +376,30 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       if (row) updateSummary(row);
     };
 
+    const mutationNeedsPrepare = (record: MutationRecord) => {
+      const target = record.target instanceof Element ? record.target : record.target.parentElement;
+      if (target?.closest(".atlas-phone-appointment-summary, .atlas-phone-appointment-search, .atlas-phone-search-meta, .atlas-phone-search-empty")) return false;
+      if (record.type === "childList") return true;
+      if (record.type === "characterData") return Boolean(target?.closest(".appointment-row"));
+      if (record.type === "attributes") {
+        if (record.attributeName === "data-atlas-compact-time") return target?.matches(".appointment-row") ?? false;
+        if (record.attributeName === "class") return target?.matches(".appointment-status-select") ?? false;
+      }
+      return false;
+    };
+
     prepare();
     document.addEventListener("change", onChange);
-    const observer = new MutationObserver(schedulePrepare);
-    observer.observe(document.querySelector(".app-content") ?? document.body, { childList: true, subtree: true });
+    const observer = new MutationObserver((records) => {
+      if (records.some(mutationNeedsPrepare)) schedulePrepare();
+    });
+    observer.observe(document.querySelector(".app-content") ?? document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["class", "data-atlas-compact-time"],
+    });
     return () => {
       observer.disconnect();
       if (prepareFrame) window.cancelAnimationFrame(prepareFrame);
