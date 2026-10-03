@@ -175,7 +175,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
                   <strong>{doctor.doctor_name}</strong>
                   <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
                 </div>
-                <p><b>{copy.clinic}:</b> {doctor.clinic_name}</p>
+                <p><b>{copy.clinic}:</b> <Link href={`/care/${doctor.clinic_slug}`}>{doctor.clinic_name}</Link></p>
                 {(doctor.city || doctor.area) ? <p>{[doctor.area, doctor.city].filter(Boolean).join(" · ")}</p> : null}
                 <Link className="button button-ghost button-small" href={`/care/${doctor.clinic_slug}/${doctor.doctor_slug}`}>
                   {copy.openProfile}
