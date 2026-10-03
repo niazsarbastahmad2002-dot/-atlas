@@ -270,7 +270,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
               </select>
             </label>
           ) : (
-            <div className="atlas-workflow-doctor"><span>{t.doctor}</span><strong>{workflow.doctorName}</strong></div>
+            <div className="atlas-workflow-doctor"><span>{t.doctor}</span><strong data-atlas-user-content="true">{workflow.doctorName}</strong></div>
           )}
 
           <label>
