@@ -133,6 +133,7 @@ export type Database = {
       get_patient_appointment: { Args: { p_token_hash: string }; Returns: { appointment_at: string; appointment_interval_minutes: number; appointment_status: string; appointments_ahead: number; clinic_name: string; doctor_name: string; doctor_specialty: string; queue_position: number; receptionist_phone: string; reminder_language: string; token_expires_at: string }[] }
       patient_list_reschedule_slots: { Args: { p_days?: number; p_token_hash: string }; Returns: { appointment_interval_minutes: number; slot_at: string }[] }
       patient_reschedule_appointment: { Args: { p_slot_at: string; p_token_hash: string }; Returns: string }
+      patient_get_clinic_location: { Args: { p_token_hash: string }; Returns: { address_text: string | null; area: string | null; city: string | null; clinic_slug: string; latitude: number | null; longitude: number | null }[] }
       patient_get_day_flow: { Args: { p_token_hash: string }; Returns: { delay_minutes: number; timing_updated_at: string }[] }
       patient_update_appointment: { Args: { p_status: string; p_token_hash: string }; Returns: string }
       record_whatsapp_delivery_status: { Args: { p_error_code?: string; p_event_key: string; p_occurred_at: string; p_provider_message_id: string; p_status: string }; Returns: boolean }
