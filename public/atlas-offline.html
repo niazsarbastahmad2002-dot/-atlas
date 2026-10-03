@@ -159,7 +159,7 @@
 
       function applyCopy(locale) {
         const t = copy[locale];
-        document.documentElement.lang = locale === "ku" ? "ckb" : locale;
+        document.documentElement.lang = locale === "ku" ? "ckb" : locale === "bd" ? "ku" : locale;
         document.documentElement.dir = locale === "en" ? "ltr" : "rtl";
         setText("offline-label", t.offline);
         setText("eyebrow", t.eyebrow);
