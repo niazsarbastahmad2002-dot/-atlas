@@ -10,6 +10,7 @@ test("dashboard live refresh preserves active receptionist appointment drafts", 
   const timeField = read("app/dashboard/appointment-time-field-v2.tsx");
 
   assert.match(refresh, /scheduleFormIsBusy/);
+  assert.match(busy, /form\.appointment-edit-form/);
   assert.match(busy, /select\[name="contact_relationship"\]/);
   assert.match(busy, /input\[name="reminder_consent"\]/);
   assert.match(busy, /data-atlas-time-draft="true"/);
