@@ -60,11 +60,29 @@ export type Database = {
         Update: { address_text?: string | null; area?: string | null; city?: string | null; clinic_id?: string; country_code?: string; created_at?: string; description?: string | null; display_name?: string; is_published?: boolean; latitude?: number | null; longitude?: number | null; public_phone?: string | null; published_at?: string | null; slug?: string; updated_at?: string }
         Relationships: [{ foreignKeyName: "clinic_directory_profiles_clinic_id_fkey"; columns: ["clinic_id"]; isOneToOne: true; referencedRelation: "clinics"; referencedColumns: ["id"] }]
       }
+      clinic_public_booking_settings: {
+        Row: { booking_horizon_days: number; clinic_id: string; created_at: string; enabled: boolean; min_lead_minutes: number; updated_at: string }
+        Insert: { booking_horizon_days?: number; clinic_id: string; created_at?: string; enabled?: boolean; min_lead_minutes?: number; updated_at?: string }
+        Update: { booking_horizon_days?: number; clinic_id?: string; created_at?: string; enabled?: boolean; min_lead_minutes?: number; updated_at?: string }
+        Relationships: [{ foreignKeyName: "clinic_public_booking_settings_clinic_id_fkey"; columns: ["clinic_id"]; isOneToOne: true; referencedRelation: "clinics"; referencedColumns: ["id"] }]
+      }
       clinics: {
         Row: { appointment_interval_minutes: number; created_at: string; id: string; name: string; owner_id: string }
         Insert: { appointment_interval_minutes?: number; created_at?: string; id?: string; name: string; owner_id: string }
         Update: { appointment_interval_minutes?: number; created_at?: string; id?: string; name?: string; owner_id?: string }
         Relationships: []
+      }
+      doctor_public_booking_closed_dates: {
+        Row: { booking_date: string; clinic_id: string; created_at: string; doctor_id: string; is_closed: boolean; updated_at: string }
+        Insert: { booking_date: string; clinic_id: string; created_at?: string; doctor_id: string; is_closed?: boolean; updated_at?: string }
+        Update: { booking_date?: string; clinic_id?: string; created_at?: string; doctor_id?: string; is_closed?: boolean; updated_at?: string }
+        Relationships: [{ foreignKeyName: "doctor_public_booking_closed_doctor_fkey"; columns: ["clinic_id", "doctor_id"]; isOneToOne: false; referencedRelation: "doctors"; referencedColumns: ["clinic_id", "id"] }]
+      }
+      doctor_public_booking_hours: {
+        Row: { clinic_id: string; created_at: string; doctor_id: string; ends_at: string; is_enabled: boolean; starts_at: string; updated_at: string; weekday: number }
+        Insert: { clinic_id: string; created_at?: string; doctor_id: string; ends_at: string; is_enabled?: boolean; starts_at: string; updated_at?: string; weekday: number }
+        Update: { clinic_id?: string; created_at?: string; doctor_id?: string; ends_at?: string; is_enabled?: boolean; starts_at?: string; updated_at?: string; weekday?: number }
+        Relationships: [{ foreignKeyName: "doctor_public_booking_hours_doctor_fkey"; columns: ["clinic_id", "doctor_id"]; isOneToOne: false; referencedRelation: "doctors"; referencedColumns: ["clinic_id", "id"] }]
       }
       doctor_directory_profiles: {
         Row: { bio: string | null; clinic_id: string; created_at: string; display_name: string; doctor_id: string; is_published: boolean; published_at: string | null; slug: string; specialty: string; subspecialty: string | null; updated_at: string }
@@ -107,6 +125,7 @@ export type Database = {
       get_public_clinic_profile: { Args: { p_slug: string }; Returns: { address_text: string | null; area: string | null; city: string | null; country_code: string; description: string | null; display_name: string; latitude: number | null; longitude: number | null; public_phone: string | null; slug: string }[] }
       get_public_doctor_profile: { Args: { p_clinic_slug: string; p_doctor_slug: string }; Returns: { address_text: string | null; area: string | null; bio: string | null; city: string | null; clinic_name: string; clinic_slug: string; country_code: string; doctor_name: string; doctor_slug: string; latitude: number | null; longitude: number | null; public_phone: string | null; specialty: string; subspecialty: string | null }[] }
       list_public_doctors: { Args: { p_clinic_slug: string }; Returns: { bio: string | null; display_name: string; slug: string; specialty: string; subspecialty: string | null }[] }
+      list_public_doctor_slots: { Args: { p_clinic_slug: string; p_days?: number; p_doctor_slug: string; p_from_date?: string | null }; Returns: { appointment_interval_minutes: number; slot_at: string }[] }
       search_public_doctors: { Args: { p_city?: string | null; p_limit?: number; p_query?: string | null; p_specialty?: string | null }; Returns: { area: string | null; city: string | null; clinic_name: string; clinic_slug: string; country_code: string; doctor_name: string; doctor_slug: string; specialty: string; subspecialty: string | null }[] }
       get_patient_appointment: { Args: { p_token_hash: string }; Returns: { appointment_at: string; appointment_interval_minutes: number; appointment_status: string; appointments_ahead: number; clinic_name: string; doctor_name: string; doctor_specialty: string; queue_position: number; receptionist_phone: string; reminder_language: string; token_expires_at: string }[] }
       patient_get_day_flow: { Args: { p_token_hash: string }; Returns: { delay_minutes: number; timing_updated_at: string }[] }
