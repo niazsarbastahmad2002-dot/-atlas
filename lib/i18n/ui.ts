@@ -1,6 +1,7 @@
 export type UiLocale = "en" | "ku" | "bd" | "ar";
 
 export const defaultUiLocale: UiLocale = "en";
+export const uiLocaleCookie = "atlas_ui_locale";
 
 export const uiLocaleMeta: Record<UiLocale, { language: string; direction: "ltr" | "rtl"; dateLocale: string; label: string; nativeLabel: string }> = {
   en: { language: "en", direction: "ltr", dateLocale: "en-IQ", label: "English", nativeLabel: "English" },
