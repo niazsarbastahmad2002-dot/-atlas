@@ -2,14 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const page = readFileSync(
-  new URL("../app/care/[clinicSlug]/[doctorSlug]/times/page.tsx", import.meta.url),
-  "utf8",
-);
+const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("full public availability uses the same truthful public slot RPC", () => {
+const page = source("app/care/[clinicSlug]/[doctorSlug]/times/page.tsx");
+
+test("full public availability uses the truthful bounded public slot window", () => {
   assert.match(page, /get_public_doctor_profile/);
-  assert.match(page, /list_public_doctor_slots/);
+  assert.match(page, /list_public_doctor_slots_window/);
   assert.match(page, /p_days: 14/);
   assert.doesNotMatch(page, /\.from\("appointments"\)/);
   assert.doesNotMatch(page, /service_role|createAdminClient/);
