@@ -162,7 +162,7 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
 
   const location = [clinic.address_text, clinic.area, clinic.city].filter(Boolean).join(" · ");
   const directionsDestination = clinic.address_text
-    ? [clinic.address_text, clinic.area, clinic.city].filter(Boolean).join(", ")
+    ? [clinic.address_text, clinic.area, clinic.city, clinic.country_code].filter(Boolean).join(", ")
     : "";
   const directionsUrl = directionsDestination
     ? `https://www.google.com/maps/dir/?${new URLSearchParams({ api: "1", destination: directionsDestination }).toString()}`
