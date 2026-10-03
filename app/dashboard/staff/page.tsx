@@ -348,7 +348,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
   ]);
-  if (membersError || doctorsError) return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
+  if (membersError || doctorsError) return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} clinicId={clinic.id} />;
   const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
 
   let memberRows: Array<{ user_id: string; role: string; assigned_doctor_id: string | null; identity: string }> = [];
@@ -392,7 +392,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         }));
     });
   } catch {
-    return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} />;
+    return <DirectoryUnavailable label={text.unavailable} back={text.backSettings} clinicId={clinic.id} />;
   }
 
   const transferCandidates = memberRows.filter((member) => member.user_id !== clinic.owner_id && member.role !== "owner");
@@ -575,13 +575,13 @@ function formatStaffInviteExpiry(value: string, locale: UiLocale) {
   return `${datePart} · ${timePart}`;
 }
 
-function DirectoryUnavailable({ label, back }: { label: string; back: string }) {
+function DirectoryUnavailable({ label, back, clinicId }: { label: string; back: string; clinicId: string }) {
   return (
     <main className="center-page">
       <section className="auth-card">
         <div className="brand">Atlas</div>
         <h1>{label}</h1>
-        <Link className="button" href="/dashboard/settings">{back}</Link>
+        <Link className="button" href={`/dashboard/settings?clinic=${clinicId}`}>{back}</Link>
       </section>
     </main>
   );
