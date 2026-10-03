@@ -12,6 +12,7 @@ import { SettingsDraftReset } from "../settings-draft-reset";
 import { PasskeyManager } from "./passkey-manager";
 import { PhoneNumberManager } from "./phone-number-manager";
 import { InterfaceLanguageControl } from "./interface-language-control";
+import { PendingTextInput } from "./pending-text-input";
 import {
   createDoctor,
   moveDoctor,
@@ -369,7 +370,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <input type="hidden" name="clinic_id" value={clinic.id} />
               <label htmlFor="clinic_name">{t.clinicName}</label>
               <div className="settings-control-row">
-                <input id="clinic_name" name="clinic_name" defaultValue={clinic.name} minLength={2} maxLength={120} required />
+                <PendingTextInput id="clinic_name" name="clinic_name" defaultValue={clinic.name} minLength={2} maxLength={120} required />
                 <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
               </div>
             </form>
@@ -400,7 +401,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             <form action={createDoctor} className="settings-form settings-form-inline">
               <input type="hidden" name="clinic_id" value={clinic.id} />
               <label className="sr-only" htmlFor="new_doctor_name">{t.doctorName}</label>
-              <input id="new_doctor_name" name="doctor_name" placeholder={t.doctorName} minLength={2} maxLength={120} required />
+              <PendingTextInput id="new_doctor_name" name="doctor_name" placeholder={t.doctorName} minLength={2} maxLength={120} required />
               <SubmitButton pendingLabel={t.saving}>{t.addDoctor}</SubmitButton>
             </form>
 
@@ -411,7 +412,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     <input type="hidden" name="clinic_id" value={clinic.id} />
                     <input type="hidden" name="doctor_id" value={doctor.id} />
                     <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
-                    <input id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
+                    <PendingTextInput id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
                     <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
                   </form>
                   <div className="doctor-row-meta">
