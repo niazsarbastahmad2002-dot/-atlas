@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const countryPattern = /^[A-Z]{2}$/;
+const publicPhonePattern = /^[+]?[0-9() .-]{6,39}$/;
 
 function profileUrl(clinicId: string, key?: "error" | "notice", value?: string) {
   const params = new URLSearchParams();
@@ -77,6 +78,7 @@ export async function saveClinicDirectoryProfile(formData: FormData) {
     || !slug
     || displayName.length < 2
     || !countryPattern.test(countryCode)
+    || (publicPhone && !publicPhonePattern.test(publicPhone))
     || (isPublished && !city)
   ) failed(clinicId, "invalid");
 
