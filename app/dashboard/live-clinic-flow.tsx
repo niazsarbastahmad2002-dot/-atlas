@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { localizeDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 type Signal = {
@@ -29,7 +30,7 @@ const copy = {
     help: "Share only what reception actually knows. Patients see the same estimate.",
     early: "15 early",
     onTime: "On time",
-    late: (minutes: number) => `${minutes} late`,
+    late: (minutes: string) => `${minutes} late`,
     patientUpdates: "Patient updates",
     onWay: "on the way",
     runningLate: "running late",
@@ -43,7 +44,7 @@ const copy = {
     help: "تەنها ئەو کاتە نیشان بدە کە ڕیسێپشن بەڕاستی دەیزانێت. نەخۆش هەمان خەمڵاندن دەبینێت.",
     early: "١٥ خولەک زووتر دێت",
     onTime: "لە کاتی خۆی دێت",
-    late: (minutes: number) => `${minutes} خولەک دوا دەکەوێت`,
+    late: (minutes: string) => `${minutes} خولەک دوا دەکەوێت`,
     patientUpdates: "نوێکاری نەخۆش",
     onWay: "لە ڕێگادایە",
     runningLate: "دواکەوتووە",
@@ -57,7 +58,7 @@ const copy = {
     help: "تەنێ ئەو دەمێ نیشان بدە کو ڕیسێپشن ب ڕاستی دزانیت. نەخۆش هەمان خەملاندن دبینیت.",
     early: "١٥ خولەک زووتر",
     onTime: "د دەمێ خۆ دا",
-    late: (minutes: number) => `${minutes} خولەک دوا`,
+    late: (minutes: string) => `${minutes} خولەک دوا`,
     patientUpdates: "نووکرنێن نەخۆشی",
     onWay: "د ڕێکێ دایە",
     runningLate: "دواکەفتییە",
@@ -69,9 +70,9 @@ const copy = {
   ar: {
     timing: "وقت العيادة",
     help: "خلي التقدير على الشي اللي الاستقبال يعرفه فعلاً. المريض يشوف نفس التقدير.",
-    early: "15 د أبكر",
+    early: "١٥ د أبكر",
     onTime: "بالوقت",
-    late: (minutes: number) => `${minutes} د تأخير`,
+    late: (minutes: string) => `${minutes} د تأخير`,
     patientUpdates: "تحديثات المرضى",
     onWay: "بالطريق",
     runningLate: "راح يتأخر",
@@ -86,7 +87,7 @@ function delayLabel(locale: UiLocale, value: number) {
   const t = copy[locale];
   if (value < 0) return t.early;
   if (value === 0) return t.onTime;
-  return t.late(value);
+  return t.late(localizeDigits(value, locale));
 }
 
 export function LiveClinicFlow({
