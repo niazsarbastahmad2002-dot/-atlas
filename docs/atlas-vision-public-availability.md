@@ -35,3 +35,8 @@ Atlas production currently protects exact doctor/time double-booking, but it has
 - ranking or sponsored placement.
 
 The next write step should create an appointment transactionally from one of these slots and let the database remain the final conflict authority.
+
+
+## Save consistency
+
+A doctor's seven-day public-booking schedule is saved in one database transaction. Atlas does not report a failed weekly save after publishing only part of the submitted week.
