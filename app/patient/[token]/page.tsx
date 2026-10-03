@@ -41,6 +41,7 @@ const patientCopy = {
     dir: "ltr" as const,
     dateLocale: "en-IQ",
     eyebrow: "Your appointment",
+    language: "Language",
     doctor: "Doctor",
     specialty: "Specialty",
     contact: "Reception contact",
@@ -86,6 +87,7 @@ const patientCopy = {
     dir: "rtl" as const,
     dateLocale: "ckb-IQ",
     eyebrow: "کاتەکەت",
+    language: "زمان",
     doctor: "پزیشک",
     specialty: "پسپۆڕی",
     contact: "ژمارەی ڕیسێپشن",
@@ -131,6 +133,7 @@ const patientCopy = {
     dir: "rtl" as const,
     dateLocale: "ckb-IQ",
     eyebrow: "وادەیا تە",
+    language: "زمان",
     doctor: "دکتۆر",
     specialty: "تایبەتمەندی",
     contact: "ژمارا ڕیسێپشنێ",
@@ -176,6 +179,7 @@ const patientCopy = {
     dir: "rtl" as const,
     dateLocale: "ar-IQ",
     eyebrow: "موعدك",
+    language: "اللغة",
     doctor: "الدكتور",
     specialty: "الاختصاص",
     contact: "رقم السكرتير",
@@ -218,8 +222,25 @@ const patientCopy = {
   },
 } as const;
 
+function isPatientLocale(value: string | undefined): value is PatientLocale {
+  return value === "ku" || value === "bd" || value === "ar" || value === "en";
+}
+
 function patientLocale(value: string): PatientLocale {
-  return value === "ku" || value === "bd" || value === "ar" ? value : "en";
+  return isPatientLocale(value) ? value : "en";
+}
+
+const patientLanguageOptions = [
+  { locale: "ku", label: "سۆرانی", lang: "ckb", dir: "rtl" as const },
+  { locale: "bd", label: "بادینی", lang: "ku", dir: "rtl" as const },
+  { locale: "ar", label: "العربية", lang: "ar", dir: "rtl" as const },
+  { locale: "en", label: "English", lang: "en", dir: "ltr" as const },
+] satisfies ReadonlyArray<{ locale: PatientLocale; label: string; lang: string; dir: "ltr" | "rtl" }>;
+
+function patientLanguageHref(token: string, locale: PatientLocale, reminderView: boolean) {
+  const params = new URLSearchParams({ lang: locale });
+  if (reminderView) params.set("view", "reminder");
+  return `/patient/${token}?${params.toString()}`;
 }
 
 function pad(value: number) {
@@ -276,7 +297,9 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const appointment = Array.isArray(data) ? data[0] as PatientAppointment | undefined : undefined;
   if (error || !appointment) return <Unavailable locale={fallbackLocale} />;
 
-  const locale = patientLocale(appointment.reminder_language);
+  const locale = isPatientLocale(query.lang)
+    ? query.lang
+    : patientLocale(appointment.reminder_language);
   const text = patientCopy[locale];
   const appointmentDate = new Date(appointment.appointment_at);
   const dateText = new Intl.DateTimeFormat(text.dateLocale, {
@@ -332,6 +355,19 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           <span className="app-brand-mark" aria-hidden="true">A</span>
           <span className="app-brand-word">Atlas</span>
         </a>
+        <nav className="patient-language-switcher" aria-label={text.language}>
+          {patientLanguageOptions.map((option) => (
+            <a
+              key={option.locale}
+              href={patientLanguageHref(token, option.locale, reminderView)}
+              lang={option.lang}
+              dir={option.dir}
+              aria-current={locale === option.locale ? "page" : undefined}
+            >
+              {option.label}
+            </a>
+          ))}
+        </nav>
         <div className="eyebrow patient-eyebrow">{text.eyebrow}</div>
         <h1 className="patient-clinic-name">{appointment.clinic_name}</h1>
 
@@ -474,6 +510,9 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
 
         <style>{`
           .patient-card { width: min(100%, 610px); padding: clamp(24px,5vw,38px); }
+          .patient-language-switcher { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin-top: 20px; }
+          .patient-language-switcher a { min-width: 0; border: 1px solid var(--line); border-radius: 999px; padding: 8px 7px; background: #fff; color: var(--muted); font-size: 11px; font-weight: 780; text-align: center; text-decoration: none; }
+          .patient-language-switcher a[aria-current="page"] { border-color: #b9dfd1; background: #effaf6; color: var(--accent); }
           .patient-eyebrow { margin-top: 20px; }
           .patient-clinic-name { margin: 8px 0 24px; font-size: clamp(30px,7vw,42px); line-height: 1.08; }
           .patient-time-card { margin: 0 0 22px; border: 1px solid #cfe7dd; border-radius: 20px; padding: clamp(20px,4vw,28px); background: linear-gradient(145deg,#f5fcf9,#edf8f3); }
