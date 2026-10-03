@@ -380,14 +380,11 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const queuePosition = appointment.queue_position ? localizeDigits(appointment.queue_position, locale) : null;
   const aheadCount = localizeDigits(ahead, locale);
   const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
-  const clinicLocationText = clinicLocation
+  const clinicLocationText = clinicLocation?.address_text
     ? [clinicLocation.address_text, clinicLocation.area, clinicLocation.city].filter(Boolean).join(" · ")
     : "";
-  const clinicDestination = clinicLocation && clinicLocation.latitude !== null && clinicLocation.longitude !== null
-    ? `${clinicLocation.latitude},${clinicLocation.longitude}`
-    : clinicLocationText;
-  const clinicDirectionsUrl = clinicDestination
-    ? `https://www.google.com/maps/dir/?${new URLSearchParams({ api: "1", destination: clinicDestination }).toString()}`
+  const clinicDirectionsUrl = clinicLocationText
+    ? `https://www.google.com/maps/dir/?${new URLSearchParams({ api: "1", destination: clinicLocationText }).toString()}`
     : null;
   let wantsEarlierSlot = false;
   let clinicDelayMinutes: number | null = null;
