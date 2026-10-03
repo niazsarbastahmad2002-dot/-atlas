@@ -8,11 +8,13 @@ type ShareProfileButtonProps = {
   shareLabel: string;
   copiedLabel: string;
   whatsappLabel: string;
+  path?: string;
 };
 
-function cleanCurrentUrl() {
+function cleanCurrentUrl(path?: string) {
   if (typeof window === "undefined") return "";
-  return `${window.location.origin}${window.location.pathname}`;
+  const pathname = path?.startsWith("/care/") ? path : window.location.pathname;
+  return `${window.location.origin}${pathname}`;
 }
 
 function fallbackCopy(value: string) {
@@ -34,11 +36,12 @@ export function ShareProfileButton({
   shareLabel,
   copiedLabel,
   whatsappLabel,
+  path,
 }: ShareProfileButtonProps) {
   const [copied, setCopied] = useState(false);
 
   async function share() {
-    const url = cleanCurrentUrl();
+    const url = cleanCurrentUrl(path);
     if (!url) return;
 
     if (typeof navigator.share === "function") {
@@ -64,7 +67,7 @@ export function ShareProfileButton({
   }
 
   function shareOnWhatsApp() {
-    const url = cleanCurrentUrl();
+    const url = cleanCurrentUrl(path);
     if (!url) return;
     const message = [text, url].filter(Boolean).join("\n");
     window.open(
