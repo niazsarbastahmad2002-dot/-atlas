@@ -119,7 +119,7 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
         {profile.bio ? <p className="hero-copy atlas-care-bio">{profile.bio}</p> : null}
 
         <dl className="atlas-care-profile-details">
-          <div><dt>{copy.clinic}</dt><dd>{profile.clinic_name}</dd></div>
+          <div><dt>{copy.clinic}</dt><dd><Link href={`/care/${profile.clinic_slug}`}>{profile.clinic_name}</Link></dd></div>
           <div><dt>{copy.specialty}</dt><dd>{profile.specialty}</dd></div>
           {profile.subspecialty ? <div><dt>{copy.subspecialty}</dt><dd>{profile.subspecialty}</dd></div> : null}
           {location ? <div><dt>{copy.location}</dt><dd>{location}</dd></div> : null}
