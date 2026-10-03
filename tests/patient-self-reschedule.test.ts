@@ -56,3 +56,14 @@ test("private patient UI lists and submits reschedule slots through server actio
   assert.match(actions, /revalidatePath\(\`\/patient\/\$\{token\}\`\)/);
   assert.doesNotMatch(actions, /\.from\("appointments"\)/);
 });
+
+
+test("patient reschedule requires explicit confirmation before a slot change", () => {
+  const page = source("app/patient/[token]/page.tsx");
+  const button = source("app/patient/[token]/patient-submit-button.tsx");
+
+  assert.match(page, /confirmMessage=\{text\.rescheduleConfirm\.replace/);
+  assert.match(button, /confirmMessage\?: string/);
+  assert.match(button, /window\.confirm\(confirmMessage\)/);
+  assert.match(button, /event\.preventDefault\(\)/);
+});
