@@ -11,6 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { cancelPendingInvitation, removeStaffMember, revokeManualStaffInvitation, transferClinicAdministrator, updateStaffRole } from "./actions";
 import { InviteLinkForm } from "./invite-link-form";
+import { PendingFormFields } from "./pending-form-fields";
 
 export const dynamic = "force-dynamic";
 
@@ -503,17 +504,19 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                   ) : (
                     <div className="staff-role-actions">
                       <form action={updateStaffRole.bind(null, clinic.id, member.user_id)}>
-                        <label className="sr-only" htmlFor={`role-${member.user_id}`}>{text.role}</label>
-                        <select id={`role-${member.user_id}`} name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.identity}`}>
-                          <option value="receptionist">{text.receptionist}</option>
-                          <option value="manager">{text.manager}</option>
-                        </select>
-                        <label className="sr-only" htmlFor={`doctor-${member.user_id}`}>{text.doctor}</label>
-                        <select id={`doctor-${member.user_id}`} name="assigned_doctor_id" defaultValue={member.assigned_doctor_id ?? ""} aria-label={`${text.doctor}: ${member.identity}`}>
-                          <option value="">{text.chooseDoctor}</option>
-                          {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
-                        </select>
-                        <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
+                        <PendingFormFields>
+                          <label className="sr-only" htmlFor={`role-${member.user_id}`}>{text.role}</label>
+                          <select id={`role-${member.user_id}`} name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.identity}`}>
+                            <option value="receptionist">{text.receptionist}</option>
+                            <option value="manager">{text.manager}</option>
+                          </select>
+                          <label className="sr-only" htmlFor={`doctor-${member.user_id}`}>{text.doctor}</label>
+                          <select id={`doctor-${member.user_id}`} name="assigned_doctor_id" defaultValue={member.assigned_doctor_id ?? ""} aria-label={`${text.doctor}: ${member.identity}`}>
+                            <option value="">{text.chooseDoctor}</option>
+                            {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
+                          </select>
+                          <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
+                        </PendingFormFields>
                       </form>
                       <form action={removeStaffMember.bind(null, clinic.id, member.user_id)}>
                         <ConfirmSubmitButton
@@ -537,16 +540,18 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             <p>{text.transferHelp}</p>
             {transferCandidates.length ? (
               <form className="administrator-transfer-form" action={transferClinicAdministrator.bind(null, clinic.id)}>
-                <select name="new_administrator_id" required aria-label={text.transfer} defaultValue="">
-                  <option value="" disabled>{text.transfer}</option>
-                  {transferCandidates.map((member) => (
-                    <option key={member.user_id} value={member.user_id}>{member.identity}</option>
-                  ))}
-                </select>
-                <label className="checkbox-field administrator-transfer-confirm">
-                  <input type="checkbox" name="confirm_transfer" value="yes" required />
-                  <span>{text.transferConfirm}</span>
-                </label>
+                <PendingFormFields>
+                  <select name="new_administrator_id" required aria-label={text.transfer} defaultValue="">
+                    <option value="" disabled>{text.transfer}</option>
+                    {transferCandidates.map((member) => (
+                      <option key={member.user_id} value={member.user_id}>{member.identity}</option>
+                    ))}
+                  </select>
+                  <label className="checkbox-field administrator-transfer-confirm">
+                    <input type="checkbox" name="confirm_transfer" value="yes" required />
+                    <span>{text.transferConfirm}</span>
+                  </label>
+                </PendingFormFields>
                 <SubmitButton className="button button-small" pendingLabel={text.working}>{text.transferButton}</SubmitButton>
               </form>
             ) : <p className="field-help">{text.transferEmpty}</p>}
