@@ -39,3 +39,10 @@ test("anonymous discovery can read only explicit published fields through bounde
   assert.match(migration, /grant execute on function public\.search_public_doctors\(text, text, text, integer\) to anon, authenticated/);
   assert.doesNotMatch(migration, /patient_name|patient_phone|appointment_at|appointment_status|reminder_/i);
 });
+
+
+test("directory publication timestamps are system-managed", () => {
+  assert.match(migration, /new\.published_at := case when new\.is_published then now\(\) else null end/);
+  assert.match(migration, /new\.published_at := old\.published_at/);
+  assert.doesNotMatch(migration, /coalesce\(new\.published_at, now\(\)\)/);
+});
