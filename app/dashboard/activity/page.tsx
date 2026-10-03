@@ -239,7 +239,7 @@ export default async function ActivityPage({ searchParams }: Props) {
   const canView = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   if (!canView) redirect(`/dashboard/settings?clinic=${clinic.id}`);
 
-  const [{ data: events, error: eventsError }, { data: members }] = await Promise.all([
+  const [{ data: events, error: eventsError }, { data: members, error: membersError }] = await Promise.all([
     supabase
       .from("appointment_audit_events")
       .select("id, actor_id, actor_type, action, entity_type, entity_id, from_status, to_status, before_state, after_state, occurred_at")
@@ -252,7 +252,7 @@ export default async function ActivityPage({ searchParams }: Props) {
       .eq("clinic_id", clinic.id),
   ]);
 
-  if (eventsError) {
+  if (eventsError || membersError) {
     return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">{t.loadFailed}</p><Link className="button" href={`/dashboard/history?clinic=${clinic.id}`}>{t.back}</Link></section></main>;
   }
 
