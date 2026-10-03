@@ -4,8 +4,8 @@ The doctor profile keeps a compact preview, while a dedicated public times page 
 
 ## Contract
 
-- Availability comes only from `list_public_doctor_slots`.
-- Atlas requests at most 14 days, matching the public scheduling RPC's hard maximum.
+- Availability comes from the cursor-paginated `list_public_doctor_slots_page` contract.
+- Atlas requests at most 14 days and at most 200 slots per database response.
 - The page never reads the appointments table directly and never uses the service role.
 - Times are grouped and rendered in Asia/Baghdad using Atlas's existing localized date/time formatters.
 - If the paid phone-verification launch gate is still off, times are read-only and the clinic phone remains the action.
@@ -16,4 +16,4 @@ The doctor profile keeps a compact preview, while a dedicated public times page 
 
 ## Complete-window data contract
 
-The dedicated full-schedule page does not use the lightweight 200-row slot RPC. It uses a separate bounded 14-day public window RPC so later dates cannot silently disappear when a doctor has a dense schedule. The RPC still exposes only open slot timestamps and the appointment interval, and the window is capped at 14 days.
+The full-schedule page does not assume that one 200-row response contains the whole 14-day window. It walks the public slot list with a strict timestamp cursor, 200 rows at a time, until the next page is shorter than 200. The page has a 24-page fail-closed ceiling; under Atlas's current one-window-per-weekday and 5-minute minimum interval constraints, a 14-day schedule cannot reach that ceiling. Each response still exposes only open slot timestamps and the appointment interval.
