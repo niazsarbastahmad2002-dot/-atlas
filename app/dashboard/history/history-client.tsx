@@ -207,26 +207,26 @@ export function HistoryClient({
   }
 
   return (
-    <section className="history-card">
+    <section className="history-card" aria-busy={pending}>
       <div className="history-toolbar">
-        <input aria-label={t.search} placeholder={t.search} value={query} onChange={(event) => setQuery(event.target.value)} />
-        <select aria-label={t.filter} value={filter} onChange={(event) => setFilter(event.target.value as "all" | "removed")}>
+        <input aria-label={t.search} placeholder={t.search} value={query} disabled={pending} onChange={(event) => setQuery(event.target.value)} />
+        <select aria-label={t.filter} value={filter} disabled={pending} onChange={(event) => setFilter(event.target.value as "all" | "removed")}>
           <option value="all">{t.all}</option><option value="removed">{t.removed}</option>
         </select>
-        <select aria-label={t.sort} value={sort} onChange={(event) => setSort(event.target.value as "newest" | "oldest")}>
+        <select aria-label={t.sort} value={sort} disabled={pending} onChange={(event) => setSort(event.target.value as "newest" | "oldest")}>
           <option value="newest">{t.newest}</option><option value="oldest">{t.oldest}</option>
         </select>
       </div>
 
       {canDelete && removableVisible.length > 0 ? (
-        <label className="history-select-all"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} /><span>{t.selectAll}</span></label>
+        <label className="history-select-all"><input type="checkbox" disabled={pending} checked={allVisibleSelected} onChange={toggleAllVisible} /><span>{t.selectAll}</span></label>
       ) : null}
 
       <div className="history-list">
         {visibleRows.length === 0 ? <div className="history-empty">{t.empty}</div> : visibleRows.map((row) => (
           <article className={`history-row ${row.removed ? "is-removed" : ""}`} key={row.id}>
             <div className="history-check">
-              {canDelete && row.removed ? <input aria-label={`${t.patient}: ${row.patientName}`} type="checkbox" checked={selected.has(row.id)} onChange={() => toggle(row.id)} /> : <span className="history-check-spacer" />}
+              {canDelete && row.removed ? <input aria-label={`${t.patient}: ${row.patientName}`} type="checkbox" disabled={pending} checked={selected.has(row.id)} onChange={() => toggle(row.id)} /> : <span className="history-check-spacer" />}
             </div>
             <div className="history-patient"><strong>{row.patientName}</strong><span dir="ltr">{row.patientPhone}</span></div>
             <div><span className="history-label">{t.doctor}</span><strong>{row.doctorName}</strong></div>
