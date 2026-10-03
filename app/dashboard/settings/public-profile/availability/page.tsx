@@ -205,7 +205,7 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
   }
 
   const hourMap = new Map((hours ?? []).map((row) => [`${row.doctor_id}:${row.weekday}`, row]));
-  const closedByDoctor = new Map<string, typeof closedDates>();
+  const closedByDoctor = new Map<string, NonNullable<typeof closedDates>>();
   for (const row of closedDates ?? []) {
     const current = closedByDoctor.get(row.doctor_id) ?? [];
     current.push(row);
