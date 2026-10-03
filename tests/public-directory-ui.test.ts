@@ -43,3 +43,11 @@ test("Atlas home gives patients a direct path into discovery", () => {
   assert.match(home, /پزیشک دەگەڕێیت؟ پزیشک بدۆزەرەوە/);
   assert.match(home, /تبحث عن طبيب؟ ابحث عن رعاية/);
 });
+
+
+test("public doctor search safely rejects repeated query parameters", () => {
+  const page = source("app/care/page.tsx");
+
+  assert.match(page, /q\?: string \| string\[\]/);
+  assert.match(page, /if \(typeof value !== "string"\) return ""/);
+});
