@@ -38,3 +38,17 @@ test("successful inline appointment saves clear the time draft marker", () => {
   assert.match(timeField, /const clearSavedDraft = \(\) => \{[\s\S]*setDateOpen\(false\);[\s\S]*setTouched\(false\);/);
   assert.match(timeField, /document\.removeEventListener\("atlas:appointment-saved", clearSavedDraft\)/);
 });
+
+
+test("dashboard live refresh waits for active receptionist writes", () => {
+  const busy = read("app/dashboard/schedule-form-busy.ts");
+  const liveFlow = read("app/dashboard/live-clinic-flow.tsx");
+  const patientLink = read("app/dashboard/patient-link-button.tsx");
+
+  assert.match(busy, /appointment-action-bar\[aria-busy="true"\]/);
+  assert.match(busy, /live-clinic-flow\[aria-busy="true"\]/);
+  assert.match(busy, /patient-link-control form\[aria-busy="true"\]/);
+  assert.match(busy, /form\.dataset\.fastSaving === "true"/);
+  assert.match(liveFlow, /aria-busy=\{saving !== null\}/);
+  assert.match(patientLink, /<form action=\{action\} aria-busy=\{pending\}>/);
+});
