@@ -15,7 +15,7 @@ test("dashboard live refresh preserves active receptionist appointment drafts", 
   assert.match(busy, /input\[name="reminder_consent"\]/);
   assert.match(busy, /data-atlas-time-draft="true"/);
   assert.match(busy, /active instanceof HTMLElement && form\.contains\(active\)/);
-  assert.match(timeField, /data-atlas-time-draft=\{dateOpen \|\| touched \|\| date !== initial \? "true" : "false"\}/);
+  assert.match(timeField, /data-atlas-time-draft=\{dateOpen \|\| touched \|\| dateEdited \? "true" : "false"\}/);
 });
 
 test("Safari stall recovery follows later schedule loading states safely", () => {
@@ -41,7 +41,8 @@ test("successful inline appointment saves clear the time draft marker", () => {
 
   assert.match(polish, /document\.dispatchEvent\(new Event\("atlas:appointment-saved"\)\)/);
   assert.match(timeField, /document\.addEventListener\("atlas:appointment-saved", clearSavedDraft\)/);
-  assert.match(timeField, /const clearSavedDraft = \(\) => \{[\s\S]*setDateOpen\(false\);[\s\S]*setTouched\(false\);/);
+  assert.match(timeField, /const clearSavedDraft = \(\) => \{[\s\S]*setDateOpen\(false\);[\s\S]*setTouched\(false\);[\s\S]*setDateEdited\(false\);/);
+  assert.match(timeField, /const chooseDate = \(nextDate: string\) => \{[\s\S]*setDateEdited\(true\);/);
   assert.match(timeField, /document\.removeEventListener\("atlas:appointment-saved", clearSavedDraft\)/);
 });
 
