@@ -375,7 +375,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               </div>
             </form>
           ) : (
-            <div className="settings-readonly-clinic"><span>{t.clinicName}</span><strong>{clinic.name}</strong><small>{copy.readOnlyClinic}</small></div>
+            <div className="settings-readonly-clinic"><span>{t.clinicName}</span><strong data-atlas-user-content="true">{clinic.name}</strong><small>{copy.readOnlyClinic}</small></div>
           )}
           {canManage ? (
             <Link className="settings-link settings-public-profile-link" href={`/dashboard/settings/public-profile?clinic=${clinic.id}`}>
@@ -441,7 +441,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 <div className="doctor-settings-list">
                   {archivedDoctors.map((doctor) => (
                     <article className="doctor-settings-row is-archived" key={doctor.id}>
-                      <strong>{doctor.name}</strong>
+                      <strong data-atlas-user-content="true">{doctor.name}</strong>
                       <form action={setDoctorActive.bind(null, clinic.id, doctor.id, true)}><SubmitButton className="button button-ghost button-small" pendingLabel={t.saving}>{t.restore}</SubmitButton></form>
                     </article>
                   ))}

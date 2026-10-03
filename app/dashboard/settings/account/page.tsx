@@ -204,7 +204,7 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
             <div className="settings-form">
               {ownedClinics.map((clinic) => (
                 <div className="account-owned-clinic" key={clinic.id}>
-                  <strong>{clinic.name}</strong>
+                  <strong data-atlas-user-content="true">{clinic.name}</strong>
                   <div className="compact-actions">
                     <Link className="button button-ghost button-small" href={`/dashboard/staff?clinic=${clinic.id}`}>{copy.ownerTransfer}</Link>
                     <Link className="button button-ghost button-small danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}>{copy.ownerDelete}</Link>
