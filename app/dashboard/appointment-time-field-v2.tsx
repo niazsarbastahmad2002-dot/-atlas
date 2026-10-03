@@ -109,9 +109,27 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       const fiveMinutesFromNow = addLocalMinutes(baghdadLocalMinute(new Date()), 5);
       setLiveMin((current) => current === fiveMinutesFromNow ? current : fiveMinutesFromNow);
     };
-    refreshMinimum();
-    const timer = window.setInterval(refreshMinimum, 30_000);
-    return () => window.clearInterval(timer);
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
+      window.clearInterval(timer);
+      timer = null;
+    };
+    const syncVisibility = () => {
+      if (document.hidden) {
+        stop();
+        return;
+      }
+      refreshMinimum();
+      if (timer === null) timer = window.setInterval(refreshMinimum, 30_000);
+    };
+
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
   }, []);
 
   useEffect(() => {
