@@ -167,6 +167,8 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         const patientName = String(formData.get("patient_name") ?? "").trim();
         if (!appointmentAt) { showFastSaveToast(locale, patientName, "").fail(false); return; }
         form.dataset.fastSaving = "true";
+        const inertBeforeSave = form.inert;
+        form.inert = true;
         const controls = Array.from(form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input, select, textarea, button"));
         const disabledBeforeSave = controls.map((control) => control.disabled);
         const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
@@ -201,6 +203,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         finally {
           form.dataset.fastSaving = "false";
           window.setTimeout(() => {
+            form.inert = inertBeforeSave;
             controls.forEach((control, index) => {
               if (control.isConnected) control.disabled = disabledBeforeSave[index] ?? false;
             });
