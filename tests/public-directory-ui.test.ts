@@ -45,6 +45,20 @@ test("Atlas home gives patients a direct path into discovery", () => {
 });
 
 
+test("published clinics have a direct public profile route and doctors link back to it", () => {
+  const clinic = source("app/care/[clinicSlug]/page.tsx");
+  const search = source("app/care/page.tsx");
+  const doctor = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");
+
+  assert.match(clinic, /get_public_clinic_profile/);
+  assert.match(clinic, /list_public_doctors/);
+  assert.match(clinic, /safeSlug\(clinicSlug\)/);
+  assert.doesNotMatch(clinic, /\.from\("appointments"\)|patient_name|patient_phone|reminder_/);
+  assert.match(search, /href=\{\`\/care\/\$\{doctor\.clinic_slug\}\`\}/);
+  assert.match(doctor, /href=\{\`\/care\/\$\{profile\.clinic_slug\}\`\}/);
+});
+
+
 test("public doctor search safely rejects repeated query parameters", () => {
   const page = source("app/care/page.tsx");
 
