@@ -32,3 +32,15 @@ test("Atlas AI and navigation chrome use the selected interface language", () =>
   assert.match(navigation, /<small>\{nav\.beta\}<\/small>/);
   assert.match(navigation, /aria-label=\{nav\.mobileNavigation\}/);
 });
+
+
+test("core route prefetch pauses while Atlas is hidden and warms on return", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.match(navigation, /document\.visibilityState !== "visible"/);
+  assert.match(navigation, /window\.clearInterval\(timer\)/);
+  assert.match(navigation, /timer = window\.setInterval\(warmCoreRoutes, 20_000\)/);
+  assert.match(navigation, /const syncVisibility = \(\) => \{[\s\S]*warmCoreRoutes\(\);[\s\S]*start\(\)/);
+  assert.match(navigation, /document\.addEventListener\("visibilitychange", syncVisibility\)/);
+  assert.match(navigation, /document\.removeEventListener\("visibilitychange", syncVisibility\)/);
+});

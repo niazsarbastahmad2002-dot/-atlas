@@ -200,22 +200,41 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
 
   useEffect(() => {
     const warmCoreRoutes = () => {
-      if (hasPendingSettingWrite() || needsFreshSettingNavigation()) return;
+      if (
+        document.visibilityState !== "visible"
+        || hasPendingSettingWrite()
+        || needsFreshSettingNavigation()
+      ) return;
       router.prefetch(scheduleHref);
       router.prefetch(settingsHref);
       router.prefetch(assistantHref);
     };
 
-    warmCoreRoutes();
-    const timer = window.setInterval(warmCoreRoutes, 20_000);
-    const onVisible = () => {
-      if (!document.hidden) warmCoreRoutes();
+    let timer: number | null = null;
+    const stop = () => {
+      if (timer === null) return;
+      window.clearInterval(timer);
+      timer = null;
     };
-    document.addEventListener("visibilitychange", onVisible);
+    const start = () => {
+      if (document.visibilityState !== "visible" || timer !== null) return;
+      timer = window.setInterval(warmCoreRoutes, 20_000);
+    };
+    const syncVisibility = () => {
+      if (document.visibilityState !== "visible") {
+        stop();
+        return;
+      }
+      warmCoreRoutes();
+      start();
+    };
+
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
 
     return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
+      stop();
+      document.removeEventListener("visibilitychange", syncVisibility);
     };
   }, [router, scheduleHref, settingsHref, assistantHref]);
 
