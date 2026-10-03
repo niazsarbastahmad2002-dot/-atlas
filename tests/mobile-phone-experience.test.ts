@@ -144,3 +144,8 @@ test("mobile appointment disclosure labels identify the patient for screen reade
   assert.match(enhancer, /otherName \? `\$\{text\.expand\}: \$\{otherName\}` : text\.expand/);
   assert.match(enhancer, /summaryName \? `\$\{action\}: \$\{summaryName\}` : action/);
 });
+
+test("mobile appointment search count uses the active locale digits", () => {
+  const enhancer = source("app/dashboard/mobile-appointment-experience.tsx");
+  assert.match(enhancer, /localizeDigits\(visible, locale\)/);
+});
