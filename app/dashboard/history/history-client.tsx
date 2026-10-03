@@ -154,7 +154,12 @@ export function HistoryClient({
     const needle = normalizeHistorySearch(query.trim());
     return rows
       .filter((row) => filter === "all" || row.removed)
-      .filter((row) => !needle || normalizeHistorySearch(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(needle))
+      .filter((row) => {
+        if (!needle) return true;
+        if (normalizeHistorySearch(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(needle)) return true;
+        const digits = needle.replace(/[^0-9]/g, "");
+        return digits.length >= 4 && row.patientPhone.replace(/[^0-9]/g, "").includes(digits);
+      })
       .sort((a, b) => sort === "newest"
         ? new Date(b.appointmentAt).getTime() - new Date(a.appointmentAt).getTime()
         : new Date(a.appointmentAt).getTime() - new Date(b.appointmentAt).getTime());
