@@ -36,16 +36,16 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   const canManageRecords = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   if (!canManageRecords) redirect(`/dashboard/settings?clinic=${clinic.id}`);
 
-  const { data: appointments, error: appointmentsError } = await supabase.from("appointments")
-    .select("id, patient_name, patient_phone, doctor_name, appointment_at, status, voided_at")
-    .eq("clinic_id", clinic.id).order("appointment_at", { ascending: false }).limit(HISTORY_VIEW_LIMIT + 1);
+  const { data: appointments, error: appointmentsError, count: appointmentCount } = await supabase.from("appointments")
+    .select("id, patient_name, patient_phone, doctor_name, appointment_at, status, voided_at", { count: "exact" })
+    .eq("clinic_id", clinic.id).order("appointment_at", { ascending: false }).limit(HISTORY_VIEW_LIMIT);
 
   if (appointmentsError) {
     return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">{t.loadFailed}</p><Link className="button" href={`/dashboard/settings?${new URLSearchParams({ clinic: clinic.id })}`}>{t.back}</Link></section></main>;
   }
 
-  const historyTruncated = (appointments?.length ?? 0) > HISTORY_VIEW_LIMIT;
-  const rows = (appointments ?? []).slice(0, HISTORY_VIEW_LIMIT).map((appointment) => ({
+  const historyTruncated = (appointmentCount ?? appointments?.length ?? 0) > HISTORY_VIEW_LIMIT;
+  const rows = (appointments ?? []).map((appointment) => ({
     id: appointment.id,
     patientName: appointment.patient_name,
     patientPhone: formatIraqiMobile(appointment.patient_phone),
