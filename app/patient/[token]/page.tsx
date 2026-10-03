@@ -5,7 +5,7 @@ import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
 import { baghdadDateKey, patientDayFlowDelay } from "@/lib/patient-day-flow";
 import { getPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
+import { reschedulePatientAppointment, updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
 import { PatientSubmitButton } from "./patient-submit-button";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 type PatientPageProps = {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ view?: string; lang?: string; error?: string }>;
+  searchParams: Promise<{ view?: string; lang?: string; error?: string; notice?: string }>;
 };
 
 type PatientAppointment = {
@@ -75,6 +75,12 @@ const patientCopy = {
     earlierJoin: "Yes, offer me an earlier time",
     earlierJoined: "You’re on the earlier-slot list.",
     earlierLeave: "Leave earlier-slot list",
+    rescheduleTitle: "Change your appointment time",
+    rescheduleHelp: "Choose another live opening for the same doctor. Atlas checks the slot again before changing your appointment.",
+    rescheduleConfirm: "Change your appointment to {slot}?",
+    rescheduled: "Your appointment time was changed.",
+    slotTaken: "That time was just taken. Choose another open time.",
+    rescheduleUnavailable: "That time is no longer available. Choose another open time.",
     updating: "Updating…",
     actionFailed: "Could not save your change. Try again.",
     privacy: "This page is private to this appointment.",
@@ -121,6 +127,12 @@ const patientCopy = {
     earlierJoin: "بەڵێ، مەوعیدی زووترم پێشنیار بکە",
     earlierJoined: "تۆ لە لیستی مەوعیدی زووتریت.",
     earlierLeave: "لە لیستی زووتر دەرچم",
+    rescheduleTitle: "کاتی مەوعیدەکەت بگۆڕە",
+    rescheduleHelp: "کاتێکی بەردەستی تری هەمان پزیشک هەڵبژێرە. Atlas پێش گۆڕینەکە کاتەکە دووبارە دەپشکنێت.",
+    rescheduleConfirm: "مەوعیدەکەت بگۆڕدرێت بۆ {slot}؟",
+    rescheduled: "کاتی مەوعیدەکەت گۆڕدرا.",
+    slotTaken: "ئەم کاتە تازە گیرا. کاتێکی بەردەستی تر هەڵبژێرە.",
+    rescheduleUnavailable: "ئەم کاتە چیتر بەردەست نییە. کاتێکی تر هەڵبژێرە.",
     updating: "نوێ دەکرێتەوە…",
     actionFailed: "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
@@ -167,6 +179,12 @@ const patientCopy = {
     earlierJoin: "بەلێ، مەوعیدەکا زووتر بۆ من پێشنیار بکە",
     earlierJoined: "تو د لیستا مەوعیدێن زووتر دای.",
     earlierLeave: "ژ لیستا زووتر دەربکەڤم",
+    rescheduleTitle: "دەمێ وادەیا خۆ بگوهۆڕە",
+    rescheduleHelp: "دەمەکێ دی یێ بەردەست بۆ هەمان دکتۆری هەلبژێرە. Atlas بەری گوهۆڕینێ دەم جارەکا دی دپشکنیت.",
+    rescheduleConfirm: "وادەیا تە بگوهۆڕدرێت بۆ {slot}؟",
+    rescheduled: "دەمێ وادەیا تە هاتە گوهۆڕین.",
+    slotTaken: "ئەڤ دەمە نوو هاتە گرتن. دەمەکێ دی یێ بەردەست هەلبژێرە.",
+    rescheduleUnavailable: "ئەڤ دەمە ئێدی بەردەست نینە. دەمەکێ دی هەلبژێرە.",
     updating: "دهێتە نوێکرن…",
     actionFailed: "گۆڕین نەهاتە پاراستن. دووبارە هەول بدە.",
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
@@ -213,6 +231,12 @@ const patientCopy = {
     earlierJoin: "إي، عرضوا عليّ موعد أبكر",
     earlierJoined: "إنت بقائمة المواعيد الأبكر.",
     earlierLeave: "شيلوني من قائمة الأبكر",
+    rescheduleTitle: "غيّر وقت موعدك",
+    rescheduleHelp: "اختر وقتاً حقيقياً متاحاً عند نفس الطبيب. Atlas يفحص الوقت مرة ثانية قبل تغيير موعدك.",
+    rescheduleConfirm: "تغيير موعدك إلى {slot}؟",
+    rescheduled: "تم تغيير وقت موعدك.",
+    slotTaken: "هذا الوقت انحجز للتو. اختر وقتاً متاحاً آخر.",
+    rescheduleUnavailable: "هذا الوقت لم يعد متاحاً. اختر وقتاً آخر.",
     updating: "جارٍ التحديث…",
     actionFailed: "ما انحفظ التغيير. حاول مرة ثانية.",
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
@@ -271,6 +295,19 @@ function patientTimingText(delayMinutes: number, locale: PatientLocale) {
   return (delayMinutes > 0 ? text.timingLate : text.timingEarly).replace("{minutes}", minutes);
 }
 
+function rescheduleSlotLabel(value: string, locale: PatientLocale) {
+  const date = new Date(value);
+  const text = patientCopy[locale];
+  const dateLabel = new Intl.DateTimeFormat(text.dateLocale, {
+    timeZone: "Asia/Baghdad",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+  const time = baghdadClock(date, locale);
+  return `${dateLabel} · ${time.clock} ${time.period}`;
+}
+
 export default async function PatientAppointmentPage({ params, searchParams }: PatientPageProps) {
   const [{ token }, query] = await Promise.all([params, searchParams]);
   const fallbackLocale = patientLocale(query.lang ?? "en");
@@ -316,21 +353,38 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const isActive = isPending || isConfirmed;
   const reminderView = query.view === "reminder";
   const actionFailed = query.error === "update_failed";
+  const rescheduled = query.notice === "rescheduled";
+  const rescheduleError = query.error === "slot_taken"
+    ? text.slotTaken
+    : query.error === "reschedule_unavailable"
+      ? text.rescheduleUnavailable
+      : null;
   const ahead = appointment.appointments_ahead ?? 0;
   const queuePosition = appointment.queue_position ? localizeDigits(appointment.queue_position, locale) : null;
   const aheadCount = localizeDigits(ahead, locale);
   const receptionPhone = appointment.receptionist_phone ? formatIraqiMobile(appointment.receptionist_phone) : null;
   let wantsEarlierSlot = false;
   let clinicDelayMinutes: number | null = null;
+  let rescheduleSlots: Array<{ slot_at: string; appointment_interval_minutes: number }> = [];
   if (isActive) {
     const isAppointmentToday = baghdadDateKey(appointmentDate) === baghdadDateKey(new Date());
     const earlierSlotPromise = getPatientEarlierSlotPreference(admin, tokenHash);
+    const reschedulePromise = admin.rpc("patient_list_reschedule_slots", {
+      p_token_hash: tokenHash,
+      p_days: 7,
+    });
     const timingPromise = isAppointmentToday
       ? admin.rpc("patient_get_day_flow", { p_token_hash: tokenHash })
       : null;
 
-    const { enabled } = await earlierSlotPromise;
+    const [{ enabled }, rescheduleResult] = await Promise.all([
+      earlierSlotPromise,
+      reschedulePromise,
+    ]);
     wantsEarlierSlot = enabled;
+    if (!rescheduleResult.error && Array.isArray(rescheduleResult.data)) {
+      rescheduleSlots = rescheduleResult.data.slice(0, 8);
+    }
 
     if (timingPromise) {
       const { data: timingData, error: timingError } = await timingPromise;
@@ -405,6 +459,8 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         </section>
 
         {actionFailed ? <p className="notice notice-error patient-action-error" role="alert">{text.actionFailed}</p> : null}
+        {rescheduled ? <p className="notice notice-success patient-action-error" role="status">{text.rescheduled}</p> : null}
+        {rescheduleError ? <p className="notice notice-error patient-action-error" role="alert">{rescheduleError}</p> : null}
 
         {isActive && clinicDelayMinutes !== null ? (
           <section className="patient-timing-card" aria-label={text.timingTitle} role="status" aria-live="polite" aria-atomic="true">
@@ -419,6 +475,29 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <div><span>{text.order}</span><strong>#{queuePosition}</strong></div>
             <p>{ahead === 0 ? text.first : `${aheadCount} ${ahead === 1 ? text.ahead : text.aheadMany}.`}</p>
           </div>
+        ) : null}
+
+        {isActive && rescheduleSlots.length ? (
+          <section className="patient-reschedule-card" aria-label={text.rescheduleTitle}>
+            <strong>{text.rescheduleTitle}</strong>
+            <p>{text.rescheduleHelp}</p>
+            <div className="patient-reschedule-slots">
+              {rescheduleSlots.map((slot) => (
+                <form key={slot.slot_at}>
+                  <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
+                  <input type="hidden" name="return_lang" value={locale} />
+                  <PatientSubmitButton
+                    formAction={reschedulePatientAppointment.bind(null, token, slot.slot_at)}
+                    pendingLabel={text.updating}
+                    className="button button-ghost patient-reschedule-slot"
+                    confirmMessage={text.rescheduleConfirm.replace("{slot}", rescheduleSlotLabel(slot.slot_at, locale))}
+                  >
+                    {rescheduleSlotLabel(slot.slot_at, locale)}
+                  </PatientSubmitButton>
+                </form>
+              ))}
+            </div>
+          </section>
         ) : null}
 
         {isActive ? (
@@ -539,6 +618,12 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-order-card span { color: var(--muted); font-size: 12px; font-weight: 780; }
           .patient-order-card strong { color: var(--accent); font-size: 30px; line-height: 1; }
           .patient-order-card p { margin: 10px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+          .patient-reschedule-card { margin: 0 0 22px; border: 1px solid var(--line); border-radius: 17px; padding: 17px 19px; background: var(--surface); }
+          .patient-reschedule-card > strong { display: block; color: var(--ink); font-size: 16px; }
+          .patient-reschedule-card > p { margin: 8px 0 14px; color: var(--ink-soft); font-size: 13px; line-height: 1.55; }
+          .patient-reschedule-slots { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+          .patient-reschedule-slots form { min-width: 0; }
+          .patient-reschedule-slot { width: 100%; min-height: 44px; padding-inline: 10px; font-size: 11px; line-height: 1.35; white-space: normal; }
           .patient-earlier-card { margin: 0 0 22px; border: 1px solid var(--line); border-radius: 17px; padding: 17px 19px; background: #fff; }
           .patient-earlier-card.is-active { border-color: #b9dfd1; background: #f3fbf8; }
           .patient-earlier-card > strong { display: block; color: var(--ink); font-size: 16px; }
@@ -558,6 +643,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-card button { transition: transform .1s ease, box-shadow .12s ease, filter .12s ease; }
           .patient-card button:active { transform: scale(.985); filter: brightness(.97); }
           .patient-card button:focus-visible, .patient-card a:focus-visible { outline: 3px solid rgba(8,119,90,.28); outline-offset: 3px; }
+          @media(max-width:520px){.patient-reschedule-slots{grid-template-columns:1fr}}
         `}</style>
       </section>
     </main>

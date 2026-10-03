@@ -22,6 +22,22 @@ function patientMutationFailureUrl(token: string, formData: FormData) {
   return patientMutationReturnUrl(token, formData, true);
 }
 
+function patientRescheduleReturnUrl(
+  token: string,
+  formData: FormData,
+  outcome: "rescheduled" | "slot_taken" | "reschedule_unavailable",
+) {
+  const params = new URLSearchParams();
+  const returnLanguage = String(formData.get("return_lang") ?? "");
+  if (returnLanguage === "ku" || returnLanguage === "bd" || returnLanguage === "ar" || returnLanguage === "en") {
+    params.set("lang", returnLanguage);
+  }
+  if (formData.get("return_view") === "reminder") params.set("view", "reminder");
+  if (outcome === "rescheduled") params.set("notice", "rescheduled");
+  else params.set("error", outcome);
+  return `/patient/${token}?${params.toString()}`;
+}
+
 async function patientMutationAdmin(token: string) {
   if (!isPatientToken(token)) return null;
 
@@ -84,4 +100,36 @@ export async function updateEarlierSlotPreference(token: string, enabled: boolea
 
   revalidatePath(`/patient/${token}`);
   redirect(patientMutationReturnUrl(token, formData));
+}
+
+
+export async function reschedulePatientAppointment(token: string, slotAt: string, formData: FormData) {
+  const slotDate = new Date(slotAt);
+  if (Number.isNaN(slotDate.getTime()) || slotDate.getTime() <= Date.now()) {
+    redirect(patientRescheduleReturnUrl(token, formData, "reschedule_unavailable"));
+  }
+
+  const context = await patientMutationAdmin(token);
+  if (!context) redirect(patientRescheduleReturnUrl(token, formData, "reschedule_unavailable"));
+
+  const { data, error } = await context.admin.rpc("patient_reschedule_appointment", {
+    p_token_hash: context.tokenHash,
+    p_slot_at: slotDate.toISOString(),
+  });
+
+  if (error) {
+    console.error("Atlas patient reschedule failed", { code: error.code });
+    redirect(patientRescheduleReturnUrl(token, formData, "reschedule_unavailable"));
+  }
+
+  if (data === "updated" || data === "unchanged") {
+    revalidatePath(`/patient/${token}`);
+    redirect(patientRescheduleReturnUrl(token, formData, "rescheduled"));
+  }
+
+  if (data === "slot_taken") {
+    redirect(patientRescheduleReturnUrl(token, formData, "slot_taken"));
+  }
+
+  redirect(patientRescheduleReturnUrl(token, formData, "reschedule_unavailable"));
 }
