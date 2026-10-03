@@ -106,6 +106,7 @@ export function LiveClinicFlow({
   const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState<"failed" | "stale" | null>(null);
   const loadRequestRef = useRef(0);
+  const savingRef = useRef(false);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -116,6 +117,7 @@ export function LiveClinicFlow({
   }, [clinicId, doctorId, day]);
 
   const load = useCallback(async () => {
+    if (savingRef.current) return;
     const requestId = ++loadRequestRef.current;
     try {
       const response = await fetch(`/api/clinic-live-flow${query ? `?${query}` : ""}`, {
@@ -146,6 +148,8 @@ export function LiveClinicFlow({
 
   async function setDelay(delayMinutes: number) {
     if (!flow || saving !== null || flow.delayMinutes === delayMinutes) return;
+    savingRef.current = true;
+    ++loadRequestRef.current;
     setSaving(delayMinutes);
     setError(null);
     try {
@@ -184,6 +188,7 @@ export function LiveClinicFlow({
     } catch {
       setError("failed");
     } finally {
+      savingRef.current = false;
       setSaving(null);
     }
   }
