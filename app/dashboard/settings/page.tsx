@@ -298,7 +298,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       .order("name", { ascending: true }),
   ]);
 
-  if (doctorsError) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} error={copy.loadFailed} />;
+  if (doctorsError) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} error={copy.loadFailed} clinicId={clinic.id} />;
 
   const canManage = clinic.owner_id === userData.user.id
     || membership?.role === "owner"
@@ -529,14 +529,14 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   );
 }
 
-function SettingsUnavailable({ label, back, error }: { label: string; back: string; error: string }) {
+function SettingsUnavailable({ label, back, error, clinicId }: { label: string; back: string; error: string; clinicId: string }) {
   return (
     <main className="center-page">
       <section className="auth-card">
         <div className="brand">Atlas</div>
         <h1>{label}</h1>
         <p className="notice notice-error" role="alert">{error}</p>
-        <Link className="button" href="/dashboard">{back}</Link>
+        <Link className="button" href={`/dashboard?clinic=${clinicId}`}>{back}</Link>
       </section>
     </main>
   );
