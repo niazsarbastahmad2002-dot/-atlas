@@ -52,3 +52,14 @@ test("dashboard live refresh waits for active receptionist writes", () => {
   assert.match(liveFlow, /aria-busy=\{saving !== null\}/);
   assert.match(patientLink, /<form action=\{action\} aria-busy=\{pending\}>/);
 });
+
+
+test("live refresh timers pause while Atlas is hidden and resync on return", () => {
+  const refresh = read("app/components/live-page-refresh.tsx");
+
+  assert.match(refresh, /if \(pathname\.startsWith\("\/patient\/"\)\)[\s\S]*document\.visibilityState !== "visible"[\s\S]*window\.clearInterval\(timer\)/);
+  assert.match(refresh, /timer = window\.setInterval\(\(\) => router\.refresh\(\), 15_000\)/);
+  assert.match(refresh, /if \(pathname !== "\/dashboard"\) return;[\s\S]*document\.visibilityState !== "visible"[\s\S]*timer = window\.setInterval\(refresh, 12_000\)/);
+  assert.ok((refresh.match(/document\.addEventListener\("visibilitychange", onVisibilityChange\)/g) ?? []).length >= 2);
+  assert.ok((refresh.match(/document\.removeEventListener\("visibilitychange", onVisibilityChange\)/g) ?? []).length >= 2);
+});
