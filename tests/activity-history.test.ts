@@ -165,9 +165,10 @@ test("appointment history discloses when the bounded view omits older records", 
   const historyPage = await read("app/dashboard/history/page.tsx");
 
   assert.match(historyPage, /const HISTORY_VIEW_LIMIT = 1000/);
-  assert.match(historyPage, /\.limit\(HISTORY_VIEW_LIMIT \+ 1\)/);
-  assert.match(historyPage, /const historyTruncated = \(appointments\?\.length \?\? 0\) > HISTORY_VIEW_LIMIT/);
-  assert.match(historyPage, /\.slice\(0, HISTORY_VIEW_LIMIT\)/);
+  assert.match(historyPage, /\{ count: "exact" \}/);
+  assert.match(historyPage, /\.limit\(HISTORY_VIEW_LIMIT\)/);
+  assert.match(historyPage, /count: appointmentCount/);
+  assert.match(historyPage, /const historyTruncated = \(appointmentCount \?\? appointments\?\.length \?\? 0\) > HISTORY_VIEW_LIMIT/);
   assert.match(historyPage, /historyTruncated \? <p className="notice history-limit-notice"/);
   assert.match(historyPage, /localizeDigits\(HISTORY_VIEW_LIMIT, locale\)/);
 });
