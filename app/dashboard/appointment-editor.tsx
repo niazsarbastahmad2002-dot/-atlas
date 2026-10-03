@@ -165,10 +165,28 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   }, [contactRelationship, reminderConsent, revision]);
 
   useEffect(() => {
-    const refreshNow = () => setNow(Date.now());
-    const timer = window.setInterval(refreshNow, 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
+    const expiresAt = new Date(appointmentAt).getTime() + 60_000;
+    if (!Number.isFinite(expiresAt)) return;
+
+    let timer: number | null = null;
+    const scheduleExpiry = () => {
+      const remaining = expiresAt - Date.now();
+      if (remaining <= 0) {
+        setNow(Date.now());
+        return;
+      }
+      timer = window.setTimeout(() => {
+        const current = Date.now();
+        setNow(current);
+        if (current < expiresAt) scheduleExpiry();
+      }, Math.min(remaining + 50, 2_147_000_000));
+    };
+
+    scheduleExpiry();
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, [appointmentAt]);
 
   useEffect(() => {
     if (open && (
