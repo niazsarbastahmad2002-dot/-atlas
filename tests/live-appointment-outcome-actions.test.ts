@@ -8,7 +8,10 @@ test("appointment outcome controls refresh while receptionist leaves schedule op
     "utf8",
   );
   assert.match(source, /setClockTick/);
-  assert.match(source, /window\.setInterval\(\(\) => setClockTick\(\(tick\) => tick \+ 1\), 30_000\)/);
+  assert.match(source, /const refreshClock = \(\) => setClockTick\(\(tick\) => tick \+ 1\)/);
+  assert.match(source, /document\.hidden/);
+  assert.match(source, /window\.setInterval\(refreshClock, 30_000\)/);
+  assert.match(source, /document\.addEventListener\("visibilitychange", syncVisibility\)/);
   assert.match(source, /window\.clearInterval\(timer\)/);
   assert.match(source, /scheduledAt > Date\.now\(\) \+ 5 \* 60 \* 1000/);
 });
