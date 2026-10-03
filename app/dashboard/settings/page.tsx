@@ -370,7 +370,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <label htmlFor="clinic_name">{t.clinicName}</label>
               <div className="settings-control-row">
                 <input id="clinic_name" name="clinic_name" defaultValue={clinic.name} minLength={2} maxLength={120} required />
-                <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
+                <SubmitButton pendingLabel={t.saving} lockForm>{t.saveName}</SubmitButton>
               </div>
             </form>
           ) : (
@@ -401,7 +401,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <input type="hidden" name="clinic_id" value={clinic.id} />
               <label className="sr-only" htmlFor="new_doctor_name">{t.doctorName}</label>
               <input id="new_doctor_name" name="doctor_name" placeholder={t.doctorName} minLength={2} maxLength={120} required />
-              <SubmitButton pendingLabel={t.saving}>{t.addDoctor}</SubmitButton>
+              <SubmitButton pendingLabel={t.saving} lockForm>{t.addDoctor}</SubmitButton>
             </form>
 
             <div className="doctor-settings-list">
@@ -412,7 +412,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     <input type="hidden" name="doctor_id" value={doctor.id} />
                     <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
                     <input id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
-                    <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
+                    <SubmitButton pendingLabel={t.saving} lockForm>{t.saveName}</SubmitButton>
                   </form>
                   <div className="doctor-row-meta">
                     <span>{t.doctorAvailable}</span>
