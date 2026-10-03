@@ -27,12 +27,15 @@ test("patient location enrichment never makes the core appointment page depend o
   assert.doesNotMatch(page, /if \(locationError/);
 });
 
-test("patient directions use published coordinates or address with a free Maps URL", () => {
+test("patient directions require a specific published address and do not trust stale coordinates", () => {
   const page = source("app/patient/[token]/page.tsx");
+  const migration = source("supabase/migrations/20261003214500_patient_published_clinic_location.sql");
 
-  assert.match(page, /clinicLocation\.latitude !== null && clinicLocation\.longitude !== null/);
+  assert.match(page, /clinicLocation\?\.address_text/);
   assert.match(page, /https:\/\/www\.google\.com\/maps\/dir\//);
-  assert.match(page, /new URLSearchParams\(\{ api: "1", destination: clinicDestination \}\)/);
+  assert.match(page, /new URLSearchParams\(\{ api: "1", destination: clinicLocationText \}\)/);
+  assert.doesNotMatch(page, /clinicLocation\.latitude|clinicLocation\.longitude/);
+  assert.doesNotMatch(migration, /latitude|longitude/);
   assert.doesNotMatch(page, /GOOGLE_MAPS_API_KEY|NEXT_PUBLIC_GOOGLE_MAPS|maps\/api\/js/);
   assert.match(page, /target="_blank"/);
   assert.match(page, /rel="noreferrer"/);
