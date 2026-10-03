@@ -174,6 +174,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   const [retryDoctorId, setRetryDoctorId] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "saving" | "saved" | "load-failed" | "save-failed">("loading");
   const loadRequestRef = useRef(0);
+  const controlsBusy = state === "saving" || state === "loading";
 
   const apply = (data: Workflow) => {
     setWorkflow(data);
@@ -264,7 +265,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
           {workflow.doctors.length > 1 ? (
             <label>
               <span>{t.doctor}</span>
-              <select value={workflow.doctorId} disabled={state === "saving" || state === "loading"} onChange={(event) => void load(event.target.value)}>
+              <select value={workflow.doctorId} disabled={controlsBusy} onChange={(event) => void load(event.target.value)}>
                 {workflow.doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
               </select>
             </label>
@@ -274,7 +275,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
 
           <label>
             <span>{t.interval}</span>
-            <select value={interval} onChange={(event) => { setInterval(Number(event.target.value)); setState("idle"); }}>
+            <select value={interval} disabled={controlsBusy} onChange={(event) => { setInterval(Number(event.target.value)); setState("idle"); }}>
               {intervals.map((minutes) => <option value={minutes} key={minutes}>{formatMinutes(minutes, locale)}</option>)}
             </select>
           </label>
@@ -283,11 +284,11 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
             <legend>{t.patientDetails}</legend>
             <label>
               <span>{t.specialty}</span>
-              <input value={specialty} disabled={workflow.role !== "admin"} maxLength={120} placeholder={t.specialtyPlaceholder} onChange={(event) => { setSpecialty(event.target.value); setState("idle"); }} />
+              <input value={specialty} disabled={workflow.role !== "admin" || controlsBusy} maxLength={120} placeholder={t.specialtyPlaceholder} onChange={(event) => { setSpecialty(event.target.value); setState("idle"); }} />
             </label>
             <label>
               <span>{t.phone}</span>
-              <input value={phone} inputMode="tel" dir="ltr" maxLength={24} placeholder={t.phonePlaceholder} onChange={(event) => { setPhone(event.target.value); setState("idle"); }} />
+              <input value={phone} disabled={controlsBusy} inputMode="tel" dir="ltr" maxLength={24} placeholder={t.phonePlaceholder} onChange={(event) => { setPhone(event.target.value); setState("idle"); }} />
             </label>
           </fieldset>
 
@@ -296,13 +297,13 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
             <div className="atlas-workflow-details-body">
               <label className="toggle-row">
                 <span><strong>{t.enabled}</strong>{!workflow.messagingApproved ? <small>{t.waiting}</small> : null}</span>
-                <input type="checkbox" checked={remindersEnabled} onChange={(event) => { setRemindersEnabled(event.target.checked); setState("idle"); }} />
+                <input type="checkbox" checked={remindersEnabled} disabled={controlsBusy} onChange={(event) => { setRemindersEnabled(event.target.checked); setState("idle"); }} />
               </label>
               <div className="atlas-workflow-two">
-                <label><span>{t.first}</span><select value={firstReminder} onChange={(event) => { const value = Number(event.target.value); setFirstReminder(value); if (secondReminder === value) setSecondReminder(null); setState("idle"); }}>{leadOptions.map((minutes) => <option value={minutes} key={minutes}>{leadLabel(minutes, locale)}</option>)}</select></label>
-                <label><span>{t.second}</span><select value={secondReminder ?? ""} onChange={(event) => { setSecondReminder(event.target.value ? Number(event.target.value) : null); setState("idle"); }}><option value="">{t.off}</option>{leadOptions.filter((minutes) => minutes !== firstReminder).map((minutes) => <option value={minutes} key={minutes}>{leadLabel(minutes, locale)}</option>)}</select></label>
+                <label><span>{t.first}</span><select value={firstReminder} disabled={controlsBusy} onChange={(event) => { const value = Number(event.target.value); setFirstReminder(value); if (secondReminder === value) setSecondReminder(null); setState("idle"); }}>{leadOptions.map((minutes) => <option value={minutes} key={minutes}>{leadLabel(minutes, locale)}</option>)}</select></label>
+                <label><span>{t.second}</span><select value={secondReminder ?? ""} disabled={controlsBusy} onChange={(event) => { setSecondReminder(event.target.value ? Number(event.target.value) : null); setState("idle"); }}><option value="">{t.off}</option>{leadOptions.filter((minutes) => minutes !== firstReminder).map((minutes) => <option value={minutes} key={minutes}>{leadLabel(minutes, locale)}</option>)}</select></label>
               </div>
-              <label><span>{t.language}</span><select value={language} onChange={(event) => { setLanguage(event.target.value); setState("idle"); }}>{Object.entries(languageLabels[locale]).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <label><span>{t.language}</span><select value={language} disabled={controlsBusy} onChange={(event) => { setLanguage(event.target.value); setState("idle"); }}>{Object.entries(languageLabels[locale]).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
 
               {canManage ? (
                 <details className="atlas-workflow-provider">
@@ -313,7 +314,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
             </div>
           </details>
 
-          <button className="button" type="button" onClick={save} disabled={state === "saving" || state === "loading"}>{state === "saving" ? t.saving : t.save}</button>
+          <button className="button" type="button" onClick={save} disabled={controlsBusy}>{state === "saving" ? t.saving : t.save}</button>
           <div className={state === "load-failed" ? "atlas-workflow-inline-retry" : ""}>
             <p className={state === "load-failed" || state === "save-failed" ? "notice notice-error" : "atlas-workflow-status"} role={state === "load-failed" || state === "save-failed" ? "alert" : "status"}>{state === "saved" ? t.saved : state === "load-failed" ? t.loadFailed : state === "save-failed" ? t.failed : ""}</p>
             {state === "load-failed" ? <button className="button button-ghost button-small" type="button" onClick={() => void load(retryDoctorId)}>{t.retry}</button> : null}
