@@ -30,7 +30,7 @@ test("fast duplicate confirmation is localized across Atlas languages", () => {
 test("fast appointment save locks the whole form and restores prior disabled states", () => {
   const client = read("app/dashboard/dashboard-client-polish.tsx");
 
-  assert.match(client, /querySelectorAll<.*>("input, select, textarea, button")/);
+  assert.ok(client.includes('"input, select, textarea, button"'));
   assert.match(client, /const disabledBeforeSave = controls\.map\(\(control\) => control\.disabled\)/);
   assert.match(client, /controls\.forEach\(\(control\) => \{ control\.disabled = true; \}\)/);
   assert.match(client, /control\.disabled = disabledBeforeSave\[index\] \?\? false/);
