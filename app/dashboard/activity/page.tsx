@@ -224,6 +224,7 @@ export default async function ActivityPage({ searchParams }: Props) {
   const params = await searchParams;
   const locale = await getUiLocale();
   const t = copy[locale];
+  const transitionArrow = locale === "en" ? "→" : "←";
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) redirect("/login");
@@ -308,9 +309,8 @@ export default async function ActivityPage({ searchParams }: Props) {
           const entity = event.entity_type === "smart_fill_slot" ? t.smartFill
             : event.entity_type === "staff_invite" || event.entity_type === "staff_membership" ? t.staff
               : t.appointment;
-          const detail = beforeText && afterText && beforeText !== afterText
-            ? `${beforeText} → ${afterText}`
-            : afterText ?? beforeText;
+          const detailChanged = Boolean(beforeText && afterText && beforeText !== afterText);
+          const detail = detailChanged ? null : afterText ?? beforeText;
 
           return (
             <article className="activity-row" key={event.id}>
@@ -320,7 +320,13 @@ export default async function ActivityPage({ searchParams }: Props) {
               </div>
               <div className="activity-meta">
                 <span>{entity} {shortId(event.entity_id)}</span>
-                {detail ? <span>{detail}</span> : null}
+                {detailChanged ? (
+                  <span className="activity-change-detail" dir={locale === "en" ? "ltr" : "rtl"}>
+                    <bdi>{beforeText}</bdi>
+                    <span>{transitionArrow}</span>
+                    <bdi>{afterText}</bdi>
+                  </span>
+                ) : detail ? <span>{detail}</span> : null}
               </div>
             </article>
           );
@@ -328,7 +334,7 @@ export default async function ActivityPage({ searchParams }: Props) {
       </section>
       <p className="history-privacy">{t.privacy}</p>
 
-      <style>{`.activity-card{display:grid}.activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:16px 18px;border-top:1px solid var(--line)}.activity-row:first-child{border-top:0}.activity-main,.activity-meta{display:grid;gap:5px}.activity-main span,.activity-meta span{color:var(--muted);font-size:12px}.activity-meta{text-align:end;justify-items:end}@media(max-width:720px){.activity-row{grid-template-columns:1fr}.activity-meta{text-align:start;justify-items:start}}`}</style>
+      <style>{`.activity-card{display:grid}.activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:16px 18px;border-top:1px solid var(--line)}.activity-row:first-child{border-top:0}.activity-main,.activity-meta{display:grid;gap:5px}.activity-main span,.activity-meta span{color:var(--muted);font-size:12px}.activity-change-detail{display:inline-flex;align-items:center;gap:5px;unicode-bidi:isolate}.activity-meta{text-align:end;justify-items:end}@media(max-width:720px){.activity-row{grid-template-columns:1fr}.activity-meta{text-align:start;justify-items:start}}`}</style>
     </main>
   );
 }
