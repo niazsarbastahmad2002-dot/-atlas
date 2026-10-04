@@ -65,3 +65,16 @@ test("patient appointment actions preserve self-booking account continuity", () 
     2,
   );
 });
+
+
+test("My Appointments Manage redirects preserve the account return entry", () => {
+  const manage = readFileSync(
+    new URL("../app/patient-account/api/appointments/[appointmentId]/manage/route.ts", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(manage, /patientUrl\.searchParams\.set\("lang", locale\)/);
+  assert.match(manage, /patientUrl\.searchParams\.set\("account", "1"\)/);
+  assert.match(manage, /resolvePatientAccountSession/);
+  assert.match(manage, /issue_patient_account_appointment_token_service/);
+});
