@@ -122,6 +122,11 @@ export type Database = {
     }
     Views: { [_ in never]: never }
     Functions: {
+      create_patient_account_session_service: { Args: { p_expires_at: string; p_token_hash: string; p_verified_user_id: string }; Returns: boolean }
+      resolve_patient_account_session_service: { Args: { p_token_hash: string }; Returns: { display_name: string | null; expires_at: string; preferred_language: string; user_id: string }[] }
+      revoke_patient_account_session_service: { Args: { p_token_hash: string }; Returns: boolean }
+      list_patient_account_appointments_service: { Args: { p_user_id: string }; Returns: { appointment_at: string; appointment_id: string; appointment_status: string; clinic_name: string; doctor_name: string; doctor_specialty: string | null; reminder_language: string }[] }
+      issue_patient_account_appointment_token_service: { Args: { p_appointment_id: string; p_expires_at: string; p_token_hash: string; p_user_id: string }; Returns: boolean }
       claim_due_whatsapp_reminders: { Args: { p_global_daily_limit?: number; p_limit?: number; p_worker_id: string }; Returns: { appointment_at: string; clinic_name: string; patient_phone: string; reminder_id: string; template_language: string; template_name: string }[] }
       complete_whatsapp_reminder: { Args: { p_provider_message_id: string; p_reminder_id: string; p_worker_id: string }; Returns: boolean }
       consume_patient_link_rate_limit: { Args: { p_bucket_hash: string }; Returns: boolean }
