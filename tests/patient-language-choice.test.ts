@@ -25,7 +25,8 @@ test("patient appointment language can be changed without changing stored remind
 test("patient language links preserve reminder-response context", () => {
   const page = source("app/patient/[token]/page.tsx");
 
-  assert.match(page, /function patientLanguageHref\(token: string, locale: PatientLocale, reminderView: boolean\)/);
+  assert.match(page, /function patientLanguageHref\([\s\S]*token: string,[\s\S]*locale: PatientLocale,[\s\S]*reminderView: boolean,[\s\S]*accountMarker: string,[\s\S]*\)/);
   assert.match(page, /if \(reminderView\) params\.set\("view", "reminder"\)/);
-  assert.match(page, /href=\{patientLanguageHref\(token, option\.locale, reminderView\)\}/);
+  assert.match(page, /if \(accountMarker\) params\.set\("account", accountMarker\)/);
+  assert.match(page, /href=\{patientLanguageHref\(token, option\.locale, reminderView, accountMarker\)\}/);
 });

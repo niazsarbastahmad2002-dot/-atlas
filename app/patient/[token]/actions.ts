@@ -3,8 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
+import { verifyPatientAccountContinuityMarker } from "@/lib/patient-account-continuity";
 import { setPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+function preservePatientAccountContinuity(params: URLSearchParams, token: string, formData: FormData) {
+  const marker = String(formData.get("return_account") ?? "");
+  if (verifyPatientAccountContinuityMarker(token, marker)) params.set("account", marker);
+}
 
 function patientMutationReturnUrl(token: string, formData: FormData, failed = false) {
   const params = new URLSearchParams();
@@ -13,6 +19,7 @@ function patientMutationReturnUrl(token: string, formData: FormData, failed = fa
     params.set("lang", returnLanguage);
   }
   if (formData.get("return_view") === "reminder") params.set("view", "reminder");
+  preservePatientAccountContinuity(params, token, formData);
   if (failed) params.set("error", "update_failed");
   const query = params.toString();
   return query ? `/patient/${token}?${query}` : `/patient/${token}`;
@@ -33,6 +40,7 @@ function patientRescheduleReturnUrl(
     params.set("lang", returnLanguage);
   }
   if (formData.get("return_view") === "reminder") params.set("view", "reminder");
+  preservePatientAccountContinuity(params, token, formData);
   if (outcome === "rescheduled") params.set("notice", "rescheduled");
   else params.set("error", outcome);
   return `/patient/${token}?${params.toString()}`;

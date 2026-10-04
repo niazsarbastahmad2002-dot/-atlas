@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { formatIraqiMobile } from "@/lib/appointments";
 import { localizeDigits } from "@/lib/i18n/format";
 import { hashPatientToken, isPatientToken } from "@/lib/patient-links";
+import { verifyPatientAccountContinuityMarker } from "@/lib/patient-account-continuity";
 import { baghdadDateKey, patientDayFlowDelay } from "@/lib/patient-day-flow";
 import { getPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-preference";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 
 type PatientPageProps = {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ view?: string; lang?: string; error?: string; notice?: string }>;
+  searchParams: Promise<{ view?: string; lang?: string; error?: string; notice?: string; account?: string }>;
 };
 
 type PatientAppointment = {
@@ -85,6 +86,7 @@ const patientCopy = {
     rescheduleUnavailable: "That time is no longer available. Choose another open time.",
     updating: "Updating…",
     actionFailed: "Could not save your change. Try again.",
+    myAppointments: "My appointments",
     privacy: "This page is private to this appointment.",
     unavailableEyebrow: "Private appointment link",
     unavailableTitle: "This link is unavailable.",
@@ -139,6 +141,7 @@ const patientCopy = {
     rescheduleUnavailable: "ئەم کاتە چیتر بەردەست نییە. کاتێکی تر هەڵبژێرە.",
     updating: "نوێ دەکرێتەوە…",
     actionFailed: "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.",
+    myAppointments: "مەوعیدەکانم",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
     unavailableEyebrow: "بەستەری تایبەتی مەوعید",
     unavailableTitle: "ئەم بەستەرە بەردەست نییە.",
@@ -193,6 +196,7 @@ const patientCopy = {
     rescheduleUnavailable: "ئەڤ دەمە ئێدی بەردەست نینە. دەمەکێ دی هەلبژێرە.",
     updating: "دهێتە نوێکرن…",
     actionFailed: "گۆڕین نەهاتە پاراستن. دووبارە هەول بدە.",
+    myAppointments: "وادەیێن من",
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
     unavailableEyebrow: "لینکێ تایبەت یێ وادەیێ",
     unavailableTitle: "ئەڤ لینکە بەردەست نینە.",
@@ -247,6 +251,7 @@ const patientCopy = {
     rescheduleUnavailable: "هذا الوقت لم يعد متاحاً. اختر وقتاً آخر.",
     updating: "جارٍ التحديث…",
     actionFailed: "ما انحفظ التغيير. حاول مرة ثانية.",
+    myAppointments: "مواعيدي",
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
     unavailableEyebrow: "رابط موعد خاص",
     unavailableTitle: "هذا الرابط غير متاح.",
@@ -269,9 +274,15 @@ const patientLanguageOptions = [
   { locale: "en", label: "English", lang: "en", dir: "ltr" as const },
 ] satisfies ReadonlyArray<{ locale: PatientLocale; label: string; lang: string; dir: "ltr" | "rtl" }>;
 
-function patientLanguageHref(token: string, locale: PatientLocale, reminderView: boolean) {
+function patientLanguageHref(
+  token: string,
+  locale: PatientLocale,
+  reminderView: boolean,
+  accountMarker: string,
+) {
   const params = new URLSearchParams({ lang: locale });
   if (reminderView) params.set("view", "reminder");
+  if (accountMarker) params.set("account", accountMarker);
   return `/patient/${token}?${params.toString()}`;
 }
 
@@ -369,6 +380,10 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const isConfirmed = status === "confirmed";
   const isActive = isPending || isConfirmed;
   const reminderView = query.view === "reminder";
+  const accountMarker = verifyPatientAccountContinuityMarker(token, query.account)
+    ? query.account ?? ""
+    : "";
+  const accountOwned = Boolean(accountMarker);
   const actionFailed = query.error === "update_failed";
   const rescheduled = query.notice === "rescheduled";
   const rescheduleError = query.error === "slot_taken"
@@ -436,7 +451,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           {patientLanguageOptions.map((option) => (
             <a
               key={option.locale}
-              href={patientLanguageHref(token, option.locale, reminderView)}
+              href={patientLanguageHref(token, option.locale, reminderView, accountMarker)}
               lang={option.lang}
               dir={option.dir}
               aria-current={locale === option.locale ? "page" : undefined}
@@ -523,6 +538,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
                 <form key={slot.slot_at}>
                   <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
                   <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountMarker} />
                   <PatientSubmitButton
                     formAction={reschedulePatientAppointment.bind(null, token, slot.slot_at)}
                     pendingLabel={text.updating}
@@ -544,6 +560,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <form>
               <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountMarker} />
               <PatientSubmitButton
                 formAction={updateEarlierSlotPreference.bind(null, token, !wantsEarlierSlot)}
                 pendingLabel={text.updating}
@@ -561,6 +578,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <form>
               <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountMarker} />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -585,6 +603,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <form className="patient-actions" role="group" aria-label={text.responseActions}>
               <input type="hidden" name="return_view" value="reminder" />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountMarker} />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -610,6 +629,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
               <form>
                 <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountMarker} />
                 <PatientSubmitButton
                   formAction={updatePatientAppointment.bind(null, token, "cancelled")}
                   pendingLabel={text.updating}
@@ -622,6 +642,11 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           </div>
         ) : null}
 
+        {accountOwned ? (
+          <a className="button button-ghost patient-account-entry" href={`/patient-account?lang=${locale}`}>
+            {text.myAppointments}
+          </a>
+        ) : null}
         <p className="quiet patient-privacy">{text.privacy}</p>
 
         <style>{`
@@ -668,6 +693,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-earlier-card > p { margin: 8px 0 14px; color: var(--ink-soft); font-size: 13px; line-height: 1.55; }
           .patient-earlier-join { width: 100%; min-height: 48px; }
           .patient-earlier-leave { border: 0; padding: 5px 0; background: transparent; color: var(--muted); font-size: 12px; font-weight: 720; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+          .patient-account-entry { width: 100%; min-height: 48px; margin-top: 6px; align-items: center; justify-content: center; color: var(--accent); text-decoration: none; }
           .patient-initial-response, .patient-response-block { margin-top: 12px; }
           .patient-initial-response h2, .patient-response-block h2 { margin: 0 0 14px; font-size: clamp(22px,5vw,28px); letter-spacing: -.02em; }
           .patient-confirm-primary { width: 100%; min-height: 54px; font-size: 16px; }
