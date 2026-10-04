@@ -5,8 +5,9 @@ import test from "node:test";
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const page = source("app/patient/[token]/page.tsx");
 
-test("My Appointments entry never carries the private appointment token into the account portal", () => {
-  assert.match(page, /href=\{\`\/patient-account\?lang=\$\{locale\}\`\}/);
+test("My Appointments continuity never carries the private appointment token into the account portal", () => {
+  assert.match(page, /const patientNavHref = accountOwned[\s\S]*?\`\/patient-account\?lang=\$\{locale\}\`/);
+  assert.match(page, /actionHref=\{patientNavHref\}/);
   assert.doesNotMatch(page, /patient-account\?[^"'\`]*token|patient-account\/\$\{token\}/);
 });
 
@@ -29,7 +30,8 @@ test("patient account continuity is signed server-side and tied to the appointme
 test("patient page trusts only a valid signed continuity marker", () => {
   assert.match(page, /verifyPatientAccountContinuityMarker\(token, query\.account\)/);
   assert.match(page, /const accountOwned = Boolean\(accountMarker\)/);
-  assert.match(page, /\{accountOwned \? \([\s\S]*patient-account-entry/);
+  assert.match(page, /const patientNavLabel = accountOwned \? text\.myAppointments : text\.findCare/);
+  assert.match(page, /const patientNavHref = accountOwned[\s\S]*patient-account\?lang=/);
   assert.doesNotMatch(page, /query\.account === "1"/);
 });
 
@@ -54,6 +56,8 @@ test("patient account continuity remains localized and mobile-sized", () => {
   assert.match(page, /myAppointments: "مەوعیدەکانم"/);
   assert.match(page, /myAppointments: "وادەیێن من"/);
   assert.match(page, /myAppointments: "مواعيدي"/);
-  assert.match(page, /patient-account-entry/);
-  assert.match(page, /min-height: 48px/);
+  const nav = source("app/care/patient-nav.tsx");
+  assert.match(page, /AtlasPatientNav/);
+  assert.match(page, /actionLabel=\{patientNavLabel\}/);
+  assert.match(nav, /atlas-patient-account-link/);
 });

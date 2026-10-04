@@ -8,6 +8,7 @@ import { getPatientEarlierSlotPreference } from "@/lib/smart-fill/patient-prefer
 import { createAdminClient } from "@/lib/supabase/admin";
 import { reschedulePatientAppointment, updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
 import { PatientSubmitButton } from "./patient-submit-button";
+import { AtlasPatientNav } from "@/app/care/patient-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,7 @@ const patientCopy = {
     updating: "Updating…",
     actionFailed: "Could not save your change. Try again.",
     myAppointments: "My appointments",
+    findCare: "Find care",
     privacy: "This page is private to this appointment.",
     unavailableEyebrow: "Private appointment link",
     unavailableTitle: "This link is unavailable.",
@@ -142,6 +144,7 @@ const patientCopy = {
     updating: "نوێ دەکرێتەوە…",
     actionFailed: "گۆڕانکارییەکە پاشەکەوت نەکرا. دووبارە هەوڵ بدە.",
     myAppointments: "مەوعیدەکانم",
+    findCare: "چارەسەر بدۆزەرەوە",
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
     unavailableEyebrow: "بەستەری تایبەتی مەوعید",
     unavailableTitle: "ئەم بەستەرە بەردەست نییە.",
@@ -197,6 +200,7 @@ const patientCopy = {
     updating: "دهێتە نوێکرن…",
     actionFailed: "گۆڕین نەهاتە پاراستن. دووبارە هەول بدە.",
     myAppointments: "وادەیێن من",
+    findCare: "دکتۆر بدیتەوە",
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
     unavailableEyebrow: "لینکێ تایبەت یێ وادەیێ",
     unavailableTitle: "ئەڤ لینکە بەردەست نینە.",
@@ -252,6 +256,7 @@ const patientCopy = {
     updating: "جارٍ التحديث…",
     actionFailed: "ما انحفظ التغيير. حاول مرة ثانية.",
     myAppointments: "مواعيدي",
+    findCare: "ابحث عن رعاية",
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
     unavailableEyebrow: "رابط موعد خاص",
     unavailableTitle: "هذا الرابط غير متاح.",
@@ -384,6 +389,10 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
     ? query.account ?? ""
     : "";
   const accountOwned = Boolean(accountMarker);
+  const patientNavLabel = accountOwned ? text.myAppointments : text.findCare;
+  const patientNavHref = accountOwned
+    ? `/patient-account?lang=${locale}`
+    : `/api/ui-language?locale=${locale}`;
   const actionFailed = query.error === "update_failed";
   const rescheduled = query.notice === "rescheduled";
   const rescheduleError = query.error === "slot_taken"
@@ -441,12 +450,14 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           : null;
 
   return (
-    <main className="center-page patient-page">
+    <main className="patient-page">
+      <AtlasPatientNav
+        locale={locale}
+        actionLabel={patientNavLabel}
+        actionHref={patientNavHref}
+      />
+      <div className="center-page patient-page-center">
       <section className="auth-card patient-card" lang={text.lang} dir={text.dir}>
-        <a className="app-brand" href="/">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </a>
         <nav className="patient-language-switcher" aria-label={text.language}>
           {patientLanguageOptions.map((option) => (
             <a
@@ -642,14 +653,11 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           </div>
         ) : null}
 
-        {accountOwned ? (
-          <a className="button button-ghost patient-account-entry" href={`/patient-account?lang=${locale}`}>
-            {text.myAppointments}
-          </a>
-        ) : null}
         <p className="quiet patient-privacy">{text.privacy}</p>
 
         <style>{`
+          .patient-page { min-height: 100dvh; }
+          .patient-page-center { min-height: calc(100dvh - 72px); padding-top: 20px; padding-bottom: 40px; }
           .patient-card { width: min(100%, 610px); padding: clamp(24px,5vw,38px); }
           .patient-language-switcher { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin-top: 20px; }
           .patient-language-switcher a { min-width: 0; border: 1px solid var(--line); border-radius: 999px; padding: 8px 7px; background: #fff; color: var(--muted); font-size: 11px; font-weight: 780; text-align: center; text-decoration: none; }
@@ -693,7 +701,6 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           .patient-earlier-card > p { margin: 8px 0 14px; color: var(--ink-soft); font-size: 13px; line-height: 1.55; }
           .patient-earlier-join { width: 100%; min-height: 48px; }
           .patient-earlier-leave { border: 0; padding: 5px 0; background: transparent; color: var(--muted); font-size: 12px; font-weight: 720; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
-          .patient-account-entry { width: 100%; min-height: 48px; margin-top: 6px; align-items: center; justify-content: center; color: var(--accent); text-decoration: none; }
           .patient-initial-response, .patient-response-block { margin-top: 12px; }
           .patient-initial-response h2, .patient-response-block h2 { margin: 0 0 14px; font-size: clamp(22px,5vw,28px); letter-spacing: -.02em; }
           .patient-confirm-primary { width: 100%; min-height: 54px; font-size: 16px; }
@@ -710,6 +717,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           @media(max-width:520px){.patient-reschedule-slots{grid-template-columns:1fr}}
         `}</style>
       </section>
+      </div>
     </main>
   );
 }
@@ -717,16 +725,19 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
 function Unavailable({ locale }: { locale: PatientLocale }) {
   const text = patientCopy[locale];
   return (
-    <main className="center-page patient-page">
-      <section className="auth-card" lang={text.lang} dir={text.dir}>
-        <a className="app-brand" href="/">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </a>
-        <div className="eyebrow">{text.unavailableEyebrow}</div>
-        <h1>{text.unavailableTitle}</h1>
-        <p className="quiet">{text.unavailableHelp}</p>
-      </section>
+    <main className="patient-page">
+      <AtlasPatientNav
+        locale={locale}
+        actionLabel={text.findCare}
+        actionHref={`/api/ui-language?locale=${locale}`}
+      />
+      <div className="center-page patient-page-center">
+        <section className="auth-card" lang={text.lang} dir={text.dir}>
+          <div className="eyebrow">{text.unavailableEyebrow}</div>
+          <h1>{text.unavailableTitle}</h1>
+          <p className="quiet">{text.unavailableHelp}</p>
+        </section>
+      </div>
     </main>
   );
 }
