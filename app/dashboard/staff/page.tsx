@@ -516,7 +516,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                     <p className="field-help staff-protected-note">{text.protected}</p>
                   ) : (
                     <div className="staff-role-actions">
-                      <form action={updateStaffRole.bind(null, clinic.id, member.user_id)}>
+                      <form key={`${clinic.id}:${member.user_id}`} action={updateStaffRole.bind(null, clinic.id, member.user_id)}>
                         <PendingFormFields>
                           <label className="sr-only" htmlFor={`role-${member.user_id}`}>{text.role}</label>
                           <select id={`role-${member.user_id}`} name="role" defaultValue={member.role} aria-label={`${text.role}: ${member.identity}`}>
@@ -552,7 +552,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             <h3>{text.transfer}</h3>
             <p>{text.transferHelp}</p>
             {transferCandidates.length ? (
-              <form className="administrator-transfer-form" action={transferClinicAdministrator.bind(null, clinic.id)}>
+              <form key={clinic.id} className="administrator-transfer-form" action={transferClinicAdministrator.bind(null, clinic.id)}>
                 <PendingFormFields>
                   <select name="new_administrator_id" required aria-label={text.transfer} defaultValue="">
                     <option value="" disabled>{text.transfer}</option>
