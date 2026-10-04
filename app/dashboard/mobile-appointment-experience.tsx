@@ -217,6 +217,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
         identity.className = "atlas-phone-appointment-identity";
         const name = document.createElement("strong");
         name.className = "atlas-phone-appointment-name";
+        name.dataset.atlasUserContent = "true";
         const order = document.createElement("small");
         order.className = "atlas-phone-appointment-order";
         const phoneNode = document.createElement("bdi");
