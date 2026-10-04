@@ -242,6 +242,39 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
   const phone = profile.public_phone
     ? (profile.country_code === "IQ" ? formatIraqiMobile(profile.public_phone) : profile.public_phone)
     : null;
+  const doctorStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: profile.doctor_name,
+    jobTitle: "Physician",
+    description: profile.bio || undefined,
+    telephone: profile.public_phone || undefined,
+    knowsAbout: [profile.specialty, profile.subspecialty].filter(Boolean),
+    address: (profile.address_text || profile.city)
+      ? {
+          "@type": "PostalAddress",
+          streetAddress: profile.address_text || undefined,
+          addressLocality: profile.city || undefined,
+          addressRegion: profile.area || undefined,
+          addressCountry: profile.country_code || undefined,
+        }
+      : undefined,
+    worksFor: {
+      "@type": "MedicalClinic",
+      name: profile.clinic_name,
+      telephone: profile.public_phone || undefined,
+      address: (profile.address_text || profile.city)
+        ? {
+            "@type": "PostalAddress",
+            streetAddress: profile.address_text || undefined,
+            addressLocality: profile.city || undefined,
+            addressRegion: profile.area || undefined,
+            addressCountry: profile.country_code || undefined,
+          }
+        : undefined,
+    },
+  };
+  const doctorStructuredDataJson = JSON.stringify(doctorStructuredData).replace(/</g, "\\u003c");
   const slotGroups: Array<{ dateKey: string; dateLabel: string; times: Array<{ label: string; slotAt: string }> }> = [];
   if (!slotError && Array.isArray(slotData)) {
     for (const slot of slotData) {
@@ -265,6 +298,10 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
         </Link>
       </nav>
 
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: doctorStructuredDataJson }}
+      />
       <article className="shell atlas-care-profile">
         <div className="eyebrow">{copy.eyebrow}</div>
         <h1>{profile.doctor_name}</h1>
