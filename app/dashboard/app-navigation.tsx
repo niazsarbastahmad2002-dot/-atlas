@@ -142,6 +142,18 @@ function todayScheduleFrom(href: string) {
   }
 }
 
+function scheduleHrefForResolvedClinic(href: string, clinicId: string | null) {
+  if (!clinicId) return href;
+  try {
+    const url = new URL(href, window.location.origin);
+    if (url.pathname !== "/dashboard") return href;
+    url.searchParams.set("clinic", clinicId);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return href;
+  }
+}
+
 function withHash(href: string, hash: string) {
   const url = new URL(href, window.location.origin);
   url.hash = hash;
@@ -176,20 +188,22 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     || visiblePath.startsWith("/dashboard/activity");
   const onAssistant = visiblePath.startsWith("/dashboard/assistant");
   const onSchedule = visiblePath === "/dashboard";
-  const assistantHref = assistantHrefFrom(scheduleHref, searchParams.get("clinic"));
+  const assistantHref = assistantHrefFrom(scheduleHref, pathname === "/dashboard" ? null : searchParams.get("clinic"));
 
   useEffect(() => {
     setVisiblePath(pathname);
 
     if (pathname === "/dashboard") {
-      const candidate = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
+      const rawCandidate = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
       const workspace = document.querySelector<HTMLElement>(".workspace-page");
+      const resolvedClinic = workspace?.dataset.atlasClinic ?? null;
+      const candidate = scheduleHrefForResolvedClinic(rawCandidate, resolvedClinic);
       const canRemember = workspace?.dataset.atlasMemoryValid !== "false";
       const current = canRemember ? candidate : todayScheduleFrom(candidate);
       setScheduleHref(current);
       try { window.localStorage.setItem(scheduleMemoryKey, current); } catch {}
 
-      const clinic = new URL(current, window.location.origin).searchParams.get("clinic");
+      const clinic = resolvedClinic ?? new URL(current, window.location.origin).searchParams.get("clinic");
       setSettingsHref(clinic ? `/dashboard/settings?${new URLSearchParams({ clinic })}` : "/dashboard/settings");
       return;
     }
