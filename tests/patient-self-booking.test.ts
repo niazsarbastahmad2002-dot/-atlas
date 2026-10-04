@@ -92,5 +92,5 @@ test("booking sends the patient profile language but never submits a phone field
   const form = source("app/care/[clinicSlug]/[doctorSlug]/book/booking-form.tsx");
   assert.match(form, /reminderLanguage: preferredLanguage/);
   assert.doesNotMatch(form, /patientPhone\s*:/);
-  assert.doesNotMatch(form, /phone:\s*verifiedPhone/);
+  assert.doesNotMatch(form, /body:\s*JSON\.stringify\([\s\S]*patientPhone/);
 });
