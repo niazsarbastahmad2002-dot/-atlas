@@ -43,3 +43,25 @@ test("My Appointments entry is shown only on verified self-booking continuity", 
   assert.match(page, /\{accountOwned \? \([\s\S]*patient-account-entry/);
   assert.match(page, /patientLanguageHref\(token, option\.locale, reminderView, accountOwned\)/);
 });
+
+
+test("patient appointment actions preserve self-booking account continuity", () => {
+  const actions = readFileSync(
+    new URL("../app/patient/[token]/actions.ts", import.meta.url),
+    "utf8",
+  );
+
+  const returnViews = (page.match(/name="return_view"/g) ?? []).length;
+  const returnAccounts = (page.match(/name="return_account"/g) ?? []).length;
+  assert.equal(returnAccounts, returnViews);
+  assert.ok(returnAccounts >= 4);
+  assert.match(page, /name="return_account" value=\{accountOwned \? "1" : ""\}/);
+  assert.equal(
+    (actions.match(/formData\.get\("return_account"\) === "1"/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (actions.match(/params\.set\("account", "1"\)/g) ?? []).length,
+    2,
+  );
+});
