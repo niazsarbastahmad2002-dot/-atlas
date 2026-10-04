@@ -534,6 +534,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
                 <form key={slot.slot_at}>
                   <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
                   <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountOwned ? "1" : ""} />
                   <PatientSubmitButton
                     formAction={reschedulePatientAppointment.bind(null, token, slot.slot_at)}
                     pendingLabel={text.updating}
@@ -555,6 +556,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <form>
               <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountOwned ? "1" : ""} />
               <PatientSubmitButton
                 formAction={updateEarlierSlotPreference.bind(null, token, !wantsEarlierSlot)}
                 pendingLabel={text.updating}
@@ -572,6 +574,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <form>
               <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountOwned ? "1" : ""} />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -596,6 +599,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
             <form className="patient-actions" role="group" aria-label={text.responseActions}>
               <input type="hidden" name="return_view" value="reminder" />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountOwned ? "1" : ""} />
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "confirmed")}
                 pendingLabel={text.updating}
@@ -621,6 +625,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
               <form>
                 <input type="hidden" name="return_view" value={reminderView ? "reminder" : ""} />
               <input type="hidden" name="return_lang" value={locale} />
+              <input type="hidden" name="return_account" value={accountOwned ? "1" : ""} />
                 <PatientSubmitButton
                   formAction={updatePatientAppointment.bind(null, token, "cancelled")}
                   pendingLabel={text.updating}
