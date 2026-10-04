@@ -375,7 +375,12 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       if (directoryError) throw directoryError;
       directoryUsers.push(...directoryPage.users);
       if (directoryPage.users.length < pageSize) break;
-      if (page === maxPages) throw new Error("staff_directory_too_large");
+      if (page === maxPages) {
+        const { data: overflowPage, error: overflowError } = await admin.auth.admin.listUsers({ page: maxPages + 1, perPage: 1 });
+        if (overflowError) throw overflowError;
+        if (overflowPage.users.length > 0) throw new Error("staff_directory_too_large");
+        break;
+      }
     }
     const { data: inviteRows, error: inviteRowsError } = await inviteRpc("list_manual_staff_invites_service", {
       p_clinic_id: clinic.id,
