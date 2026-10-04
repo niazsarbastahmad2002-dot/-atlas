@@ -181,7 +181,7 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
                 type="button"
                 disabled={disabled || cell.disabled}
                 className={cell.value === date ? "is-selected" : ""}
-                aria-current={cell.value === date ? "date" : undefined}
+                aria-pressed={cell.value === date}
                 onClick={() => { setDate(cell.value); setMonth(monthFromValue(cell.value)); }}
               >
                 {localizeDigits(cell.day, locale)}
