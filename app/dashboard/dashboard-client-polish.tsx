@@ -173,6 +173,14 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       input.dir = "ltr";
       input.style.textAlign = locale === "en" ? "left" : "right";
       input.placeholder = localizeDigits("0750 000 0000", locale);
+      let deletedFormattingSeparator = false;
+      const rememberBackwardDelete = (event: InputEvent) => {
+        const cursor = input.selectionStart;
+        deletedFormattingSeparator = event.inputType === "deleteContentBackward"
+          && cursor !== null
+          && cursor > 0
+          && /\D/.test(toAsciiDigits(input.value[cursor - 1] ?? ""));
+      };
       const update = () => {
         const selectionStart = input.selectionStart;
         const trailingDigits = selectionStart === null
@@ -182,14 +190,25 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         const formatted = groupPhone(input.value);
         const display = localizeDigits(formatted, locale);
         if (input.value !== display) input.value = display;
-        if (selectionStart === null || document.activeElement !== input) return;
+        if (selectionStart === null || document.activeElement !== input) {
+          deletedFormattingSeparator = false;
+          return;
+        }
         const retainedTrailingDigits = Math.max(0, trailingDigits - truncatedTrailingDigits);
-        const cursor = cursorFromTrailingDigits(display, retainedTrailingDigits);
+        let cursor = cursorFromTrailingDigits(display, retainedTrailingDigits);
+        if (deletedFormattingSeparator && cursor > 0 && /\D/.test(toAsciiDigits(display[cursor - 1] ?? ""))) {
+          cursor -= 1;
+        }
+        deletedFormattingSeparator = false;
         window.requestAnimationFrame(() => { try { input.setSelectionRange(cursor, cursor); } catch {} });
       };
       update();
+      input.addEventListener("beforeinput", rememberBackwardDelete);
       input.addEventListener("input", update);
-      listenerCleanups.push(() => input.removeEventListener("input", update));
+      listenerCleanups.push(() => {
+        input.removeEventListener("beforeinput", rememberBackwardDelete);
+        input.removeEventListener("input", update);
+      });
     };
     const prepareAppointmentForm = (form: HTMLFormElement) => {
       if (preparedForms.has(form)) return;
