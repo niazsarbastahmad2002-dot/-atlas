@@ -385,7 +385,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             </div>
           </div>
           {canManage ? (
-            <form action={updateClinicName} className="settings-form">
+            <form key={clinic.id} action={updateClinicName} className="settings-form">
               <input type="hidden" name="clinic_id" value={clinic.id} />
               <label htmlFor="clinic_name">{t.clinicName}</label>
               <div className="settings-control-row">
