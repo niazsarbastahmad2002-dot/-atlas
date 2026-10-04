@@ -13,6 +13,7 @@ function patientMutationReturnUrl(token: string, formData: FormData, failed = fa
     params.set("lang", returnLanguage);
   }
   if (formData.get("return_view") === "reminder") params.set("view", "reminder");
+  if (formData.get("return_account") === "1") params.set("account", "1");
   if (failed) params.set("error", "update_failed");
   const query = params.toString();
   return query ? `/patient/${token}?${query}` : `/patient/${token}`;
@@ -33,6 +34,7 @@ function patientRescheduleReturnUrl(
     params.set("lang", returnLanguage);
   }
   if (formData.get("return_view") === "reminder") params.set("view", "reminder");
+  if (formData.get("return_account") === "1") params.set("account", "1");
   if (outcome === "rescheduled") params.set("notice", "rescheduled");
   else params.set("error", outcome);
   return `/patient/${token}?${params.toString()}`;

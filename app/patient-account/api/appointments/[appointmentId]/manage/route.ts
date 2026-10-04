@@ -69,5 +69,6 @@ export async function POST(
 
   const patientUrl = new URL(`/patient/${patientToken}`, request.url);
   patientUrl.searchParams.set("lang", locale);
+  patientUrl.searchParams.set("account", "1");
   return NextResponse.redirect(patientUrl, 303);
 }
