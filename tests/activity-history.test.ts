@@ -124,11 +124,12 @@ test("permanent history deletion is limited to removed records visible in the cu
 
 test("history phone search accepts Arabic and Persian digits", async () => {
   const historyClient = await read("app/dashboard/history/history-client.tsx");
+  const search = await read("lib/mobile-appointment-search.ts");
 
-  assert.ok(historyClient.includes(".replace(/[٠-٩]/g"));
-  assert.ok(historyClient.includes(".replace(/[۰-۹]/g"));
-  assert.ok(historyClient.includes("normalizeHistorySearch(query.trim())"));
-  assert.ok(historyClient.includes("normalizeHistorySearch(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(needle)"));
+  assert.match(historyClient, /normalizePhone\(rawQuery\)/);
+  assert.match(historyClient, /normalizePhone\(row\.patientPhone\)\.includes\(phoneDigits\)/);
+  assert.match(search, /const arabicIndicDigits = "٠١٢٣٤٥٦٧٨٩"/);
+  assert.match(search, /const easternArabicDigits = "۰۱۲۳۴۵۶۷۸۹"/);
 });
 
 test("history selected-record count uses the selected Atlas digit style", async () => {
