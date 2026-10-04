@@ -52,7 +52,11 @@ export function LivePageRefresh() {
 
     if (pathname !== "/dashboard") return;
     const refresh = () => {
-      if (document.visibilityState !== "visible" || scheduleFormIsBusy()) return;
+      if (
+        document.visibilityState !== "visible"
+        || navigator.onLine === false
+        || scheduleFormIsBusy()
+      ) return;
       router.refresh();
     };
     let timer: number | null = null;
@@ -97,6 +101,7 @@ export function LivePageRefresh() {
     const schedule = () => {
       if (
         document.visibilityState !== "visible"
+        || navigator.onLine === false
         || timer !== null
         || !document.querySelector(loadingSelector)
       ) return;
@@ -104,6 +109,7 @@ export function LivePageRefresh() {
         timer = null;
         if (
           document.visibilityState !== "visible"
+          || navigator.onLine === false
           || !document.querySelector(loadingSelector)
           || !reserveSafariStallReload(Date.now())
         ) return;
@@ -113,6 +119,7 @@ export function LivePageRefresh() {
     const sync = () => {
       if (
         document.visibilityState !== "visible"
+        || navigator.onLine === false
         || !document.querySelector(loadingSelector)
       ) {
         stop();
