@@ -358,7 +358,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
                   type="button"
                   disabled={cell.disabled}
                   className={cell.value === date ? "is-selected" : ""}
-                  aria-current={cell.value === date ? "date" : undefined}
+                  aria-pressed={cell.value === date}
                   onClick={() => chooseDate(cell.value)}
                 >
                   {localizeDigits(cell.day, locale)}
