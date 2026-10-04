@@ -11,3 +11,9 @@ test("superseded doctor workflow loads cannot overwrite the latest doctor settin
   assert.match(source, /const next = await response\.json\(\) as Workflow/);
   assert.match(source, /apply\(next\)/);
 });
+
+
+test("doctor workflow client state is isolated by clinic", () => {
+  const settings = readFileSync(new URL("../app/dashboard/settings/page.tsx", import.meta.url), "utf8");
+  assert.match(settings, /<DoctorWorkflowCard key=\{clinic\.id\} clinicId=\{clinic\.id\}/);
+});
