@@ -181,6 +181,7 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
                 type="button"
                 disabled={disabled || cell.disabled}
                 className={cell.value === date ? "is-selected" : ""}
+                aria-current={cell.value === date ? "date" : undefined}
                 onClick={() => { setDate(cell.value); setMonth(monthFromValue(cell.value)); }}
               >
                 {localizeDigits(cell.day, locale)}
@@ -191,8 +192,8 @@ export function AppointmentEditDateTimeField({ id, appointmentAt, min, max, loca
           <div className="edit-time-divider" />
           <div className="edit-custom-time-heading">{t.custom}</div>
           <div className="edit-period-toggle">
-            <button type="button" className={period === "am" ? "is-selected" : ""} disabled={disabled} onClick={() => setPeriod("am")}>{t.am}</button>
-            <button type="button" className={period === "pm" ? "is-selected" : ""} disabled={disabled} onClick={() => setPeriod("pm")}>{t.pm}</button>
+            <button type="button" className={period === "am" ? "is-selected" : ""} aria-pressed={period === "am"} disabled={disabled} onClick={() => setPeriod("am")}>{t.am}</button>
+            <button type="button" className={period === "pm" ? "is-selected" : ""} aria-pressed={period === "pm"} disabled={disabled} onClick={() => setPeriod("pm")}>{t.pm}</button>
           </div>
           <div className="edit-custom-time" dir="ltr">
             <label>
