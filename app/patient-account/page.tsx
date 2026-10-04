@@ -49,6 +49,7 @@ const copy: Record<UiLocale, {
   sessionExpired: string;
   manageFailed: string;
   rateLimited: string;
+  loadFailed: string;
   statuses: Record<string, string>;
 }> = {
   en: {
@@ -67,6 +68,7 @@ const copy: Record<UiLocale, {
     sessionExpired: "Your patient session ended. Verify your mobile number again.",
     manageFailed: "Atlas could not open that appointment. Try again.",
     rateLimited: "Too many attempts. Wait a little and try again.",
+    loadFailed: "Atlas could not load your appointments right now. Try again.",
     statuses: { pending: "Pending", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "No-show" },
   },
   ku: {
@@ -85,6 +87,7 @@ const copy: Record<UiLocale, {
     sessionExpired: "دانیشتنی نەخۆش کۆتایی هات. ژمارەی مۆبایل دووبارە پشتڕاست بکەرەوە.",
     manageFailed: "Atlas نەیتوانی ئەم مەوعیدە بکاتەوە. دووبارە هەوڵبدەوە.",
     rateLimited: "هەوڵەکان زۆر بوون. کەمێک چاوەڕێ بکە و دووبارە هەوڵبدەوە.",
+    loadFailed: "Atlas ئێستا نەیتوانی مەوعیدەکانت بار بکات. دووبارە هەوڵبدەوە.",
     statuses: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراو", cancelled: "هەڵوەشاوە", completed: "تەواوبوو", no_show: "نەهات" },
   },
   bd: {
@@ -103,6 +106,7 @@ const copy: Record<UiLocale, {
     sessionExpired: "دانیشتنا نەخۆشی دوماهی هات. ژمارا موبایلێ جارەکا دی پشتڕاست بکە.",
     manageFailed: "Atlas نەشیا ڤێ وادەیێ بکەتەڤە. جارەکا دی هەول بدە.",
     rateLimited: "هەول زۆر بوون. کەمەک چاوەرێ بکە و جارەکا دی هەول بدە.",
+    loadFailed: "Atlas نوکە نەشیا وادەیێن تە بار بکەت. جارەکا دی هەول بدە.",
     statuses: { pending: "چاڤەڕێ", confirmed: "پشتڕاستکری", cancelled: "هەلوەشاندی", completed: "تەمامبووی", no_show: "نەهات" },
   },
   ar: {
@@ -121,6 +125,7 @@ const copy: Record<UiLocale, {
     sessionExpired: "انتهت جلسة المريض. وثّق رقم الموبايل مرة ثانية.",
     manageFailed: "تعذر على Atlas فتح هذا الموعد. حاول مرة ثانية.",
     rateLimited: "المحاولات كثيرة. انتظر قليلاً وحاول مرة ثانية.",
+    loadFailed: "تعذر على Atlas تحميل مواعيدك الآن. حاول مرة ثانية.",
     statuses: { pending: "قيد الانتظار", confirmed: "مؤكد", cancelled: "ملغي", completed: "مكتمل", no_show: "لم يحضر" },
   },
 };
@@ -176,19 +181,23 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
   const meta = localeMeta(locale);
 
   let appointments: AccountAppointment[] = [];
+  let appointmentsFailed = false;
   if (admin && session) {
     const { data, error } = await admin.rpc("list_patient_account_appointments_service", {
       p_user_id: session.user_id,
     });
-    if (!error && Array.isArray(data)) appointments = data as AccountAppointment[];
+    if (error || !Array.isArray(data)) appointmentsFailed = true;
+    else appointments = data as AccountAppointment[];
   }
 
   const readiness = session ? null : await getAtlasAuthReadiness();
   const signInReady = Boolean(
     readiness?.reachable
-    && readiness.supabasePhoneEnabled
-    && !readiness.signupDisabled
-    && readiness.openPhoneSignupEnabled,
+    && readiness.supabasePhoneEnabled,
+  );
+  const allowSignup = Boolean(
+    readiness?.openPhoneSignupEnabled
+    && !readiness.signupDisabled,
   );
 
   const notice = query.notice === "session_expired" ? t.sessionExpired : null;
@@ -239,7 +248,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
 
             <section className="patient-account-appointments" aria-label={t.upcoming}>
               <h2>{t.upcoming}</h2>
-              {appointments.length ? (
+              {appointmentsFailed ? (
+                <p className="notice notice-error" role="alert">{t.loadFailed}</p>
+              ) : appointments.length ? (
                 <div className="patient-account-list">
                   {appointments.map((appointment) => (
                     <article className="patient-account-appointment" key={appointment.appointment_id}>
@@ -276,6 +287,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
             <PatientAccountLoginForm
               locale={locale}
               ready={signInReady}
+              allowSignup={allowSignup}
               whatsappOtpEnabled={readiness?.whatsappOtpEnabled === true}
             />
           </>
