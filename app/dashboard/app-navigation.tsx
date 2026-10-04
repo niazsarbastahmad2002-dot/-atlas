@@ -281,13 +281,13 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
             <span className="app-brand-word">Atlas</span>
           </Link>
           <nav className="app-top-actions" aria-label={nav.navigation}>
-            <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onMouseEnter={warm(scheduleHref)} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} title={t.schedule}>
+            <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onMouseEnter={warm(scheduleHref)} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} aria-current={onSchedule ? "page" : undefined} title={t.schedule}>
               <CalendarIcon /><span className="icon-button-label">{t.schedule}</span>
             </Link>
-            <Link className={`icon-button ${onAssistant ? "is-active" : ""}`} href={assistantHref} prefetch={true} scroll={true} onPointerDown={warm(assistantHref)} onMouseEnter={warm(assistantHref)} onClick={go(assistantHref, "topbar")} aria-label={nav.askAtlas} title="Atlas AI">
+            <Link className={`icon-button ${onAssistant ? "is-active" : ""}`} href={assistantHref} prefetch={true} scroll={true} onPointerDown={warm(assistantHref)} onMouseEnter={warm(assistantHref)} onClick={go(assistantHref, "topbar")} aria-label={nav.askAtlas} aria-current={onAssistant ? "page" : undefined} title="Atlas AI">
               <SparkleIcon /><span className="icon-button-label">Atlas AI</span>
             </Link>
-            <Link className={`icon-button ${onSettings ? "is-active" : ""}`} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onMouseEnter={warm(settingsHref)} onClick={go(settingsHref, "topbar")} aria-label={t.openSettings} title={t.settings}>
+            <Link className={`icon-button ${onSettings ? "is-active" : ""}`} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onMouseEnter={warm(settingsHref)} onClick={go(settingsHref, "topbar")} aria-label={t.openSettings} aria-current={onSettings ? "page" : undefined} title={t.settings}>
               <GearIcon /><span className="icon-button-label">{t.settings}</span>
             </Link>
           </nav>
@@ -314,13 +314,13 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       ) : null}
 
       <nav className="app-bottom-nav" aria-label={nav.mobileNavigation}>
-        <Link className={onSchedule ? "is-active" : ""} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "bottom_nav")}>
+        <Link className={onSchedule ? "is-active" : ""} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "bottom_nav")} aria-current={onSchedule ? "page" : undefined}>
           <CalendarIcon /><span>{t.schedule}</span>
         </Link>
         <Link className="app-bottom-add" href={addHref} prefetch={true} scroll={true} onClick={go(addHref, "bottom_nav")}>
           <span className="app-bottom-add-circle"><PlusIcon /></span><span>{t.add}</span>
         </Link>
-        <Link className={onSettings ? "is-active" : ""} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onClick={go(settingsHref, "bottom_nav")}>
+        <Link className={onSettings ? "is-active" : ""} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onClick={go(settingsHref, "bottom_nav")} aria-current={onSettings ? "page" : undefined}>
           <GearIcon /><span>{t.settings}</span>
         </Link>
       </nav>
