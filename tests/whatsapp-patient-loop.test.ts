@@ -129,7 +129,7 @@ test("database and webhook bind WhatsApp replies to phone, outbound message and 
 test("receptionist live flow is one honest shared timing surface", () => {
   const api = source("app/api/clinic-live-flow/route.ts");
   const component = source("app/dashboard/live-clinic-flow.tsx");
-  const navigation = source("app/dashboard/app-navigation.tsx");
+  const schedule = source("app/dashboard/page.tsx");
 
   assert.match(api, /private\.can_access_doctor|doctor_day_flow/);
   assert.match(api, /allowedDelays = new Set\(\[-15, 0, 15, 30, 45, 60, 90, 120\]\)/);
@@ -139,7 +139,7 @@ test("receptionist live flow is one honest shared timing surface", () => {
   assert.match(component, /running late/);
   assert.match(component, /30_000/);
   assert.doesNotMatch(component, /\bAI\b|predict|exact wait/i);
-  assert.match(navigation, /LiveClinicFlow/);
+  assert.match(schedule, /<LiveClinicFlow[\s\S]*clinicId=\{clinic\.id\}[\s\S]*doctorId=\{selectedDoctor\?\.id \?\? null\}[\s\S]*day=\{selectedDay\}/);
 });
 
 test("manual sharing puts appointment details in WhatsApp before the private details link", () => {
