@@ -27,6 +27,11 @@ type ContinuitySnapshot = {
   appointments: ContinuityAppointment[];
 };
 
+type ContinuityRequestScope = {
+  clinicId: string | null;
+  doctorId: string | null;
+};
+
 type StoredContinuityKey = {
   id: "key";
   key: CryptoKey;
@@ -113,7 +118,7 @@ async function getOrCreateContinuityKey(db: IDBDatabase) {
   return key;
 }
 
-async function persistBrowserSnapshot(snapshot: ContinuitySnapshot) {
+async function persistBrowserSnapshot(snapshot: ContinuitySnapshot, requestScope: ContinuityRequestScope) {
   if (!("indexedDB" in window) || !window.crypto?.subtle) return;
 
   const db = await openContinuityDb();
@@ -122,6 +127,7 @@ async function persistBrowserSnapshot(snapshot: ContinuitySnapshot) {
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const envelope = {
       snapshot,
+      requestScope,
       locale: document.documentElement.lang || "en",
       direction: document.documentElement.dir === "rtl" ? "rtl" : "ltr",
     };
@@ -268,7 +274,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
             || clearedScopeRef.current === scopeVersion
             || requestId !== snapshotRequestRef.current
           ) return;
-          await persistBrowserSnapshot(snapshot);
+          await persistBrowserSnapshot(snapshot, { clinicId: clinic, doctorId: doctor });
         });
       void snapshotMutationRef.current.catch(() => undefined);
       setLastSyncedAt(snapshot.syncedAt);
