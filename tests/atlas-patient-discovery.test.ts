@@ -3,11 +3,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const page = readFileSync(new URL("../app/care/page.tsx", import.meta.url), "utf8");
+const patientNav = readFileSync(new URL("../app/care/patient-nav.tsx", import.meta.url), "utf8");
 
 test("care discovery is clearly the Atlas Patient front door", () => {
-  assert.match(page, /atlas-patient-brand/);
-  assert.match(page, />Patient<\/span>/);
-  assert.match(page, /href="\/patient-account"/);
+  assert.match(page, /AtlasPatientNav/);
+  assert.match(patientNav, /atlas-patient-brand/);
+  assert.match(patientNav, />Patient<\/span>/);
+  assert.match(patientNav, /\/patient-account\?lang=\$\{locale\}/);
   assert.match(page, /myAppointments: "My appointments"/);
   assert.match(page, /myAppointments: "مەوعیدەکانم"/);
   assert.match(page, /myAppointments: "وادەیێن من"/);
