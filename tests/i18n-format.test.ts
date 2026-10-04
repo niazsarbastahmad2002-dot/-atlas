@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { formatAppointmentDateValue, formatTimeValue, localizeDigits, toAsciiDigits } from "../lib/i18n/format.ts";
-import { formatBaghdadDay } from "../lib/i18n/ui.ts";
+import { formatBaghdadDateTime, formatBaghdadDay } from "../lib/i18n/ui.ts";
 
 test("formats receptionist times as a simple 12-hour clock", () => {
   assert.equal(formatTimeValue("14:00", "en"), "02:00 PM");
@@ -32,4 +32,10 @@ test("formats appointment dates as strict DD/MM/YYYY ASCII digits", () => {
 test("Badini weekday follows the Baghdad calendar day across UTC midnight", () => {
   const afterBaghdadMidnight = new Date("2026-10-04T22:30:00.000Z");
   assert.equal(formatBaghdadDay(afterBaghdadMidnight, "bd"), "دووشەم، ٠٥/١٠/٢٠٢٦");
+});
+
+
+test("Badini appointment timestamps keep Baghdad time in Badini digits and day-period wording", () => {
+  const evening = new Date("2026-10-04T15:15:00.000Z");
+  assert.equal(formatBaghdadDateTime(evening, "bd"), "٠٤/١٠/٢٠٢٦ · ٠٦:١٥ پشتی نیڤرۆ");
 });
