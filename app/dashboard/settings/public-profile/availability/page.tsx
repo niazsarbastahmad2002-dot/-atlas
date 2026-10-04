@@ -42,6 +42,9 @@ const copy: Record<UiLocale, {
   closedDates: string;
   closedDatesHelp: string;
   closeDate: string;
+  startTime: string;
+  endTime: string;
+  closedDateInput: string;
   reopen: string;
   saved: string;
   invalid: string;
@@ -70,6 +73,9 @@ const copy: Record<UiLocale, {
     closedDates: "Closed dates",
     closedDatesHelp: "Hide a specific date from public booking without cancelling existing appointments.",
     closeDate: "Close date",
+    startTime: "Start time",
+    endTime: "End time",
+    closedDateInput: "Closed date",
     reopen: "Reopen",
     saved: "Public availability settings saved.",
     invalid: "Check the availability settings and try again.",
@@ -98,6 +104,9 @@ const copy: Record<UiLocale, {
     closedDates: "ڕۆژە داخراوەکان",
     closedDatesHelp: "ڕۆژێکی دیاریکراو لە مەوعیدی گشتی بشارەوە بەبێ هەڵوەشاندنەوەی مەوعیدە هەبووەکان.",
     closeDate: "داخستنی ڕۆژ",
+    startTime: "کاتی دەستپێک",
+    endTime: "کاتی کۆتایی",
+    closedDateInput: "ڕۆژی داخستن",
     reopen: "کردنەوە",
     saved: "ڕێکخستنەکانی بەردەستبوونی گشتی پاشەکەوت کران.",
     invalid: "ڕێکخستنەکان بپشکنە و دووبارە هەوڵ بدەوە.",
@@ -126,6 +135,9 @@ const copy: Record<UiLocale, {
     closedDates: "ڕۆژێن گرتی",
     closedDatesHelp: "ڕۆژەکێ دیاریکری ژ وادەیا گشتی ڤەشێرە بێ هەلوەشاندنا وادەیێن هەیی.",
     closeDate: "ڕۆژێ بگرە",
+    startTime: "دەمێ دەستپێکێ",
+    endTime: "دەمێ دوماهیکێ",
+    closedDateInput: "ڕۆژا گرتنێ",
     reopen: "ڤەکە",
     saved: "ڕێکخستنێن بەردەستبوونا گشتی هاتنە پاراستن.",
     invalid: "ڕێکخستنان بپشکنە و جارەکا دی هەول بدە.",
@@ -154,6 +166,9 @@ const copy: Record<UiLocale, {
     closedDates: "الأيام المغلقة",
     closedDatesHelp: "اخفِ تاريخاً محدداً عن الحجز العام بدون إلغاء المواعيد الموجودة.",
     closeDate: "إغلاق التاريخ",
+    startTime: "وقت البدء",
+    endTime: "وقت الانتهاء",
+    closedDateInput: "تاريخ الإغلاق",
     reopen: "إعادة الفتح",
     saved: "تم حفظ إعدادات التوفر العام.",
     invalid: "راجع إعدادات التوفر وحاول مرة ثانية.",
@@ -274,9 +289,9 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
                             <input type="checkbox" name={`day_${weekday}_enabled`} defaultChecked={row?.is_enabled ?? false} />
                             <span>{t.weekdays[weekday]}</span>
                           </label>
-                          <input aria-label={`${t.weekdays[weekday]} start`} type="time" name={`day_${weekday}_start`} defaultValue={row?.starts_at?.slice(0,5) ?? "09:00"} required />
+                          <input aria-label={`${t.weekdays[weekday]} — ${t.startTime}`} type="time" name={`day_${weekday}_start`} defaultValue={row?.starts_at?.slice(0,5) ?? "09:00"} required />
                           <span aria-hidden="true">–</span>
-                          <input aria-label={`${t.weekdays[weekday]} end`} type="time" name={`day_${weekday}_end`} defaultValue={row?.ends_at?.slice(0,5) ?? "17:00"} required />
+                          <input aria-label={`${t.weekdays[weekday]} — ${t.endTime}`} type="time" name={`day_${weekday}_end`} defaultValue={row?.ends_at?.slice(0,5) ?? "17:00"} required />
                         </div>
                       );
                     })}
@@ -287,7 +302,7 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
                 <div className="public-booking-closed">
                   <div><strong>{t.closedDates}</strong><span>{t.closedDatesHelp}</span></div>
                   <form action={setDoctorPublicClosedDate.bind(null, clinic.id, doctor.id, true)} className="public-booking-close-form">
-                    <input type="date" name="booking_date" min={today} required />
+                    <input type="date" name="booking_date" min={today} aria-label={t.closedDateInput} required />
                     <SubmitButton className="button button-ghost button-small" pendingLabel="…">{t.closeDate}</SubmitButton>
                   </form>
                   {doctorClosedDates.length ? (

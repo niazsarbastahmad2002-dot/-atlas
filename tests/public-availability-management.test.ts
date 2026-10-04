@@ -79,7 +79,20 @@ test("public closed-date management stays future-focused in Baghdad time", () =>
 
   assert.match(page, /const today = baghdadDate\.format\(new Date\(\)\)/);
   assert.match(page, /\.gte\("booking_date", today\)/);
-  assert.match(page, /name="booking_date" min=\{today\} required/);
+  assert.match(page, /name="booking_date" min=\{today\} aria-label=\{t\.closedDateInput\} required/);
   assert.match(page, /formatLocalDateValue\(row\.booking_date, locale\)/);
   assert.match(actions, /isClosed && bookingDate < baghdadDate\.format\(new Date\(\)\)/);
+});
+
+
+test("Doctor availability control names stay localized for assistive technology", () => {
+  const page = source("app/dashboard/settings/public-profile/availability/page.tsx");
+
+  assert.match(page, /startTime: "کاتی دەستپێک"/);
+  assert.match(page, /endTime: "دەمێ دوماهیکێ"/);
+  assert.match(page, /closedDateInput: "تاريخ الإغلاق"/);
+  assert.match(page, /aria-label=\{\`\$\{t\.weekdays\[weekday\]\} — \$\{t\.startTime\}\`\}/);
+  assert.match(page, /aria-label=\{\`\$\{t\.weekdays\[weekday\]\} — \$\{t\.endTime\}\`\}/);
+  assert.match(page, /aria-label=\{t\.closedDateInput\}/);
+  assert.doesNotMatch(page, /weekdays\[weekday\]\} start|weekdays\[weekday\]\} end/);
 });

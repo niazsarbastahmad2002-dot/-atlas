@@ -16,30 +16,35 @@ const navigationCopy: Record<UiLocale, {
   mobileNavigation: string;
   askAtlas: string;
   beta: string;
+  doctorSide: string;
 }> = {
   en: {
     navigation: "Atlas navigation",
     mobileNavigation: "Atlas mobile navigation",
     askAtlas: "Ask Atlas",
     beta: "Beta",
+    doctorSide: "Atlas Doctor professional workspace",
   },
   ku: {
     navigation: "ڕێنوێنی Atlas",
     mobileNavigation: "ڕێنوێنی مۆبایلی Atlas",
     askAtlas: "لە Atlas بپرسە",
     beta: "تاقیکردنەوە",
+    doctorSide: "بەشی پیشەیی Atlas Doctor",
   },
   bd: {
     navigation: "ڕێنیشاندانا Atlas",
     mobileNavigation: "ڕێنیشاندانا موبایلا Atlas",
     askAtlas: "ژ Atlas بپرسە",
     beta: "تاقیکرنەوە",
+    doctorSide: "بەشێ پیشەیی Atlas Doctor",
   },
   ar: {
     navigation: "التنقل في Atlas",
     mobileNavigation: "تنقل Atlas على الهاتف",
     askAtlas: "اسأل Atlas",
     beta: "تجريبي",
+    doctorSide: "مساحة Atlas Doctor المهنية",
   },
 };
 
@@ -277,7 +282,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     <>
       <header className="app-topbar">
         <div className="app-topbar-inner shell">
-          <Link className="app-brand" href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "brand")} aria-label={t.openSchedule}>
+          <Link className="app-brand" href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "brand")} aria-label={`${nav.doctorSide}. ${t.openSchedule}`}>
             <span className="app-brand-mark" aria-hidden="true">A</span>
             <span className="app-brand-word">Atlas</span>
             <span className="app-brand-product" aria-hidden="true">Doctor</span>

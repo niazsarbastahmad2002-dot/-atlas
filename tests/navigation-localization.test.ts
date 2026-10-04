@@ -75,3 +75,14 @@ test("professional dashboard visibly identifies the Atlas Doctor side", () => {
   assert.match(navigation, /<span className="app-brand-product" aria-hidden="true">Doctor<\/span>/);
   assert.match(navigation, /\.app-brand-product\{/);
 });
+
+
+test("Atlas Doctor identity is exposed to assistive technology in each interface language", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.match(navigation, /doctorSide: "Atlas Doctor professional workspace"/);
+  assert.match(navigation, /doctorSide: "بەشی پیشەیی Atlas Doctor"/);
+  assert.match(navigation, /doctorSide: "بەشێ پیشەیی Atlas Doctor"/);
+  assert.match(navigation, /doctorSide: "مساحة Atlas Doctor المهنية"/);
+  assert.match(navigation, /aria-label=\{\`\$\{nav\.doctorSide\}\. \$\{t\.openSchedule\}\`\}/);
+});
