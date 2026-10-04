@@ -170,3 +170,18 @@ test("continuity cache cleanup still clears IndexedDB when localStorage is block
   assert.match(component, /clearBrowserContinuityCache\(\)[\s\S]*writeContinuityMarker\("0"\)[\s\S]*indexedDB/);
   assert.match(guard, /localStorage\.setItem\(CONTINUITY_ACTIVE_MARKER, "0"\)[\s\S]*catch \{[\s\S]*if \(!\("indexedDB" in window\)\) return;[\s\S]*deleteDatabase\(CONTINUITY_DB\)/);
 });
+
+
+test("continuity ignores stale snapshot responses after clinic or doctor navigation", () => {
+  const component = source("app/dashboard/continuity-mode.tsx");
+
+  assert.match(component, /const snapshotRequestRef = useRef\(0\)/);
+  assert.match(component, /const requestId = \+\+snapshotRequestRef\.current/);
+  assert.match(component, /if \(requestId !== snapshotRequestRef\.current\) return/);
+  assert.match(component, /snapshotRequestRef\.current \+= 1/);
+  assert.ok(
+    component.indexOf("if (requestId !== snapshotRequestRef.current) return")
+      < component.indexOf('nativePost({ type: "snapshot", snapshot: body.snapshot })'),
+    "stale snapshot responses must be rejected before any cache/native side effect",
+  );
+});
