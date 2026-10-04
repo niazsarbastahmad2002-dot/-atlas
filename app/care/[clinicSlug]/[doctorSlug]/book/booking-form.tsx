@@ -40,6 +40,11 @@ const copy: Record<UiLocale, {
   pasteFailed: string;
   verify: string;
   verifying: string;
+  profileTitle: string;
+  profileHelp: string;
+  preferredLanguage: string;
+  book: string;
+  booking: string;
   resend: string;
   change: string;
   invalidName: string;
@@ -70,8 +75,13 @@ const copy: Record<UiLocale, {
     code: "Verification code",
     paste: "Paste code",
     pasteFailed: "Atlas could not paste a valid code. Enter it manually.",
-    verify: "Verify and book",
-    verifying: "Verifying and booking…",
+    verify: "Verify number",
+    verifying: "Verifying…",
+    profileTitle: "Your patient profile",
+    profileHelp: "Atlas reuses these details for future bookings after you verify the same mobile number. Review them before booking.",
+    preferredLanguage: "Preferred language",
+    book: "Book appointment",
+    booking: "Booking…",
     resend: "Send another code",
     change: "Change number",
     invalidName: "Enter the patient's name.",
@@ -82,7 +92,7 @@ const copy: Record<UiLocale, {
     slotTaken: "That time was just taken. Go back and choose another open time.",
     unavailable: "This time is no longer available.",
     failed: "Atlas could not complete the booking. Try again.",
-    privacy: "Your verified number is used for this appointment. It never gives you access to the clinic workspace.",
+    privacy: "Your verified mobile identifies your private Atlas patient profile. The clinic receives only the details needed for this appointment.",
   },
   ku: {
     patientName: "ناوی نەخۆش",
@@ -102,8 +112,13 @@ const copy: Record<UiLocale, {
     code: "کۆدی پشتڕاستکردنەوە",
     paste: "کۆد دابنێ",
     pasteFailed: "Atlas نەیتوانی کۆدێکی دروست دابنێت. بە دەست بنووسە.",
-    verify: "پشتڕاست بکەوە و مەوعید دابنێ",
-    verifying: "پشتڕاست دەکرێتەوە و مەوعید دادەنرێت…",
+    verify: "ژمارەکە پشتڕاست بکەرەوە",
+    verifying: "پشتڕاست دەکرێتەوە…",
+    profileTitle: "پڕۆفایلی نەخۆشی تۆ",
+    profileHelp: "Atlas دوای پشتڕاستکردنەوەی هەمان ژمارە ئەم زانیارییانە بۆ مەوعیدەکانی داهاتوو دووبارە بەکاردەهێنێت. پێش مەوعید پشکنینیان بکە.",
+    preferredLanguage: "زمانی پەسەندکراو",
+    book: "مەوعید دابنێ",
+    booking: "مەوعید دادەنرێت…",
     resend: "کۆدێکی تر بنێرە",
     change: "ژمارە بگۆڕە",
     invalidName: "ناوی نەخۆش بنووسە.",
@@ -114,7 +129,7 @@ const copy: Record<UiLocale, {
     slotTaken: "ئەم کاتە تازە گیرا. بگەڕێوە و کاتێکی بەردەستی تر هەڵبژێرە.",
     unavailable: "ئەم کاتە چیتر بەردەست نییە.",
     failed: "Atlas نەیتوانی مەوعیدەکە تەواو بکات. دووبارە هەوڵبدەوە.",
-    privacy: "ژمارە پشتڕاستکراوەکەت تەنها بۆ ئەم مەوعیدە بەکاردێت. هیچ دەستگەیشتنێک بە شوێنی کاری کلینیک نادات.",
+    privacy: "ژمارەی پشتڕاستکراوەکەت ناسنامەی پڕۆفایلی تایبەتی نەخۆشی Atlas ـە. کلینیک تەنها زانیاریی پێویست بۆ ئەم مەوعیدە وەردەگرێت.",
   },
   bd: {
     patientName: "ناڤێ نەخۆشی",
@@ -134,8 +149,13 @@ const copy: Record<UiLocale, {
     code: "کۆدێ پشتڕاستکرنێ",
     paste: "کۆد دابنێ",
     pasteFailed: "Atlas نەشیا کۆدەکێ دروست دابنێت. ب دەستی بنڤیسە.",
-    verify: "پشتڕاست بکە و وادە دابنێ",
-    verifying: "دهێتە پشتڕاستکرن و وادە دهێتە دانان…",
+    verify: "ژمارێ پشتڕاست بکە",
+    verifying: "دهێتە پشتڕاستکرن…",
+    profileTitle: "پڕۆفایلا نەخۆشیا تە",
+    profileHelp: "Atlas پشتی پشتڕاستکرنا هەمان ژمارێ ئەڤ زانیاریان بۆ وادەیێن داهاتی دووبارە بکار دئینیت. بەری وادەیێ پشکنینا وان بکە.",
+    preferredLanguage: "زمانێ پەسەندکری",
+    book: "وادە دابنێ",
+    booking: "وادە دهێتە دانان…",
     resend: "کۆدەکێ دی بهنێرە",
     change: "ژمارێ بگوهۆڕە",
     invalidName: "ناڤێ نەخۆشی بنڤیسە.",
@@ -146,7 +166,7 @@ const copy: Record<UiLocale, {
     slotTaken: "ئەڤ دەمە نوو هاتە گرتن. ڤەگەڕە و دەمەکێ دی یێ بەردەست هەلبژێرە.",
     unavailable: "ئەڤ دەمە ئێدی بەردەست نینە.",
     failed: "Atlas نەشیا وادەیێ تەمام بکەت. جارەکا دی هەول بدە.",
-    privacy: "ژمارا پشتڕاستکری یا تە تەنێ بۆ ڤێ وادەیێ دهێتە بکارئینان. دەستگەهشتنێ ب شوێنێ کارێ کلینیکێ نادات.",
+    privacy: "ژمارا پشتڕاستکری یا تە ناسنامەیا پڕۆفایلا تایبەتا نەخۆشی ل Atlas ـە. کلینیک تەنێ زانیاریێن پێدڤی بۆ ڤێ وادەیێ وەردگریت.",
   },
   ar: {
     patientName: "اسم المريض",
@@ -166,8 +186,13 @@ const copy: Record<UiLocale, {
     code: "رمز التحقق",
     paste: "لصق الرمز",
     pasteFailed: "تعذر لصق رمز صالح. اكتبه يدوياً.",
-    verify: "تحقق واحجز",
-    verifying: "جارٍ التحقق والحجز…",
+    verify: "تحقق من الرقم",
+    verifying: "جارٍ التحقق…",
+    profileTitle: "ملفك كمريض",
+    profileHelp: "يعيد Atlas استخدام هذه المعلومات في الحجوزات القادمة بعد توثيق نفس رقم الموبايل. راجعها قبل الحجز.",
+    preferredLanguage: "اللغة المفضلة",
+    book: "احجز الموعد",
+    booking: "جارٍ الحجز…",
     resend: "إرسال رمز آخر",
     change: "تغيير الرقم",
     invalidName: "اكتب اسم المريض.",
@@ -178,7 +203,7 @@ const copy: Record<UiLocale, {
     slotTaken: "هذا الوقت انحجز للتو. ارجع واختر وقتاً متاحاً آخر.",
     unavailable: "هذا الوقت لم يعد متاحاً.",
     failed: "تعذر على Atlas إكمال الحجز. حاول مرة ثانية.",
-    privacy: "رقمك الموثق يُستخدم لهذا الموعد فقط. لا يعطيك أي وصول إلى مساحة عمل العيادة.",
+    privacy: "رقمك الموثق يعرّف ملف المريض الخاص بك في Atlas. العيادة تستلم فقط المعلومات اللازمة لهذا الموعد.",
   },
 };
 
@@ -193,9 +218,11 @@ export function PatientBookingForm(props: BookingFormProps) {
   const [phoneInput, setPhoneInput] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState("");
   const [token, setToken] = useState("");
+  const [accessToken, setAccessToken] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("sms");
+  const [preferredLanguage, setPreferredLanguage] = useState<UiLocale>(props.locale);
   const [reminderConsent, setReminderConsent] = useState(false);
-  const [step, setStep] = useState<"details" | "code">("details");
+  const [step, setStep] = useState<"details" | "code" | "profile">("details");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [idempotencyKey] = useState(() => crypto.randomUUID());
@@ -203,12 +230,6 @@ export function PatientBookingForm(props: BookingFormProps) {
   async function sendCode(event?: FormEvent) {
     event?.preventDefault();
     if (busy) return;
-
-    const name = patientName.trim();
-    if (name.length < 2 || name.length > 120) {
-      setError(t.invalidName);
-      return;
-    }
 
     const phone = normalizeAuthPhone(phoneInput);
     if (!phone || !/^\+9647\d{9}$/.test(phone)) {
@@ -234,6 +255,7 @@ export function PatientBookingForm(props: BookingFormProps) {
 
       setVerifiedPhone(phone);
       setToken("");
+      setAccessToken("");
       setStep("code");
     } catch {
       setError(t.failed);
@@ -242,7 +264,7 @@ export function PatientBookingForm(props: BookingFormProps) {
     }
   }
 
-  async function verifyAndBook(event: FormEvent) {
+  async function verifyAndContinue(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
 
@@ -261,12 +283,53 @@ export function PatientBookingForm(props: BookingFormProps) {
         token: normalizedToken,
         type: "sms",
       });
-      const accessToken = data.session?.access_token;
-      if (verifyError || !accessToken) {
+      const verifiedAccessToken = data.session?.access_token;
+      if (verifyError || !verifiedAccessToken) {
         setError(isRateLimitError(verifyError) ? t.rateLimited : t.incorrectCode);
         return;
       }
 
+      const profileResponse = await fetch("/api/care/patient-profile", {
+        headers: { Authorization: `Bearer ${verifiedAccessToken}` },
+        cache: "no-store",
+      });
+      const saved = await profileResponse.json().catch(() => null) as {
+        profile?: { displayName?: string; preferredLanguage?: UiLocale } | null;
+      } | null;
+      if (!profileResponse.ok) {
+        setError(t.failed);
+        return;
+      }
+
+      setAccessToken(verifiedAccessToken);
+      setPatientName(saved?.profile?.displayName ?? "");
+      setPreferredLanguage(saved?.profile?.preferredLanguage ?? props.locale);
+      setStep("profile");
+    } catch {
+      setError(t.failed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function bookAppointment(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+
+    const name = patientName.trim();
+    if (name.length < 2 || name.length > 120) {
+      setError(t.invalidName);
+      return;
+    }
+    if (!accessToken) {
+      setError(t.incorrectCode);
+      setStep("code");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    try {
       const bookingResponse = await fetch("/api/care/booking/finalize", {
         method: "POST",
         headers: {
@@ -277,9 +340,9 @@ export function PatientBookingForm(props: BookingFormProps) {
           clinicSlug: props.clinicSlug,
           doctorSlug: props.doctorSlug,
           slotAt: props.slotAt,
-          patientName: patientName.trim(),
+          patientName: name,
           idempotencyKey,
-          reminderLanguage: props.locale,
+          reminderLanguage: preferredLanguage,
           reminderConsent,
         }),
       });
@@ -313,18 +376,6 @@ export function PatientBookingForm(props: BookingFormProps) {
       {step === "details" ? (
         <form className="atlas-booking-form" onSubmit={sendCode}>
           <label>
-            <span>{t.patientName}</span>
-            <input
-              name="patient_name"
-              value={patientName}
-              onChange={(event) => { setPatientName(event.target.value); setError(""); }}
-              maxLength={120}
-              autoComplete="name"
-              placeholder={t.patientNamePlaceholder}
-              required
-            />
-          </label>
-          <label>
             <span>{t.phone}</span>
             <input
               name="phone"
@@ -352,21 +403,12 @@ export function PatientBookingForm(props: BookingFormProps) {
             />
           ) : null}
 
-          <label className="atlas-booking-consent">
-            <input
-              type="checkbox"
-              checked={reminderConsent}
-              onChange={(event) => setReminderConsent(event.target.checked)}
-            />
-            <span><strong>{t.reminders}</strong><small>{t.remindersHelp}</small></span>
-          </label>
-
           <button className="button atlas-booking-primary" type="submit" disabled={busy}>
             {busy ? t.sending : t.send}
           </button>
         </form>
-      ) : (
-        <form className="atlas-booking-form" onSubmit={verifyAndBook}>
+      ) : step === "code" ? (
+        <form className="atlas-booking-form" onSubmit={verifyAndContinue}>
           <div className="atlas-booking-code-heading">
             <strong>{t.codeTitle}</strong>
             <p>{t.codeHelp} <span dir="ltr">{maskPhone(verifiedPhone)}</span>.</p>
@@ -387,10 +429,49 @@ export function PatientBookingForm(props: BookingFormProps) {
             <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => void sendCode()}>
               {t.resend}
             </button>
-            <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setStep("details"); setToken(""); setError(""); }}>
+            <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => { setStep("details"); setToken(""); setAccessToken(""); setError(""); }}>
               {t.change}
             </button>
           </div>
+        </form>
+      ) : (
+        <form className="atlas-booking-form" onSubmit={bookAppointment}>
+          <div className="atlas-booking-code-heading">
+            <strong>{t.profileTitle}</strong>
+            <p>{t.profileHelp}</p>
+          </div>
+          <label>
+            <span>{t.patientName}</span>
+            <input
+              name="patient_name"
+              value={patientName}
+              onChange={(event) => { setPatientName(event.target.value); setError(""); }}
+              maxLength={120}
+              autoComplete="name"
+              placeholder={t.patientNamePlaceholder}
+              required
+            />
+          </label>
+          <label>
+            <span>{t.preferredLanguage}</span>
+            <select value={preferredLanguage} onChange={(event) => setPreferredLanguage(event.target.value as UiLocale)}>
+              <option value="ku">کوردی — سۆرانی</option>
+              <option value="bd">کوردی — بادینی</option>
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <label className="atlas-booking-consent">
+            <input
+              type="checkbox"
+              checked={reminderConsent}
+              onChange={(event) => setReminderConsent(event.target.checked)}
+            />
+            <span><strong>{t.reminders}</strong><small>{t.remindersHelp}</small></span>
+          </label>
+          <button className="button atlas-booking-primary" type="submit" disabled={busy}>
+            {busy ? t.booking : t.book}
+          </button>
         </form>
       )}
 
