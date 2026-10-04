@@ -64,3 +64,17 @@ test("pending Kurdish phone text is not forced into left-to-right English render
   assert.match(manager, /<strong>\{copy\.pending\}<\/strong>/);
   assert.doesNotMatch(manager, /\{currentPhone \? formatPhoneForDisplay\(currentPhone\) : copy\.pending\}/);
 });
+
+
+test("Settings support and legal footer follows the active Atlas locale", async () => {
+  const settings = await readFile(new URL("../app/dashboard/settings/page.tsx", import.meta.url), "utf8");
+
+  assert.match(settings, /supportLink: string/);
+  assert.match(settings, /privacyLink: string/);
+  assert.match(settings, /termsLink: string/);
+  assert.match(settings, /href="\/support">\{copy\.supportLink\}/);
+  assert.match(settings, /href="\/privacy">\{copy\.privacyLink\}/);
+  assert.match(settings, /href="\/terms">\{copy\.termsLink\}/);
+  assert.match(settings, /supportLink: "یارمەتی"/);
+  assert.match(settings, /privacyLink: "الخصوصية"/);
+});
