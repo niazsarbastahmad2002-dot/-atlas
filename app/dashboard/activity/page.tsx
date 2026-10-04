@@ -282,7 +282,7 @@ export default async function ActivityPage({ searchParams }: Props) {
       </header>
 
       {clinics.length > 1 ? (
-        <form className="clinic-switcher history-clinic-switcher" method="get">
+        <form key={clinic.id} className="clinic-switcher history-clinic-switcher" method="get">
           <label htmlFor="clinic-activity">{t.clinic}</label>
           <select id="clinic-activity" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
           <button className="button button-ghost button-small" type="submit">{t.open}</button>
