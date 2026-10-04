@@ -64,3 +64,10 @@ test("staff role and administrator transfer fields lock with their pending serve
   assert.match(fields, /disabled=\{pending\}/);
   assert.match(fields, /aria-busy=\{pending\}/);
 });
+
+test("staff access drafts remount when switching clinic workspaces", async () => {
+  const page = await read("app/dashboard/staff/page.tsx");
+
+  assert.ok(page.includes('<form key={`${clinic.id}:${member.user_id}`} action={updateStaffRole.bind(null, clinic.id, member.user_id)}>'));
+  assert.ok(page.includes('<form key={clinic.id} className="administrator-transfer-form" action={transferClinicAdministrator.bind(null, clinic.id)}>'));
+});
