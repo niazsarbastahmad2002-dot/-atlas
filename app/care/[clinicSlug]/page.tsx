@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { formatIraqiMobile } from "@/lib/appointments";
-import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { ShareProfileButton } from "../share-profile-button";
 import { AtlasPatientNav } from "../patient-nav";
+import { patientLocaleHref, resolvePatientLocale } from "../patient-locale";
 
 export const dynamic = "force-dynamic";
 
 type ClinicProfilePageProps = {
   params: Promise<{ clinicSlug: string }>;
+  searchParams: Promise<{ lang?: string | string[] }>;
 };
 
 const clinicCopy: Record<UiLocale, {
@@ -152,8 +153,9 @@ export async function generateMetadata({ params }: ClinicProfilePageProps): Prom
   }
 }
 
-export default async function ClinicProfilePage({ params }: ClinicProfilePageProps) {
-  const [{ clinicSlug }, locale] = await Promise.all([params, getUiLocale()]);
+export default async function ClinicProfilePage({ params, searchParams }: ClinicProfilePageProps) {
+  const [{ clinicSlug }, query] = await Promise.all([params, searchParams]);
+  const locale = await resolvePatientLocale(query.lang);
   const copy = clinicCopy[locale];
 
   if (!safeSlug(clinicSlug)) return <Unavailable copy={copy} locale={locale} />;
@@ -227,14 +229,14 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
                     <strong>{doctor.display_name}</strong>
                     <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
                   </div>
-                  <Link className="button button-ghost button-small" href={`/care/${clinicSlug}/${doctor.slug}`}>{copy.openDoctor}</Link>
+                  <Link className="button button-ghost button-small" href={patientLocaleHref(`/care/${clinicSlug}/${doctor.slug}`, locale)}>{copy.openDoctor}</Link>
                 </article>
               ))}
             </div>
           ) : <p className="quiet">{copy.noDoctors}</p>}
         </section>
 
-        <Link className="button button-ghost atlas-care-clinic-back" href="/care">{copy.back}</Link>
+        <Link className="button button-ghost atlas-care-clinic-back" href={patientLocaleHref("/care", locale)}>{copy.back}</Link>
       </article>
 
       <style>{`
@@ -253,7 +255,7 @@ function Unavailable({ copy, locale }: { copy: typeof clinicCopy[UiLocale]; loca
         <section className="auth-card" lang={meta.language} dir={meta.direction}>
           <h1>{copy.unavailableTitle}</h1>
           <p>{copy.unavailableHelp}</p>
-          <Link className="button button-ghost" href="/care">{copy.back}</Link>
+          <Link className="button button-ghost" href={patientLocaleHref("/care", locale)}>{copy.back}</Link>
         </section>
       </div>
       <style>{`

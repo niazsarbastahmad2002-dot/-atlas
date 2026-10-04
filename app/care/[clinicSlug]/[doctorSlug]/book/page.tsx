@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
-import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { createClient } from "@/lib/supabase/server";
 import { PatientBookingForm } from "./booking-form";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
+import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 type BookingPageProps = {
   params: Promise<{ clinicSlug: string; doctorSlug: string }>;
-  searchParams: Promise<{ slot?: string | string[] }>;
+  searchParams: Promise<{ slot?: string | string[]; lang?: string | string[] }>;
 };
 
 const copy: Record<UiLocale, {
@@ -108,13 +108,14 @@ function slotLabel(date: Date, locale: UiLocale) {
 }
 
 export default async function BookingPage({ params, searchParams }: BookingPageProps) {
-  const [{ clinicSlug, doctorSlug }, query, locale] = await Promise.all([params, searchParams, getUiLocale()]);
+  const [{ clinicSlug, doctorSlug }, query] = await Promise.all([params, searchParams]);
+  const locale = await resolvePatientLocale(query.lang);
   const t = copy[locale];
   const slotRaw = typeof query.slot === "string" ? query.slot : "";
   const requestedSlot = new Date(slotRaw);
   const doctorHref = safeSlug(clinicSlug) && safeSlug(doctorSlug)
-    ? `/care/${clinicSlug}/${doctorSlug}`
-    : "/care";
+    ? patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}`, locale)
+    : patientLocaleHref("/care", locale);
 
   if (
     !safeSlug(clinicSlug)
@@ -186,7 +187,7 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
           </div>
         )}
 
-        <Link className="button button-ghost atlas-booking-back" href={`/care/${clinicSlug}/${doctorSlug}`}>{t.back}</Link>
+        <Link className="button button-ghost atlas-booking-back" href={doctorHref}>{t.back}</Link>
       </article>
 
       <style>{`

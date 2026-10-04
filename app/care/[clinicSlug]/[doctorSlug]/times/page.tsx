@@ -3,10 +3,10 @@ import Link from "next/link";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { formatIraqiMobile } from "@/lib/appointments";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
-import { getUiLocale } from "@/lib/i18n/ui-server";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
+import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 
 type TimesPageProps = {
   params: Promise<{ clinicSlug: string; doctorSlug: string }>;
+  searchParams: Promise<{ lang?: string | string[] }>;
 };
 
 const copy: Record<UiLocale, {
@@ -116,12 +117,13 @@ function slotParts(value: string, locale: UiLocale) {
   };
 }
 
-export default async function PublicDoctorTimesPage({ params }: TimesPageProps) {
-  const [{ clinicSlug, doctorSlug }, locale] = await Promise.all([params, getUiLocale()]);
+export default async function PublicDoctorTimesPage({ params, searchParams }: TimesPageProps) {
+  const [{ clinicSlug, doctorSlug }, query] = await Promise.all([params, searchParams]);
+  const locale = await resolvePatientLocale(query.lang);
   const t = copy[locale];
   const doctorHref = safeSlug(clinicSlug) && safeSlug(doctorSlug)
-    ? `/care/${clinicSlug}/${doctorSlug}`
-    : "/care";
+    ? patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}`, locale)
+    : patientLocaleHref("/care", locale);
 
   if (!safeSlug(clinicSlug) || !safeSlug(doctorSlug)) {
     return <Unavailable copy={t} locale={locale} href={doctorHref} />;
@@ -240,7 +242,7 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
                   {group.slots.map((slot) => bookingReady ? (
                     <Link
                       className="button button-ghost atlas-time-option"
-                      href={`/care/${clinicSlug}/${doctorSlug}/book?slot=${encodeURIComponent(slot.slotAt)}`}
+                      href={patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}/book`, locale, { slot: slot.slotAt })}
                       key={slot.slotAt}
                     >
                       <span dir="auto">{slot.label}</span>
@@ -264,7 +266,7 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
 
         <div className="atlas-times-actions">
           {phone ? <a className="button" href={`tel:${profile.public_phone}`}>{t.call}</a> : null}
-          <Link className="button button-ghost" href={`/care/${clinicSlug}/${doctorSlug}`}>{t.back}</Link>
+          <Link className="button button-ghost" href={doctorHref}>{t.back}</Link>
         </div>
       </article>
 
