@@ -208,7 +208,7 @@ export function PatientLinkButton({
                 <span className="field-help patient-link-copy-error" role="alert">{t.copyFailed}</span>
                 <input
                   className="patient-link-copy-fallback"
-                  value={initialLink}
+                  value={initialLink ?? ""}
                   readOnly
                   dir="ltr"
                   aria-label={t.copy}
