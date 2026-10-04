@@ -34,12 +34,12 @@ type DashboardPageProps = {
 
 const dayCopy: Record<UiLocale, {
   previous: string; today: string; yesterday: string; tomorrow: string; next: string; nextUp: string;
-  appointments: string; empty: string; emptyHelp: string; add: string; reminders: string; order: string; quickDates: string; doctorSchedules: string; limited: string;
+  appointments: string; empty: string; emptyHelp: string; add: string; reminders: string; order: string; quickDates: string; doctorSchedules: string; limited: string; availabilityLimited: string;
 }> = {
-  en: { previous: "Previous", today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow", next: "Next", nextUp: "Next appointment", appointments: "Appointments", empty: "No appointments on this day.", emptyHelp: "Add an appointment when the first patient calls or walks in.", add: "Add appointment", reminders: "Patient reminders", order: "Appointment order", quickDates: "Quick schedule dates", doctorSchedules: "Doctor schedules", limited: "This clinic day has more than {count} appointments. Atlas is showing the first {count}; schedule counts may be incomplete." },
-  ku: { previous: "پێشوو", today: "ئەمڕۆ", yesterday: "دوێنێ", tomorrow: "سبەی", next: "داهاتوو", nextUp: "وادەی داهاتوو", appointments: "وادەکان", empty: "لەم ڕۆژە هیچ وادەیەک نییە.", emptyHelp: "کاتێک یەکەم نەخۆش پەیوەندی کرد یان هات، وادەکە زیاد بکە.", add: "وادە زیاد بکە", reminders: "بیرخستنەوەی نەخۆش", order: "ڕیزی وادە", quickDates: "ڕۆژە خێراکان", doctorSchedules: "خشتەی پزیشکەکان", limited: "ئەم ڕۆژەی کلینیک زیاتر لە {count} وادەی هەیە. Atlas تەنها یەکەم {count} وادە پیشان دەدات؛ ژمارەکانی خشتەکە لەوانەیە تەواو نەبن." },
-  bd: { previous: "بەرێ", today: "ئەڤرۆ", yesterday: "دووهی", tomorrow: "سبەهێ", next: "پاش", nextUp: "وادەیا پاش", appointments: "وادە", empty: "ل ڤێ ڕۆژێ چ وادە نینن.", emptyHelp: "دەمێ نەخۆشێ ئێکێ پەیوەندی دکەت یان دهێت، وادەیێ زێدە بکە.", add: "وادە زێدە بکە", reminders: "بیرخستنەوەیێن نەخۆشی", order: "ڕێزا وادەیان", quickDates: "ڕۆژێن خێرا", doctorSchedules: "خشتەیێن دکتۆران", limited: "ڤێ ڕۆژا کلینیکێ پتر ژ {count} وادە هەنە. Atlas تەنێ {count} وادەیێن ئێکێ نیشان ددەت؛ ژمارێن خشتەیێ دکارن ناتەمام بن." },
-  ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد", quickDates: "أيام سريعة", doctorSchedules: "جداول الأطباء", limited: "هذا اليوم في العيادة يحتوي على أكثر من {count} موعد. يعرض Atlas أول {count} فقط، لذلك قد تكون أعداد الجدول غير مكتملة." },
+  en: { previous: "Previous", today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow", next: "Next", nextUp: "Next appointment", appointments: "Appointments", empty: "No appointments on this day.", emptyHelp: "Add an appointment when the first patient calls or walks in.", add: "Add appointment", reminders: "Patient reminders", order: "Appointment order", quickDates: "Quick schedule dates", doctorSchedules: "Doctor schedules", limited: "This clinic day has more than {count} appointments. Atlas is showing the first {count}; schedule counts may be incomplete.", availabilityLimited: "Future availability is partially loaded because this clinic has more than {count} active upcoming appointments. Atlas will still prevent double-booking when you save." },
+  ku: { previous: "پێشوو", today: "ئەمڕۆ", yesterday: "دوێنێ", tomorrow: "سبەی", next: "داهاتوو", nextUp: "وادەی داهاتوو", appointments: "وادەکان", empty: "لەم ڕۆژە هیچ وادەیەک نییە.", emptyHelp: "کاتێک یەکەم نەخۆش پەیوەندی کرد یان هات، وادەکە زیاد بکە.", add: "وادە زیاد بکە", reminders: "بیرخستنەوەی نەخۆش", order: "ڕیزی وادە", quickDates: "ڕۆژە خێراکان", doctorSchedules: "خشتەی پزیشکەکان", limited: "ئەم ڕۆژەی کلینیک زیاتر لە {count} وادەی هەیە. Atlas تەنها یەکەم {count} وادە پیشان دەدات؛ ژمارەکانی خشتەکە لەوانەیە تەواو نەبن.", availabilityLimited: "بەردەستبوونی کاتە داهاتووەکان بەشێکی بارکراوە، چونکە کلینیکەکە زیاتر لە {count} وادەی چالاکی داهاتووی هەیە. Atlas لە کاتی پاشەکەوتکردن هەرگیز ڕێگە بە دوو وادە لە یەک کاتدا نادات." },
+  bd: { previous: "بەرێ", today: "ئەڤرۆ", yesterday: "دووهی", tomorrow: "سبەهێ", next: "پاش", nextUp: "وادەیا پاش", appointments: "وادە", empty: "ل ڤێ ڕۆژێ چ وادە نینن.", emptyHelp: "دەمێ نەخۆشێ ئێکێ پەیوەندی دکەت یان دهێت، وادەیێ زێدە بکە.", add: "وادە زێدە بکە", reminders: "بیرخستنەوەیێن نەخۆشی", order: "ڕێزا وادەیان", quickDates: "ڕۆژێن خێرا", doctorSchedules: "خشتەیێن دکتۆران", limited: "ڤێ ڕۆژا کلینیکێ پتر ژ {count} وادە هەنە. Atlas تەنێ {count} وادەیێن ئێکێ نیشان ددەت؛ ژمارێن خشتەیێ دکارن ناتەمام بن.", availabilityLimited: "بەردەستبوونا دەمێن پاشێ بەشەک هاتیە بارکرن، چونکی کلینیک پتر ژ {count} وادەیێن چالاک یێن پاشێ هەنە. Atlas دەمێ پاراستنێ هەر دێ دوو وادە ل ئێک دەمی ڕێ نەدەت." },
+  ar: { previous: "السابق", today: "اليوم", yesterday: "أمس", tomorrow: "باچر", next: "التالي", nextUp: "الموعد التالي", appointments: "المواعيد", empty: "ماكو مواعيد بهذا اليوم.", emptyHelp: "ضيف موعد من يتصل أول مريض أو يوصل للعيادة.", add: "إضافة موعد", reminders: "تذكيرات المرضى", order: "ترتيب الموعد", quickDates: "أيام سريعة", doctorSchedules: "جداول الأطباء", limited: "هذا اليوم في العيادة يحتوي على أكثر من {count} موعد. يعرض Atlas أول {count} فقط، لذلك قد تكون أعداد الجدول غير مكتملة.", availabilityLimited: "توفر الأوقات المستقبلية محمّل جزئياً لأن العيادة عندها أكثر من {count} موعد فعال قادم. Atlas سيظل يمنع الحجز المزدوج عند الحفظ." },
 };
 
 const contactRelationshipCopy: Record<UiLocale, {
@@ -177,18 +177,30 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .order("appointment_at", { ascending: true })
         .order("id", { ascending: true })
         .range(from, to);
-      if (error) return { data: null, error };
+      if (error) return { data: null, error, limited: false };
       const page = data ?? [];
       loaded.push(...page);
-      if (page.length < OCCUPIED_SLOT_PAGE_SIZE) break;
+      if (page.length < OCCUPIED_SLOT_PAGE_SIZE) return { data: loaded, error: null, limited: false };
     }
-    return { data: loaded, error: null };
+
+    const { data: overflow, error: overflowError } = await supabase.from("appointments")
+      .select("id")
+      .eq("clinic_id", clinic.id)
+      .is("voided_at", null)
+      .in("status", ["pending", "confirmed"])
+      .gte("appointment_at", new Date(now - 5 * 60 * 1000).toISOString())
+      .lte("appointment_at", bookingHorizonEnd.toISOString())
+      .order("appointment_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(OCCUPIED_SLOT_VIEW_LIMIT, OCCUPIED_SLOT_VIEW_LIMIT);
+    if (overflowError) return { data: null, error: overflowError, limited: false };
+    return { data: loaded, error: null, limited: Boolean(overflow?.length) };
   };
 
   const [
     { data: membership, error: membershipError },
     { data: appointments, error: appointmentError, count: appointmentCount },
-    { data: occupiedAppointments, error: occupiedError },
+    { data: occupiedAppointments, error: occupiedError, limited: occupiedSlotsLimited },
     { data: reminderSettings, error: reminderSettingsError },
     { data: doctorWorkflowRows, error: workflowError },
     { data: doctors, error: doctorsError },
@@ -287,6 +299,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <section className="stats workspace-stats schedule-summary" aria-label={days.appointments}><Stat label={summary.all} value={visibleRows.length} tone="total" locale={locale} /><Stat label={summary.notConfirmed} value={pending} tone="pending" locale={locale} /><Stat label={summary.confirmed} value={confirmed} tone="confirmed" locale={locale} /><Stat label={summary.completed} value={completed} tone="completed" locale={locale} /><Stat label={summary.noShow} value={noShow} tone="no-show" locale={locale} /><Stat label={summary.cancelled} value={cancelled} tone="cancelled" locale={locale} /></section>
     <div className={`workspace-grid ${canCreateOnSelectedDay ? "" : "is-read-only-day"}`}>
       {canCreateOnSelectedDay ? <section className="panel appointment-composer" id="new-appointment"><div className="panel-heading composer-heading"><div><div className="eyebrow">{relativeDay ?? formatBaghdadDay(selectedDate, locale)}</div><h2>{t.newAppointment}</h2></div><span className="composer-shortcut" aria-hidden="true">+</span></div>
+        {occupiedSlotsLimited ? <p className="notice workspace-notice" role="status">{days.availabilityLimited.replace("{count}", localizeDigits(OCCUPIED_SLOT_VIEW_LIMIT, locale))}</p> : null}
         <form action={createAppointment} className="stack-form appointment-form" key={`${clinic.id}:${selectedDay}:${selectedDoctor?.id ?? "none"}`}><input type="hidden" name="clinic_id" value={clinic.id} /><input type="hidden" name="return_day" value={selectedDay} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
           <label htmlFor="patient_name">{t.patientName}</label><input id="patient_name" name="patient_name" autoComplete="name" minLength={2} maxLength={120} required />
           <label htmlFor="patient_phone">{t.iraqiMobile}</label><input id="patient_phone" name="patient_phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={24} pattern="(?:[+]?(?:[9٩۹][6٦۶][4٤۴])|[0٠۰])[7٧۷][0-9٠-٩۰-۹ .\(\)\-]{9,16}" placeholder="0750 000 0000" aria-describedby="phone-help" dir="ltr" required /><p className="field-help" id="phone-help">{t.phoneHelp}</p>
