@@ -172,19 +172,26 @@ test("continuity cache cleanup still clears IndexedDB when localStorage is block
 });
 
 
-test("continuity ignores stale snapshot responses after clinic or doctor navigation", () => {
+test("continuity scopes stale responses and serializes protected cache mutations", () => {
   const component = source("app/dashboard/continuity-mode.tsx");
 
   assert.match(component, /const snapshotRequestRef = useRef\(0\)/);
-  assert.match(component, /const snapshotPersistenceRef = useRef<Promise<void>>\(Promise\.resolve\(\)\)/);
-  assert.match(component, /const requestId = \+\+snapshotRequestRef\.current/);
-  assert.match(component, /if \(requestId !== snapshotRequestRef\.current\) return/);
-  assert.match(component, /snapshotPersistenceRef\.current = snapshotPersistenceRef\.current/);
+  assert.match(component, /const snapshotScopeRef = useRef\(0\)/);
+  assert.match(component, /const clearedScopeRef = useRef<number \| null>\(null\)/);
+  assert.match(component, /const snapshotMutationRef = useRef<Promise<void>>\(Promise\.resolve\(\)\)/);
+  assert.match(component, /const scopeVersion = \+\+snapshotScopeRef\.current/);
+  assert.match(component, /if \(scopeVersion !== snapshotScopeRef\.current\) return/);
+  assert.match(component, /clearedScopeRef\.current = scopeVersion/);
+  assert.match(component, /await clearBrowserContinuityCache\(\)/);
+  assert.ok((component.match(/snapshotMutationRef\.current = snapshotMutationRef\.current/g) ?? []).length >= 2);
+  assert.match(component, /requestId !== snapshotRequestRef\.current/);
+  assert.match(component, /clearedScopeRef\.current === scopeVersion/);
   assert.match(component, /await persistBrowserSnapshot\(snapshot\)/);
+  assert.match(component, /snapshotScopeRef\.current \+= 1/);
   assert.match(component, /snapshotRequestRef\.current \+= 1/);
   assert.ok(
-    component.indexOf("if (requestId !== snapshotRequestRef.current) return")
-      < component.indexOf('nativePost({ type: "snapshot", snapshot: body.snapshot })'),
-    "stale snapshot responses must be rejected before any cache/native side effect",
+    component.indexOf("if (body?.clear === true)")
+      < component.indexOf("requestId !== snapshotRequestRef.current"),
+    "same-scope authorization clears must not be discarded merely because a newer refresh started",
   );
 });
