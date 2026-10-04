@@ -56,8 +56,10 @@ test("time picker exposes selected choices to assistive technology", () => {
   const createField = readFileSync(new URL("../app/dashboard/appointment-time-field-v2.tsx", import.meta.url), "utf8");
   const editField = readFileSync(new URL("../app/dashboard/appointment-edit-datetime-field.tsx", import.meta.url), "utf8");
 
-  assert.match(createField, /aria-current=\{cell\.value === date \? "date" : undefined\}/);
-  assert.ok((createField.match(/aria-pressed=/g) ?? []).length >= 4);
-  assert.match(editField, /aria-current=\{cell\.value === date \? "date" : undefined\}/);
-  assert.ok((editField.match(/aria-pressed=/g) ?? []).length >= 2);
+  assert.match(createField, /aria-pressed=\{cell\.value === date\}/);
+  assert.ok((createField.match(/aria-pressed=/g) ?? []).length >= 5);
+  assert.match(editField, /aria-pressed=\{cell\.value === date\}/);
+  assert.ok((editField.match(/aria-pressed=/g) ?? []).length >= 3);
+  assert.doesNotMatch(createField, /aria-current=\{cell\.value === date/);
+  assert.doesNotMatch(editField, /aria-current=\{cell\.value === date/);
 });
