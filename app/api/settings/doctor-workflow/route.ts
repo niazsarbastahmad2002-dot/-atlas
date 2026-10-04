@@ -69,7 +69,10 @@ export async function GET(request: Request) {
   const ctx = await context(clinicId, doctorId);
   if (!ctx) return NextResponse.json({ error: "unavailable" }, { status: 404 });
 
-  const [{ data: settings }, { data: provider }] = await Promise.all([
+  const [
+    { data: settings, error: settingsError },
+    { data: provider, error: providerError },
+  ] = await Promise.all([
     ctx.db.from("doctor_workflow_settings")
       .select("appointment_interval_minutes, reminders_enabled, reminder_lead_minutes, reminder_second_lead_minutes, default_reminder_language")
       .eq("clinic_id", clinicId)
@@ -80,6 +83,17 @@ export async function GET(request: Request) {
       .eq("clinic_id", clinicId)
       .maybeSingle(),
   ]);
+
+  if (settingsError || providerError) {
+    console.error("Atlas doctor workflow read failed", {
+      settingsCode: settingsError?.code ?? null,
+      providerCode: providerError?.code ?? null,
+    });
+    return NextResponse.json(
+      { error: "settings_unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   if (!settings) return NextResponse.json({ error: "settings_unavailable" }, { status: 404 });
 
