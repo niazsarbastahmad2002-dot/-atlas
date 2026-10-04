@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { localizeDigits } from "@/lib/i18n/format";
+import { normalizeName, normalizePhone } from "@/lib/mobile-appointment-search";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { deleteArchivedAppointments } from "./actions";
 
@@ -116,13 +117,6 @@ const copy = {
   },
 } as const;
 
-function normalizeHistorySearch(value: string) {
-  return value
-    .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0))
-    .toLowerCase();
-}
-
 const statusLabels: Record<UiLocale, Record<string, string>> = {
   en: { pending: "Pending", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "No-show", voided: "Removed" },
   ku: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراوە", cancelled: "هەڵوەشێنراوەتەوە", completed: "تەواوبوو", no_show: "نەهات", voided: "لابراوە" },
@@ -151,15 +145,16 @@ export function HistoryClient({
   const [pending, startTransition] = useTransition();
 
   const visibleRows = useMemo(() => {
-    const needle = normalizeHistorySearch(query.trim());
+    const rawQuery = query.trim();
+    const nameNeedle = normalizeName(rawQuery);
+    const phoneDigits = normalizePhone(rawQuery);
     return rows
       .filter((row) => filter === "all" || row.removed)
       .filter((row) => {
-        if (!needle) return true;
-        if (normalizeHistorySearch(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(needle)) return true;
-        const phoneQuery = /^[0-9+().\-\s]+$/.test(needle);
-        const digits = needle.replace(/[^0-9]/g, "");
-        return phoneQuery && digits.length >= 4 && row.patientPhone.replace(/[^0-9]/g, "").includes(digits);
+        if (!rawQuery) return true;
+        if (normalizeName(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(nameNeedle)) return true;
+        const phoneQuery = !/\p{L}/u.test(rawQuery);
+        return phoneQuery && phoneDigits.length >= 4 && normalizePhone(row.patientPhone).includes(phoneDigits);
       })
       .sort((a, b) => sort === "newest"
         ? new Date(b.appointmentAt).getTime() - new Date(a.appointmentAt).getTime()
