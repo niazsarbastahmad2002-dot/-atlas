@@ -51,3 +51,12 @@ test("activity history stays inside the Settings navigation section", () => {
 
   assert.match(navigation, /visiblePath\.startsWith\("\/dashboard\/activity"\)/);
 });
+
+
+test("active navigation links expose current-page semantics", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.ok((navigation.match(/aria-current=\{onSchedule \? "page" : undefined\}/g) ?? []).length >= 2);
+  assert.match(navigation, /aria-current=\{onAssistant \? "page" : undefined\}/);
+  assert.ok((navigation.match(/aria-current=\{onSettings \? "page" : undefined\}/g) ?? []).length >= 2);
+});
