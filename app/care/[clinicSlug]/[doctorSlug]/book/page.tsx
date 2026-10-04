@@ -111,6 +111,7 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
   const [{ clinicSlug, doctorSlug }, query] = await Promise.all([params, searchParams]);
   const locale = await resolvePatientLocale(query.lang);
   const t = copy[locale];
+  const meta = uiLocaleMeta[locale];
   const slotRaw = typeof query.slot === "string" ? query.slot : "";
   const requestedSlot = new Date(slotRaw);
   const doctorHref = safeSlug(clinicSlug) && safeSlug(doctorSlug)
@@ -160,7 +161,7 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
   );
 
   return (
-    <main className="marketing-page atlas-booking-page">
+    <main className="marketing-page atlas-booking-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
 
       <article className="shell atlas-booking-shell">
