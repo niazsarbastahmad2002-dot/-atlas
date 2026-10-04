@@ -98,6 +98,12 @@ export type Database = {
         Update: { active?: boolean; clinic_id?: string; created_at?: string; created_by?: string | null; display_order?: number; id?: string; name?: string; updated_at?: string }
         Relationships: [{ foreignKeyName: "doctors_clinic_id_fkey"; columns: ["clinic_id"]; isOneToOne: false; referencedRelation: "clinics"; referencedColumns: ["id"] }]
       }
+      patient_profiles: {
+        Row: { created_at: string; display_name: string; preferred_language: string; updated_at: string; user_id: string }
+        Insert: { created_at?: string; display_name: string; preferred_language?: string; updated_at?: string; user_id: string }
+        Update: { created_at?: string; display_name?: string; preferred_language?: string; updated_at?: string; user_id?: string }
+        Relationships: []
+      }
       pending_reminder_delivery_events: {
         Row: { error_code: string | null; event_key: string; occurred_at: string; provider_message_id: string; received_at: string; status: string }
         Insert: { error_code?: string | null; event_key: string; occurred_at: string; provider_message_id: string; received_at?: string; status: string }
