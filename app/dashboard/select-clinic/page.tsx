@@ -46,6 +46,7 @@ const copy: Record<UiLocale, {
 export default async function SelectClinicPage() {
   const locale = await getUiLocale();
   const t = copy[locale];
+  const openArrow = locale === "en" ? "→" : "←";
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) redirect("/login");
@@ -74,7 +75,7 @@ export default async function SelectClinicPage() {
           {clinics.map((clinic) => (
             <Link className="clinic-choice" href={`/dashboard?clinic=${clinic.id}`} key={clinic.id}>
               <span data-atlas-user-content="true">{clinic.name}</span>
-              <strong>{t.open} →</strong>
+              <strong>{t.open} <span aria-hidden="true">{openArrow}</span></strong>
             </Link>
           ))}
         </div>
