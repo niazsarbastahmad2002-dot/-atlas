@@ -559,7 +559,8 @@ function badiniNumericDate(date: Date, withWeekday: boolean) {
     weekday: withWeekday ? "short" : undefined,
   }).formatToParts(date);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const weekday = ["یەکشەم", "دووشەم", "سێشەم", "چوارشەم", "پێنجشەم", "هەینی", "شەمبی"][date.getDay()] ?? "";
+  const baghdadDay = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day))).getUTCDay();
+  const weekday = ["یەکشەم", "دووشەم", "سێشەم", "چوارشەم", "پێنجشەم", "هەینی", "شەمبی"][baghdadDay] ?? "";
   const numeric = `${values.day}/${values.month}/${values.year}`.replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)]);
   return withWeekday ? `${weekday}، ${numeric}` : numeric;
 }

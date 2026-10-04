@@ -24,3 +24,11 @@ test("live clinic clock pauses in background and resyncs when Atlas becomes visi
   assert.match(clock, /if \(timer === null\) timer = window\.setInterval\(update, 1_000\)/);
   assert.match(clock, /window\.clearInterval\(timer\)/);
 });
+
+
+test("live clinic clock uses Atlas locale helpers for Badini date and day period copy", () => {
+  const clock = source();
+
+  assert.match(clock, /locale === "bd"[\s\S]*formatBaghdadDay\(now, locale\)/);
+  assert.match(clock, /formatDayPeriod\(baghdadHour < 12 \? "am" : "pm", locale\)/);
+});
