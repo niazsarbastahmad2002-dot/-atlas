@@ -6,7 +6,6 @@ import { type MouseEvent, useEffect, useState } from "react";
 import { trackAtlasEvent } from "@/lib/analytics/client";
 import { classifyAtlasScreen } from "@/lib/analytics/schema";
 import { uiText, type UiLocale } from "@/lib/i18n/ui";
-import { LiveClinicFlow } from "./live-clinic-flow";
 import { flushSettingWrites, hasPendingSettingWrite, needsFreshSettingNavigation } from "./setting-write-barrier";
 
 const scheduleMemoryKey = "atlas:last-schedule-href";
@@ -178,7 +177,6 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
   const onAssistant = visiblePath.startsWith("/dashboard/assistant");
   const onSchedule = visiblePath === "/dashboard";
   const assistantHref = assistantHrefFrom(scheduleHref, searchParams.get("clinic"));
-  const liveFlowKey = [searchParams.get("clinic") ?? "", searchParams.get("doctor") ?? "", searchParams.get("day") ?? ""].join("|");
 
   useEffect(() => {
     setVisiblePath(pathname);
@@ -312,13 +310,6 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
 
       {onSchedule ? (
         <>
-          <LiveClinicFlow
-            key={liveFlowKey}
-            locale={locale}
-            clinicId={searchParams.get("clinic")}
-            doctorId={searchParams.get("doctor")}
-            day={searchParams.get("day")}
-          />
           <div className="atlas-ai-launcher shell">
             <Link href={assistantHref} prefetch={true} onPointerDown={warm(assistantHref)}>
               <SparkleIcon />
