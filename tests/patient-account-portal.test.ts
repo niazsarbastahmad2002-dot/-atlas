@@ -75,3 +75,21 @@ test("home exposes My Appointments without replacing care discovery or clinic wo
   assert.match(home, /href="\/care"/);
   assert.match(home, /href="\/dashboard"/);
 });
+
+
+test("existing verified patients can sign in even when new phone signup is closed", () => {
+  const page = source("app/patient-account/page.tsx");
+  const login = source("app/patient-account/login-form.tsx");
+
+  assert.match(page, /readiness\?\.reachable[\s\S]*readiness\.supabasePhoneEnabled/);
+  assert.doesNotMatch(page, /signInReady[\s\S]{0,180}openPhoneSignupEnabled/);
+  assert.match(page, /allowSignup[\s\S]*openPhoneSignupEnabled[\s\S]*!readiness\.signupDisabled/);
+  assert.match(login, /shouldCreateUser: allowSignup/);
+});
+
+test("appointment RPC failures are never rendered as an authoritative empty account", () => {
+  const page = source("app/patient-account/page.tsx");
+  assert.match(page, /let appointmentsFailed = false/);
+  assert.match(page, /if \(error \|\| !Array\.isArray\(data\)\) appointmentsFailed = true/);
+  assert.match(page, /appointmentsFailed \? \([\s\S]*notice notice-error[\s\S]*loadFailed/);
+});
