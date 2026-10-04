@@ -26,6 +26,8 @@ test("web continuity keeps an encrypted current-day snapshot and stays read-only
   assert.match(component, /AES-GCM/);
   assert.match(component, /extractable|false,/);
   assert.match(component, /crypto\.subtle\.encrypt/);
+  assert.match(component, /requestScope,/);
+  assert.match(component, /persistBrowserSnapshot\(snapshot, \{ clinicId: clinic, doctorId: doctor \}\)/);
   assert.match(component, /serviceWorker\.register\("\/atlas-sw\.js"/);
   assert.match(component, /window\.location\.reload\(\)/);
   assert.match(component, /pointer-events:none/);
@@ -55,6 +57,14 @@ test("browser offline page decrypts and renders only bounded current-day recepti
   assert.match(page, /snapshot\.day !== baghdadDay\(\)/);
   assert.match(page, /18 \* 60 \* 60 \* 1000/);
   assert.match(page, /snapshot\.appointments\.length > 500/);
+  assert.match(page, /new URLSearchParams\(location\.search\)/);
+  assert.match(page, /cachedRequestScope = envelope && envelope\.requestScope/);
+  assert.match(page, /hasOwnProperty\.call\(cachedRequestScope, "clinicId"\)/);
+  assert.match(page, /hasOwnProperty\.call\(cachedRequestScope, "doctorId"\)/);
+  assert.match(page, /requestedClinicId !== cachedRequestScope\.clinicId/);
+  assert.match(page, /requestedDoctorId !== cachedRequestScope\.doctorId/);
+  assert.match(page, /requestedClinicId && snapshot\.clinicId !== requestedClinicId/);
+  assert.match(page, /requestedDoctorId && snapshot\.doctorId !== requestedDoctorId/);
   assert.match(page, /textContent/);
   assert.match(page, /OFFLINE · READ ONLY/);
   assert.doesNotMatch(page, /patientPhone|phoneNumber|reminderConsent|accessToken|refreshToken|providerCredential/);
@@ -186,7 +196,7 @@ test("continuity scopes stale responses and serializes protected cache mutations
   assert.ok((component.match(/snapshotMutationRef\.current = snapshotMutationRef\.current/g) ?? []).length >= 2);
   assert.match(component, /requestId !== snapshotRequestRef\.current/);
   assert.match(component, /clearedScopeRef\.current === scopeVersion/);
-  assert.match(component, /await persistBrowserSnapshot\(snapshot\)/);
+  assert.match(component, /await persistBrowserSnapshot\(snapshot, \{ clinicId: clinic, doctorId: doctor \}\)/);
   assert.match(component, /snapshotScopeRef\.current \+= 1/);
   assert.match(component, /snapshotRequestRef\.current \+= 1/);
   assert.ok(
@@ -212,4 +222,13 @@ test("offline continuity discloses when today's protected schedule is capped", (
   assert.match(nativeStore, /var appointmentsTruncated: Bool\? = nil/);
   assert.match(nativeApp, /snapshot\.appointmentsTruncated == true/);
   assert.match(nativeApp, /first 500 appointments/);
+});
+
+test("offline continuity cache revision refreshes installed workspace guards", () => {
+  const worker = source("public/atlas-sw.js");
+
+  assert.match(worker, /ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v12"/);
+  assert.match(worker, /Previous installed shell: atlas-offline-shell-v11/);
+  assert.match(worker, /cache\.addAll\(\[/);
+  assert.match(worker, /new Request\(ATLAS_OFFLINE_PAGE, \{ cache: "reload" \}\)/);
 });
