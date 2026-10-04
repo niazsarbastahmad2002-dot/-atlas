@@ -11,6 +11,7 @@ import {
   resolvePatientAccountSession,
 } from "@/lib/patient-account-session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AtlasPatientNav } from "@/app/care/patient-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -65,17 +66,17 @@ const copy: Record<UiLocale, {
     language: "Language",
     eyebrow: "Patient account",
     title: "My appointments",
-    intro: "Your Atlas patient account keeps verified self-booked appointments together without giving access to clinic workspaces.",
-    signInTitle: "Sign in to your patient account",
+    intro: "See your appointments and keep your booking details together in one private place.",
+    signInTitle: "Sign in to see your appointments",
     hello: "Hello",
     upcoming: "Your appointments",
-    noAppointments: "No linked appointments yet.",
-    noAppointmentsHelp: "Appointments you self-book with this verified number will appear here.",
+    noAppointments: "No appointments yet.",
+    noAppointmentsHelp: "Appointments you book with Atlas will appear here.",
     findCare: "Find care",
     manage: "Manage appointment",
     signOut: "Sign out",
     profileTitle: "Your profile",
-    profileHelp: "Atlas reuses these details when you self-book. Your patient profile stays private.",
+    profileHelp: "Atlas can reuse your name and language when you book. These details stay private.",
     nameLabel: "Name",
     nameHint: "Use the name clinics should see with your appointment.",
     preferredLanguage: "Preferred language",
@@ -93,17 +94,17 @@ const copy: Record<UiLocale, {
     language: "زمان",
     eyebrow: "هەژماری نەخۆش",
     title: "مەوعیدەکانم",
-    intro: "هەژماری نەخۆشی Atlas مەوعیدە پشتڕاستکراوەکانی خۆت لە یەک شوێن کۆدەکاتەوە، بەبێ ئەوەی دەستگەیشتن بە شوێنی کاری کلینیک بدات.",
-    signInTitle: "بچۆ ژوورەوە بۆ هەژماری نەخۆش",
+    intro: "مەوعیدەکانت ببینە و زانیارییە پێویستەکانت لە یەک شوێنی تایبەتدا بپارێزە.",
+    signInTitle: "بچۆ ژوورەوە بۆ بینینی مەوعیدەکانت",
     hello: "سڵاو",
     upcoming: "مەوعیدەکانی تۆ",
-    noAppointments: "هێشتا هیچ مەوعیدێکی بەستراو نییە.",
-    noAppointmentsHelp: "ئەو مەوعیدانەی خۆت بە هەمان ژمارەی پشتڕاستکراو دایدەنێیت لێرە دەردەکەون.",
+    noAppointments: "هێشتا هیچ مەوعیدێکت نییە.",
+    noAppointmentsHelp: "ئەو مەوعیدانەی لە Atlas دایدەنێیت لێرە دەردەکەون.",
     findCare: "چارەسەر بدۆزەرەوە",
     manage: "بەڕێوەبردنی مەوعید",
     signOut: "دەرچوون",
     profileTitle: "زانیارییەکانت",
-    profileHelp: "Atlas ئەم زانیارییانە کاتێک خۆت مەوعید دادەنێیت دووبارە بەکاردەهێنێت. زانیارییەکانت تایبەتن.",
+    profileHelp: "Atlas ناو و زمانەکەت کاتێک مەوعید دادەنێیت دووبارە بەکاردەهێنێت. ئەم زانیارییانە تایبەتن.",
     nameLabel: "ناو",
     nameHint: "ئەو ناوە بنووسە کە دەتەوێت کلینیک لەگەڵ مەوعیدەکەت ببینێت.",
     preferredLanguage: "زمانی پەسەندکراو",
@@ -121,17 +122,17 @@ const copy: Record<UiLocale, {
     language: "زمان",
     eyebrow: "هەژمارا نەخۆشی",
     title: "وادەیێن من",
-    intro: "هەژمارا نەخۆشی یا Atlas وادەیێن پشتڕاستکری یێن خۆ ل جهەکێ کۆم دکەت، بێ دەستگەهشتنێ ب شوێنێ کارێ کلینیکێ.",
-    signInTitle: "بچۆ ژوور بۆ هەژمارا نەخۆشی",
+    intro: "وادەیێن خۆ ببینە و زانیارییێن پێدڤی یێن خۆ ل جهەکێ تایبەت بپارێزە.",
+    signInTitle: "بچۆ ژوور بۆ دیتنا وادەیێن خۆ",
     hello: "سلاڤ",
     upcoming: "وادەیێن تە",
-    noAppointments: "هێشتا چ وادەیەکا گرێدای نینە.",
-    noAppointmentsHelp: "وادەیێن کو تو ب هەمان ژمارا پشتڕاستکری خۆ ددانی ل ڤێرێ دیار دبن.",
+    noAppointments: "هێشتا چ وادەیەکا تە نینە.",
+    noAppointmentsHelp: "وادەیێن کو تو ل Atlas ددانی ل ڤێرێ دیار دبن.",
     findCare: "دکتۆر بدیتەوە",
     manage: "وادەیێ بەڕێڤە ببە",
     signOut: "دەرکەڤە",
     profileTitle: "زانیارییێن تە",
-    profileHelp: "Atlas ئەڤ زانیارییان دەمێ تو بخۆ وادەیەکێ ددانی جارەکا دی ب کار دئینیت. زانیارییێن تە تایبەتن.",
+    profileHelp: "Atlas ناڤ و زمانێ تە دەمێ وادەیەکێ ددانی جارەکا دی ب کار دئینیت. ئەڤ زانیارییە تایبەتن.",
     nameLabel: "ناڤ",
     nameHint: "ئەو ناڤە بنڤیسە کو دخوازیت کلینیک دگەل وادەیا تە ببینیت.",
     preferredLanguage: "زمانێ پەسەندکری",
@@ -149,17 +150,17 @@ const copy: Record<UiLocale, {
     language: "اللغة",
     eyebrow: "حساب المريض",
     title: "مواعيدي",
-    intro: "حساب المريض في Atlas يجمع مواعيدك المحجوزة بنفسك والمرتبطة برقمك الموثق، بدون أي وصول لمساحة عمل العيادة.",
-    signInTitle: "ادخل إلى حساب المريض",
+    intro: "شوف مواعيدك وخلي معلومات الحجز الأساسية بمكان واحد خاص بيك.",
+    signInTitle: "سجّل الدخول حتى تشوف مواعيدك",
     hello: "أهلاً",
     upcoming: "مواعيدك",
-    noAppointments: "ماكو مواعيد مرتبطة بعد.",
-    noAppointmentsHelp: "المواعيد التي تحجزها بنفسك بنفس الرقم الموثق راح تظهر هنا.",
+    noAppointments: "ماكو مواعيد بعد.",
+    noAppointmentsHelp: "المواعيد اللي تحجزها عبر Atlas راح تظهر هنا.",
     findCare: "ابحث عن رعاية",
     manage: "إدارة الموعد",
     signOut: "تسجيل الخروج",
     profileTitle: "معلوماتك",
-    profileHelp: "Atlas يعيد استخدام هذه المعلومات عندما تحجز موعدك بنفسك. معلومات حساب المريض تبقى خاصة.",
+    profileHelp: "Atlas يقدر يعيد استخدام اسمك ولغتك لما تحجز. هالمعلومات تبقى خاصة.",
     nameLabel: "الاسم",
     nameHint: "اكتب الاسم الذي تريد أن تراه العيادة مع موعدك.",
     preferredLanguage: "اللغة المفضلة",
@@ -261,13 +262,14 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           : null;
 
   return (
-    <main className="center-page patient-account-page">
+    <main className="patient-account-page">
+      <AtlasPatientNav
+        locale={locale}
+        actionLabel={t.findCare}
+        actionHref="/care"
+      />
+      <div className="center-page patient-account-center">
       <section className="auth-card patient-account-card" lang={meta.lang} dir={meta.dir}>
-        <Link className="app-brand" href="/">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </Link>
-
         <nav className="patient-account-languages" aria-label={t.language}>
           {languageOptions.map((option) => (
             <Link
@@ -292,43 +294,6 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
         {session ? (
           <>
             {session.display_name ? <p className="patient-account-hello">{t.hello}, <strong>{session.display_name}</strong></p> : null}
-
-            <section className="patient-account-profile" aria-label={t.profileTitle}>
-              <h2>{t.profileTitle}</h2>
-              <p className="quiet">{t.profileHelp}</p>
-              <form
-                className="patient-account-profile-form"
-                action={`/patient-account/api/profile?lang=${locale}`}
-                method="post"
-              >
-                <input type="hidden" name="return_lang" value={locale} />
-                <label>
-                  <span>{t.nameLabel}</span>
-                  <input
-                    name="display_name"
-                    type="text"
-                    defaultValue={session.display_name ?? ""}
-                    minLength={2}
-                    maxLength={120}
-                    autoComplete="name"
-                    required
-                  />
-                  <small>{t.nameHint}</small>
-                </label>
-                <label>
-                  <span>{t.preferredLanguage}</span>
-                  <select
-                    name="preferred_language"
-                    defaultValue={isUiLocale(session.preferred_language) ? session.preferred_language : locale}
-                  >
-                    {languageOptions.map((option) => (
-                      <option key={option.locale} value={option.locale}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-                <button className="button" type="submit">{t.saveProfile}</button>
-              </form>
-            </section>
 
             <div className="patient-account-toolbar">
               <Link className="button button-ghost" href={`/care?lang=${locale}`}>{t.findCare}</Link>
@@ -371,6 +336,43 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                 </div>
               )}
             </section>
+
+            <section className="patient-account-profile" aria-label={t.profileTitle}>
+              <h2>{t.profileTitle}</h2>
+              <p className="quiet">{t.profileHelp}</p>
+              <form
+                className="patient-account-profile-form"
+                action={`/patient-account/api/profile?lang=${locale}`}
+                method="post"
+              >
+                <input type="hidden" name="return_lang" value={locale} />
+                <label>
+                  <span>{t.nameLabel}</span>
+                  <input
+                    name="display_name"
+                    type="text"
+                    defaultValue={session.display_name ?? ""}
+                    minLength={2}
+                    maxLength={120}
+                    autoComplete="name"
+                    required
+                  />
+                  <small>{t.nameHint}</small>
+                </label>
+                <label>
+                  <span>{t.preferredLanguage}</span>
+                  <select
+                    name="preferred_language"
+                    defaultValue={isUiLocale(session.preferred_language) ? session.preferred_language : locale}
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.locale} value={option.locale}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <button className="button" type="submit">{t.saveProfile}</button>
+              </form>
+            </section>
           </>
         ) : (
           <>
@@ -385,6 +387,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
         )}
 
         <style>{`
+          .patient-account-page{min-height:100dvh}.patient-account-center{min-height:calc(100dvh - 72px);padding-top:20px;padding-bottom:40px}
           .patient-account-card{width:min(100%,720px);padding:clamp(24px,5vw,38px)}
           .patient-account-languages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:20px 0}
           .patient-account-languages a{border:1px solid var(--line);border-radius:999px;padding:8px 6px;color:var(--muted);font-size:11px;font-weight:780;text-align:center;text-decoration:none}
@@ -409,6 +412,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           @media(max-width:620px){.patient-account-appointment{grid-template-columns:1fr}.patient-account-manage{width:100%}}
         `}</style>
       </section>
+      </div>
     </main>
   );
 }
