@@ -367,7 +367,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       data: Array<{ invitation_id: string; doctor_name: string; created_at: string; expires_at: string }> | null;
       error: { code?: string; message?: string } | null;
     }>;
-    const directoryUsers: Awaited<ReturnType<typeof admin.auth.admin.listUsers>>["data"]["users"] = [];
+    const directoryUsers: Array<{ id: string; phone?: string | null; app_metadata: Record<string, unknown> }> = [];
     const pageSize = 1000;
     const maxPages = 100;
     for (let page = 1; page <= maxPages; page += 1) {
