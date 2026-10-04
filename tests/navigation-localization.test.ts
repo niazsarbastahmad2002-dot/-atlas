@@ -86,3 +86,14 @@ test("Atlas Doctor identity is exposed to assistive technology in each interface
   assert.match(navigation, /doctorSide: "مساحة Atlas Doctor المهنية"/);
   assert.match(navigation, /aria-label=\{\`\$\{nav\.doctorSide\}\. \$\{t\.openSchedule\}\`\}/);
 });
+
+
+test("core navigation follows the clinic currently open outside the schedule", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.match(navigation, /const pageClinic = new URLSearchParams\(searchKey\)\.get\("clinic"\)/);
+  assert.match(navigation, /const rememberedClinic = new URL\(remembered, window\.location\.origin\)\.searchParams\.get\("clinic"\)/);
+  assert.match(navigation, /if \(rememberedClinic !== pageClinic\)/);
+  assert.match(navigation, /remembered = todayScheduleFrom\(\`\/dashboard\?\$\{new URLSearchParams\(\{ clinic: pageClinic \}\)\}\`\)/);
+  assert.match(navigation, /window\.localStorage\.setItem\(scheduleMemoryKey, remembered\)/);
+});
