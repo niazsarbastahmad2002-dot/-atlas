@@ -60,3 +60,10 @@ test("active navigation links expose current-page semantics", () => {
   assert.match(navigation, /aria-current=\{onAssistant \? "page" : undefined\}/);
   assert.ok((navigation.match(/aria-current=\{onSettings \? "page" : undefined\}/g) ?? []).length >= 2);
 });
+
+
+test("remembered schedule links drop transient result parameters", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.match(navigation, /\["notice", "error", "after"\]\.forEach\(\(key\) => url\.searchParams\.delete\(key\)\)/);
+});
