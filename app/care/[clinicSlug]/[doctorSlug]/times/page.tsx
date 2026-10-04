@@ -4,7 +4,7 @@ import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { formatIraqiMobile } from "@/lib/appointments";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 
@@ -119,8 +119,13 @@ function slotParts(value: string, locale: UiLocale) {
 export default async function PublicDoctorTimesPage({ params }: TimesPageProps) {
   const [{ clinicSlug, doctorSlug }, locale] = await Promise.all([params, getUiLocale()]);
   const t = copy[locale];
+  const doctorHref = safeSlug(clinicSlug) && safeSlug(doctorSlug)
+    ? `/care/${clinicSlug}/${doctorSlug}`
+    : "/care";
 
-  if (!safeSlug(clinicSlug) || !safeSlug(doctorSlug)) return <Unavailable copy={t} />;
+  if (!safeSlug(clinicSlug) || !safeSlug(doctorSlug)) {
+    return <Unavailable copy={t} locale={locale} href={doctorHref} />;
+  }
 
   const supabase = await createClient();
   const launchEnabled = process.env.ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED === "true";
@@ -148,7 +153,7 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
   ]);
 
   const profile = Array.isArray(profileData) ? profileData[0] : undefined;
-  if (profileError || firstSlotPage.error || !profile) return <Unavailable copy={t} />;
+  if (profileError || firstSlotPage.error || !profile) return <Unavailable copy={t} locale={locale} href={doctorHref} />;
 
   const slotData = [...(firstSlotPage.data ?? [])];
   let pageRows = firstSlotPage.data ?? [];
@@ -187,7 +192,7 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
     cursor = nextCursor;
   }
 
-  if (slotLoadFailed) return <Unavailable copy={t} />;
+  if (slotLoadFailed) return <Unavailable copy={t} locale={locale} href={doctorHref} />;
 
   const bookingReady = Boolean(
     launchEnabled
@@ -272,18 +277,21 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
 
 type TimesCopy = (typeof copy)[UiLocale];
 
-function Unavailable({ copy: t }: { copy: TimesCopy }) {
+function Unavailable({ copy: t, locale, href }: { copy: TimesCopy; locale: UiLocale; href: string }) {
+  const meta = uiLocaleMeta[locale];
   return (
-    <main className="center-page">
-      <section className="auth-card">
-        <div className="app-brand">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </div>
-        <h1>{t.unavailableTitle}</h1>
-        <p>{t.unavailableHelp}</p>
-        <Link className="button button-ghost" href="/care">{t.back}</Link>
-      </section>
+    <main className="marketing-page atlas-times-page">
+      <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
+      <div className="center-page atlas-patient-unavailable-center">
+        <section className="auth-card" lang={meta.language} dir={meta.direction}>
+          <h1>{t.unavailableTitle}</h1>
+          <p>{t.unavailableHelp}</p>
+          <Link className="button button-ghost" href={href}>{t.back}</Link>
+        </section>
+      </div>
+      <style>{`
+        .atlas-patient-unavailable-center{min-height:calc(100dvh - 72px);padding-top:20px;padding-bottom:40px}
+      `}</style>
     </main>
   );
 }

@@ -4,7 +4,7 @@ import { formatIraqiMobile } from "@/lib/appointments";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { ShareProfileButton } from "../../share-profile-button";
 import { AtlasPatientNav } from "../../patient-nav";
@@ -211,7 +211,7 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
   const copy = profileCopy[locale];
 
   if (!safeSlug(clinicSlug) || !safeSlug(doctorSlug)) {
-    return <Unavailable copy={copy} />;
+    return <Unavailable copy={copy} locale={locale} />;
   }
 
   const supabase = await createClient();
@@ -236,7 +236,7 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
   ]);
   const profile = Array.isArray(data) ? data[0] : undefined;
 
-  if (error || !profile) return <Unavailable copy={copy} />;
+  if (error || !profile) return <Unavailable copy={copy} locale={locale} />;
 
   const bookingReady = Boolean(
     launchEnabled
@@ -375,18 +375,21 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
   );
 }
 
-function Unavailable({ copy }: { copy: typeof profileCopy[UiLocale] }) {
+function Unavailable({ copy, locale }: { copy: typeof profileCopy[UiLocale]; locale: UiLocale }) {
+  const meta = uiLocaleMeta[locale];
   return (
-    <main className="center-page">
-      <section className="auth-card">
-        <div className="app-brand">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </div>
-        <h1>{copy.unavailableTitle}</h1>
-        <p>{copy.unavailableHelp}</p>
-        <Link className="button button-ghost" href="/care">{copy.back}</Link>
-      </section>
+    <main className="marketing-page atlas-care-profile-page">
+      <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
+      <div className="center-page atlas-patient-unavailable-center">
+        <section className="auth-card" lang={meta.language} dir={meta.direction}>
+          <h1>{copy.unavailableTitle}</h1>
+          <p>{copy.unavailableHelp}</p>
+          <Link className="button button-ghost" href="/care">{copy.back}</Link>
+        </section>
+      </div>
+      <style>{`
+        .atlas-patient-unavailable-center{min-height:calc(100dvh - 72px);padding-top:20px;padding-bottom:40px}
+      `}</style>
     </main>
   );
 }
