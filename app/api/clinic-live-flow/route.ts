@@ -77,7 +77,10 @@ export async function GET(request: Request) {
 
   const dayStart = new Date(`${day}T00:00:00+03:00`).toISOString();
   const dayEnd = new Date(`${shiftDay(day, 1)}T00:00:00+03:00`).toISOString();
-  const [{ data: flow }, { data: signals }] = await Promise.all([
+  const [
+    { data: flow, error: flowError },
+    { data: signals, error: signalsError },
+  ] = await Promise.all([
     context.db.from("doctor_day_flow")
       .select("delay_minutes, updated_at")
       .eq("clinic_id", context.clinicId)
@@ -96,6 +99,17 @@ export async function GET(request: Request) {
       .order("appointment_at", { ascending: true })
       .limit(100),
   ]);
+
+  if (flowError || signalsError) {
+    console.error("Atlas clinic live flow read failed", {
+      flowCode: flowError?.code ?? null,
+      signalsCode: signalsError?.code ?? null,
+    });
+    return NextResponse.json(
+      { error: "unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   return NextResponse.json({
     clinicId: context.clinicId,
