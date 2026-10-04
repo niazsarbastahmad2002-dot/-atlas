@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { isUuid } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
@@ -41,12 +42,14 @@ const copyByLocale: Record<UiLocale, Copy> = {
   },
 };
 
-export default async function SignInPhonePage() {
-  const [locale, supabase] = await Promise.all([getUiLocale(), createClient()]);
+export default async function SignInPhonePage({ searchParams }: { searchParams: Promise<{ clinic?: string }> }) {
+  const [locale, supabase, params] = await Promise.all([getUiLocale(), createClient(), searchParams]);
+  const clinicId = params.clinic && isUuid(params.clinic) ? params.clinic : null;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/dashboard/settings/phone");
 
   const copy = copyByLocale[locale];
+  const backHref = clinicId ? `/dashboard/settings?${new URLSearchParams({ clinic: clinicId })}` : "/dashboard/settings";
 
   return (
     <main className="settings-page">
@@ -57,7 +60,7 @@ export default async function SignInPhonePage() {
             <h1>{copy.title}</h1>
             <p>{copy.intro}</p>
           </div>
-          <Link className="button button-ghost button-small" href="/dashboard/settings">{copy.back}</Link>
+          <Link className="button button-ghost button-small" href={backHref}>{copy.back}</Link>
         </div>
 
         <section className="settings-card" style={{ maxWidth: 720, marginInline: "auto" }}>
