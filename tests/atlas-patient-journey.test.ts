@@ -16,7 +16,8 @@ test("Atlas Patient navigation is shared across the full care journey", () => {
   const nav = source("app/care/patient-nav.tsx");
   assert.match(nav, /href="\/care"/);
   assert.match(nav, />Patient<\/span>/);
-  assert.match(nav, /href=\{\`\/patient-account\?lang=\$\{locale\}\`\}/);
+  assert.match(nav, /const href = actionHref \?\? \`\/patient-account\?lang=\$\{locale\}\`/);
+  assert.match(nav, /href=\{href\}/);
 
   for (const path of patientPages) {
     const page = source(path);
