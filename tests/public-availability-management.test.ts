@@ -71,3 +71,15 @@ test("weekly public hours are committed through one invoker RPC transaction", ()
   assert.match(actions, /weekSaved !== true/);
   assert.doesNotMatch(actions, /rows\.push\(\{\s*clinic_id:/);
 });
+
+
+test("public closed-date management stays future-focused in Baghdad time", () => {
+  const actions = source("app/dashboard/settings/public-profile/availability/actions.ts");
+  const page = source("app/dashboard/settings/public-profile/availability/page.tsx");
+
+  assert.match(page, /const today = baghdadDate\.format\(new Date\(\)\)/);
+  assert.match(page, /\.gte\("booking_date", today\)/);
+  assert.match(page, /name="booking_date" min=\{today\} required/);
+  assert.match(page, /formatLocalDateValue\(row\.booking_date, locale\)/);
+  assert.match(actions, /isClosed && bookingDate < baghdadDate\.format\(new Date\(\)\)/);
+});
