@@ -118,13 +118,21 @@ export function ResponsiveDashboardExperience({ locale }: { locale: UiLocale }) 
       const focusKey = `${notice}|${after}|${params.get("doctor") ?? ""}`;
       if (focusedSave.current === focusKey) return;
 
-      const candidates = timeCandidates(after);
-      if (!candidates.size) return;
+      const savedAppointmentId = document.documentElement.dataset.atlasSavedAppointmentId;
       const rows = Array.from(document.querySelectorAll<HTMLElement>(".polished-appointment-list .appointment-row"));
-      const row = rows.find((candidate) => rowMatchesSavedTime(candidate, candidates));
+      let row = savedAppointmentId
+        ? rows.find((candidate) => candidate.dataset.atlasAppointmentId === savedAppointmentId)
+        : undefined;
+      if (savedAppointmentId && !row) return;
+      if (!row) {
+        const candidates = timeCandidates(after);
+        if (!candidates.size) return;
+        row = rows.find((candidate) => rowMatchesSavedTime(candidate, candidates));
+      }
       if (!row) return;
 
       focusedSave.current = focusKey;
+      if (savedAppointmentId) delete document.documentElement.dataset.atlasSavedAppointmentId;
       rows.forEach((candidate) => candidate.classList.remove("is-atlas-post-save-focus"));
       row.classList.add("is-atlas-post-save-focus");
       row.dataset.atlasPostSaveTarget = "true";
