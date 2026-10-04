@@ -209,8 +209,10 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
   const [offline, setOffline] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const wasOffline = useRef(false);
+  const snapshotRequestRef = useRef(0);
 
   const refreshSnapshot = useCallback(async () => {
+    const requestId = ++snapshotRequestRef.current;
     if (pathname !== "/dashboard" || navigator.onLine === false) return;
 
     const params = new URLSearchParams();
@@ -229,6 +231,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
         clear?: unknown;
         snapshot?: ContinuitySnapshot;
       } | null;
+      if (requestId !== snapshotRequestRef.current) return;
 
       if (body?.clear === true) {
         nativePost({ type: "clear" });
@@ -261,6 +264,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
+      snapshotRequestRef.current += 1;
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
