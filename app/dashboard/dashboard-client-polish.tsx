@@ -119,6 +119,9 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
   document.querySelectorAll(".atlas-fast-save-toast").forEach((element) => element.remove());
   const toast = document.createElement("div");
   toast.className = "atlas-fast-save-toast";
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
+  toast.setAttribute("aria-atomic", "true");
   toast.dir = locale === "en" ? "ltr" : "rtl";
   const main = document.createElement("strong");
   main.textContent = fastSaveCopy[locale].saving;
@@ -129,7 +132,7 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
   document.body.append(toast);
   return {
     success(duplicate = false) { toast.classList.add("is-success"); main.textContent = `✓ ${duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`; window.setTimeout(() => toast.remove(), duplicate ? 1200 : 700); },
-    fail(slotTaken = false) { toast.classList.add("is-error"); main.textContent = slotTaken ? fastSaveCopy[locale].slotTaken : fastSaveCopy[locale].failed; window.setTimeout(() => toast.remove(), 2600); },
+    fail(slotTaken = false) { toast.classList.add("is-error"); toast.setAttribute("role", "alert"); main.textContent = slotTaken ? fastSaveCopy[locale].slotTaken : fastSaveCopy[locale].failed; window.setTimeout(() => toast.remove(), 2600); },
   };
 }
 
