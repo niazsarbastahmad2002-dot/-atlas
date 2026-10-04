@@ -200,6 +200,17 @@ export async function generateMetadata({ params }: DoctorProfilePageProps): Prom
   }
 }
 
+function baghdadDateKeyAfterDays(days: number) {
+  const date = new Date(Date.now() + (days * 24 * 60 * 60 * 1000));
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baghdad",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 function baghdadSlotParts(value: string, locale: UiLocale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
@@ -315,6 +326,22 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
     }
   }
 
+  let laterSlotAvailable = false;
+  if (!slotError && slotGroups.length === 0) {
+    const { data: laterSlotData, error: laterSlotError } = await supabase.rpc(
+      "list_public_doctor_slots_page",
+      {
+        p_clinic_slug: clinicSlug,
+        p_doctor_slug: doctorSlug,
+        p_from_date: baghdadDateKeyAfterDays(7),
+        p_days: 7,
+        p_after: null,
+        p_limit: 1,
+      },
+    );
+    laterSlotAvailable = !laterSlotError && Array.isArray(laterSlotData) && laterSlotData.length > 0;
+  }
+
   return (
     <main className="marketing-page atlas-care-profile-page">
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
@@ -353,53 +380,61 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
           ) : null}
         </dl>
 
-        <section className="atlas-care-availability" aria-label={copy.availability}>
-          <div className="atlas-care-availability-heading">
-            <h2>{copy.availability}</h2>
-            <p>
-              {slotError
-                ? copy.availabilityUnavailableHelp
-                : slotGroups.length
-                  ? (bookingReady ? copy.bookingHelp : copy.availabilityHelp)
-                  : copy.noPreviewTimesHelp}
-            </p>
-          </div>
-
-          {slotError ? (
-            <div className="atlas-care-availability-empty">
-              <strong>{copy.availabilityUnavailable}</strong>
+        {(slotError || slotGroups.length > 0 || laterSlotAvailable) ? (
+          <section className="atlas-care-availability" aria-label={copy.availability}>
+            <div className="atlas-care-availability-heading">
+              <h2>{copy.availability}</h2>
+              <p>
+                {slotError
+                  ? copy.availabilityUnavailableHelp
+                  : slotGroups.length
+                    ? (bookingReady ? copy.bookingHelp : copy.availabilityHelp)
+                    : copy.noPreviewTimesHelp}
+              </p>
             </div>
-          ) : slotGroups.length ? (
-            <div className="atlas-care-availability-days">
-              {slotGroups.map((group) => (
-                <div className="atlas-care-availability-day" key={group.dateKey}>
-                  <strong>{group.dateLabel}</strong>
-                  <div>
-                    {group.times.map((time) => bookingReady ? (
-                      <Link
-                        className="atlas-care-slot-book"
-                        href={`/care/${clinicSlug}/${doctorSlug}/book?slot=${encodeURIComponent(time.slotAt)}`}
-                        key={time.slotAt}
-                      >
-                        <span dir="auto">{time.label}</span>
-                        <small>{copy.bookTime}</small>
-                      </Link>
-                    ) : <span key={time.slotAt} dir="auto">{time.label}</span>)}
+
+            {slotError ? (
+              <div className="atlas-care-availability-empty">
+                <strong>{copy.availabilityUnavailable}</strong>
+              </div>
+            ) : slotGroups.length ? (
+              <div className="atlas-care-availability-days">
+                {slotGroups.map((group) => (
+                  <div className="atlas-care-availability-day" key={group.dateKey}>
+                    <strong>{group.dateLabel}</strong>
+                    <div>
+                      {group.times.map((time) => bookingReady ? (
+                        <Link
+                          className="atlas-care-slot-book"
+                          href={`/care/${clinicSlug}/${doctorSlug}/book?slot=${encodeURIComponent(time.slotAt)}`}
+                          key={time.slotAt}
+                        >
+                          <span dir="auto">{time.label}</span>
+                          <small>{copy.bookTime}</small>
+                        </Link>
+                      ) : <span key={time.slotAt} dir="auto">{time.label}</span>)}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="atlas-care-availability-empty">
-              <strong>{copy.noPreviewTimes}</strong>
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="atlas-care-availability-empty">
+                <strong>{copy.noPreviewTimes}</strong>
+              </div>
+            )}
 
-          <div className="atlas-care-availability-actions">
-            <Link className="button button-ghost" href={`/care/${clinicSlug}/${doctorSlug}/times`}>{copy.allTimes}</Link>
-            {phone ? <a className="button atlas-care-call" href={`tel:${profile.public_phone}`}>{copy.callToReserve}</a> : null}
-          </div>
-        </section>
+            {(!slotError || phone) ? (
+              <div className="atlas-care-availability-actions">
+                {!slotError ? (
+                  <Link className="button button-ghost" href={`/care/${clinicSlug}/${doctorSlug}/times`}>
+                    {copy.allTimes}
+                  </Link>
+                ) : null}
+                {phone ? <a className="button atlas-care-call" href={`tel:${profile.public_phone}`}>{copy.callToReserve}</a> : null}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         <Link className="button button-ghost atlas-care-profile-back" href="/care">{copy.back}</Link>
       </article>
