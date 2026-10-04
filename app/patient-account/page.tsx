@@ -46,6 +46,15 @@ const copy: Record<UiLocale, {
   findCare: string;
   manage: string;
   signOut: string;
+  profileTitle: string;
+  profileHelp: string;
+  nameLabel: string;
+  nameHint: string;
+  preferredLanguage: string;
+  saveProfile: string;
+  profileSaved: string;
+  profileInvalid: string;
+  profileFailed: string;
   sessionExpired: string;
   manageFailed: string;
   rateLimited: string;
@@ -65,6 +74,15 @@ const copy: Record<UiLocale, {
     findCare: "Find care",
     manage: "Manage appointment",
     signOut: "Sign out",
+    profileTitle: "Your profile",
+    profileHelp: "Atlas reuses these details when you self-book. Your patient profile stays private.",
+    nameLabel: "Name",
+    nameHint: "Use the name clinics should see with your appointment.",
+    preferredLanguage: "Preferred language",
+    saveProfile: "Save profile",
+    profileSaved: "Your patient profile was saved.",
+    profileInvalid: "Check your name and language, then try again.",
+    profileFailed: "Atlas could not save your profile right now. Try again.",
     sessionExpired: "Your patient session ended. Verify your mobile number again.",
     manageFailed: "Atlas could not open that appointment. Try again.",
     rateLimited: "Too many attempts. Wait a little and try again.",
@@ -84,6 +102,15 @@ const copy: Record<UiLocale, {
     findCare: "چارەسەر بدۆزەرەوە",
     manage: "بەڕێوەبردنی مەوعید",
     signOut: "دەرچوون",
+    profileTitle: "زانیارییەکانت",
+    profileHelp: "Atlas ئەم زانیارییانە کاتێک خۆت مەوعید دادەنێیت دووبارە بەکاردەهێنێت. زانیارییەکانت تایبەتن.",
+    nameLabel: "ناو",
+    nameHint: "ئەو ناوە بنووسە کە دەتەوێت کلینیک لەگەڵ مەوعیدەکەت ببینێت.",
+    preferredLanguage: "زمانی پەسەندکراو",
+    saveProfile: "پاشەکەوتکردن",
+    profileSaved: "زانیارییەکانت پاشەکەوت کران.",
+    profileInvalid: "ناو و زمانەکەت بپشکنە و دووبارە هەوڵ بدە.",
+    profileFailed: "Atlas ئێستا نەیتوانی زانیارییەکانت پاشەکەوت بکات. دووبارە هەوڵ بدە.",
     sessionExpired: "دانیشتنی نەخۆش کۆتایی هات. ژمارەی مۆبایل دووبارە پشتڕاست بکەرەوە.",
     manageFailed: "Atlas نەیتوانی ئەم مەوعیدە بکاتەوە. دووبارە هەوڵبدەوە.",
     rateLimited: "هەوڵەکان زۆر بوون. کەمێک چاوەڕێ بکە و دووبارە هەوڵبدەوە.",
@@ -103,6 +130,15 @@ const copy: Record<UiLocale, {
     findCare: "دکتۆر بدیتەوە",
     manage: "وادەیێ بەڕێڤە ببە",
     signOut: "دەرکەڤە",
+    profileTitle: "زانیارییێن تە",
+    profileHelp: "Atlas ئەڤ زانیارییان دەمێ تو بخۆ وادەیەکێ ددانی جارەکا دی ب کار دئینیت. زانیارییێن تە تایبەتن.",
+    nameLabel: "ناڤ",
+    nameHint: "ئەو ناڤە بنڤیسە کو دخوازیت کلینیک دگەل وادەیا تە ببینیت.",
+    preferredLanguage: "زمانێ پەسەندکری",
+    saveProfile: "پاراستن",
+    profileSaved: "زانیارییێن تە هاتنە پاراستن.",
+    profileInvalid: "ناڤ و زمانێ خۆ بپشکنە و جارەکا دی هەول بدە.",
+    profileFailed: "Atlas نوکە نەشیا زانیارییێن تە بپارێزیت. جارەکا دی هەول بدە.",
     sessionExpired: "دانیشتنا نەخۆشی دوماهی هات. ژمارا موبایلێ جارەکا دی پشتڕاست بکە.",
     manageFailed: "Atlas نەشیا ڤێ وادەیێ بکەتەڤە. جارەکا دی هەول بدە.",
     rateLimited: "هەول زۆر بوون. کەمەک چاوەرێ بکە و جارەکا دی هەول بدە.",
@@ -122,6 +158,15 @@ const copy: Record<UiLocale, {
     findCare: "ابحث عن رعاية",
     manage: "إدارة الموعد",
     signOut: "تسجيل الخروج",
+    profileTitle: "معلوماتك",
+    profileHelp: "Atlas يعيد استخدام هذه المعلومات عندما تحجز موعدك بنفسك. معلومات حساب المريض تبقى خاصة.",
+    nameLabel: "الاسم",
+    nameHint: "اكتب الاسم الذي تريد أن تراه العيادة مع موعدك.",
+    preferredLanguage: "اللغة المفضلة",
+    saveProfile: "حفظ المعلومات",
+    profileSaved: "تم حفظ معلوماتك.",
+    profileInvalid: "راجع الاسم واللغة وحاول مرة ثانية.",
+    profileFailed: "تعذر على Atlas حفظ معلوماتك الآن. حاول مرة ثانية.",
     sessionExpired: "انتهت جلسة المريض. وثّق رقم الموبايل مرة ثانية.",
     manageFailed: "تعذر على Atlas فتح هذا الموعد. حاول مرة ثانية.",
     rateLimited: "المحاولات كثيرة. انتظر قليلاً وحاول مرة ثانية.",
@@ -200,12 +245,20 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
     && !readiness.signupDisabled,
   );
 
-  const notice = query.notice === "session_expired" ? t.sessionExpired : null;
+  const notice = query.notice === "session_expired"
+    ? t.sessionExpired
+    : query.notice === "profile_saved"
+      ? t.profileSaved
+      : null;
   const error = query.error === "rate_limited"
     ? t.rateLimited
     : query.error === "manage_failed"
       ? t.manageFailed
-      : null;
+      : query.error === "profile_invalid"
+        ? t.profileInvalid
+        : query.error === "profile_failed"
+          ? t.profileFailed
+          : null;
 
   return (
     <main className="center-page patient-account-page">
@@ -239,6 +292,44 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
         {session ? (
           <>
             {session.display_name ? <p className="patient-account-hello">{t.hello}, <strong>{session.display_name}</strong></p> : null}
+
+            <section className="patient-account-profile" aria-label={t.profileTitle}>
+              <h2>{t.profileTitle}</h2>
+              <p className="quiet">{t.profileHelp}</p>
+              <form
+                className="patient-account-profile-form"
+                action={`/patient-account/api/profile?lang=${locale}`}
+                method="post"
+              >
+                <input type="hidden" name="return_lang" value={locale} />
+                <label>
+                  <span>{t.nameLabel}</span>
+                  <input
+                    name="display_name"
+                    type="text"
+                    defaultValue={session.display_name ?? ""}
+                    minLength={2}
+                    maxLength={120}
+                    autoComplete="name"
+                    required
+                  />
+                  <small>{t.nameHint}</small>
+                </label>
+                <label>
+                  <span>{t.preferredLanguage}</span>
+                  <select
+                    name="preferred_language"
+                    defaultValue={isUiLocale(session.preferred_language) ? session.preferred_language : locale}
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.locale} value={option.locale}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <button className="button" type="submit">{t.saveProfile}</button>
+              </form>
+            </section>
+
             <div className="patient-account-toolbar">
               <Link className="button button-ghost" href={`/care?lang=${locale}`}>{t.findCare}</Link>
               <form action={`/patient-account/api/sign-out?lang=${locale}`} method="post">
@@ -300,6 +391,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-languages a[aria-current="page"]{border-color:#b9dfd1;background:#effaf6;color:var(--accent)}
           .patient-account-intro{margin-bottom:20px;line-height:1.6}
           .patient-account-hello{font-size:16px}
+          .patient-account-profile{display:grid;gap:10px;margin:18px 0 22px;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}
+          .patient-account-profile h2{margin:0;font-size:20px}.patient-account-profile>p{margin:0;line-height:1.55}
+          .patient-account-profile-form{display:grid;gap:14px;margin-top:4px}.patient-account-profile-form label{display:grid;gap:6px}.patient-account-profile-form label>span{font-size:12px;font-weight:800}.patient-account-profile-form small{color:var(--muted);font-size:10.5px;line-height:1.5}.patient-account-profile-form input,.patient-account-profile-form select{width:100%;min-height:46px}.patient-account-profile-form button{min-height:48px}
           .patient-account-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}.patient-account-toolbar form{margin:0}
           .patient-account-appointments h2,.patient-account-signin-title{margin:18px 0 12px;font-size:20px}
           .patient-account-list{display:grid;gap:12px}
