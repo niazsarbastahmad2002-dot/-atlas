@@ -210,9 +210,11 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const wasOffline = useRef(false);
   const snapshotRequestRef = useRef(0);
-  const snapshotPersistenceRef = useRef<Promise<void>>(Promise.resolve());
+  const snapshotScopeRef = useRef(0);
+  const clearedScopeRef = useRef<number | null>(null);
+  const snapshotMutationRef = useRef<Promise<void>>(Promise.resolve());
 
-  const refreshSnapshot = useCallback(async () => {
+  const refreshSnapshot = useCallback(async (scopeVersion: number) => {
     const requestId = ++snapshotRequestRef.current;
     if (pathname !== "/dashboard" || navigator.onLine === false) return;
 
@@ -232,25 +234,42 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
         clear?: unknown;
         snapshot?: ContinuitySnapshot;
       } | null;
-      if (requestId !== snapshotRequestRef.current) return;
+      if (scopeVersion !== snapshotScopeRef.current) return;
 
       if (body?.clear === true) {
+        clearedScopeRef.current = scopeVersion;
         nativePost({ type: "clear" });
-        void clearBrowserContinuityCache();
+        snapshotMutationRef.current = snapshotMutationRef.current
+          .catch(() => undefined)
+          .then(async () => {
+            if (scopeVersion !== snapshotScopeRef.current || clearedScopeRef.current !== scopeVersion) return;
+            await clearBrowserContinuityCache();
+          });
+        void snapshotMutationRef.current.catch(() => undefined);
         setLastSyncedAt(null);
         return;
       }
-      if (!response.ok || !body?.snapshot || body.snapshot.version !== 1) return;
+      if (
+        requestId !== snapshotRequestRef.current
+        || clearedScopeRef.current === scopeVersion
+        || !response.ok
+        || !body?.snapshot
+        || body.snapshot.version !== 1
+      ) return;
 
       nativePost({ type: "snapshot", snapshot: body.snapshot });
       const snapshot = body.snapshot;
-      snapshotPersistenceRef.current = snapshotPersistenceRef.current
+      snapshotMutationRef.current = snapshotMutationRef.current
         .catch(() => undefined)
         .then(async () => {
-          if (requestId !== snapshotRequestRef.current) return;
+          if (
+            scopeVersion !== snapshotScopeRef.current
+            || clearedScopeRef.current === scopeVersion
+            || requestId !== snapshotRequestRef.current
+          ) return;
           await persistBrowserSnapshot(snapshot);
         });
-      void snapshotPersistenceRef.current.catch(() => undefined);
+      void snapshotMutationRef.current.catch(() => undefined);
       setLastSyncedAt(snapshot.syncedAt);
     } catch {
       // A failed refresh never mutates or replaces the last protected snapshot.
@@ -263,15 +282,18 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
   }, []);
 
   useEffect(() => {
-    void refreshSnapshot();
+    const scopeVersion = ++snapshotScopeRef.current;
+    clearedScopeRef.current = null;
+    void refreshSnapshot(scopeVersion);
     const timer = window.setInterval(() => {
-      if (!document.hidden) void refreshSnapshot();
+      if (!document.hidden) void refreshSnapshot(scopeVersion);
     }, 60_000);
     const onVisible = () => {
-      if (!document.hidden) void refreshSnapshot();
+      if (!document.hidden) void refreshSnapshot(scopeVersion);
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
+      snapshotScopeRef.current += 1;
       snapshotRequestRef.current += 1;
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
