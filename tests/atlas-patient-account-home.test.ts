@@ -45,3 +45,12 @@ test("profile editing remains minimal and secondary instead of becoming a patien
   assert.match(page, /name="preferred_language"/);
   assert.doesNotMatch(page, /name="diagnosis"|name="medical_history"|name="medications"|name="clinical_notes"/i);
 });
+
+
+test("Patient navigation persists the active locale before same-tab navigation", () => {
+  assert.match(nav, /fetch\("\/api\/ui-language"/);
+  assert.match(nav, /body: JSON\.stringify\(\{ locale \}\)/);
+  assert.match(nav, /window\.location\.assign\(href\)/);
+  assert.match(nav, /event\.metaKey/);
+  assert.match(nav, /event\.ctrlKey/);
+});
