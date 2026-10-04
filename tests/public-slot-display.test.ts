@@ -17,7 +17,9 @@ test("public doctor profiles show only bounded live slot data", () => {
 test("public availability is useful without pretending self-booking is active", () => {
   const page = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");
 
-  assert.match(page, /online self-booking is not enabled yet/);
+  assert.match(page, /const bookingReady = Boolean\(/);
+  assert.match(page, /ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED === "true"/);
+  assert.match(page, /readiness\.supabasePhoneEnabled/);
   assert.match(page, /href=\{\`tel:\$\{profile\.public_phone\}\`\}/);
   assert.doesNotMatch(page, />Book now</i);
 });
