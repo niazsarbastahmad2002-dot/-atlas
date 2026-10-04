@@ -154,7 +154,7 @@ test("offline continuity disables write controls while preserving local micropho
   assert.match(component, /if \(!control\.disabled\) control\.disabled = true/);
   assert.match(component, /new MutationObserver\(lockOfflineControls\)/);
   assert.match(component, /attributes: true/);
-  assert.match(component, /attributeFilter: \["disabled"\]/);
+  assert.match(component, /attributeFilter: \["disabled", "data-atlas-offline-local-action"\]/);
   assert.match(component, /control\.disabled = wasDisabled/);
   assert.match(component, /unlockOfflineControls\(\)/);
   assert.ok((ai.match(/data-atlas-offline-local-action/g) ?? []).length >= 4);
