@@ -209,7 +209,7 @@ test("offline continuity discloses when today's protected schedule is capped", (
   assert.match(component, /appointmentsTruncated: boolean/);
   assert.match(page, /snapshot\.appointmentsTruncated \? t\.limited : t\.notice/);
   assert.match(page, /first 500 appointments/);
-  assert.match(nativeStore, /let appointmentsTruncated: Bool\?/);
+  assert.match(nativeStore, /var appointmentsTruncated: Bool\? = nil/);
   assert.match(nativeApp, /snapshot\.appointmentsTruncated == true/);
   assert.match(nativeApp, /first 500 appointments/);
 });
