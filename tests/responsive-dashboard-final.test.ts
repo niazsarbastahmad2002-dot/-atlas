@@ -38,6 +38,10 @@ test("responsive dashboard enhancement keeps React-owned summary content server-
   assert.match(experience, /min-width: 700px/);
   assert.doesNotMatch(experience, /any-pointer: coarse/);
   assert.match(experience, /params\.get\("after"\)/);
+  assert.match(experience, /dataset\.atlasSavedAppointmentId/);
+  assert.match(experience, /candidate\.dataset\.atlasAppointmentId === savedAppointmentId/);
+  assert.match(experience, /delete document\.documentElement\.dataset\.atlasSavedAppointmentId/);
+  assert.match(source("app/dashboard/page.tsx"), /data-atlas-appointment-id=\{appointment\.id\}/);
   assert.match(experience, /is-atlas-post-save-focus/);
   assert.match(experience, /scrollIntoView/);
   assert.match(experience, /is-atlas-phone-expanded/);
