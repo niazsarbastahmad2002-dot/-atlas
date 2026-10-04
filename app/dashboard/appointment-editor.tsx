@@ -325,7 +325,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           {lockedDoctor ? (
             <>
               <input id={`edit-doctor-${appointmentId}`} name="doctor_id" type="hidden" value={lockedDoctor.id} />
-              <div className="appointment-locked-doctor" aria-label={`${ui.doctor}: ${lockedDoctor.name}`}>
+              <div className="appointment-locked-doctor" data-atlas-user-content="true" aria-label={`${ui.doctor}: ${lockedDoctor.name}`}>
                 <span data-atlas-user-content="true">{lockedDoctor.name}</span><small>✓</small>
               </div>
             </>
