@@ -282,6 +282,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const params = await searchParams;
   const locale = await getUiLocale();
   const t = uiText(locale);
+  const actionArrow = locale === "en" ? "→" : "←";
   const copy = settingsCopy[locale];
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -398,7 +399,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           {canManage ? (
             <Link className="settings-link settings-public-profile-link" href={`/dashboard/settings/public-profile?clinic=${clinic.id}`}>
               <span className="settings-export-copy"><strong>{copy.publicPresence}</strong><small>{copy.publicPresenceHelp}</small></span>
-              <span aria-hidden="true">→</span>
+              <span aria-hidden="true">{actionArrow}</span>
             </Link>
           ) : null}
         </section>
@@ -480,8 +481,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               </div>
             </div>
             <div className="settings-link-list">
-              <Link className="settings-link" href={`/dashboard/staff?clinic=${clinic.id}`} prefetch><span>{copy.teamAccess}</span><span aria-hidden="true">→</span></Link>
-              <Link className="settings-link" href={`/dashboard/history?clinic=${clinic.id}`} prefetch><span>{copy.history}</span><span aria-hidden="true">→</span></Link>
+              <Link className="settings-link" href={`/dashboard/staff?clinic=${clinic.id}`} prefetch><span>{copy.teamAccess}</span><span aria-hidden="true">{actionArrow}</span></Link>
+              <Link className="settings-link" href={`/dashboard/history?clinic=${clinic.id}`} prefetch><span>{copy.history}</span><span aria-hidden="true">{actionArrow}</span></Link>
               <div className="settings-export-group">
                 <form className="settings-export-form" action="/api/clinic-export" method="post" target="_blank">
                   <input type="hidden" name="clinic_id" value={clinic.id} />
@@ -508,7 +509,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   </button>
                 </form>
               </div>
-              <Link className="settings-link danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}><span>{copy.deleteClinic}</span><span aria-hidden="true">→</span></Link>
+              <Link className="settings-link danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}><span>{copy.deleteClinic}</span><span aria-hidden="true">{actionArrow}</span></Link>
             </div>
           </section>
         ) : null}
@@ -524,7 +525,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           </div>
           <p className="field-help">{copy.accountHelp}</p>
           <PhoneNumberManager locale={locale} currentPhone={userData.user.phone ?? null} clinicId={clinic.id} />
-          <Link className="settings-link" href={`/dashboard/settings/account?clinic=${clinic.id}`}><span>{copy.accountDeletion}</span><span aria-hidden="true">→</span></Link>
+          <Link className="settings-link" href={`/dashboard/settings/account?clinic=${clinic.id}`}><span>{copy.accountDeletion}</span><span aria-hidden="true">{actionArrow}</span></Link>
           <details className="settings-disclosure">
             <summary>{copy.quickSignIn}</summary>
             <p className="field-help">{copy.quickSignInHelp}</p>
