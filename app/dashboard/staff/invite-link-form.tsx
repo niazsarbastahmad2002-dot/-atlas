@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createReceptionistInviteLink, type InviteLinkState } from "./invite-actions";
 
@@ -76,6 +76,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [copied, setCopied] = useState(false);
   const [shareError, setShareError] = useState("");
+  const inviteInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentInviteUrl = !pending && state.assignedDoctorId === selectedDoctorId ? state.url : undefined;
 
@@ -90,6 +91,10 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
     } catch {
       setCopied(false);
       setShareError(t.copyFailed);
+      window.requestAnimationFrame(() => {
+        inviteInputRef.current?.focus();
+        inviteInputRef.current?.select();
+      });
     }
   }
 
@@ -147,6 +152,7 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
           {currentInviteUrl ? (
             <>
               <input
+                ref={inviteInputRef}
                 className="staff-invite-link-value"
                 value={currentInviteUrl ?? ""}
                 readOnly

@@ -11,6 +11,8 @@ test("receptionist invite sharing falls back safely when native share or clipboa
   assert.match(source, /const \[shareError, setShareError\] = useState\(""/);
   assert.match(source, /await navigator\.clipboard\.writeText\(currentInviteUrl\)/);
   assert.match(source, /setShareError\(t\.copyFailed\)/);
+  assert.match(source, /inviteInputRef\.current\?\.focus\(\)/);
+  assert.match(source, /inviteInputRef\.current\?\.select\(\)/);
   assert.match(source, /await navigator\.clipboard\.writeText\(currentInviteUrl\);\s*setShareError\(""\);\s*setCopied\(true\)/);
   assert.match(source, /async function shareLink\(\) \{[\s\S]*?setCopied\(false\);[\s\S]*?setShareError\(""\);/);
   assert.match(source, /error instanceof DOMException && error\.name === "AbortError"/);
@@ -21,6 +23,7 @@ test("receptionist invite sharing falls back safely when native share or clipboa
   assert.match(source, /دعوة عيادة Atlas/);
   assert.match(source, /expires in 24 hours/);
   assert.match(source, /role="alert"/);
+  assert.match(source, /ref=\{inviteInputRef\}/);
   assert.match(source, /className="staff-invite-link-value"/);
   assert.match(source, /value=\{currentInviteUrl \?\? ""\}/);
   assert.match(source, /readOnly/);
