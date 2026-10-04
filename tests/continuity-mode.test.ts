@@ -55,6 +55,9 @@ test("browser offline page decrypts and renders only bounded current-day recepti
   assert.match(page, /snapshot\.day !== baghdadDay\(\)/);
   assert.match(page, /18 \* 60 \* 60 \* 1000/);
   assert.match(page, /snapshot\.appointments\.length > 500/);
+  assert.match(page, /new URLSearchParams\(location\.search\)/);
+  assert.match(page, /requestedClinicId && snapshot\.clinicId !== requestedClinicId/);
+  assert.match(page, /requestedDoctorId && snapshot\.doctorId !== requestedDoctorId/);
   assert.match(page, /textContent/);
   assert.match(page, /OFFLINE · READ ONLY/);
   assert.doesNotMatch(page, /patientPhone|phoneNumber|reminderConsent|accessToken|refreshToken|providerCredential/);
