@@ -46,6 +46,8 @@ const copy: Record<UiLocale, {
   preview: string;
   availability: string;
   availabilityHelp: string;
+  availabilityOn: string;
+  availabilityOff: string;
   share: string;
   copied: string;
   whatsapp: string;
@@ -84,6 +86,8 @@ const copy: Record<UiLocale, {
     preview: "Open public profile",
     availability: "Online booking hours",
     availabilityHelp: "Define which hours may later appear as real self-booking slots.",
+    availabilityOn: "Patient booking on",
+    availabilityOff: "Patient booking off",
     share: "Share",
     copied: "Link copied",
     whatsapp: "WhatsApp",
@@ -122,6 +126,8 @@ const copy: Record<UiLocale, {
     preview: "کردنەوەی پڕۆفایلی گشتی",
     availability: "کاتەکانی مەوعیدی ئۆنلاین",
     availabilityHelp: "دیاری بکە کام کاتانە بتوانن وەک کاتی ڕاستەقینەی مەوعیدی خۆکار پیشان بدرێن.",
+    availabilityOn: "مەوعیدی نەخۆش چالاکە",
+    availabilityOff: "مەوعیدی نەخۆش ناچالاکە",
     share: "هاوبەشکردن",
     copied: "بەستەر کۆپی کرا",
     whatsapp: "WhatsApp",
@@ -160,6 +166,8 @@ const copy: Record<UiLocale, {
     preview: "پڕۆفایلا گشتی بکەڤە",
     availability: "دەمێن وادەیێ ئۆنلاین",
     availabilityHelp: "دیار بکە کیژ دەمان دەتوانن وەک دەمێ ڕاستەقینە یێ وادەیا خۆکار دیار بن.",
+    availabilityOn: "وادەیا نەخۆشی چالاکە",
+    availabilityOff: "وادەیا نەخۆشی ناچالاکە",
     share: "پارڤەکرن",
     copied: "لینک هاتە کۆپیکرن",
     whatsapp: "WhatsApp",
@@ -198,6 +206,8 @@ const copy: Record<UiLocale, {
     preview: "فتح الملف العام",
     availability: "ساعات الحجز عبر الإنترنت",
     availabilityHelp: "حدد الساعات التي يمكن أن تظهر لاحقاً كأوقات حجز ذاتي حقيقية.",
+    availabilityOn: "حجز المرضى مفعّل",
+    availabilityOff: "حجز المرضى متوقف",
     share: "مشاركة",
     copied: "تم نسخ الرابط",
     whatsapp: "WhatsApp",
@@ -239,12 +249,14 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
     { data: clinicProfile, error: clinicProfileError },
     { data: doctors, error: doctorsError },
     { data: doctorProfiles, error: doctorProfilesError },
+    { data: bookingSettings, error: bookingSettingsError },
   ] = await Promise.all([
     supabase.from("clinic_directory_profiles").select("*").eq("clinic_id", clinic.id).maybeSingle(),
     supabase.from("doctors").select("id, name, active").eq("clinic_id", clinic.id).order("display_order", { ascending: true }),
     supabase.from("doctor_directory_profiles").select("*").eq("clinic_id", clinic.id),
+    supabase.from("clinic_public_booking_settings").select("enabled").eq("clinic_id", clinic.id).maybeSingle(),
   ]);
-  if (clinicProfileError || doctorsError || doctorProfilesError) {
+  if (clinicProfileError || doctorsError || doctorProfilesError || bookingSettingsError) {
     redirect(`/dashboard/settings?clinic=${clinic.id}&error=save_failed`);
   }
 
@@ -272,7 +284,9 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
 
         <Link className="settings-link public-profile-availability-link" href={`/dashboard/settings/public-profile/availability?clinic=${clinic.id}`}>
           <span className="settings-export-copy"><strong>{t.availability}</strong><small>{t.availabilityHelp}</small></span>
-          <span aria-hidden="true">→</span>
+          <span className={`public-booking-state ${bookingSettings?.enabled ? "is-on" : "is-off"}`}>
+            {bookingSettings?.enabled ? t.availabilityOn : t.availabilityOff}
+          </span>
         </Link>
 
         <form action={saveClinicDirectoryProfile} className="settings-form public-profile-form">
@@ -350,7 +364,7 @@ export default async function PublicProfileSettings({ searchParams }: PublicProf
       </section>
 
       <style>{`
-        .public-profile-settings{padding-bottom:100px}.public-profile-availability-link{margin-bottom:14px}.public-profile-settings>.settings-card{margin-top:16px}.public-profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.public-profile-form>label{display:grid;gap:7px;color:var(--muted);font-size:11px;font-weight:780}.public-profile-wide,.public-profile-publish,.public-profile-actions{grid-column:1/-1}.public-profile-form textarea{resize:vertical;min-height:96px}.public-profile-publish{grid-template-columns:auto 1fr!important;align-items:start;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.public-profile-publish input{margin-top:3px}.public-profile-publish span{display:grid;gap:4px}.public-profile-publish strong{color:var(--ink)}.public-profile-publish small{font-weight:650;line-height:1.45}.public-profile-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.public-profile-actions .atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap}.public-doctor-profile-list{display:grid;gap:10px}.public-doctor-profile>summary{justify-content:space-between}.public-doctor-profile>summary small{color:var(--accent)}@media(max-width:680px){.public-profile-form{grid-template-columns:1fr}}
+        .public-profile-settings{padding-bottom:100px}.public-profile-availability-link{margin-bottom:14px}.public-booking-state{flex:0 0 auto;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:850;white-space:nowrap}.public-booking-state.is-on{background:var(--accent-soft);color:var(--accent)}.public-booking-state.is-off{background:var(--surface-soft);color:var(--muted)}.public-profile-settings>.settings-card{margin-top:16px}.public-profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.public-profile-form>label{display:grid;gap:7px;color:var(--muted);font-size:11px;font-weight:780}.public-profile-wide,.public-profile-publish,.public-profile-actions{grid-column:1/-1}.public-profile-form textarea{resize:vertical;min-height:96px}.public-profile-publish{grid-template-columns:auto 1fr!important;align-items:start;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.public-profile-publish input{margin-top:3px}.public-profile-publish span{display:grid;gap:4px}.public-profile-publish strong{color:var(--ink)}.public-profile-publish small{font-weight:650;line-height:1.45}.public-profile-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.public-profile-actions .atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap}.public-doctor-profile-list{display:grid;gap:10px}.public-doctor-profile>summary{justify-content:space-between}.public-doctor-profile>summary small{color:var(--accent)}@media(max-width:680px){.public-profile-form{grid-template-columns:1fr}}
       `}</style>
     </main>
   );
