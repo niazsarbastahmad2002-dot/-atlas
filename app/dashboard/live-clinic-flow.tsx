@@ -19,6 +19,7 @@ type Flow = {
   isToday: boolean;
   delayMinutes: number | null;
   timingUpdatedAt?: string | null;
+  signalsTruncated?: boolean;
   signals: Signal[];
 };
 
@@ -32,6 +33,7 @@ const copy = {
     onTime: "On time",
     late: (minutes: string) => `${minutes} late`,
     patientUpdates: "Patient updates",
+    updatesLimited: "More patient updates exist. Atlas is showing the first 100.",
     onWay: "on the way",
     runningLate: "running late",
     failed: "Timing did not save.",
@@ -46,6 +48,7 @@ const copy = {
     onTime: "لە کاتی خۆی دێت",
     late: (minutes: string) => `${minutes} خولەک دوا دەکەوێت`,
     patientUpdates: "نوێکاری نەخۆش",
+    updatesLimited: "نوێکاری نەخۆشی زیاتر هەیە. Atlas تەنها یەکەم ١٠٠ دانە پیشان دەدات.",
     onWay: "لە ڕێگادایە",
     runningLate: "دواکەوتووە",
     failed: "کاتی کلینیک پاشەکەوت نەکرا.",
@@ -60,6 +63,7 @@ const copy = {
     onTime: "د دەمێ خۆ دا",
     late: (minutes: string) => `${minutes} خولەک دوا`,
     patientUpdates: "نووکرنێن نەخۆشی",
+    updatesLimited: "نووکرنێن نەخۆشی پتر هەنە. Atlas تەنێ ١٠٠ یێن ئێکێ نیشان ددەت.",
     onWay: "د ڕێکێ دایە",
     runningLate: "دواکەفتییە",
     failed: "دەمێ کلینیکێ نەهاتە پاراستن.",
@@ -74,6 +78,7 @@ const copy = {
     onTime: "بالوقت",
     late: (minutes: string) => `${minutes} د تأخير`,
     patientUpdates: "تحديثات المرضى",
+    updatesLimited: "توجد تحديثات مرضى إضافية. يعرض Atlas أول ١٠٠ فقط.",
     onWay: "بالطريق",
     runningLate: "راح يتأخر",
     failed: "ما انحفظ وقت العيادة.",
@@ -263,11 +268,12 @@ export function LiveClinicFlow({
               </span>
             ))}
           </div>
+          {flow.signalsTruncated ? <span className="live-patient-limit" role="status">{t.updatesLimited}</span> : null}
         </div>
       ) : null}
 
       <style>{`
-        .live-clinic-flow{display:grid;gap:9px;margin-top:10px;margin-bottom:10px}.live-clinic-timing{display:grid;grid-template-columns:minmax(150px,1fr) auto;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface)}.live-clinic-copy{display:grid;gap:2px;min-width:0}.live-clinic-copy>strong{font-size:11px;font-weight:880}.live-clinic-copy>span{color:var(--muted);font-size:10px;font-weight:720}.live-clinic-copy>small{margin-top:2px;color:var(--muted);font-size:9px;font-weight:560;line-height:1.4}.live-clinic-options{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}.live-clinic-options::-webkit-scrollbar{display:none}.live-clinic-options button{flex:0 0 auto;min-height:34px;border:1px solid var(--line);border-radius:999px;padding:6px 9px;background:var(--surface-soft);color:var(--ink-soft);font-size:9.5px;font-weight:800;cursor:pointer}.live-clinic-options button.is-selected{border-color:rgba(8,119,90,.28);background:var(--accent-soft);color:var(--accent)}.live-clinic-options button:disabled{cursor:wait;opacity:.72}.live-clinic-error{grid-column:1/-1;color:var(--danger);font-size:10px;font-weight:720}.live-clinic-retry{margin-inline-start:6px;border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}.live-patient-updates{display:flex;align-items:center;gap:9px;min-width:0}.live-patient-updates>strong{flex:0 0 auto;color:var(--muted);font-size:9.5px;font-weight:850}.live-patient-pills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.live-patient-pills::-webkit-scrollbar{display:none}.live-patient-pill{display:inline-flex;flex:0 0 auto;align-items:center;gap:2px;border-radius:999px;padding:6px 9px;background:var(--accent-faint);color:var(--ink-soft);font-size:9.5px}.live-patient-pill b{font-weight:850}.live-patient-pill.is-running_late{background:var(--warning-bg);color:var(--warning)}@media(max-width:720px){.live-clinic-timing{grid-template-columns:1fr}.live-clinic-copy>small{display:none}.live-clinic-options{width:100%}.live-clinic-options button{flex:1 0 auto}.live-patient-updates{align-items:flex-start;flex-direction:column;gap:5px}.live-patient-pills{width:100%}}
+        .live-clinic-flow{display:grid;gap:9px;margin-top:10px;margin-bottom:10px}.live-clinic-timing{display:grid;grid-template-columns:minmax(150px,1fr) auto;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface)}.live-clinic-copy{display:grid;gap:2px;min-width:0}.live-clinic-copy>strong{font-size:11px;font-weight:880}.live-clinic-copy>span{color:var(--muted);font-size:10px;font-weight:720}.live-clinic-copy>small{margin-top:2px;color:var(--muted);font-size:9px;font-weight:560;line-height:1.4}.live-clinic-options{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}.live-clinic-options::-webkit-scrollbar{display:none}.live-clinic-options button{flex:0 0 auto;min-height:34px;border:1px solid var(--line);border-radius:999px;padding:6px 9px;background:var(--surface-soft);color:var(--ink-soft);font-size:9.5px;font-weight:800;cursor:pointer}.live-clinic-options button.is-selected{border-color:rgba(8,119,90,.28);background:var(--accent-soft);color:var(--accent)}.live-clinic-options button:disabled{cursor:wait;opacity:.72}.live-clinic-error{grid-column:1/-1;color:var(--danger);font-size:10px;font-weight:720}.live-clinic-retry{margin-inline-start:6px;border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}.live-patient-updates{display:flex;align-items:center;gap:9px;min-width:0}.live-patient-updates>strong{flex:0 0 auto;color:var(--muted);font-size:9.5px;font-weight:850}.live-patient-pills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.live-patient-pills::-webkit-scrollbar{display:none}.live-patient-pill{display:inline-flex;flex:0 0 auto;align-items:center;gap:2px;border-radius:999px;padding:6px 9px;background:var(--accent-faint);color:var(--ink-soft);font-size:9.5px}.live-patient-pill b{font-weight:850}.live-patient-limit{flex:0 0 100%;color:var(--muted);font-size:9px;line-height:1.35}.live-patient-pill.is-running_late{background:var(--warning-bg);color:var(--warning)}@media(max-width:720px){.live-clinic-timing{grid-template-columns:1fr}.live-clinic-copy>small{display:none}.live-clinic-options{width:100%}.live-clinic-options button{flex:1 0 auto}.live-patient-updates{align-items:flex-start;flex-direction:column;gap:5px}.live-patient-pills{width:100%}}
       `}</style>
     </section>
   );
