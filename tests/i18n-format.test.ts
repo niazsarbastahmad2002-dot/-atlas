@@ -31,5 +31,5 @@ test("formats appointment dates as strict DD/MM/YYYY ASCII digits", () => {
 
 test("Badini weekday follows the Baghdad calendar day across UTC midnight", () => {
   const afterBaghdadMidnight = new Date("2026-10-04T22:30:00.000Z");
-  assert.equal(formatBaghdadDay(afterBaghdadMidnight, "bd"), "دووشەم، ٥/١٠/٢٠٢٦");
+  assert.equal(formatBaghdadDay(afterBaghdadMidnight, "bd"), "دووشەم، ٠٥/١٠/٢٠٢٦");
 });
