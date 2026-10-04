@@ -11,11 +11,15 @@ test("dashboard polish observer stays scoped to the Atlas shell", () => {
 });
 
 
-test("dashboard polish removes locale-bound DOM listeners before rebuilding", () => {
-  assert.match(source, /const listenerCleanups: Array<\(\) => void> = \[\]/);
+test("dashboard polish removes locale-bound DOM listeners and prunes detached controls", () => {
+  assert.match(source, /const listenerCleanups = new Map<Element, \(\) => void>\(\)/);
+  assert.match(source, /listenerCleanups\.set\(input,/);
+  assert.match(source, /listenerCleanups\.set\(form,/);
   assert.match(source, /input\.removeEventListener\("input", update\)/);
   assert.match(source, /form\.removeEventListener\("submit", handleSubmit, true\)/);
-  assert.match(source, /listenerCleanups\.forEach\(\(cleanup\) => cleanup\(\)\)/);
+  assert.match(source, /if \(element\.isConnected\) return/);
+  assert.match(source, /listenerCleanups\.delete\(element\)/);
+  assert.match(source, /listenerCleanups\.clear\(\)/);
 });
 
 
