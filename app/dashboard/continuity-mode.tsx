@@ -284,7 +284,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ["disabled"],
+          attributeFilter: ["disabled", "data-atlas-offline-local-action"],
         });
       }
     };
