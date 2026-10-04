@@ -6,6 +6,7 @@ import type { UiLocale } from "@/lib/i18n/ui";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { createClient } from "@/lib/supabase/server";
 import { PatientBookingForm } from "./booking-form";
+import { AtlasPatientNav } from "@/app/care/patient-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -29,50 +30,55 @@ const copy: Record<UiLocale, {
   back: string;
   unavailableTitle: string;
   unavailableHelp: string;
+  myAppointments: string;
 }> = {
   en: {
     eyebrow: "Book with Atlas",
     title: "Verify your mobile, then book",
-    help: "Atlas rechecks the clinic schedule at the final step so two patients cannot take the same slot.",
+    help: "Atlas checks this time again before booking so it cannot be taken twice.",
     notReadyTitle: "Online booking is not active yet.",
-    notReadyHelp: "The clinic's live availability is visible, but Atlas is waiting for production phone verification before it can safely reserve a slot online.",
+    notReadyHelp: "You can see the clinic's live times, but online booking is not ready yet. Call the clinic to reserve this time.",
     call: "Call clinic",
     back: "Back to doctor",
     unavailableTitle: "This booking time is unavailable.",
     unavailableHelp: "It may have been taken, closed, or the link may be incorrect.",
+    myAppointments: "My appointments",
   },
   ku: {
     eyebrow: "مەوعید لە Atlas",
     title: "ژمارەکەت پشتڕاست بکەرەوە، پاشان مەوعید دابنێ",
-    help: "Atlas لە هەنگاوی کۆتاییدا خشتەی کلینیک دووبارە دەپشکنێت تا دوو نەخۆش هەمان کات نەگرن.",
+    help: "Atlas پێش دانانی مەوعید ئەم کاتە دووبارە دەپشکنێت تا دوو جار نەگیرێت.",
     notReadyTitle: "مەوعیددانانی ئۆنلاین هێشتا چالاک نییە.",
-    notReadyHelp: "کاتە بەردەستە ڕاستەقینەکان دیارن، بەڵام Atlas چاوەڕێی پشتڕاستکردنەوەی مۆبایلی بەرهەمی ڕاستەقینەیە پێش ئەوەی کاتێک ئۆنلاین بگرێت.",
+    notReadyHelp: "کاتە بەردەستە ڕاستەقینەکان دەبینیت، بەڵام مەوعیددانانی ئۆنلاین هێشتا ئامادە نییە. بۆ گرتنی ئەم کاتە پەیوەندی بە کلینیک بکە.",
     call: "پەیوەندی بە کلینیک",
     back: "گەڕانەوە بۆ پزیشک",
     unavailableTitle: "ئەم کاتی مەوعیدە بەردەست نییە.",
     unavailableHelp: "لەوانەیە گیرا بێت، داخرا بێت یان بەستەرەکە هەڵە بێت.",
+    myAppointments: "مەوعیدەکانم",
   },
   bd: {
     eyebrow: "وادە ل Atlas",
     title: "ژمارا خۆ پشتڕاست بکە، پاشی وادە دابنێ",
-    help: "Atlas ل هەنگاڤا دوماهیێ خشتەیا کلینیکێ جارەکا دی دپشکنیت دا دوو نەخۆش هەمان دەم نەگرن.",
+    help: "Atlas بەری دانانا وادەیێ ئەڤ دەمە جارەکا دی دپشکنیت دا دوو جار نەهێتە گرتن.",
     notReadyTitle: "وادەدانانا ئۆنلاین هێشتا چالاک نینە.",
-    notReadyHelp: "دەمێن ڕاستەقینە یێن بەردەست دیارن، لێ Atlas چاوەرێیا پشتڕاستکرنا موبایلا بەرهەمی دکەت بەری کو دەمەکێ ئۆنلاین بگریت.",
+    notReadyHelp: "دەمێن ڕاستەقینە یێن بەردەست دبینی، لێ وادەدانانا ئۆنلاین هێشتا ئامادە نینە. بۆ گرتنا ڤی دەمی پەیوەندی ب کلینیکێ بکە.",
     call: "پەیوەندی ب کلینیکێ",
     back: "ڤەگەڕە دکتۆری",
     unavailableTitle: "ئەڤ دەمێ وادەیێ بەردەست نینە.",
     unavailableHelp: "دبیت هاتبیتە گرتن، گرتی بیت یان لینک هەڵە بیت.",
+    myAppointments: "وادەیێن من",
   },
   ar: {
     eyebrow: "احجز عبر Atlas",
     title: "وثّق رقمك وبعدها احجز",
-    help: "Atlas يعيد فحص جدول العيادة في الخطوة الأخيرة حتى ما يحجز مريضان نفس الوقت.",
+    help: "Atlas يفحص هذا الوقت مرة ثانية قبل الحجز حتى ما ينحجز مرتين.",
     notReadyTitle: "الحجز عبر الإنترنت غير مفعّل حالياً.",
-    notReadyHelp: "الأوقات الحقيقية المتاحة ظاهرة، لكن Atlas ينتظر تفعيل التحقق الإنتاجي من رقم الهاتف قبل أن يحجز وقتاً بأمان.",
+    notReadyHelp: "تقدر تشوف الأوقات الحقيقية المتاحة، لكن الحجز عبر الإنترنت مو جاهز بعد. اتصل بالعيادة لحجز هذا الوقت.",
     call: "اتصل بالعيادة",
     back: "العودة للطبيب",
     unavailableTitle: "وقت الحجز هذا غير متاح.",
     unavailableHelp: "ممكن انحجز، انغلق، أو الرابط غير صحيح.",
+    myAppointments: "مواعيدي",
   },
 };
 
@@ -151,12 +157,7 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
 
   return (
     <main className="marketing-page atlas-booking-page">
-      <nav className="nav shell marketing-nav">
-        <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </Link>
-      </nav>
+      <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
 
       <article className="shell atlas-booking-shell">
         <div className="eyebrow">{t.eyebrow}</div>
