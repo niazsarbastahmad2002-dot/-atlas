@@ -7,12 +7,15 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 test("dashboard loading landmarks stay language-neutral without breaking Safari stall recovery", () => {
   const dashboard = read("app/dashboard/loading.tsx");
   const settings = read("app/dashboard/settings/loading.tsx");
+  const staff = read("app/dashboard/staff/loading.tsx");
   const refresh = read("app/components/live-page-refresh.tsx");
 
   assert.match(dashboard, /aria-busy="true" data-atlas-loading="schedule"/);
   assert.match(settings, /aria-busy="true" data-atlas-loading="settings"/);
+  assert.match(staff, /aria-busy="true" data-atlas-loading="staff"/);
   assert.doesNotMatch(dashboard, /aria-label="Loading schedule"/);
   assert.doesNotMatch(settings, /aria-label="Loading settings"/);
+  assert.doesNotMatch(staff, /Loading clinic access|Clinic access|Loading…/);
   assert.match(refresh, /data-atlas-loading="schedule"/);
   assert.doesNotMatch(refresh, /aria-label="Loading schedule"/);
 });
