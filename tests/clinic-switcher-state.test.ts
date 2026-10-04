@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 
 test("clinic switchers remount with the clinic currently being viewed", () => {
   const pages = [
+    "app/dashboard/page.tsx",
     "app/dashboard/settings/page.tsx",
     "app/dashboard/history/page.tsx",
     "app/dashboard/assistant/page.tsx",
