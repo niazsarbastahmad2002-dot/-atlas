@@ -235,6 +235,9 @@ export default async function ActivityPage({ searchParams }: Props) {
   if (clinicsError || !clinics?.length) redirect("/dashboard");
 
   const requestedClinic = params.clinic && isUuid(params.clinic) ? params.clinic : null;
+  if (params.clinic && (!requestedClinic || !clinics.some((item) => item.id === requestedClinic))) {
+    redirect("/dashboard?error=clinic_unavailable");
+  }
   const clinic = clinics.find((item) => item.id === requestedClinic) ?? clinics[0];
   const { data: membership } = await supabase
     .from("clinic_members")
