@@ -48,7 +48,7 @@ test("patient profile remains small, private, multilingual, and does not make ph
   assert.match(page, /profileTitle: "زانیارییەکانت"/);
   assert.match(page, /profileTitle: "زانیارییێن تە"/);
   assert.match(page, /profileTitle: "معلوماتك"/);
-  assert.match(page, /Your patient profile stays private/);
+  assert.match(page, /These details stay private\./);
   assert.doesNotMatch(page, /name="phone"|type="tel"/);
   assert.match(page, /patient-account-profile-form button\{min-height:48px\}/);
 });
