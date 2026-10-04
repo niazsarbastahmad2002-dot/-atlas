@@ -30,7 +30,7 @@ test("unavailable times and booking return to the doctor when the doctor path is
   ]) {
     const page = source(path);
     assert.match(page, /const doctorHref = safeSlug\(clinicSlug\) && safeSlug\(doctorSlug\)/);
-    assert.match(page, /\? `\/care\/\$\{clinicSlug\}\/\$\{doctorSlug\}`/);
+    assert.match(page, /\? patientLocaleHref\(`\/care\/\$\{clinicSlug\}\/\$\{doctorSlug\}`, locale\)/);
     assert.match(page, /<Unavailable copy=\{t\} locale=\{locale\} href=\{doctorHref\}/);
   }
 });
@@ -41,6 +41,6 @@ test("invalid patient route slugs fall back to care instead of echoing them into
     "app/care/[clinicSlug]/[doctorSlug]/book/page.tsx",
   ]) {
     const page = source(path);
-    assert.match(page, /: "\/care";/);
+    assert.match(page, /: patientLocaleHref\("\/care", locale\);/);
   }
 });

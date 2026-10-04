@@ -2,14 +2,14 @@ import Link from "next/link";
 import { LoginLanguagePicker } from "@/app/login/language-picker";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
-import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
+import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 type CarePageProps = {
-  searchParams: Promise<{ q?: string | string[]; city?: string | string[]; specialty?: string | string[]; sort?: string | string[] }>;
+  searchParams: Promise<{ q?: string | string[]; city?: string | string[]; specialty?: string | string[]; sort?: string | string[]; lang?: string | string[] }>;
 };
 
 const careCopy: Record<UiLocale, {
@@ -193,7 +193,8 @@ function nextAvailabilityLabel(value: string, locale: UiLocale) {
 }
 
 export default async function CarePage({ searchParams }: CarePageProps) {
-  const [params, locale] = await Promise.all([searchParams, getUiLocale()]);
+  const params = await searchParams;
+  const locale = await resolvePatientLocale(params.lang);
   const copy = careCopy[locale];
   const query = bounded(params.q, 80);
   const city = bounded(params.city, 100);
@@ -241,7 +242,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
               {hasAvailableSoon ? (
                 <Link
                   className={`atlas-care-choice ${sort === "soonest" ? "is-active" : ""}`}
-                  href="/care?sort=soonest"
+                  href={patientLocaleHref("/care", locale, { sort: "soonest" })}
                 >
                   <span aria-hidden="true">◷</span>
                   {copy.availableSoon}
@@ -251,7 +252,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
                 <Link
                   className="atlas-care-choice"
                   key={item}
-                  href={`/care?specialty=${encodeURIComponent(item)}&sort=soonest`}
+                  href={patientLocaleHref("/care", locale, { specialty: item, sort: "soonest" })}
                 >
                   <span className="atlas-care-choice-mark" aria-hidden="true">{item.slice(0, 1)}</span>
                   {item}
@@ -262,6 +263,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         ) : null}
 
         <form className="atlas-care-search" method="get">
+          <input type="hidden" name="lang" value={locale} />
           <label>
             <span>{copy.query}</span>
             <input name="q" defaultValue={query} placeholder={copy.queryPlaceholder} maxLength={80} />
@@ -297,14 +299,14 @@ export default async function CarePage({ searchParams }: CarePageProps) {
                     <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
                   </div>
                 </div>
-                <p><b>{copy.clinic}:</b> <Link href={`/care/${doctor.clinic_slug}`}>{doctor.clinic_name}</Link></p>
+                <p><b>{copy.clinic}:</b> <Link href={patientLocaleHref(`/care/${doctor.clinic_slug}`, locale)}>{doctor.clinic_name}</Link></p>
                 {(doctor.city || doctor.area) ? <p>{[doctor.area, doctor.city].filter(Boolean).join(" · ")}</p> : null}
                 {doctor.next_available_at && nextAvailabilityLabel(doctor.next_available_at, locale) ? (
                   <p className="atlas-care-next-opening">
                     <b>{copy.nextAvailable}:</b> {nextAvailabilityLabel(doctor.next_available_at, locale)}
                   </p>
                 ) : null}
-                <Link className="button button-ghost button-small" href={`/care/${doctor.clinic_slug}/${doctor.doctor_slug}`}>
+                <Link className="button button-ghost button-small" href={patientLocaleHref(`/care/${doctor.clinic_slug}/${doctor.doctor_slug}`, locale)}>
                   {copy.openProfile}
                 </Link>
               </article>
@@ -314,13 +316,13 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <div className="atlas-care-empty">
             <strong>{copy.noResults}</strong>
             <p>{copy.noResultsHelp}</p>
-            <Link className="atlas-care-reset" href="/care">{copy.allDoctors}</Link>
+            <Link className="atlas-care-reset" href={patientLocaleHref("/care", locale)}>{copy.allDoctors}</Link>
           </div>
         ) : (
           <div className="atlas-care-empty atlas-care-empty-published">
             <strong>{copy.noPublished}</strong>
             <p>{copy.noPublishedHelp}</p>
-            <Link className="button button-ghost" href="/patient-account">{copy.myAppointments}</Link>
+            <Link className="button button-ghost" href={patientLocaleHref("/patient-account", locale)}>{copy.myAppointments}</Link>
           </div>
         )}
 

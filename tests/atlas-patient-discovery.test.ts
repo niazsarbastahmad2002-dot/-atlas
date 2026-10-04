@@ -19,8 +19,8 @@ test("care discovery is clearly the Atlas Patient front door", () => {
 test("visual browse choices come only from legitimately published doctor results", () => {
   assert.match(page, /const browseSpecialties = hasSearch[\s\S]*results[\s\S]*doctor\.specialty/);
   assert.match(page, /const hasAvailableSoon = !hasSearch && results\.some/);
-  assert.match(page, /href=\{\`\/care\?specialty=\$\{encodeURIComponent\(item\)\}&sort=soonest\`\}/);
-  assert.match(page, /href="\/care\?sort=soonest"/);
+  assert.match(page, /patientLocaleHref\("\/care", locale, \{ specialty: item, sort: "soonest" \}\)/);
+  assert.match(page, /patientLocaleHref\("\/care", locale, \{ sort: "soonest" \}\)/);
   assert.doesNotMatch(page, /hardcodedSpecialties|fakeDoctor/i);
 });
 
@@ -34,7 +34,7 @@ test("zero published doctors still leaves a useful patient experience", () => {
   assert.match(page, /noPublished: "No doctors are published on Atlas yet\."/);
   assert.match(page, /noPublishedHelp:/);
   assert.match(page, /atlas-care-empty-published/);
-  assert.match(page, /href="\/patient-account"/);
+  assert.match(page, /patientLocaleHref\("\/patient-account", locale\)/);
 });
 
 test("existing safe search and real availability contract remain intact", () => {
