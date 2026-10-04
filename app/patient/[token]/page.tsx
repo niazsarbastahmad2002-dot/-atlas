@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 type PatientPageProps = {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ view?: string; lang?: string; error?: string; notice?: string }>;
+  searchParams: Promise<{ view?: string; lang?: string; error?: string; notice?: string; account?: string }>;
 };
 
 type PatientAppointment = {
@@ -273,9 +273,15 @@ const patientLanguageOptions = [
   { locale: "en", label: "English", lang: "en", dir: "ltr" as const },
 ] satisfies ReadonlyArray<{ locale: PatientLocale; label: string; lang: string; dir: "ltr" | "rtl" }>;
 
-function patientLanguageHref(token: string, locale: PatientLocale, reminderView: boolean) {
+function patientLanguageHref(
+  token: string,
+  locale: PatientLocale,
+  reminderView: boolean,
+  accountOwned: boolean,
+) {
   const params = new URLSearchParams({ lang: locale });
   if (reminderView) params.set("view", "reminder");
+  if (accountOwned) params.set("account", "1");
   return `/patient/${token}?${params.toString()}`;
 }
 
@@ -373,6 +379,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const isConfirmed = status === "confirmed";
   const isActive = isPending || isConfirmed;
   const reminderView = query.view === "reminder";
+  const accountOwned = query.account === "1";
   const actionFailed = query.error === "update_failed";
   const rescheduled = query.notice === "rescheduled";
   const rescheduleError = query.error === "slot_taken"
@@ -440,7 +447,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           {patientLanguageOptions.map((option) => (
             <a
               key={option.locale}
-              href={patientLanguageHref(token, option.locale, reminderView)}
+              href={patientLanguageHref(token, option.locale, reminderView, accountOwned)}
               lang={option.lang}
               dir={option.dir}
               aria-current={locale === option.locale ? "page" : undefined}
@@ -626,9 +633,11 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           </div>
         ) : null}
 
-        <a className="button button-ghost patient-account-entry" href={`/patient-account?lang=${locale}`}>
-          {text.myAppointments}
-        </a>
+        {accountOwned ? (
+          <a className="button button-ghost patient-account-entry" href={`/patient-account?lang=${locale}`}>
+            {text.myAppointments}
+          </a>
+        ) : null}
         <p className="quiet patient-privacy">{text.privacy}</p>
 
         <style>{`
