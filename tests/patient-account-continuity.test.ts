@@ -30,3 +30,16 @@ test("patient account entry stays mobile-sized and preserves appointment privacy
   assert.match(page, /min-height: 48px/);
   assert.match(page, /\{text\.privacy\}/);
 });
+
+
+test("My Appointments entry is shown only on verified self-booking continuity", () => {
+  const finalize = readFileSync(
+    new URL("../app/api/care/booking/finalize/route.ts", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(finalize, /patientPath: \`\/patient\/\$\{patientToken\}\?lang=\$\{encodeURIComponent\(lang\)\}&account=1\`/);
+  assert.match(page, /const accountOwned = query\.account === "1"/);
+  assert.match(page, /\{accountOwned \? \([\s\S]*patient-account-entry/);
+  assert.match(page, /patientLanguageHref\(token, option\.locale, reminderView, accountOwned\)/);
+});
