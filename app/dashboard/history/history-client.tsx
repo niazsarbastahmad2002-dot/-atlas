@@ -148,13 +148,15 @@ export function HistoryClient({
     const rawQuery = query.trim();
     const nameNeedle = normalizeName(rawQuery);
     const phoneDigits = normalizePhone(rawQuery);
+    const nameQuery = /\p{L}/u.test(rawQuery);
     return rows
       .filter((row) => filter === "all" || row.removed)
       .filter((row) => {
         if (!rawQuery) return true;
-        if (nameNeedle && normalizeName(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(nameNeedle)) return true;
-        const phoneQuery = !/\p{L}/u.test(rawQuery);
-        return phoneQuery && phoneDigits.length >= 4 && normalizePhone(row.patientPhone).includes(phoneDigits);
+        if (nameQuery) {
+          return Boolean(nameNeedle && normalizeName(`${row.patientName} ${row.doctorName}`).includes(nameNeedle));
+        }
+        return phoneDigits.length >= 4 && normalizePhone(row.patientPhone).includes(phoneDigits);
       })
       .sort((a, b) => sort === "newest"
         ? new Date(b.appointmentAt).getTime() - new Date(a.appointmentAt).getTime()
