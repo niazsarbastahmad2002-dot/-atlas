@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import { createClient } from "@/lib/supabase/server";
 import { PatientBookingForm } from "./booking-form";
@@ -112,6 +112,9 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
   const t = copy[locale];
   const slotRaw = typeof query.slot === "string" ? query.slot : "";
   const requestedSlot = new Date(slotRaw);
+  const doctorHref = safeSlug(clinicSlug) && safeSlug(doctorSlug)
+    ? `/care/${clinicSlug}/${doctorSlug}`
+    : "/care";
 
   if (
     !safeSlug(clinicSlug)
@@ -120,7 +123,7 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
     || Number.isNaN(requestedSlot.getTime())
     || requestedSlot.getTime() <= Date.now()
   ) {
-    return <Unavailable copy={t} href={`/care/${clinicSlug}/${doctorSlug}`} />;
+    return <Unavailable copy={t} locale={locale} href={doctorHref} />;
   }
 
   const supabase = await createClient();
@@ -143,7 +146,7 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
     : undefined;
 
   if (profileError || slotError || !profile || !exactSlot) {
-    return <Unavailable copy={t} href={`/care/${clinicSlug}/${doctorSlug}`} />;
+    return <Unavailable copy={t} locale={locale} href={doctorHref} />;
   }
 
   const launchEnabled = process.env.ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED === "true";
@@ -195,15 +198,21 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
 
 type BookingPageCopy = (typeof copy)[UiLocale];
 
-function Unavailable({ copy: t, href }: { copy: BookingPageCopy; href: string }) {
+function Unavailable({ copy: t, locale, href }: { copy: BookingPageCopy; locale: UiLocale; href: string }) {
+  const meta = uiLocaleMeta[locale];
   return (
-    <main className="center-page">
-      <section className="auth-card">
-        <div className="app-brand"><span className="app-brand-mark" aria-hidden="true">A</span><span className="app-brand-word">Atlas</span></div>
-        <h1>{t.unavailableTitle}</h1>
-        <p>{t.unavailableHelp}</p>
-        <Link className="button button-ghost" href={href}>{t.back}</Link>
-      </section>
+    <main className="marketing-page atlas-booking-page">
+      <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
+      <div className="center-page atlas-patient-unavailable-center">
+        <section className="auth-card" lang={meta.language} dir={meta.direction}>
+          <h1>{t.unavailableTitle}</h1>
+          <p>{t.unavailableHelp}</p>
+          <Link className="button button-ghost" href={href}>{t.back}</Link>
+        </section>
+      </div>
+      <style>{`
+        .atlas-patient-unavailable-center{min-height:calc(100dvh - 72px);padding-top:20px;padding-bottom:40px}
+      `}</style>
     </main>
   );
 }

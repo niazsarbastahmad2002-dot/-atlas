@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { formatIraqiMobile } from "@/lib/appointments";
 import { getUiLocale } from "@/lib/i18n/ui-server";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { ShareProfileButton } from "../share-profile-button";
 import { AtlasPatientNav } from "../patient-nav";
@@ -156,7 +156,7 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
   const [{ clinicSlug }, locale] = await Promise.all([params, getUiLocale()]);
   const copy = clinicCopy[locale];
 
-  if (!safeSlug(clinicSlug)) return <Unavailable copy={copy} />;
+  if (!safeSlug(clinicSlug)) return <Unavailable copy={copy} locale={locale} />;
 
   const supabase = await createClient();
   const [{ data: clinicData, error: clinicError }, { data: doctors, error: doctorsError }] = await Promise.all([
@@ -164,7 +164,7 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
     supabase.rpc("list_public_doctors", { p_clinic_slug: clinicSlug }),
   ]);
   const clinic = Array.isArray(clinicData) ? clinicData[0] : undefined;
-  if (clinicError || doctorsError || !clinic) return <Unavailable copy={copy} />;
+  if (clinicError || doctorsError || !clinic) return <Unavailable copy={copy} locale={locale} />;
 
   const location = [clinic.address_text, clinic.area, clinic.city].filter(Boolean).join(" · ");
   const directionsDestination = clinic.address_text
@@ -244,18 +244,21 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
   );
 }
 
-function Unavailable({ copy }: { copy: typeof clinicCopy[UiLocale] }) {
+function Unavailable({ copy, locale }: { copy: typeof clinicCopy[UiLocale]; locale: UiLocale }) {
+  const meta = uiLocaleMeta[locale];
   return (
-    <main className="center-page">
-      <section className="auth-card">
-        <div className="app-brand">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </div>
-        <h1>{copy.unavailableTitle}</h1>
-        <p>{copy.unavailableHelp}</p>
-        <Link className="button button-ghost" href="/care">{copy.back}</Link>
-      </section>
+    <main className="marketing-page atlas-care-clinic-page">
+      <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
+      <div className="center-page atlas-patient-unavailable-center">
+        <section className="auth-card" lang={meta.language} dir={meta.direction}>
+          <h1>{copy.unavailableTitle}</h1>
+          <p>{copy.unavailableHelp}</p>
+          <Link className="button button-ghost" href="/care">{copy.back}</Link>
+        </section>
+      </div>
+      <style>{`
+        .atlas-patient-unavailable-center{min-height:calc(100dvh - 72px);padding-top:20px;padding-bottom:40px}
+      `}</style>
     </main>
   );
 }
