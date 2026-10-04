@@ -21,6 +21,10 @@ test("receptionist invite sharing falls back safely when native share or clipboa
   assert.match(source, /دعوة عيادة Atlas/);
   assert.match(source, /expires in 24 hours/);
   assert.match(source, /role="alert"/);
+  assert.match(source, /className="staff-invite-link-value"/);
+  assert.match(source, /value=\{currentInviteUrl \?\? ""\}/);
+  assert.match(source, /readOnly/);
+  assert.match(source, /onFocus=\{\(event\) => event\.currentTarget\.select\(\)\}/);
   assert.match(source, /بەستەرەکە کۆپی نەکرا/);
   assert.match(source, /تعذر نسخ الرابط/);
 });
