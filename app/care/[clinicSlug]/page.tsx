@@ -157,6 +157,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
   const [{ clinicSlug }, query] = await Promise.all([params, searchParams]);
   const locale = await resolvePatientLocale(query.lang);
   const copy = clinicCopy[locale];
+  const meta = uiLocaleMeta[locale];
 
   if (!safeSlug(clinicSlug)) return <Unavailable copy={copy} locale={locale} />;
 
@@ -180,7 +181,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
     : null;
 
   return (
-    <main className="marketing-page atlas-care-clinic-page">
+    <main className="marketing-page atlas-care-clinic-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
 
       <article className="shell atlas-care-clinic">
@@ -249,7 +250,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
 function Unavailable({ copy, locale }: { copy: typeof clinicCopy[UiLocale]; locale: UiLocale }) {
   const meta = uiLocaleMeta[locale];
   return (
-    <main className="marketing-page atlas-care-clinic-page">
+    <main className="marketing-page atlas-care-clinic-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
       <div className="center-page atlas-patient-unavailable-center">
         <section className="auth-card" lang={meta.language} dir={meta.direction}>

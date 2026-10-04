@@ -121,6 +121,7 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
   const [{ clinicSlug, doctorSlug }, query] = await Promise.all([params, searchParams]);
   const locale = await resolvePatientLocale(query.lang);
   const t = copy[locale];
+  const meta = uiLocaleMeta[locale];
   const doctorHref = safeSlug(clinicSlug) && safeSlug(doctorSlug)
     ? patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}`, locale)
     : patientLocaleHref("/care", locale);
@@ -220,7 +221,7 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
     : null;
 
   return (
-    <main className="marketing-page atlas-times-page">
+    <main className="marketing-page atlas-times-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
 
       <article className="shell atlas-times-shell">
@@ -282,7 +283,7 @@ type TimesCopy = (typeof copy)[UiLocale];
 function Unavailable({ copy: t, locale, href }: { copy: TimesCopy; locale: UiLocale; href: string }) {
   const meta = uiLocaleMeta[locale];
   return (
-    <main className="marketing-page atlas-times-page">
+    <main className="marketing-page atlas-times-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
       <div className="center-page atlas-patient-unavailable-center">
         <section className="auth-card" lang={meta.language} dir={meta.direction}>

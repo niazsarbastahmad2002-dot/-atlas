@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LoginLanguagePicker } from "@/app/login/language-picker";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 import { createClient } from "@/lib/supabase/server";
 
@@ -196,6 +196,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
   const params = await searchParams;
   const locale = await resolvePatientLocale(params.lang);
   const copy = careCopy[locale];
+  const meta = uiLocaleMeta[locale];
   const query = bounded(params.q, 80);
   const city = bounded(params.city, 100);
   const specialty = bounded(params.specialty, 120);
@@ -222,7 +223,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
   const hasAvailableSoon = !hasSearch && results.some((doctor) => Boolean(doctor.next_available_at));
 
   return (
-    <main className="marketing-page atlas-care-page">
+    <main className="marketing-page atlas-care-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
 
       <section className="shell atlas-care-shell">
