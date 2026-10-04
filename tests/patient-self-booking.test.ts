@@ -71,3 +71,35 @@ test("verified patient booking never grants clinic membership", () => {
     assert.doesNotMatch(value, /clinic_members|redeem_staff_invite|assigned_doctor_id/);
   }
 });
+
+
+test("verified booking reuses a private patient profile only after phone verification", () => {
+  const form = source("app/care/[clinicSlug]/[doctorSlug]/book/booking-form.tsx");
+  const profileRoute = source("app/api/care/patient-profile/route.ts");
+
+  assert.match(form, /verifyOtp\(\{/);
+  assert.match(form, /\/api\/care\/patient-profile/);
+  assert.match(form, /setPatientName\(saved\?\.profile\?\.displayName \?\? ""\)/);
+  assert.match(form, /setPreferredLanguage\(saved\?\.profile\?\.preferredLanguage \?\? props\.locale\)/);
+  assert.match(profileRoute, /admin\.auth\.getUser\(token\)/);
+  assert.match(profileRoute, /user\.phone_confirmed_at/);
+  assert.match(profileRoute, /\.from\("patient_profiles"\)/);
+  assert.match(profileRoute, /\.eq\("user_id", user\.id\)/);
+  assert.doesNotMatch(profileRoute, /clinic_members|appointments/);
+});
+
+test("booking sends the patient profile language but never submits a phone field", () => {
+  const form = source("app/care/[clinicSlug]/[doctorSlug]/book/booking-form.tsx");
+  assert.match(form, /reminderLanguage: preferredLanguage/);
+  assert.doesNotMatch(form, /patientPhone\s*:/);
+  assert.doesNotMatch(form, /body:\s*JSON\.stringify\([\s\S]*patientPhone/);
+});
+
+
+test("verified patient flow recovers from profile lookup and token expiry without trapping the patient", () => {
+  const form = source("app/care/[clinicSlug]/[doctorSlug]/book/booking-form.tsx");
+
+  assert.match(form, /setAccessToken\(verifiedAccessToken\)[\s\S]*\/api\/care\/patient-profile/);
+  assert.match(form, /profileResponse\.status === 401[\s\S]*setAccessToken\(""\)[\s\S]*setStep\("details"\)/);
+  assert.match(form, /booking\?\.status === "verification_required"[\s\S]*setAccessToken\(""\)[\s\S]*setToken\(""\)[\s\S]*setStep\("details"\)/);
+});
