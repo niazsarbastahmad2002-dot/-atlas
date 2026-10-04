@@ -404,7 +404,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           ) : null}
         </section>
 
-        <DoctorWorkflowCard clinicId={clinic.id} locale={locale} canManage={Boolean(canManage)} />
+        <DoctorWorkflowCard key={clinic.id} clinicId={clinic.id} locale={locale} canManage={Boolean(canManage)} />
 
         {canManage ? (
           <section className="settings-card settings-card-wide">
