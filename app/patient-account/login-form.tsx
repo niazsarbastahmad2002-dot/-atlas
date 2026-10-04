@@ -144,10 +144,12 @@ function isRateLimitError(error: { code?: string; message?: string } | null) {
 export function PatientAccountLoginForm({
   locale,
   ready,
+  allowSignup,
   whatsappOtpEnabled,
 }: {
   locale: UiLocale;
   ready: boolean;
+  allowSignup: boolean;
   whatsappOtpEnabled: boolean;
 }) {
   const t = copy[locale];
@@ -185,7 +187,7 @@ export function PatientAccountLoginForm({
       const { error: sendError } = await supabase.auth.signInWithOtp({
         phone,
         options: {
-          shouldCreateUser: true,
+          shouldCreateUser: allowSignup,
           ...(delivery === "whatsapp" ? { channel: "whatsapp" as const } : {}),
         },
       });
