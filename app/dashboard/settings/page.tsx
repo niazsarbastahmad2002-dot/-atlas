@@ -417,7 +417,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               </div>
             </div>
 
-            <form action={createDoctor} className="settings-form settings-form-inline">
+            <form key={clinic.id} action={createDoctor} className="settings-form settings-form-inline">
               <input type="hidden" name="clinic_id" value={clinic.id} />
               <label className="sr-only" htmlFor="new_doctor_name">{t.doctorName}</label>
               <PendingTextInput id="new_doctor_name" name="doctor_name" placeholder={t.doctorName} minLength={2} maxLength={120} required />

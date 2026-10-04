@@ -15,3 +15,8 @@ test("settings name fields stay fixed while their server action is pending", () 
   assert.match(input, /useFormStatus\(\)/);
   assert.match(input, /disabled=\{disabled \|\| pending\}/);
 });
+
+test("new doctor draft remounts when switching clinic workspaces", () => {
+  const page = read("app/dashboard/settings/page.tsx");
+  assert.match(page, /<form key=\{clinic\.id\} action=\{createDoctor\} className="settings-form settings-form-inline">/);
+});
