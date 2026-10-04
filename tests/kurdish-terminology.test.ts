@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import { applyClinicTerminology } from "../lib/i18n/terminology.ts";
 
 test("Sorani uses the common secretary wording across Atlas UI copy", () => {
@@ -43,4 +44,11 @@ test("English and Arabic terminology is unchanged", () => {
   assert.equal(applyClinicTerminology("الاستقبال", "ar"), "الاستقبال");
   assert.equal(applyClinicTerminology("المواعيد", "ar"), "المواعيد");
   assert.equal(applyClinicTerminology("الطبيب", "ar"), "الطبيب");
+});
+
+
+test("Kurdish terminology normalizer leaves marked user content and its attributes unchanged", () => {
+  const source = readFileSync(new URL("../app/components/kurdish-secretary-terminology.tsx", import.meta.url), "utf8");
+  assert.ok(source.includes('[data-atlas-user-content="true"]'));
+  assert.ok(source.includes("element.closest"));
 });
