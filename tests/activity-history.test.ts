@@ -197,3 +197,15 @@ test("activity before-and-after details stay ordered in RTL", async () => {
   assert.match(activityPage, /<bdi>\{afterText\}<\/bdi>/);
   assert.match(activityPage, /unicode-bidi:isolate/);
 });
+
+
+test("activity actor, entity, and date fragments stay bidi-isolated", async () => {
+  const activityPage = await read("app/dashboard/activity/page.tsx");
+
+  assert.match(activityPage, /const actorReference = event\.actor_id/);
+  assert.match(activityPage, /className="activity-actor-line" dir=\{locale === "en" \? "ltr" : "rtl"\}/);
+  assert.match(activityPage, /actorReference \? <bdi dir="ltr">\{actorReference\}<\/bdi>/);
+  assert.match(activityPage, /<bdi>\{formatBaghdadDateTime\(new Date\(event\.occurred_at\), locale\)\}<\/bdi>/);
+  assert.match(activityPage, /className="activity-entity-line" dir=\{locale === "en" \? "ltr" : "rtl"\}/);
+  assert.match(activityPage, /<bdi dir="ltr">\{shortId\(event\.entity_id\)\}<\/bdi>/);
+});
