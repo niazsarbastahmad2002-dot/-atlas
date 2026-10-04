@@ -358,6 +358,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
                   type="button"
                   disabled={cell.disabled}
                   className={cell.value === date ? "is-selected" : ""}
+                  aria-pressed={cell.value === date}
                   onClick={() => chooseDate(cell.value)}
                 >
                   {localizeDigits(cell.day, locale)}
@@ -370,8 +371,8 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
 
       <div className="atlas-time-heading"><strong>{text.time} · {localizeDigits(interval, locale)} {text.minuteUnit}</strong><button type="button" onClick={() => { setCustom((current) => !current); setSavedAdvance(false); setTouched(true); }}>{custom ? text.quick : text.custom}</button></div>
       <div className="atlas-period-tabs" role="group" aria-label={text.time}>
-        <button className={period === "am" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "am")}>{text.am}</button>
-        <button className={period === "pm" ? "is-selected" : ""} type="button" onClick={() => select(hour, minute, "pm")}>{text.pm}</button>
+        <button className={period === "am" ? "is-selected" : ""} type="button" aria-pressed={period === "am"} onClick={() => select(hour, minute, "am")}>{text.am}</button>
+        <button className={period === "pm" ? "is-selected" : ""} type="button" aria-pressed={period === "pm"} onClick={() => select(hour, minute, "pm")}>{text.pm}</button>
       </div>
       {custom ? (
         <div className="atlas-custom-time">
@@ -382,12 +383,12 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       ) : (
         <>
           <span className="atlas-time-grid-label">{text.hour}</span>
-          <div className="atlas-hour-grid">{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <button className={hour === item ? "is-selected" : ""} type="button" key={item} onClick={() => select(item, minuteOptions.includes(minute) ? minute : minuteOptions[0], period)}>{localizeDigits(item, locale)}</button>)}</div>
+          <div className="atlas-hour-grid">{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <button className={hour === item ? "is-selected" : ""} type="button" key={item} aria-pressed={hour === item} onClick={() => select(item, minuteOptions.includes(minute) ? minute : minuteOptions[0], period)}>{localizeDigits(item, locale)}</button>)}</div>
           <span className="atlas-time-grid-label">{text.minute}</span>
           <div className="atlas-minute-grid">{minuteOptions.map((item) => {
             const candidate = `${date}T${to24(hour, item, period)}`;
             const blocked = occupied.has(candidate) || candidate < effectiveMin || candidate > max;
-            return <button className={minute === item ? "is-selected" : ""} type="button" key={item} disabled={blocked} onClick={() => select(hour, item, period)}>{localizeDigits(item, locale)}</button>;
+            return <button className={minute === item ? "is-selected" : ""} type="button" key={item} disabled={blocked} aria-pressed={minute === item} onClick={() => select(hour, item, period)}>{localizeDigits(item, locale)}</button>;
           })}</div>
         </>
       )}
