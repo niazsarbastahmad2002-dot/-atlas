@@ -9,11 +9,12 @@ test("fast appointment retries treat idempotency conflicts as already saved", ()
   const client = read("app/dashboard/dashboard-client-polish.tsx");
 
   assert.match(action, /classifyAppointmentCreateError/);
-  assert.match(action, /createFailure === "duplicate"[\s\S]*return \{ ok: true, created: false, duplicate: true \}/);
+  assert.match(action, /createFailure === "duplicate"[\s\S]*appointmentId: existing\.id/);
   assert.match(action, /createFailure === "slot_taken"[\s\S]*return \{ ok: false, reason: "slot_taken" \}/);
 
   assert.match(client, /duplicate: "Appointment was already added"/);
   assert.match(client, /notice: result\.duplicate \? "appointment_duplicate" : "appointment_created"/);
+  assert.match(client, /dataset\.atlasSavedAppointmentId = result\.appointmentId/);
   assert.match(client, /toast\.success\(Boolean\(result\.duplicate\)\)/);
   assert.match(client, /result\.duplicate \? fastSaveCopy\[locale\]\.duplicate : fastSaveCopy\[locale\]\.saved/);
 });

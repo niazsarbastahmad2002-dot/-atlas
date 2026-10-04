@@ -24,7 +24,7 @@ const contactRelationships = new Set<AppointmentContactRelationship>(["patient",
 export type AppointmentContactRelationship = "patient" | "parent_guardian" | "relative_caregiver";
 
 export type InlineAppointmentResult =
-  | { ok: true; status?: AppointmentStatus; archived?: boolean; updated?: boolean; created?: boolean; duplicate?: boolean }
+  | { ok: true; status?: AppointmentStatus; archived?: boolean; updated?: boolean; created?: boolean; duplicate?: boolean; appointmentId?: string }
   | { ok: false; reason: AppointmentMutationFailure };
 
 function statusAction(status: AppointmentStatus) {
@@ -86,7 +86,7 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     return { ok: false, reason: "invalid" };
   }
 
-  const { error } = await supabase.from("appointments").insert({
+  const { data: createdAppointment, error } = await supabase.from("appointments").insert({
     clinic_id: clinicId,
     patient_name: patientName,
     patient_phone: patientPhone,
@@ -97,7 +97,7 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     idempotency_key: idempotencyKey,
     reminder_consent: reminderConsent,
     reminder_language: reminderLanguage,
-  });
+  }).select("id").single();
 
   if (error) {
     const createFailure = classifyAppointmentCreateError(
@@ -107,7 +107,7 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
     if (createFailure === "duplicate") {
       const { data: existing, error: existingError } = await supabase
         .from("appointments")
-        .select("patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_consent, reminder_language, voided_at")
+        .select("id, patient_name, patient_phone, contact_relationship, doctor_id, appointment_at, reminder_consent, reminder_language, voided_at")
         .eq("clinic_id", clinicId)
         .eq("idempotency_key", idempotencyKey)
         .maybeSingle();
@@ -129,7 +129,7 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
           screen: "schedule",
           surface: "clinic",
         });
-        return { ok: true, created: false, duplicate: true };
+        return { ok: true, created: false, duplicate: true, appointmentId: existing.id };
       }
 
       console.error("Atlas fast appointment idempotency payload mismatch", {
@@ -165,7 +165,7 @@ export async function createAppointmentInline(formData: FormData): Promise<Inlin
   }
 
   queueAtlasServerEvent("atlas_appointment_created", { outcome: "success", interaction: "form", screen: "schedule", surface: "clinic" });
-  return { ok: true, created: true };
+  return { ok: true, created: true, appointmentId: createdAppointment.id };
 }
 
 export async function updateAppointmentStatusInline(
