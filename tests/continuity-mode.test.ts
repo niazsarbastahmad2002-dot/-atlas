@@ -26,6 +26,8 @@ test("web continuity keeps an encrypted current-day snapshot and stays read-only
   assert.match(component, /AES-GCM/);
   assert.match(component, /extractable|false,/);
   assert.match(component, /crypto\.subtle\.encrypt/);
+  assert.match(component, /requestScope,/);
+  assert.match(component, /persistBrowserSnapshot\(snapshot, \{ clinicId: clinic, doctorId: doctor \}\)/);
   assert.match(component, /serviceWorker\.register\("\/atlas-sw\.js"/);
   assert.match(component, /window\.location\.reload\(\)/);
   assert.match(component, /pointer-events:none/);
@@ -56,6 +58,11 @@ test("browser offline page decrypts and renders only bounded current-day recepti
   assert.match(page, /18 \* 60 \* 60 \* 1000/);
   assert.match(page, /snapshot\.appointments\.length > 500/);
   assert.match(page, /new URLSearchParams\(location\.search\)/);
+  assert.match(page, /cachedRequestScope = envelope && envelope\.requestScope/);
+  assert.match(page, /hasOwnProperty\.call\(cachedRequestScope, "clinicId"\)/);
+  assert.match(page, /hasOwnProperty\.call\(cachedRequestScope, "doctorId"\)/);
+  assert.match(page, /requestedClinicId !== cachedRequestScope\.clinicId/);
+  assert.match(page, /requestedDoctorId !== cachedRequestScope\.doctorId/);
   assert.match(page, /requestedClinicId && snapshot\.clinicId !== requestedClinicId/);
   assert.match(page, /requestedDoctorId && snapshot\.doctorId !== requestedDoctorId/);
   assert.match(page, /textContent/);
