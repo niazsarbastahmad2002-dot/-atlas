@@ -152,7 +152,7 @@ export function HistoryClient({
       .filter((row) => filter === "all" || row.removed)
       .filter((row) => {
         if (!rawQuery) return true;
-        if (normalizeName(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(nameNeedle)) return true;
+        if (nameNeedle && normalizeName(`${row.patientName} ${row.patientPhone} ${row.doctorName}`).includes(nameNeedle)) return true;
         const phoneQuery = !/\p{L}/u.test(rawQuery);
         return phoneQuery && phoneDigits.length >= 4 && normalizePhone(row.patientPhone).includes(phoneDigits);
       })
