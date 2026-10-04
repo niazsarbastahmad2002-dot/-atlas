@@ -67,3 +67,11 @@ test("remembered schedule links drop transient result parameters", () => {
 
   assert.match(navigation, /\["notice", "error", "after"\]\.forEach\(\(key\) => url\.searchParams\.delete\(key\)\)/);
 });
+
+
+test("professional dashboard visibly identifies the Atlas Doctor side", () => {
+  const navigation = source("app/dashboard/app-navigation.tsx");
+
+  assert.match(navigation, /<span className="app-brand-product" aria-hidden="true">Doctor<\/span>/);
+  assert.match(navigation, /\.app-brand-product\{/);
+});
