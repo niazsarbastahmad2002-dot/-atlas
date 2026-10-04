@@ -141,8 +141,9 @@ test("patient appointment mutations disable their controls while an update is pe
   const patientButton = source("app/patient/[token]/patient-submit-button.tsx");
 
   assert.match(patientButton, /useFormStatus\(\)/);
-  assert.match(patientButton, /disabled=\{pending\}/);
-  assert.match(patientButton, /aria-disabled=\{pending\}/);
+  assert.match(patientButton, /const disabled = pending \|\| Boolean\(confirmMessage && !hydrated\)/);
+  assert.match(patientButton, /disabled=\{disabled\}/);
+  assert.match(patientButton, /aria-disabled=\{disabled\}/);
   assert.match(patientButton, /formAction=\{formAction\}/);
   assert.match(patientPage, /updating: "Updating…"/);
   assert.match(patientPage, /updating: "نوێ دەکرێتەوە…"/);
