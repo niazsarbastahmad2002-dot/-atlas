@@ -293,7 +293,7 @@ export default async function ActivityPage({ searchParams }: Props) {
           const beforeText = stateText(before, locale);
           const afterText = stateText(after, locale);
           const actorRole = event.actor_id ? roleByUser.get(event.actor_id) : null;
-          const actor = event.actor_id === userData.user.id
+          const actorLabel = event.actor_id === userData.user.id
             ? t.you
             : event.actor_type === "system"
               ? t.system
@@ -302,10 +302,15 @@ export default async function ActivityPage({ searchParams }: Props) {
                 : event.actor_type === "contact"
                   ? t.contact
                   : actorRole
-                    ? `${roleLabel[locale][actorRole] ?? actorRole} ${shortId(event.actor_id)}`
-                    : event.actor_id
-                      ? `${t.formerStaff} ${shortId(event.actor_id)}`
-                      : t.formerStaff;
+                    ? roleLabel[locale][actorRole] ?? actorRole
+                    : t.formerStaff;
+          const actorReference = event.actor_id
+            && event.actor_id !== userData.user.id
+            && event.actor_type !== "system"
+            && event.actor_type !== "patient"
+            && event.actor_type !== "contact"
+            ? shortId(event.actor_id)
+            : null;
           const entity = event.entity_type === "smart_fill_slot" ? t.smartFill
             : event.entity_type === "staff_invite" || event.entity_type === "staff_membership" ? t.staff
               : t.appointment;
@@ -316,10 +321,18 @@ export default async function ActivityPage({ searchParams }: Props) {
             <article className="activity-row" key={event.id}>
               <div className="activity-main">
                 <strong>{eventLabel(event.action, event.to_status, locale)}</strong>
-                <span>{actor} · {formatBaghdadDateTime(new Date(event.occurred_at), locale)}</span>
+                <span className="activity-actor-line" dir={locale === "en" ? "ltr" : "rtl"}>
+                  <span>{actorLabel}</span>
+                  {actorReference ? <bdi dir="ltr">{actorReference}</bdi> : null}
+                  <span>·</span>
+                  <bdi>{formatBaghdadDateTime(new Date(event.occurred_at), locale)}</bdi>
+                </span>
               </div>
               <div className="activity-meta">
-                <span>{entity} {shortId(event.entity_id)}</span>
+                <span className="activity-entity-line" dir={locale === "en" ? "ltr" : "rtl"}>
+                  <span>{entity}</span>
+                  <bdi dir="ltr">{shortId(event.entity_id)}</bdi>
+                </span>
                 {detailChanged ? (
                   <span className="activity-change-detail" dir={locale === "en" ? "ltr" : "rtl"}>
                     <bdi>{beforeText}</bdi>
@@ -334,7 +347,7 @@ export default async function ActivityPage({ searchParams }: Props) {
       </section>
       <p className="history-privacy">{t.privacy}</p>
 
-      <style>{`.activity-card{display:grid}.activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:16px 18px;border-top:1px solid var(--line)}.activity-row:first-child{border-top:0}.activity-main,.activity-meta{display:grid;gap:5px}.activity-main span,.activity-meta span{color:var(--muted);font-size:12px}.activity-change-detail{display:inline-flex;align-items:center;gap:5px;unicode-bidi:isolate}.activity-meta{text-align:end;justify-items:end}@media(max-width:720px){.activity-row{grid-template-columns:1fr}.activity-meta{text-align:start;justify-items:start}}`}</style>
+      <style>{`.activity-card{display:grid}.activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:16px 18px;border-top:1px solid var(--line)}.activity-row:first-child{border-top:0}.activity-main,.activity-meta{display:grid;gap:5px}.activity-main span,.activity-meta span{color:var(--muted);font-size:12px}.activity-actor-line,.activity-entity-line,.activity-change-detail{display:inline-flex;align-items:center;gap:5px;unicode-bidi:isolate}.activity-meta{text-align:end;justify-items:end}@media(max-width:720px){.activity-row{grid-template-columns:1fr}.activity-meta{text-align:start;justify-items:start}}`}</style>
     </main>
   );
 }
