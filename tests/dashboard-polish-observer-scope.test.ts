@@ -34,3 +34,24 @@ test("dashboard localization preserves patient and clinic supplied text", () => 
   const chooser = readFileSync(new URL("../app/dashboard/select-clinic/page.tsx", import.meta.url), "utf8");
   assert.match(chooser, /<span data-atlas-user-content="true">\{clinic\.name\}<\/span>/);
 });
+
+
+test("phone formatting preserves the edit position instead of forcing the cursor to the end", () => {
+  assert.ok(source.includes("function cursorFromTrailingDigits"));
+  assert.ok(source.includes("function trailingPhoneTruncation"));
+  assert.ok(source.includes("input.value.slice(selectionStart)"));
+  assert.ok(source.includes("const truncatedTrailingDigits = trailingPhoneTruncation(input.value)"));
+  assert.ok(source.includes("const retainedTrailingDigits = Math.max(0, trailingDigits - truncatedTrailingDigits)"));
+  assert.match(source, /(?:const|let) cursor = cursorFromTrailingDigits\(display, retainedTrailingDigits\)/);
+  assert.ok(source.includes("input.setSelectionRange(cursor, cursor)"));
+  assert.doesNotMatch(source, /input\.setSelectionRange\(display\.length, display\.length\)/);
+});
+
+
+test("phone formatting lets Backspace cross an inserted separator", () => {
+  assert.ok(source.includes("deletedFormattingSeparator"));
+  assert.ok(source.includes('event.inputType === "deleteContentBackward"'));
+  assert.ok(source.includes('input.addEventListener("beforeinput", rememberBackwardDelete)'));
+  assert.ok(source.includes("cursor -= 1"));
+  assert.ok(source.includes('input.removeEventListener("beforeinput", rememberBackwardDelete)'));
+});

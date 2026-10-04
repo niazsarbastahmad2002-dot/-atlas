@@ -80,6 +80,25 @@ const fastSaveCopy = {
   ar: { saving: "جارٍ إضافة الموعد…", saved: "تمت إضافة الموعد", duplicate: "الموعد مضاف مسبقاً", failed: "تعذرت إضافة الموعد. تحقق من البيانات وحاول مرة أخرى.", slotTaken: "تم حجز هذا الوقت للتو. اختر وقتاً آخر." },
 } as const;
 
+function cursorFromTrailingDigits(value: string, trailingDigits: number) {
+  let cursor = value.length;
+  let remaining = trailingDigits;
+  while (cursor > 0 && remaining > 0) {
+    cursor -= 1;
+    if (/\d/.test(toAsciiDigits(value[cursor] ?? ""))) remaining -= 1;
+  }
+  return cursor;
+}
+
+function trailingPhoneTruncation(value: string) {
+  const ascii = toAsciiDigits(value).trim();
+  const hasInternationalPrefix = ascii.startsWith("+") || ascii.startsWith("964") || ascii.startsWith("00964");
+  let digits = ascii.replace(/\D/g, "");
+  if (digits.startsWith("00964")) digits = digits.slice(2);
+  const maxDigits = hasInternationalPrefix && digits.startsWith("964") ? 13 : 11;
+  return Math.max(0, digits.length - maxDigits);
+}
+
 function groupPhone(value: string) {
   const ascii = toAsciiDigits(value).trim();
   const hasInternationalPrefix = ascii.startsWith("+") || ascii.startsWith("964") || ascii.startsWith("00964");
@@ -154,15 +173,42 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       input.dir = "ltr";
       input.style.textAlign = locale === "en" ? "left" : "right";
       input.placeholder = localizeDigits("0750 000 0000", locale);
+      let deletedFormattingSeparator = false;
+      const rememberBackwardDelete = (event: InputEvent) => {
+        const cursor = input.selectionStart;
+        deletedFormattingSeparator = event.inputType === "deleteContentBackward"
+          && cursor !== null
+          && cursor > 0
+          && /\D/.test(toAsciiDigits(input.value[cursor - 1] ?? ""));
+      };
       const update = () => {
+        const selectionStart = input.selectionStart;
+        const trailingDigits = selectionStart === null
+          ? 0
+          : toAsciiDigits(input.value.slice(selectionStart)).replace(/\D/g, "").length;
+        const truncatedTrailingDigits = trailingPhoneTruncation(input.value);
         const formatted = groupPhone(input.value);
         const display = localizeDigits(formatted, locale);
         if (input.value !== display) input.value = display;
-        window.requestAnimationFrame(() => { try { input.setSelectionRange(display.length, display.length); } catch {} });
+        if (selectionStart === null || document.activeElement !== input) {
+          deletedFormattingSeparator = false;
+          return;
+        }
+        const retainedTrailingDigits = Math.max(0, trailingDigits - truncatedTrailingDigits);
+        let cursor = cursorFromTrailingDigits(display, retainedTrailingDigits);
+        if (deletedFormattingSeparator && cursor > 0 && /\D/.test(toAsciiDigits(display[cursor - 1] ?? ""))) {
+          cursor -= 1;
+        }
+        deletedFormattingSeparator = false;
+        window.requestAnimationFrame(() => { try { input.setSelectionRange(cursor, cursor); } catch {} });
       };
       update();
+      input.addEventListener("beforeinput", rememberBackwardDelete);
       input.addEventListener("input", update);
-      listenerCleanups.push(() => input.removeEventListener("input", update));
+      listenerCleanups.push(() => {
+        input.removeEventListener("beforeinput", rememberBackwardDelete);
+        input.removeEventListener("input", update);
+      });
     };
     const prepareAppointmentForm = (form: HTMLFormElement) => {
       if (preparedForms.has(form)) return;
