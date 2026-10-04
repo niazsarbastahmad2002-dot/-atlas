@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isUuid } from "@/lib/appointments";
 import { createPatientToken, hashPatientToken } from "@/lib/patient-links";
+import { issuePatientAccountSession, setPatientAccountCookie } from "@/lib/patient-account-session";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -135,10 +136,19 @@ export async function POST(request: Request) {
 
   if ((result.result === "created" || result.result === "duplicate") && result.appointment_id) {
     const lang = reminderLanguages.has(reminderLanguage) ? reminderLanguage : "ku";
-    return response({
+    const bookingResponse = response({
       status: "ok",
       patientPath: `/patient/${patientToken}?lang=${encodeURIComponent(lang)}`,
     }, 200);
+    const patientSession = await issuePatientAccountSession(admin, user.id);
+    if (patientSession) {
+      setPatientAccountCookie(bookingResponse, patientSession.token, patientSession.expiresAt);
+    } else {
+      console.error("Atlas patient account session was not issued after booking", {
+        userId: user.id,
+      });
+    }
+    return bookingResponse;
   }
 
   const clientStatus = new Set(["invalid", "verification_required", "unavailable", "slot_taken", "idempotency_mismatch"]);
