@@ -5,6 +5,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { ShareProfileButton } from "../share-profile-button";
+import { AtlasPatientNav } from "../patient-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ const clinicCopy: Record<UiLocale, {
   back: string;
   unavailableTitle: string;
   unavailableHelp: string;
+  myAppointments: string;
 }> = {
   en: {
     eyebrow: "Clinic profile",
@@ -43,6 +45,7 @@ const clinicCopy: Record<UiLocale, {
     back: "Back to doctor search",
     unavailableTitle: "This clinic profile is unavailable.",
     unavailableHelp: "It may be unpublished or the link may be incorrect.",
+    myAppointments: "My appointments",
   },
   ku: {
     eyebrow: "پڕۆفایلی کلینیک",
@@ -59,6 +62,7 @@ const clinicCopy: Record<UiLocale, {
     back: "گەڕانەوە بۆ گەڕانی پزیشک",
     unavailableTitle: "ئەم پڕۆفایلەی کلینیک بەردەست نییە.",
     unavailableHelp: "لەوانەیە بڵاونەکرابێتەوە یان بەستەرەکە هەڵە بێت.",
+    myAppointments: "مەوعیدەکانم",
   },
   bd: {
     eyebrow: "پڕۆفایلا کلینیکێ",
@@ -75,6 +79,7 @@ const clinicCopy: Record<UiLocale, {
     back: "ڤەگەڕە گەڕانا دکتۆران",
     unavailableTitle: "ئەڤ پڕۆفایلا کلینیکێ بەردەست نینە.",
     unavailableHelp: "دبیت نەهاتبیتە بڵاوکرن یان لینک هەڵە بیت.",
+    myAppointments: "وادەیێن من",
   },
   ar: {
     eyebrow: "ملف العيادة",
@@ -91,6 +96,7 @@ const clinicCopy: Record<UiLocale, {
     back: "العودة إلى بحث الأطباء",
     unavailableTitle: "ملف هذه العيادة غير متاح.",
     unavailableHelp: "قد يكون غير منشور أو أن الرابط غير صحيح.",
+    myAppointments: "مواعيدي",
   },
 };
 
@@ -173,12 +179,7 @@ export default async function ClinicProfilePage({ params }: ClinicProfilePagePro
 
   return (
     <main className="marketing-page atlas-care-clinic-page">
-      <nav className="nav shell marketing-nav">
-        <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </Link>
-      </nav>
+      <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
 
       <article className="shell atlas-care-clinic">
         <div className="eyebrow">{copy.eyebrow}</div>

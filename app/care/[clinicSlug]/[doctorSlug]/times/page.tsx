@@ -6,6 +6,7 @@ import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
+import { AtlasPatientNav } from "@/app/care/patient-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +30,12 @@ const copy: Record<UiLocale, {
   back: string;
   unavailableTitle: string;
   unavailableHelp: string;
+  myAppointments: string;
 }> = {
   en: {
     eyebrow: "Live appointment times",
     title: "Choose a time",
-    intro: "These openings come from the clinic's current public schedule. Atlas checks a time again before any online booking is finalized.",
+    intro: "These are live times from the clinic. Atlas checks your choice again before booking.",
     noTimes: "No public appointment times are open right now.",
     noTimesHelp: "The clinic may add more times later. You can still contact the clinic directly.",
     book: "Book",
@@ -41,11 +43,12 @@ const copy: Record<UiLocale, {
     back: "Back to doctor",
     unavailableTitle: "Appointment times are unavailable.",
     unavailableHelp: "The doctor profile may be unpublished or the link may be incorrect.",
+    myAppointments: "My appointments",
   },
   ku: {
     eyebrow: "کاتە ڕاستەقینەکانی مەوعید",
     title: "کاتێک هەڵبژێرە",
-    intro: "ئەم کاتانە لە خشتەی گشتیی ئێستای کلینیکەوە دێن. Atlas پێش تەواوکردنی مەوعیدی ئۆنلاین کاتەکە دووبارە دەپشکنێت.",
+    intro: "ئەم کاتانە ڕاستەوخۆ لە خشتەی کلینیکەوە دێن. Atlas پێش دانانی مەوعید کاتە هەڵبژێردراوەکەت دووبارە دەپشکنێت.",
     noTimes: "ئێستا هیچ کاتی گشتیی مەوعید بەردەست نییە.",
     noTimesHelp: "لەوانەیە کلینیک دواتر کاتی تر زیاد بکات. هێشتا دەتوانیت ڕاستەوخۆ پەیوەندی بکەیت.",
     book: "مەوعید دابنێ",
@@ -53,11 +56,12 @@ const copy: Record<UiLocale, {
     back: "گەڕانەوە بۆ پزیشک",
     unavailableTitle: "کاتەکانی مەوعید بەردەست نین.",
     unavailableHelp: "لەوانەیە پڕۆفایلی پزیشک بڵاونەکرابێتەوە یان بەستەرەکە هەڵە بێت.",
+    myAppointments: "مەوعیدەکانم",
   },
   bd: {
     eyebrow: "دەمێن ڕاستەقینە یێن وادەیێ",
     title: "دەمەکێ هەلبژێرە",
-    intro: "ئەڤ دەمە ژ خشتەیا گشتی یا نوکە یا کلینیکێ دهێن. Atlas بەری تەمامکرنا وادەیا ئۆنلاین دەم جارەکا دی دپشکنیت.",
+    intro: "ئەڤ دەمە ڕاستەوخۆ ژ خشتەیا کلینیکێ دهێن. Atlas بەری دانانا وادەیێ دەمی هەلبژارتی جارەکا دی دپشکنیت.",
     noTimes: "نوکە هیچ دەمەکێ گشتی یێ وادەیێ بەردەست نینە.",
     noTimesHelp: "دبیت کلینیک پاشتر دەمێن دی زێدە بکەت. هێشتا دشێی ڕاستەوخۆ پەیوەندی بکەی.",
     book: "وادە دابنێ",
@@ -65,11 +69,12 @@ const copy: Record<UiLocale, {
     back: "ڤەگەڕە دکتۆری",
     unavailableTitle: "دەمێن وادەیێ بەردەست نینن.",
     unavailableHelp: "دبیت پڕۆفایلا دکتۆری نەهاتبیتە بڵاوکرن یان لینک هەڵە بیت.",
+    myAppointments: "وادەیێن من",
   },
   ar: {
     eyebrow: "أوقات المواعيد الفعلية",
     title: "اختر وقتاً",
-    intro: "هذه الأوقات تأتي من جدول العيادة العام الحالي. Atlas يفحص الوقت مرة ثانية قبل إكمال أي حجز عبر الإنترنت.",
+    intro: "هذه أوقات مباشرة من جدول العيادة. Atlas يفحص اختيارك مرة ثانية قبل الحجز.",
     noTimes: "لا توجد أوقات مواعيد عامة متاحة حالياً.",
     noTimesHelp: "قد تضيف العيادة أوقاتاً أخرى لاحقاً. تقدر تتواصل مع العيادة مباشرة.",
     book: "احجز",
@@ -77,6 +82,7 @@ const copy: Record<UiLocale, {
     back: "العودة للطبيب",
     unavailableTitle: "أوقات المواعيد غير متاحة.",
     unavailableHelp: "قد يكون ملف الطبيب غير منشور أو الرابط غير صحيح.",
+    myAppointments: "مواعيدي",
   },
 };
 
@@ -208,12 +214,7 @@ export default async function PublicDoctorTimesPage({ params }: TimesPageProps) 
 
   return (
     <main className="marketing-page atlas-times-page">
-      <nav className="nav shell marketing-nav">
-        <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </Link>
-      </nav>
+      <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
 
       <article className="shell atlas-times-shell">
         <div className="eyebrow">{t.eyebrow}</div>
