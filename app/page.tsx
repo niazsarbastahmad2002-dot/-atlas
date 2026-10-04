@@ -21,6 +21,7 @@ type HomeCopy = {
   localDescription: string;
   modeNote: string;
   demo: string;
+  patientAccount: string;
   scope: string;
   essentials: ReadonlyArray<{ title: string; text: string }>;
   support: string;
@@ -42,6 +43,7 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     localDescription: "Use this device without internet.",
     modeNote: "Patient discovery is public. Clinic work stays private. Atlas Local remains separate from cloud data.",
     demo: "Try a sample clinic",
+    patientAccount: "My appointments",
     scope: "Scheduling and patient communication only — keep medical notes in the clinic's approved record system.", // keep medical notes in the clinic&apos;s approved record system
     essentials: [
       { title: "Schedule", text: "See the clinic day and add the next patient fast." },
@@ -65,6 +67,7 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     localDescription: "لەسەر ئەم ئامێرە بەبێ ئینتەرنێت کار بکە.",
     modeNote: "گەڕانی نەخۆش گشتییە؛ کاری کلینیک تایبەتە. Atlas Local لە داتای کلاود جیا دەمێنێت.",
     demo: "کلینیکی نموونە تاقی بکەرەوە",
+    patientAccount: "مەوعیدەکانم",
     scope: "تەنها بۆ ڕێکخستنی مەوعید و پەیوەندی بە نەخۆش — تێبینییە پزیشکییەکان لە سیستەمی پەسەندکراوی کلینیکەکەت بپارێزە.",
     essentials: [
       { title: "خشتە", text: "ڕۆژی کلینیک ببینە و نەخۆشی داهاتوو بەخێرایی زیاد بکە." },
@@ -88,6 +91,7 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     localDescription: "ل سەر ڤی ئامێری بێ ئینتەرنێت کار بکە.",
     modeNote: "گەڕانا نەخۆشان گشتییە؛ کارێ کلینیکێ تایبەتە. Atlas Local ژ داتای کلاود جودا دەمینیت.",
     demo: "کلینیکەکا نموونە تاقی بکە",
+    patientAccount: "وادەیێن من",
     scope: "تەنێ بۆ ڕێکخستنا مەوعیدان و پەیوەندیا نەخۆشان — تێبینیێن پزیشکی ل سیستەمێ پەسەندکری یێ کلینیکێ بپارێزە.",
     essentials: [
       { title: "خشتە", text: "ڕۆژا کلینیکێ ببینە و نەخۆشێ داهاتی ب لەز زیاد بکە." },
@@ -111,6 +115,7 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     localDescription: "استخدمه على هذا الجهاز بدون إنترنت.",
     modeNote: "بحث المرضى عام، وعمل العيادة يبقى خاص. Atlas Local يبقى منفصل عن بيانات السحابة.",
     demo: "جرّب عيادة نموذجية",
+    patientAccount: "مواعيدي",
     scope: "للمواعيد والتواصل مع المرضى فقط — احتفظ بالملاحظات الطبية داخل نظام السجل المعتمد في العيادة.",
     essentials: [
       { title: "الجدول", text: "شوف يوم العيادة وأضف المريض التالي بسرعة." },
@@ -166,6 +171,7 @@ export default async function HomePage() {
             <strong>{copy.localTitle}</strong>
             <span>{copy.localDescription}</span>
           </a>
+          <Link className="button button-ghost atlas-demo-link" href="/patient-account">{copy.patientAccount}</Link>
           <Link className="button button-ghost atlas-demo-link" href="/demo">{copy.demo}</Link>
         </div>
         <p className="quiet atlas-scope-note">{copy.scope}</p>
