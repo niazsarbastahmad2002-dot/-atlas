@@ -55,6 +55,9 @@ test("browser offline page decrypts and renders only bounded current-day recepti
   assert.match(page, /snapshot\.day !== baghdadDay\(\)/);
   assert.match(page, /18 \* 60 \* 60 \* 1000/);
   assert.match(page, /snapshot\.appointments\.length > 500/);
+  assert.match(page, /new URLSearchParams\(location\.search\)/);
+  assert.match(page, /requestedClinicId && snapshot\.clinicId !== requestedClinicId/);
+  assert.match(page, /requestedDoctorId && snapshot\.doctorId !== requestedDoctorId/);
   assert.match(page, /textContent/);
   assert.match(page, /OFFLINE · READ ONLY/);
   assert.doesNotMatch(page, /patientPhone|phoneNumber|reminderConsent|accessToken|refreshToken|providerCredential/);
@@ -212,4 +215,13 @@ test("offline continuity discloses when today's protected schedule is capped", (
   assert.match(nativeStore, /var appointmentsTruncated: Bool\? = nil/);
   assert.match(nativeApp, /snapshot\.appointmentsTruncated == true/);
   assert.match(nativeApp, /first 500 appointments/);
+});
+
+test("offline continuity cache revision refreshes installed workspace guards", () => {
+  const worker = source("public/atlas-sw.js");
+
+  assert.match(worker, /ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v12"/);
+  assert.match(worker, /Previous installed shell: atlas-offline-shell-v11/);
+  assert.match(worker, /cache\.addAll\(\[/);
+  assert.match(worker, /new Request\(ATLAS_OFFLINE_PAGE, \{ cache: "reload" \}\)/);
 });
