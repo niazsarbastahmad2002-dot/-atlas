@@ -550,6 +550,12 @@ export function uiText(locale: UiLocale) {
   return copy[locale];
 }
 
+const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+
+function badiniDigits(value: string) {
+  return value.replace(/\d/g, (digit) => arabicDigits[Number(digit)]);
+}
+
 function badiniNumericDate(date: Date, withWeekday: boolean) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Baghdad",
@@ -561,19 +567,23 @@ function badiniNumericDate(date: Date, withWeekday: boolean) {
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   const baghdadDay = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day))).getUTCDay();
   const weekday = ["یەکشەم", "دووشەم", "سێشەم", "چوارشەم", "پێنجشەم", "هەینی", "شەمبی"][baghdadDay] ?? "";
-  const numeric = `${values.day}/${values.month}/${values.year}`.replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)]);
+  const numeric = badiniDigits(`${values.day}/${values.month}/${values.year}`);
   return withWeekday ? `${weekday}، ${numeric}` : numeric;
 }
 
 export function formatBaghdadDateTime(date: Date, locale: UiLocale) {
   if (locale === "bd") {
     const dateText = badiniNumericDate(date, false);
-    const time = new Intl.DateTimeFormat("en-IQ", {
+    const parts = new Intl.DateTimeFormat("en-GB", {
       timeZone: "Asia/Baghdad",
-      hour: "numeric",
+      hour: "2-digit",
       minute: "2-digit",
-      hour12: true,
-    }).format(date);
+      hourCycle: "h23",
+    }).formatToParts(date);
+    const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+    const hour24 = Number(value("hour"));
+    const hour12 = hour24 % 12 || 12;
+    const time = `${badiniDigits(String(hour12).padStart(2, "0"))}:${badiniDigits(value("minute"))} ${hour24 < 12 ? "بەری نیڤرۆ" : "پشتی نیڤرۆ"}`;
     return `${dateText} · ${time}`;
   }
   return new Intl.DateTimeFormat(uiLocaleMeta[locale].dateLocale, {
