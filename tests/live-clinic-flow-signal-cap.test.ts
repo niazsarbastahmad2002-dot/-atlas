@@ -15,3 +15,10 @@ test("live clinic patient updates disclose when the bounded view is incomplete",
   assert.match(client, /Atlas تەنێ ١٠٠ یێن ئێکێ نیشان ددەت/);
   assert.match(client, /يعرض Atlas أول ١٠٠ فقط/);
 });
+
+
+test("live clinic truncation notice keeps patient pills visible across RTL and desktop layouts", () => {
+  assert.match(client, /live-patient-updates\{display:grid;grid-template-columns:auto minmax\(0,1fr\)/);
+  assert.match(client, /live-patient-limit\{grid-column:1\/-1/);
+  assert.match(client, /live-patient-updates\{grid-template-columns:1fr;align-items:flex-start;gap:5px\}/);
+});
