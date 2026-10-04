@@ -196,7 +196,7 @@ test("continuity scopes stale responses and serializes protected cache mutations
   assert.ok((component.match(/snapshotMutationRef\.current = snapshotMutationRef\.current/g) ?? []).length >= 2);
   assert.match(component, /requestId !== snapshotRequestRef\.current/);
   assert.match(component, /clearedScopeRef\.current === scopeVersion/);
-  assert.match(component, /await persistBrowserSnapshot\(snapshot\)/);
+  assert.match(component, /await persistBrowserSnapshot\(snapshot, \{ clinicId: clinic, doctorId: doctor \}\)/);
   assert.match(component, /snapshotScopeRef\.current \+= 1/);
   assert.match(component, /snapshotRequestRef\.current \+= 1/);
   assert.ok(
