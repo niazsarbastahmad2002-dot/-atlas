@@ -650,6 +650,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
                 <PatientSubmitButton
                   formAction={updatePatientAppointment.bind(null, token, "cancelled")}
                   pendingLabel={text.updating}
+                  confirmMessage={text.cancelConfirm}
                   className="patient-change-mind"
                 >
                   {text.changeMind}
