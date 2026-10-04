@@ -79,7 +79,7 @@ export async function GET(request: Request) {
   const dayEnd = new Date(`${shiftDay(day, 1)}T00:00:00+03:00`).toISOString();
   const [
     { data: flow, error: flowError },
-    { data: signals, error: signalsError },
+    { data: signals, error: signalsError, count: signalCount },
   ] = await Promise.all([
     context.db.from("doctor_day_flow")
       .select("delay_minutes, updated_at")
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
       .eq("service_day", day)
       .maybeSingle(),
     context.db.from("appointments")
-      .select("id, patient_name, arrival_signal, arrival_signal_at")
+      .select("id, patient_name, arrival_signal, arrival_signal_at", { count: "exact" })
       .eq("clinic_id", context.clinicId)
       .eq("doctor_id", context.doctor.id)
       .is("voided_at", null)
@@ -119,6 +119,7 @@ export async function GET(request: Request) {
     isToday: true,
     delayMinutes: flow?.delay_minutes ?? null,
     timingUpdatedAt: flow?.updated_at ?? null,
+    signalsTruncated: signalCount !== null && signalCount > (signals?.length ?? 0),
     signals: Array.isArray(signals) ? signals.map((row: any) => ({
       appointmentId: row.id,
       patientName: row.patient_name,
