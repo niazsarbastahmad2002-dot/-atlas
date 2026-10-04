@@ -46,3 +46,12 @@ test("phone formatting preserves the edit position instead of forcing the cursor
   assert.ok(source.includes("input.setSelectionRange(cursor, cursor)"));
   assert.doesNotMatch(source, /input\.setSelectionRange\(display\.length, display\.length\)/);
 });
+
+
+test("phone formatting lets Backspace cross an inserted separator", () => {
+  assert.ok(source.includes("deletedFormattingSeparator"));
+  assert.ok(source.includes('event.inputType === "deleteContentBackward"'));
+  assert.ok(source.includes('input.addEventListener("beforeinput", rememberBackwardDelete)'));
+  assert.ok(source.includes("cursor -= 1"));
+  assert.ok(source.includes('input.removeEventListener("beforeinput", rememberBackwardDelete)'));
+});
