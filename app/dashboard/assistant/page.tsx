@@ -28,6 +28,9 @@ export default async function AtlasAiPage({ searchParams }: AtlasAiPageProps) {
   if (clinicsError || !clinics?.length) redirect("/dashboard");
 
   const requestedClinicId = params.clinic && isUuid(params.clinic) ? params.clinic : null;
+  if (params.clinic && (!requestedClinicId || !clinics.some((item) => item.id === requestedClinicId))) {
+    redirect("/dashboard?error=clinic_unavailable");
+  }
   const clinic = clinics.find((item) => item.id === requestedClinicId) ?? clinics[0];
   const scheduleHref = `/dashboard?${new URLSearchParams({ clinic: clinic.id })}`;
 
