@@ -367,26 +367,30 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       data: Array<{ invitation_id: string; doctor_name: string; created_at: string; expires_at: string }> | null;
       error: { code?: string; message?: string } | null;
     }>;
-    const [
-      { data: directory, error: directoryError },
-      { data: inviteRows, error: inviteRowsError },
-    ] = await Promise.all([
-      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-      inviteRpc("list_manual_staff_invites_service", {
-        p_clinic_id: clinic.id,
-        p_owner_id: userData.user.id,
-      }),
-    ]);
-    if (directoryError || inviteRowsError) throw directoryError ?? inviteRowsError;
+    const directoryUsers: Awaited<ReturnType<typeof admin.auth.admin.listUsers>>["data"]["users"] = [];
+    const pageSize = 1000;
+    const maxPages = 100;
+    for (let page = 1; page <= maxPages; page += 1) {
+      const { data: directoryPage, error: directoryError } = await admin.auth.admin.listUsers({ page, perPage: pageSize });
+      if (directoryError) throw directoryError;
+      directoryUsers.push(...directoryPage.users);
+      if (directoryPage.users.length < pageSize) break;
+      if (page === maxPages) throw new Error("staff_directory_too_large");
+    }
+    const { data: inviteRows, error: inviteRowsError } = await inviteRpc("list_manual_staff_invites_service", {
+      p_clinic_id: clinic.id,
+      p_owner_id: userData.user.id,
+    });
+    if (inviteRowsError) throw inviteRowsError;
     activeManualInvites = inviteRows ?? [];
-    const identityById = new Map(directory.users.map((user) => [user.id, user.phone ?? text.phonePending]));
+    const identityById = new Map(directoryUsers.map((user) => [user.id, user.phone ?? text.phonePending]));
     memberRows = (members ?? []).map((member) => ({
       ...member,
       identity: identityById.get(member.user_id) ?? text.phonePending,
     }));
 
     const activeMemberIds = new Set((members ?? []).map((member) => member.user_id));
-    pendingRows = directory.users.flatMap((user) => {
+    pendingRows = directoryUsers.flatMap((user) => {
       if (activeMemberIds.has(user.id)) return [];
       return readPendingStaffInvitations(user.app_metadata)
         .filter((invitation) => invitation.clinic_id === clinic.id)
