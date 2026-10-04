@@ -83,3 +83,16 @@ test("public closed-date management stays future-focused in Baghdad time", () =>
   assert.match(page, /formatLocalDateValue\(row\.booking_date, locale\)/);
   assert.match(actions, /isClosed && bookingDate < baghdadDate\.format\(new Date\(\)\)/);
 });
+
+
+test("professional profile settings show whether patient self-booking is enabled", () => {
+  const page = source("app/dashboard/settings/public-profile/page.tsx");
+
+  assert.match(page, /clinic_public_booking_settings/);
+  assert.match(page, /select\("enabled"\)/);
+  assert.match(page, /bookingSettings\?\.enabled \? t\.availabilityOn : t\.availabilityOff/);
+  assert.match(page, /availabilityOn: "Patient booking on"/);
+  assert.match(page, /availabilityOff: "Patient booking off"/);
+  assert.match(page, /availabilityOn: "مەوعیدی نەخۆش چالاکە"/);
+  assert.match(page, /availabilityOff: "حجز المرضى متوقف"/);
+});
