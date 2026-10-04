@@ -194,8 +194,17 @@
         const requestedParams = new URLSearchParams(location.search);
         const requestedClinicId = requestedParams.get("clinic");
         const requestedDoctorId = requestedParams.get("doctor");
+        const cachedRequestScope = envelope && envelope.requestScope;
         if (
-          snapshot.day !== baghdadDay()
+          !cachedRequestScope
+          || typeof cachedRequestScope !== "object"
+          || !Object.prototype.hasOwnProperty.call(cachedRequestScope, "clinicId")
+          || !Object.prototype.hasOwnProperty.call(cachedRequestScope, "doctorId")
+          || (cachedRequestScope.clinicId !== null && typeof cachedRequestScope.clinicId !== "string")
+          || (cachedRequestScope.doctorId !== null && typeof cachedRequestScope.doctorId !== "string")
+          || requestedClinicId !== cachedRequestScope.clinicId
+          || requestedDoctorId !== cachedRequestScope.doctorId
+          || snapshot.day !== baghdadDay()
           || Number.isNaN(syncedAt.getTime())
           || Date.now() - syncedAt.getTime() > MAX_AGE_MS
           || snapshot.appointments.length > 500
