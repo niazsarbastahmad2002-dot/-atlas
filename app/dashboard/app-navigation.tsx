@@ -198,9 +198,18 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
 
     let remembered = "/dashboard";
     try { remembered = validRememberedSchedule(window.localStorage.getItem(scheduleMemoryKey)); } catch {}
+
+    const pageClinic = new URLSearchParams(searchKey).get("clinic");
+    if (pageClinic) {
+      const rememberedClinic = new URL(remembered, window.location.origin).searchParams.get("clinic");
+      if (rememberedClinic !== pageClinic) {
+        remembered = todayScheduleFrom(`/dashboard?${new URLSearchParams({ clinic: pageClinic })}`);
+        try { window.localStorage.setItem(scheduleMemoryKey, remembered); } catch {}
+      }
+    }
     setScheduleHref(remembered);
 
-    const currentClinic = new URLSearchParams(searchKey).get("clinic")
+    const currentClinic = pageClinic
       ?? new URL(remembered, window.location.origin).searchParams.get("clinic");
     setSettingsHref(currentClinic ? `/dashboard/settings?${new URLSearchParams({ clinic: currentClinic })}` : "/dashboard/settings");
   }, [pathname, searchKey]);
