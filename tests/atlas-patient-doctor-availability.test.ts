@@ -7,19 +7,28 @@ const page = readFileSync(
   "utf8",
 );
 
-test("doctor profile keeps availability visible when the 7-day preview is empty", () => {
-  const start = page.indexOf('<section className="atlas-care-availability"');
-  const end = page.indexOf('<Link className="button button-ghost atlas-care-profile-back"', start);
-  assert.ok(start >= 0);
-  assert.ok(end > start);
+test("doctor profile probes only days 8-14 when the 7-day preview is empty", () => {
+  assert.match(page, /if \(!slotError && slotGroups\.length === 0\)/);
+  assert.match(page, /"list_public_doctor_slots_page"/);
+  assert.match(page, /p_from_date: baghdadDateKeyAfterDays\(7\)/);
+  assert.match(page, /p_days: 7/);
+  assert.match(page, /p_limit: 1/);
+  assert.match(page, /laterSlotAvailable = !laterSlotError && Array\.isArray\(laterSlotData\) && laterSlotData\.length > 0/);
+});
 
-  const availability = page.slice(start, end);
-  assert.match(availability, /slotError/);
-  assert.match(availability, /copy\.availabilityUnavailable/);
-  assert.match(availability, /copy\.noPreviewTimes/);
-  assert.match(availability, /copy\.noPreviewTimesHelp/);
-  assert.match(availability, /\/times/);
+test("doctor profile only advertises later times when real availability proves they exist", () => {
+  assert.match(page, /\(slotError \|\| slotGroups\.length > 0 \|\| laterSlotAvailable\) \? \(/);
+  assert.match(page, /copy\.noPreviewTimes/);
+  assert.match(page, /copy\.noPreviewTimesHelp/);
+  assert.ok(page.includes('href={`/care/${clinicSlug}/${doctorSlug}/times`}'));
+  assert.match(page, /!slotError \? \(/);
   assert.doesNotMatch(page, /\{slotGroups\.length \? \(\s*<section className="atlas-care-availability"/);
+});
+
+test("slot lookup failures stay distinct from a legitimate later-availability gap", () => {
+  assert.match(page, /slotError\s*\? copy\.availabilityUnavailableHelp/);
+  assert.match(page, /copy\.availabilityUnavailable/);
+  assert.match(page, /\(!slotError \|\| phone\) \? \(/);
 });
 
 test("empty and unavailable availability states are patient-facing in every Atlas Patient language", () => {
@@ -28,4 +37,5 @@ test("empty and unavailable availability states are patient-facing in every Atla
   assert.match(page, /د حەفت ڕۆژێن داهاتی دا چ دەمەکێ بەردەست نینە\./);
   assert.match(page, /ماكو أوقات متاحة خلال الأيام السبعة الجاية\./);
   assert.match(page, /Open times are temporarily unavailable\./);
+  assert.match(page, /کاتە بەردەستەکان ئێستا نیشان نادرێن\./);
 });
