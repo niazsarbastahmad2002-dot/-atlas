@@ -521,7 +521,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           </div>
           <p className="field-help">{copy.accountHelp}</p>
           <PhoneNumberManager locale={locale} currentPhone={userData.user.phone ?? null} />
-          <Link className="settings-link" href="/dashboard/settings/account"><span>{copy.accountDeletion}</span><span aria-hidden="true">→</span></Link>
+          <Link className="settings-link" href={`/dashboard/settings/account?clinic=${clinic.id}`}><span>{copy.accountDeletion}</span><span aria-hidden="true">→</span></Link>
           <details className="settings-disclosure">
             <summary>{copy.quickSignIn}</summary>
             <p className="field-help">{copy.quickSignInHelp}</p>
