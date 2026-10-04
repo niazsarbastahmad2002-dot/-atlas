@@ -1,25 +1,42 @@
-import Link from "next/link";
 import type { UiLocale } from "@/lib/i18n/ui";
 
 type AtlasPatientNavProps = {
   locale: UiLocale;
-  myAppointments: string;
+  myAppointments?: string;
+  actionLabel?: string;
+  actionHref?: string;
 };
 
-export function AtlasPatientNav({ locale, myAppointments }: AtlasPatientNavProps) {
+export function AtlasPatientNav({
+  locale,
+  myAppointments,
+  actionLabel,
+  actionHref,
+}: AtlasPatientNavProps) {
+  const label = actionLabel ?? myAppointments ?? "My appointments";
+  const href = actionHref ?? `/patient-account?lang=${locale}`;
+  const careHref = `/api/ui-language?locale=${locale}`;
+
   return (
-    <nav className="nav shell marketing-nav atlas-patient-nav">
-      <Link className="app-brand atlas-marketing-brand atlas-patient-brand" href="/care" aria-label="Atlas Patient">
+    <nav
+      className="nav shell marketing-nav atlas-patient-nav"
+      dir={locale === "en" ? "ltr" : "rtl"}
+    >
+      <a
+        className="app-brand atlas-marketing-brand atlas-patient-brand"
+        href={careHref}
+        aria-label="Atlas Patient"
+      >
         <span className="app-brand-mark" aria-hidden="true">A</span>
         <span className="app-brand-word">Atlas</span>
         <span className="atlas-patient-brand-label" dir="ltr">Patient</span>
-      </Link>
-      <Link
+      </a>
+      <a
         className="button button-ghost atlas-patient-account-link"
-        href={`/patient-account?lang=${locale}`}
+        href={href}
       >
-        {myAppointments}
-      </Link>
+        {label}
+      </a>
 
       <style>{`
         .atlas-patient-nav{align-items:center;justify-content:space-between}
