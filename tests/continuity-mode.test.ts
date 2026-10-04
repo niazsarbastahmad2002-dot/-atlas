@@ -176,8 +176,11 @@ test("continuity ignores stale snapshot responses after clinic or doctor navigat
   const component = source("app/dashboard/continuity-mode.tsx");
 
   assert.match(component, /const snapshotRequestRef = useRef\(0\)/);
+  assert.match(component, /const snapshotPersistenceRef = useRef<Promise<void>>\(Promise\.resolve\(\)\)/);
   assert.match(component, /const requestId = \+\+snapshotRequestRef\.current/);
   assert.match(component, /if \(requestId !== snapshotRequestRef\.current\) return/);
+  assert.match(component, /snapshotPersistenceRef\.current = snapshotPersistenceRef\.current/);
+  assert.match(component, /await persistBrowserSnapshot\(snapshot\)/);
   assert.match(component, /snapshotRequestRef\.current \+= 1/);
   assert.ok(
     component.indexOf("if (requestId !== snapshotRequestRef.current) return")
