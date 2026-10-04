@@ -301,7 +301,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const clinic = clinics.find((item) => item.id === requestedClinic) ?? clinics[0];
 
   const [
-    { data: membership },
+    { data: membership, error: membershipError },
     { data: doctors, error: doctorsError },
   ] = await Promise.all([
     supabase
@@ -318,7 +318,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       .order("name", { ascending: true }),
   ]);
 
-  if (doctorsError) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} error={copy.loadFailed} clinicId={clinic.id} />;
+  if (doctorsError || (membershipError && clinic.owner_id !== userData.user.id)) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} error={copy.loadFailed} clinicId={clinic.id} />;
 
   const canManage = clinic.owner_id === userData.user.id
     || membership?.role === "owner"
