@@ -186,3 +186,14 @@ test("activity history discloses when older audit events are outside the bounded
   assert.match(activityPage, /activityTruncated \? <p className="notice history-limit-notice"/);
   assert.match(activityPage, /localizeDigits\(ACTIVITY_VIEW_LIMIT, locale\)/);
 });
+
+
+test("activity before-and-after details stay ordered in RTL", async () => {
+  const activityPage = await read("app/dashboard/activity/page.tsx");
+
+  assert.match(activityPage, /const transitionArrow = locale === "en" \? "→" : "←"/);
+  assert.match(activityPage, /className="activity-change-detail" dir=\{locale === "en" \? "ltr" : "rtl"\}/);
+  assert.match(activityPage, /<bdi>\{beforeText\}<\/bdi>/);
+  assert.match(activityPage, /<bdi>\{afterText\}<\/bdi>/);
+  assert.match(activityPage, /unicode-bidi:isolate/);
+});
