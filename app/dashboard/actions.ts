@@ -49,13 +49,46 @@ async function authenticatedUserId() {
 
 async function authorizeClinic(clinicId: string) {
   const { supabase, userId } = await authenticatedUserId();
-  const { data, error } = await supabase
-    .from("clinics")
-    .select("id")
-    .eq("id", clinicId)
-    .maybeSingle();
-  if (error || !data) redirect(dashboardUrl("error", "clinic_unavailable"));
-  return { supabase, userId };
+  const [{ data: clinic, error: clinicError }, { data: membership, error: membershipError }] = await Promise.all([
+    supabase
+      .from("clinics")
+      .select("id, owner_id")
+      .eq("id", clinicId)
+      .maybeSingle(),
+    supabase
+      .from("clinic_members")
+      .select("role")
+      .eq("clinic_id", clinicId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+
+  if (clinicError || !clinic) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
+  const isClinicOwner = clinic.owner_id === userId;
+  if (!isClinicOwner && membershipError) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
+  const hasClinicAccess = isClinicOwner
+    || membership?.role === "owner"
+    || membership?.role === "manager"
+    || membership?.role === "receptionist";
+  if (!hasClinicAccess) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
+  const canManage = isClinicOwner
+    || membership?.role === "owner"
+    || membership?.role === "manager";
+  return { supabase, userId, canManage };
+}
+
+async function authorizeClinicManagement(clinicId: string) {
+  const context = await authorizeClinic(clinicId);
+  if (!context.canManage) {
+    redirect(dashboardUrl("error", "clinic_unavailable"));
+  }
+  return context;
 }
 
 export async function createClinic(formData: FormData) {
@@ -87,7 +120,7 @@ export async function updateClinicInterval(formData: FormData) {
     redirect(dashboardUrl("error", "clinic_settings_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data, error } = await supabase
     .from("clinics")
     .update({ appointment_interval_minutes: interval })
@@ -113,7 +146,7 @@ export async function createDoctor(formData: FormData) {
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase, userId } = await authorizeClinic(clinicId);
+  const { supabase, userId } = await authorizeClinicManagement(clinicId);
   const { data: lastDoctor } = await supabase
     .from("doctors")
     .select("display_order")
@@ -150,7 +183,7 @@ export async function updateDoctor(formData: FormData) {
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data, error } = await supabase
     .from("doctors")
     .update({ name })
@@ -173,7 +206,7 @@ export async function setDoctorActive(clinicId: string, doctorId: string, active
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data, error } = await supabase
     .from("doctors")
     .update({ active })
@@ -196,7 +229,7 @@ export async function moveDoctor(clinicId: string, doctorId: string, direction: 
     redirect(dashboardUrl("error", "doctor_invalid", clinicId));
   }
 
-  const { supabase } = await authorizeClinic(clinicId);
+  const { supabase } = await authorizeClinicManagement(clinicId);
   const { data: doctors, error: readError } = await supabase
     .from("doctors")
     .select("id, name, display_order")
