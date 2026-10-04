@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     const lang = reminderLanguages.has(reminderLanguage) ? reminderLanguage : "ku";
     const bookingResponse = response({
       status: "ok",
-      patientPath: `/patient/${patientToken}?lang=${encodeURIComponent(lang)}`,
+      patientPath: `/patient/${patientToken}?lang=${encodeURIComponent(lang)}&account=1`,
     }, 200);
     const patientSession = await issuePatientAccountSession(admin, user.id);
     if (patientSession) {
