@@ -41,7 +41,7 @@ export default async function AtlasAiPage({ searchParams }: AtlasAiPageProps) {
           {t.backToSchedule}
         </Link>
         {clinics.length > 1 ? (
-          <form method="get" className="atlas-ai-clinic-switcher">
+          <form key={clinic.id} method="get" className="atlas-ai-clinic-switcher">
             <label htmlFor="atlas-ai-clinic">{t.clinicWorkspace}</label>
             <select id="atlas-ai-clinic" name="clinic" defaultValue={clinic.id}>
               {clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}

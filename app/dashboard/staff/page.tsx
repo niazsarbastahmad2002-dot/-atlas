@@ -424,7 +424,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       </header>
 
       {clinics.length > 1 ? (
-        <form className="clinic-switcher settings-clinic-switcher" method="get">
+        <form key={clinic.id} className="clinic-switcher settings-clinic-switcher" method="get">
           <label htmlFor="clinic">{t.clinicWorkspace}</label>
           <select id="clinic" name="clinic" defaultValue={clinic.id}>
             {clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
