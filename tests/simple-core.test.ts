@@ -6,13 +6,14 @@ import test from "node:test";
 const path = (value: string) => join(process.cwd(), value);
 const source = (value: string) => readFileSync(path(value), "utf8");
 
-test("Atlas home offers Online and Local as two clear modes while signed-in users keep their fast path", () => {
+test("Atlas home separates patient discovery, clinic workspace, and Local while signed-in users keep their fast path", () => {
   const home = source("app/page.tsx");
   const config = source("next.config.mjs");
   assert.match(home, /if \(data\.user\) redirect\("\/dashboard"\)/);
-  assert.equal((home.match(/>Atlas Online</g) ?? []).length, 1);
-  assert.equal((home.match(/>Atlas Local</g) ?? []).length, 1);
+  assert.match(home, /className="button atlas-mode-button atlas-patient-entry" href="\/care"/);
+  assert.match(home, /className="button button-ghost atlas-mode-button atlas-professional-entry" href="\/dashboard"/);
   assert.match(home, /href="\/atlas-local\.html"/);
+  assert.match(home, /Patient discovery is public\. Clinic work stays private\./);
   assert.match(home, /Try a sample clinic/);
   assert.doesNotMatch(config, /source:\s*"\/"[\s\S]*destination:\s*"\/dashboard"/);
 });
