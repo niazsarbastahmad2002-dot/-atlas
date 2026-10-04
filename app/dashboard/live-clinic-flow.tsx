@@ -100,11 +100,13 @@ export function LiveClinicFlow({
   clinicId,
   doctorId,
   day,
+  embedded = false,
 }: {
   locale: UiLocale;
   clinicId: string | null;
   doctorId: string | null;
   day: string | null;
+  embedded?: boolean;
 }) {
   const t = copy[locale];
   const [flow, setFlow] = useState<Flow | null>(null);
@@ -113,6 +115,7 @@ export function LiveClinicFlow({
   const [error, setError] = useState<"failed" | "stale" | null>(null);
   const loadRequestRef = useRef(0);
   const savingRef = useRef(false);
+  const shellClass = embedded ? "live-clinic-flow" : "live-clinic-flow shell";
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -221,7 +224,7 @@ export function LiveClinicFlow({
   if (!flow) {
     if (!loadFailed) return null;
     return (
-      <section className="live-clinic-flow shell" aria-label={t.timing}>
+      <section className={shellClass} aria-label={t.timing}>
         <div className="live-clinic-load-error" role="alert">
           <span>{t.loadFailed}</span>
           <button type="button" onClick={() => void load()}>{t.retry}</button>
@@ -232,7 +235,7 @@ export function LiveClinicFlow({
   }
 
   return (
-    <section className="live-clinic-flow shell" aria-label={t.timing} aria-busy={saving !== null}>
+    <section className={shellClass} aria-label={t.timing} aria-busy={saving !== null}>
       <div className="live-clinic-timing">
         <div className="live-clinic-copy">
           <strong>{t.timing}</strong>
