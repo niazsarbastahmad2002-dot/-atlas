@@ -294,6 +294,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   if (clinicsError || !clinics?.length) redirect("/dashboard");
 
   const requestedClinic = params.clinic && isUuid(params.clinic) ? params.clinic : null;
+  if (params.clinic && (!requestedClinic || !clinics.some((item) => item.id === requestedClinic))) {
+    redirect("/dashboard?error=clinic_unavailable");
+  }
   const clinic = clinics.find((item) => item.id === requestedClinic) ?? clinics[0];
 
   const [
