@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
+import { baghdadDate } from "@/lib/i18n/config";
 import { createClient } from "@/lib/supabase/server";
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -143,6 +144,7 @@ export async function setDoctorPublicClosedDate(
     || !isUuid(doctorId)
     || typeof isClosed !== "boolean"
     || !datePattern.test(bookingDate)
+    || (isClosed && bookingDate < baghdadDate.format(new Date()))
   ) fail(clinicId, "invalid");
 
   const { supabase } = await managementContext(clinicId);
