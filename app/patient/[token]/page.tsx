@@ -65,6 +65,7 @@ const patientCopy = {
     confirmTitle: "Confirm your appointment",
     confirmInitial: "Confirm appointment",
     cancelSmall: "Need to cancel?",
+    cancelConfirm: "Cancel this appointment?",
     question: "Will you come?",
     responseActions: "Appointment response options",
     confirm: "Yes, I’m coming",
@@ -121,6 +122,7 @@ const patientCopy = {
     confirmTitle: "کاتەکەت پشتڕاست بکەرەوە",
     confirmInitial: "پشتڕاستکردنەوەی کات",
     cancelSmall: "دەتەوێت هەڵیوەشێنیتەوە؟",
+    cancelConfirm: "دڵنیایت دەتەوێت ئەم مەوعیدە هەڵوەشێنیتەوە؟",
     question: "دێیت؟",
     responseActions: "هەڵبژاردەکانی وەڵامدانەوەی مەوعید",
     confirm: "بەڵێ، دێم",
@@ -177,6 +179,7 @@ const patientCopy = {
     confirmTitle: "وادەیا خۆ پشتڕاست بکە",
     confirmInitial: "وادەیێ پشتڕاست بکە",
     cancelSmall: "دخوازیت هەلوەشێنیت؟",
+    cancelConfirm: "تو پشتڕاستی کو دخوازیت ئەڤ وادەیێ هەلوەشێنی؟",
     question: "تو دێی؟",
     responseActions: "هەلبژاردەیێن بەرسڤدانا وادەیێ",
     confirm: "بەلێ، دێم",
@@ -233,6 +236,7 @@ const patientCopy = {
     confirmTitle: "أكد موعدك",
     confirmInitial: "أكد الموعد",
     cancelSmall: "تريد تلغي الموعد؟",
+    cancelConfirm: "متأكد تريد تلغي هذا الموعد؟",
     question: "راح تجي؟",
     responseActions: "خيارات الرد على الموعد",
     confirm: "إي، راح أجي",
@@ -600,6 +604,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "cancelled")}
                 pendingLabel={text.updating}
+                confirmMessage={text.cancelConfirm}
                 className="patient-cancel-small"
               >
                 {text.cancelSmall}
@@ -625,6 +630,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
               <PatientSubmitButton
                 formAction={updatePatientAppointment.bind(null, token, "cancelled")}
                 pendingLabel={text.updating}
+                confirmMessage={text.cancelConfirm}
                 className="button button-ghost"
               >
                 {text.cancel}
