@@ -85,10 +85,17 @@ export async function saveClinicDirectoryProfile(formData: FormData) {
   const { supabase } = await managementContext(clinicId);
   const { data: existing, error: existingError } = await supabase
     .from("clinic_directory_profiles")
-    .select("clinic_id, latitude, longitude")
+    .select("clinic_id, country_code, address_text, area, city, latitude, longitude")
     .eq("clinic_id", clinicId)
     .maybeSingle();
   if (existingError) failed(clinicId);
+
+  const locationChanged = Boolean(existing && (
+    (existing.country_code ?? "") !== countryCode
+    || (existing.address_text ?? "") !== addressText
+    || (existing.area ?? "") !== area
+    || (existing.city ?? "") !== city
+  ));
 
   const clinicPatch = {
     slug,
@@ -98,8 +105,8 @@ export async function saveClinicDirectoryProfile(formData: FormData) {
     city: city || null,
     area: area || null,
     address_text: addressText || null,
-    latitude: existing?.latitude ?? null,
-    longitude: existing?.longitude ?? null,
+    latitude: locationChanged ? null : (existing?.latitude ?? null),
+    longitude: locationChanged ? null : (existing?.longitude ?? null),
     public_phone: publicPhone || null,
     is_published: isPublished,
   };
