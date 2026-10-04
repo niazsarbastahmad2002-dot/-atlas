@@ -209,3 +209,9 @@ test("activity actor, entity, and date fragments stay bidi-isolated", async () =
   assert.match(activityPage, /className="activity-entity-line" dir=\{locale === "en" \? "ltr" : "rtl"\}/);
   assert.match(activityPage, /<bdi dir="ltr">\{shortId\(event\.entity_id\)\}<\/bdi>/);
 });
+
+
+test("appointment history client state is isolated by clinic", async () => {
+  const historyPage = await read("app/dashboard/history/page.tsx");
+  assert.match(historyPage, /<HistoryClient key=\{clinic\.id\} clinicId=\{clinic\.id\}/);
+});
