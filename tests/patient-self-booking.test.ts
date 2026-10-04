@@ -94,3 +94,12 @@ test("booking sends the patient profile language but never submits a phone field
   assert.doesNotMatch(form, /patientPhone\s*:/);
   assert.doesNotMatch(form, /body:\s*JSON\.stringify\([\s\S]*patientPhone/);
 });
+
+
+test("verified patient flow recovers from profile lookup and token expiry without trapping the patient", () => {
+  const form = source("app/care/[clinicSlug]/[doctorSlug]/book/booking-form.tsx");
+
+  assert.match(form, /setAccessToken\(verifiedAccessToken\)[\s\S]*\/api\/care\/patient-profile/);
+  assert.match(form, /profileResponse\.status === 401[\s\S]*setAccessToken\(""\)[\s\S]*setStep\("details"\)/);
+  assert.match(form, /booking\?\.status === "verification_required"[\s\S]*setAccessToken\(""\)[\s\S]*setToken\(""\)[\s\S]*setStep\("details"\)/);
+});
