@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import type { UiLocale } from "@/lib/i18n/ui";
+import { formatBaghdadDateTime, type UiLocale } from "@/lib/i18n/ui";
 import { createPatientAccessLink } from "./patient-link-actions";
 
 type PatientLinkError = "invalid" | "signed_out" | "unavailable" | "failed" | "not_configured";
@@ -93,6 +93,7 @@ function appointmentText(value: string | null, locale: UiLocale) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
+  if (locale === "bd") return formatBaghdadDateTime(date, locale);
   return new Intl.DateTimeFormat(dateLocale[locale], {
     timeZone: "Asia/Baghdad",
     weekday: "short",
