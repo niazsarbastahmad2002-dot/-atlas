@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SubmitButton } from "@/app/components/submit-button";
+import { isUuid } from "@/lib/appointments";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { createClient } from "@/lib/supabase/server";
@@ -8,7 +9,7 @@ import { deleteAtlasAccount } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ error?: string; notice?: string }> };
+type Props = { searchParams: Promise<{ clinic?: string; error?: string; notice?: string }> };
 
 type Copy = {
   eyebrow: string;
@@ -154,7 +155,12 @@ export default async function AccountSettingsPage({ searchParams }: Props) {
       : params.error === "failed" ? copy.failed
         : null;
   const clinicDeleted = params.notice === "clinic_deleted" && !ownedClinics?.length;
-  const backHref = clinicDeleted ? "/dashboard" : "/dashboard/settings";
+  const returnClinicId = params.clinic && isUuid(params.clinic) ? params.clinic : null;
+  const backHref = clinicDeleted
+    ? "/dashboard"
+    : returnClinicId
+      ? `/dashboard/settings?clinic=${returnClinicId}`
+      : "/dashboard/settings";
 
   return (
     <main className="settings-page shell">
