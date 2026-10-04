@@ -37,9 +37,12 @@ test("dashboard localization preserves patient and clinic supplied text", () => 
 
 
 test("phone formatting preserves the edit position instead of forcing the cursor to the end", () => {
-  assert.match(source, /function cursorFromTrailingDigits\(value: string, trailingDigits: number\)/);
-  assert.match(source, /input\.value\.slice\(selectionStart\)/);
-  assert.match(source, /const cursor = cursorFromTrailingDigits\(display, trailingDigits\)/);
-  assert.match(source, /input\.setSelectionRange\(cursor, cursor\)/);
+  assert.ok(source.includes("function cursorFromTrailingDigits"));
+  assert.ok(source.includes("function trailingPhoneTruncation"));
+  assert.ok(source.includes("input.value.slice(selectionStart)"));
+  assert.ok(source.includes("const truncatedTrailingDigits = trailingPhoneTruncation(input.value)"));
+  assert.ok(source.includes("const retainedTrailingDigits = Math.max(0, trailingDigits - truncatedTrailingDigits)"));
+  assert.ok(source.includes("const cursor = cursorFromTrailingDigits(display, retainedTrailingDigits)"));
+  assert.ok(source.includes("input.setSelectionRange(cursor, cursor)"));
   assert.doesNotMatch(source, /input\.setSelectionRange\(display\.length, display\.length\)/);
 });
