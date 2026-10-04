@@ -17,3 +17,9 @@ test("settings name draft is preserved when keyboard focus moves to submit", () 
   assert.match(reset, /input\.form === keyboardSubmitForm/);
   assert.match(reset, /input\.form === confirmingForm/);
 });
+
+
+test("clinic name form remounts when switching clinic workspaces", () => {
+  const settings = source("app/dashboard/settings/page.tsx");
+  assert.match(settings, /<form key=\{clinic\.id\} action=\{updateClinicName\} className="settings-form">/);
+});
