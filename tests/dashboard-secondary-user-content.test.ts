@@ -11,6 +11,7 @@ test("secondary dashboard views preserve user-supplied clinic doctor and patient
   const deletion = read("app/dashboard/settings/delete/page.tsx");
   const workflow = read("app/dashboard/doctor-workflow-card.tsx");
   const staff = read("app/dashboard/staff/page.tsx");
+  const appointmentEditor = read("app/dashboard/appointment-editor.tsx");
 
   assert.ok(history.includes('data-atlas-user-content="true">{row.patientName}'));
   assert.ok(history.includes('data-atlas-user-content="true">{row.doctorName}'));
@@ -21,4 +22,6 @@ test("secondary dashboard views preserve user-supplied clinic doctor and patient
   assert.ok(workflow.includes('data-atlas-user-content="true">{workflow.doctorName}'));
   assert.ok(staff.includes('data-atlas-user-content="true">{invitation.doctor_name}'));
   assert.ok(staff.includes('data-atlas-user-content="true">{assignedDoctor.name}'));
+  assert.ok(appointmentEditor.includes('className="appointment-locked-doctor" data-atlas-user-content="true"'));
+  assert.ok(appointmentEditor.includes('data-atlas-user-content="true">{lockedDoctor.name}'));
 });

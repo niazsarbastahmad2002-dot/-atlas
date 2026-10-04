@@ -8,13 +8,14 @@ const normalizedAttributes = ["aria-label", "title", "placeholder", "alt"] as co
 
 function normalizeTextNode(node: Text, locale: UiLocale) {
   const parent = node.parentElement;
-  if (!parent || parent.closest("script,style,noscript,textarea")) return;
+  if (!parent || parent.closest('script,style,noscript,textarea,[data-atlas-user-content="true"]')) return;
   const current = node.nodeValue ?? "";
   const next = applyClinicTerminology(current, locale);
   if (next !== current) node.nodeValue = next;
 }
 
 function normalizeElement(element: Element, locale: UiLocale) {
+  if (element.closest('[data-atlas-user-content="true"]')) return;
   for (const attribute of normalizedAttributes) {
     const current = element.getAttribute(attribute);
     if (!current) continue;
