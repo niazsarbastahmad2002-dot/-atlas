@@ -163,12 +163,13 @@ test("service worker installs every Local module and refreshes safely online", (
   assert.doesNotMatch(worker, /cache\.put\(|response\.clone\(/);
 });
 
-test("Atlas Online and Atlas Local remain peer choices on the Atlas entry", () => {
+test("Atlas entry keeps patient discovery and clinic workspace primary while Local stays separate", () => {
   const home = source("app/page.tsx");
-  assert.match(home, />Atlas Online</);
-  assert.match(home, />Atlas Local</);
+  assert.match(home, /atlas-patient-entry/);
+  assert.match(home, /atlas-professional-entry/);
+  assert.match(home, /localTitle: "Atlas Local"/);
   assert.match(home, /href="\/atlas-local\.html"/);
-  assert.match(home, /Choose Atlas mode/);
+  assert.match(home, /Choose how to use Atlas/);
 });
 
 test("Atlas Local installs as its own standalone PWA", () => {
