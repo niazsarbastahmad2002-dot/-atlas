@@ -27,6 +27,6 @@ test("patient language links preserve reminder-response context", () => {
 
   assert.match(page, /function patientLanguageHref\([\s\S]*token: string,[\s\S]*locale: PatientLocale,[\s\S]*reminderView: boolean,[\s\S]*accountMarker: string,[\s\S]*\)/);
   assert.match(page, /if \(reminderView\) params\.set\("view", "reminder"\)/);
-  assert.match(page, /if \(accountOwned\) params\.set\("account", "1"\)/);
+  assert.match(page, /if \(accountMarker\) params\.set\("account", accountMarker\)/);
   assert.match(page, /href=\{patientLanguageHref\(token, option\.locale, reminderView, accountMarker\)\}/);
 });
