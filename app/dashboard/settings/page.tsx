@@ -138,6 +138,9 @@ const settingsCopy: Record<UiLocale, {
   readOnlyClinic: string;
   phonePending: string;
   support: string;
+  supportLink: string;
+  privacyLink: string;
+  termsLink: string;
   archiveDoctorConfirm: string;
   loadFailed: string;
 }> = {
@@ -168,6 +171,9 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "Clinic administration manages the clinic name.",
     phonePending: "Phone not verified yet",
     support: "Help & legal",
+    supportLink: "Support",
+    privacyLink: "Privacy",
+    termsLink: "Terms",
     archiveDoctorConfirm: "Remove {doctor} from new scheduling? Existing appointment history will stay preserved.",
     loadFailed: "The clinic settings could not load. Go back to the schedule and try again.",
   },
@@ -198,6 +204,9 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "بەڕێوەبەری کلینیک ناوی کلینیک بەڕێوە دەبات.",
     phonePending: "ژمارەی مۆبایل هێشتا پشتڕاست نەکراوەتەوە",
     support: "یارمەتی و یاسایی",
+    supportLink: "یارمەتی",
+    privacyLink: "پاراستنی نهێنی",
+    termsLink: "مەرجەکان",
     archiveDoctorConfirm: "{doctor} لە وادە نوێکان لاببرێت؟ مێژووی وادەکانی پێشوو پارێزراو دەمێنێتەوە.",
     loadFailed: "ڕێکخستنەکانی کلینیک بار نەبوون. بگەڕێوە بۆ خشتەی وادەکان و دووبارە هەوڵ بدەوە.",
   },
@@ -228,6 +237,9 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "بەڕێڤەبرنا کلینیکێ ناڤێ کلینیکێ بەڕێڤە دبەت.",
     phonePending: "ژمارا موبایلێ هێشتا نەهاتییە پشتڕاستکرن",
     support: "هاریکاری و یاسایی",
+    supportLink: "هاریکاری",
+    privacyLink: "پاراستنا نهێنی",
+    termsLink: "مەرج",
     archiveDoctorConfirm: "{doctor} ژ وادەیێن نوو بهێتە لابرن؟ مێژوویا وادەیێن پێشوو دێ پاراستی بمینیت.",
     loadFailed: "ڕێکخستنێن کلینیکێ بار نەبوون. ڤەگەڕە خشتەیا وادەیان و جارەکا دی هەول بدە.",
   },
@@ -258,6 +270,9 @@ const settingsCopy: Record<UiLocale, {
     readOnlyClinic: "تدير إدارة العيادة اسم العيادة.",
     phonePending: "رقم الهاتف غير موثق بعد",
     support: "المساعدة والقانوني",
+    supportLink: "الدعم",
+    privacyLink: "الخصوصية",
+    termsLink: "الشروط",
     archiveDoctorConfirm: "إزالة {doctor} من المواعيد الجديدة؟ سيبقى سجل المواعيد السابقة محفوظاً.",
     loadFailed: "تعذر تحميل إعدادات العيادة. ارجع إلى جدول المواعيد وحاول مرة ثانية.",
   },
@@ -520,7 +535,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       </div>
 
       <footer className="settings-utility-footer" aria-label={copy.support}>
-        <Link href="/support">Support</Link><span>·</span><Link href="/privacy">Privacy</Link><span>·</span><Link href="/terms">Terms</Link>
+        <Link href="/support">{copy.supportLink}</Link><span>·</span><Link href="/privacy">{copy.privacyLink}</Link><span>·</span><Link href="/terms">{copy.termsLink}</Link>
       </footer>
 
       <style>{`
