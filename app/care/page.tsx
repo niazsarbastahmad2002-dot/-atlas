@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type CarePageProps = {
-  searchParams: Promise<{ q?: string | string[]; city?: string | string[]; specialty?: string | string[] }>;
+  searchParams: Promise<{ q?: string | string[]; city?: string | string[]; specialty?: string | string[]; sort?: string | string[] }>;
 };
 
 const careCopy: Record<UiLocale, {
@@ -22,6 +22,9 @@ const careCopy: Record<UiLocale, {
   cityPlaceholder: string;
   specialty: string;
   specialtyPlaceholder: string;
+  sort: string;
+  sortName: string;
+  sortSoonest: string;
   search: string;
   noResults: string;
   noResultsHelp: string;
@@ -42,6 +45,9 @@ const careCopy: Record<UiLocale, {
     cityPlaceholder: "e.g. Erbil",
     specialty: "Specialty",
     specialtyPlaceholder: "e.g. Orthopedics",
+    sort: "Sort by",
+    sortName: "Doctor name",
+    sortSoonest: "Soonest open time",
     search: "Search",
     noResults: "No published doctors match this search yet.",
     noResultsHelp: "Try a broader search or remove one of the filters.",
@@ -62,6 +68,9 @@ const careCopy: Record<UiLocale, {
     cityPlaceholder: "بۆ نموونە: هەولێر",
     specialty: "پسپۆڕی",
     specialtyPlaceholder: "بۆ نموونە: ئێسک و جومگە",
+    sort: "ڕیزکردن",
+    sortName: "ناوی پزیشک",
+    sortSoonest: "نزیکترین کاتی بەردەست",
     search: "گەڕان",
     noResults: "هێشتا هیچ پزیشکێکی بڵاوکراوە لەم گەڕانەدا نەدۆزرایەوە.",
     noResultsHelp: "گەڕانەکە فراوانتر بکە یان یەکێک لە فلتەرەکان لاببە.",
@@ -82,6 +91,9 @@ const careCopy: Record<UiLocale, {
     cityPlaceholder: "بۆ نموونە: هەولێر",
     specialty: "تایبەتمەندی",
     specialtyPlaceholder: "بۆ نموونە: ئێسک و جومگە",
+    sort: "ڕێزکرن",
+    sortName: "ناڤێ دکتۆری",
+    sortSoonest: "نێزیکترین دەمێ بەردەست",
     search: "گەڕان",
     noResults: "هێشتا هیچ دکتۆرەکێ بڵاوکری ل ڤی گەڕانێ نەهاتە دیتن.",
     noResultsHelp: "گەڕانێ فراوانتر بکە یان فلتەرەکێ لاببە.",
@@ -102,6 +114,9 @@ const careCopy: Record<UiLocale, {
     cityPlaceholder: "مثلاً: أربيل",
     specialty: "الاختصاص",
     specialtyPlaceholder: "مثلاً: عظام",
+    sort: "ترتيب حسب",
+    sortName: "اسم الطبيب",
+    sortSoonest: "أقرب وقت متاح",
     search: "بحث",
     noResults: "لا يوجد أطباء منشورون يطابقون هذا البحث حالياً.",
     noResultsHelp: "وسّع البحث أو احذف أحد الفلاتر.",
@@ -147,6 +162,8 @@ export default async function CarePage({ searchParams }: CarePageProps) {
   const query = bounded(params.q, 80);
   const city = bounded(params.city, 100);
   const specialty = bounded(params.specialty, 120);
+  const sortValue = bounded(params.sort, 20);
+  const sort = sortValue === "soonest" ? "soonest" : "name";
   const hasSearch = Boolean(query || city || specialty);
 
   const supabase = await createClient();
@@ -155,6 +172,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
     p_city: city || null,
     p_specialty: specialty || null,
     p_limit: 30,
+    p_sort: sort,
   });
   const results = error ? [] : (data ?? []);
 
@@ -189,6 +207,13 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <label>
             <span>{copy.specialty}</span>
             <input name="specialty" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
+          </label>
+          <label>
+            <span>{copy.sort}</span>
+            <select name="sort" defaultValue={sort}>
+              <option value="name">{copy.sortName}</option>
+              <option value="soonest">{copy.sortSoonest}</option>
+            </select>
           </label>
           <button className="button" type="submit">{copy.search}</button>
         </form>
@@ -227,7 +252,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
       </section>
 
       <style>{`
-        .atlas-care-page{min-height:100dvh}.atlas-care-shell{max-width:880px;padding-top:clamp(34px,7vh,72px);padding-bottom:70px}.atlas-care-language{max-width:650px;margin-bottom:30px}.atlas-care-language>.eyebrow{margin-bottom:10px}.atlas-care-search{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end;margin:28px 0}.atlas-care-search label{display:grid;gap:7px}.atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}.atlas-care-search input{min-height:48px}.atlas-care-search .button{min-height:48px}.atlas-care-results{display:grid;gap:12px;margin-top:24px}.atlas-care-result{display:grid;gap:9px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-result>div{display:grid;gap:4px}.atlas-care-result strong{font-size:18px}.atlas-care-result span,.atlas-care-result p{color:var(--muted);font-size:12px;line-height:1.5}.atlas-care-result p{margin:0}.atlas-care-next-opening{color:var(--accent)!important;font-weight:720}.atlas-care-result .button{justify-self:start;text-decoration:none}.atlas-care-empty{margin-top:24px;padding:22px;border:1px dashed var(--line);border-radius:18px}.atlas-care-empty p{margin:7px 0 0;color:var(--muted)}.atlas-care-notice{margin-top:24px}.atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}@media(max-width:760px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search .button{width:100%}}
+        .atlas-care-page{min-height:100dvh}.atlas-care-shell{max-width:880px;padding-top:clamp(34px,7vh,72px);padding-bottom:70px}.atlas-care-language{max-width:650px;margin-bottom:30px}.atlas-care-language>.eyebrow{margin-bottom:10px}.atlas-care-search{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin:28px 0}.atlas-care-search label{display:grid;gap:7px}.atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}.atlas-care-search input,.atlas-care-search select{min-width:0;min-height:48px}.atlas-care-search .button{min-height:48px}.atlas-care-results{display:grid;gap:12px;margin-top:24px}.atlas-care-result{display:grid;gap:9px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-result>div{display:grid;gap:4px}.atlas-care-result strong{font-size:18px}.atlas-care-result span,.atlas-care-result p{color:var(--muted);font-size:12px;line-height:1.5}.atlas-care-result p{margin:0}.atlas-care-next-opening{color:var(--accent)!important;font-weight:720}.atlas-care-result .button{justify-self:start;text-decoration:none}.atlas-care-empty{margin-top:24px;padding:22px;border:1px dashed var(--line);border-radius:18px}.atlas-care-empty p{margin:7px 0 0;color:var(--muted)}.atlas-care-notice{margin-top:24px}.atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}@media(max-width:900px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search .button{width:100%}}
       `}</style>
     </main>
   );
