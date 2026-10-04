@@ -178,3 +178,10 @@ test("manual patient sharing reports clipboard failures instead of failing silen
   assert.match(button, /بەستەرەکە کۆپی نەکرا/);
   assert.match(button, /لینک نەهاتە کۆپیکرن/);
 });
+
+
+test("manual Badini patient sharing uses the native Baghdad appointment formatter", () => {
+  const button = source("app/dashboard/patient-link-button.tsx");
+  assert.match(button, /formatBaghdadDateTime/);
+  assert.match(button, /if \(locale === "bd"\) return formatBaghdadDateTime\(date, locale\)/);
+});
