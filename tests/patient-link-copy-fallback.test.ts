@@ -6,7 +6,7 @@ const source = readFileSync(new URL("../app/dashboard/patient-link-button.tsx", 
 
 test("manual patient sharing exposes a selectable link when clipboard copy fails", () => {
   assert.match(source, /className="patient-link-copy-fallback"/);
-  assert.match(source, /value=\{initialLink\}/);
+  assert.match(source, /value=\{initialLink \?\? ""\}/);
   assert.match(source, /readOnly/);
   assert.match(source, /onFocus=\{\(event\) => event\.currentTarget\.select\(\)\}/);
   assert.match(source, /function closeShareResult\(\)/);
