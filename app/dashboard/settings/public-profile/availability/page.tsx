@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
+import { baghdadDate } from "@/lib/i18n/config";
+import { formatLocalDateValue } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
@@ -188,6 +190,7 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
   const canManage = clinic
     && (clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager");
   if (!clinic || !canManage) redirect("/dashboard/settings");
+  const today = baghdadDate.format(new Date());
 
   const [
     { data: settings, error: settingsError },
@@ -198,7 +201,7 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
     supabase.from("clinic_public_booking_settings").select("*").eq("clinic_id", clinic.id).maybeSingle(),
     supabase.from("doctors").select("id, name, active").eq("clinic_id", clinic.id).eq("active", true).order("display_order"),
     supabase.from("doctor_public_booking_hours").select("*").eq("clinic_id", clinic.id),
-    supabase.from("doctor_public_booking_closed_dates").select("*").eq("clinic_id", clinic.id).eq("is_closed", true).order("booking_date"),
+    supabase.from("doctor_public_booking_closed_dates").select("*").eq("clinic_id", clinic.id).eq("is_closed", true).gte("booking_date", today).order("booking_date"),
   ]);
   if (settingsError || doctorsError || hoursError || closedDatesError) {
     redirect(`/dashboard/settings/public-profile?clinic=${clinic.id}`);
@@ -284,7 +287,7 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
                 <div className="public-booking-closed">
                   <div><strong>{t.closedDates}</strong><span>{t.closedDatesHelp}</span></div>
                   <form action={setDoctorPublicClosedDate.bind(null, clinic.id, doctor.id, true)} className="public-booking-close-form">
-                    <input type="date" name="booking_date" required />
+                    <input type="date" name="booking_date" min={today} required />
                     <SubmitButton className="button button-ghost button-small" pendingLabel="…">{t.closeDate}</SubmitButton>
                   </form>
                   {doctorClosedDates.length ? (
@@ -292,7 +295,7 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
                       {doctorClosedDates.map((row) => (
                         <form action={setDoctorPublicClosedDate.bind(null, clinic.id, doctor.id, false)} key={row.booking_date}>
                           <input type="hidden" name="booking_date" value={row.booking_date} />
-                          <span>{row.booking_date}</span>
+                          <span>{formatLocalDateValue(row.booking_date, locale)}</span>
                           <SubmitButton className="button button-ghost button-small" pendingLabel="…">{t.reopen}</SubmitButton>
                         </form>
                       ))}
