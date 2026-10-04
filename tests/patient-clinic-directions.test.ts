@@ -45,8 +45,9 @@ test("patient directions require an explicit published address and use a free Ma
 test("changing published clinic location invalidates stale saved coordinates", () => {
   const actions = source("app/dashboard/settings/public-profile/actions.ts");
 
-  assert.match(actions, /select\("clinic_id, address_text, area, city, latitude, longitude"\)/);
+  assert.match(actions, /select\("clinic_id, country_code, address_text, area, city, latitude, longitude"\)/);
   assert.match(actions, /const locationChanged = Boolean\(existing && \(/);
+  assert.match(actions, /\(existing\.country_code \?\? ""\) !== countryCode/);
   assert.match(actions, /\(existing\.address_text \?\? ""\) !== addressText/);
   assert.match(actions, /\(existing\.area \?\? ""\) !== area/);
   assert.match(actions, /\(existing\.city \?\? ""\) !== city/);
