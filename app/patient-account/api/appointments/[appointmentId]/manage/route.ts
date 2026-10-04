@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { isUuid } from "@/lib/appointments";
 import { createPatientToken, hashPatientToken } from "@/lib/patient-links";
+import { createPatientAccountContinuityMarker } from "@/lib/patient-account-continuity";
 import {
   patientAccountCookieName,
   resolvePatientAccountSession,
@@ -69,5 +70,6 @@ export async function POST(
 
   const patientUrl = new URL(`/patient/${patientToken}`, request.url);
   patientUrl.searchParams.set("lang", locale);
+  patientUrl.searchParams.set("account", createPatientAccountContinuityMarker(patientToken));
   return NextResponse.redirect(patientUrl, 303);
 }
