@@ -189,7 +189,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     { data: membership, error: membershipError },
     { data: appointments, error: appointmentError, count: appointmentCount },
     { data: occupiedAppointments, error: occupiedError },
-    { data: reminderSettings },
+    { data: reminderSettings, error: reminderSettingsError },
     { data: doctorWorkflowRows, error: workflowError },
     { data: doctors, error: doctorsError },
   ] = await Promise.all([
@@ -200,7 +200,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     (supabase as any).from("doctor_workflow_settings").select("doctor_id, default_reminder_language").eq("clinic_id", clinic.id),
     supabase.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinic.id).order("display_order", { ascending: true }).order("name", { ascending: true }),
   ]);
-  if (membershipError || appointmentError || occupiedError || workflowError || doctorsError) return <DashboardError locale={locale} />;
+  if (membershipError || appointmentError || occupiedError || reminderSettingsError || workflowError || doctorsError) return <DashboardError locale={locale} />;
 
   const canMonitorDoctors = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   const rows = appointments ?? [];
