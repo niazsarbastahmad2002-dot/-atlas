@@ -210,6 +210,7 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const wasOffline = useRef(false);
   const snapshotRequestRef = useRef(0);
+  const snapshotPersistenceRef = useRef<Promise<void>>(Promise.resolve());
 
   const refreshSnapshot = useCallback(async () => {
     const requestId = ++snapshotRequestRef.current;
@@ -242,8 +243,15 @@ export function AtlasContinuityMode({ locale }: { locale: UiLocale }) {
       if (!response.ok || !body?.snapshot || body.snapshot.version !== 1) return;
 
       nativePost({ type: "snapshot", snapshot: body.snapshot });
-      void persistBrowserSnapshot(body.snapshot).catch(() => undefined);
-      setLastSyncedAt(body.snapshot.syncedAt);
+      const snapshot = body.snapshot;
+      snapshotPersistenceRef.current = snapshotPersistenceRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (requestId !== snapshotRequestRef.current) return;
+          await persistBrowserSnapshot(snapshot);
+        });
+      void snapshotPersistenceRef.current.catch(() => undefined);
+      setLastSyncedAt(snapshot.syncedAt);
     } catch {
       // A failed refresh never mutates or replaces the last protected snapshot.
     }
