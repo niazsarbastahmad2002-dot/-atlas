@@ -34,3 +34,12 @@ test("dashboard localization preserves patient and clinic supplied text", () => 
   const chooser = readFileSync(new URL("../app/dashboard/select-clinic/page.tsx", import.meta.url), "utf8");
   assert.match(chooser, /<span data-atlas-user-content="true">\{clinic\.name\}<\/span>/);
 });
+
+
+test("phone formatting preserves the edit position instead of forcing the cursor to the end", () => {
+  assert.match(source, /function cursorFromTrailingDigits\(value: string, trailingDigits: number\)/);
+  assert.match(source, /input\.value\.slice\(selectionStart\)/);
+  assert.match(source, /const cursor = cursorFromTrailingDigits\(display, trailingDigits\)/);
+  assert.match(source, /input\.setSelectionRange\(cursor, cursor\)/);
+  assert.doesNotMatch(source, /input\.setSelectionRange\(display\.length, display\.length\)/);
+});
