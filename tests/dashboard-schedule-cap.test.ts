@@ -20,7 +20,7 @@ test("future occupied slots page through the existing bounded booking horizon", 
   assert.match(source, /for \(let from = 0; from < OCCUPIED_SLOT_VIEW_LIMIT; from \+= OCCUPIED_SLOT_PAGE_SIZE\)/);
   assert.match(source, /\.lte\("appointment_at", bookingHorizonEnd\.toISOString\(\)\)/);
   assert.match(source, /\.order\("appointment_at", \{ ascending: true \}\)[\s\S]*\.order\("id", \{ ascending: true \}\)[\s\S]*\.range\(from, to\)/);
-  assert.match(source, /if \(page\.length < OCCUPIED_SLOT_PAGE_SIZE\) break/);
+  assert.match(source, /if \(page\.length < OCCUPIED_SLOT_PAGE_SIZE\) return \{ data: loaded, error: null, limited: false \}/);
   assert.match(source, /loadOccupiedAppointments\(\)/);
 });
 
