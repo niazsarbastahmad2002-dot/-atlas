@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
+import { formatBaghdadDay, uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
+import { formatDayPeriod } from "@/lib/i18n/format";
 
 function timeParts(date: Date, locale: string) {
   const parts = new Intl.DateTimeFormat(locale, {
@@ -49,12 +50,14 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
     };
   }, []);
 
-  const date = useMemo(() => new Intl.DateTimeFormat(dateLocale, {
-    timeZone: "Asia/Baghdad",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(now), [dateLocale, now]);
+  const date = useMemo(() => locale === "bd"
+    ? formatBaghdadDay(now, locale)
+    : new Intl.DateTimeFormat(dateLocale, {
+      timeZone: "Asia/Baghdad",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }).format(now), [dateLocale, locale, now]);
 
   const clock = useMemo(() => timeParts(now, dateLocale), [dateLocale, now]);
   const baghdadHour = useMemo(() => Number(new Intl.DateTimeFormat("en-GB", {
@@ -62,9 +65,7 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
     hour: "2-digit",
     hourCycle: "h23",
   }).format(now)), [now]);
-  const dayPeriod = locale === "ku"
-    ? (baghdadHour < 12 ? "پ.ن" : "د.ن")
-    : clock.dayPeriod;
+  const dayPeriod = formatDayPeriod(baghdadHour < 12 ? "am" : "pm", locale);
   const accessibleTime = [
     `${clock.hour}:${clock.minute}:${clock.second}`,
     dayPeriod,
