@@ -438,6 +438,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
 
       <div className="settings-grid staff-settings-grid">
         <InviteLinkForm
+          key={clinic.id}
           clinicId={clinic.id}
           locale={locale}
           doctors={activeDoctors.map((doctor) => ({ id: doctor.id, name: doctor.name }))}
