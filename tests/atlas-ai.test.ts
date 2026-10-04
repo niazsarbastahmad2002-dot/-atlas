@@ -258,3 +258,9 @@ test("Atlas external model context contains configuration but not patient record
   assert.doesNotMatch(route, /modelContext =[^\n]*authorizedRows/);
   assert.match(knowledge, /No patient names or phone numbers are included in this context/);
 });
+
+
+test("Atlas AI remounts when the active clinic changes", () => {
+  const page = read("app/dashboard/assistant/page.tsx");
+  assert.match(page, /<AtlasAiClient key=\{clinic\.id\} clinicId=\{clinic\.id\}/);
+});
