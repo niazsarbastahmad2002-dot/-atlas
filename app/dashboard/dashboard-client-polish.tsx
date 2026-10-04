@@ -164,7 +164,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
   useEffect(() => {
     const preparedInputs = new WeakSet<HTMLInputElement>();
     const preparedForms = new WeakSet<HTMLFormElement>();
-    const listenerCleanups: Array<() => void> = [];
+    const listenerCleanups = new Map<Element, () => void>();
     let frame = 0;
     const preparePhoneInput = (input: HTMLInputElement) => {
       if (preparedInputs.has(input)) return;
@@ -205,7 +205,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       update();
       input.addEventListener("beforeinput", rememberBackwardDelete);
       input.addEventListener("input", update);
-      listenerCleanups.push(() => {
+      listenerCleanups.set(input, () => {
         input.removeEventListener("beforeinput", rememberBackwardDelete);
         input.removeEventListener("input", update);
       });
@@ -268,9 +268,14 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         }
       };
       form.addEventListener("submit", handleSubmit, true);
-      listenerCleanups.push(() => form.removeEventListener("submit", handleSubmit, true));
+      listenerCleanups.set(form, () => form.removeEventListener("submit", handleSubmit, true));
     };
     const polish = () => {
+      listenerCleanups.forEach((cleanup, element) => {
+        if (element.isConnected) return;
+        cleanup();
+        listenerCleanups.delete(element);
+      });
       document.querySelectorAll<HTMLInputElement>('.app-shell input[type="tel"]').forEach(preparePhoneInput);
       document.querySelectorAll<HTMLFormElement>(".app-shell form.appointment-form").forEach(prepareAppointmentForm);
       if (locale === "en") return;
@@ -298,6 +303,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     return () => {
       observer.disconnect();
       listenerCleanups.forEach((cleanup) => cleanup());
+      listenerCleanups.clear();
       if (frame) window.cancelAnimationFrame(frame);
     };
   }, [locale, router]);
