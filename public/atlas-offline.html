@@ -191,11 +191,16 @@
 
         if (!snapshot || snapshot.version !== 1 || !Array.isArray(snapshot.appointments)) return showEmpty(locale);
         const syncedAt = new Date(snapshot.syncedAt);
+        const requestedParams = new URLSearchParams(location.search);
+        const requestedClinicId = requestedParams.get("clinic");
+        const requestedDoctorId = requestedParams.get("doctor");
         if (
           snapshot.day !== baghdadDay()
           || Number.isNaN(syncedAt.getTime())
           || Date.now() - syncedAt.getTime() > MAX_AGE_MS
           || snapshot.appointments.length > 500
+          || (requestedClinicId && snapshot.clinicId !== requestedClinicId)
+          || (requestedDoctorId && snapshot.doctorId !== requestedDoctorId)
         ) return showEmpty(locale);
 
         setText("clinic-name", String(snapshot.clinicName || "Atlas").slice(0, 120));
