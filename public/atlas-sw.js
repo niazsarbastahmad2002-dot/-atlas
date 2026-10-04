@@ -1,5 +1,5 @@
-// Previous installed shell: atlas-offline-shell-v10. v11 refreshes the Local workflow UI.
-const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v11";
+// Previous installed shell: atlas-offline-shell-v11. v12 refreshes the offline workspace-isolation guard.
+const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v12";
 const ATLAS_OFFLINE_PAGE = "/atlas-offline.html";
 const ATLAS_LOCAL_PAGE = "/atlas-local.html";
 const ATLAS_LOCAL_SCRIPT = "/atlas-local.js";
