@@ -7,6 +7,7 @@ import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { ShareProfileButton } from "../../share-profile-button";
+import { AtlasPatientNav } from "../../patient-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ const profileCopy: Record<UiLocale, {
   back: string;
   unavailableTitle: string;
   unavailableHelp: string;
+  myAppointments: string;
 }> = {
   en: {
     eyebrow: "Doctor profile",
@@ -43,9 +45,9 @@ const profileCopy: Record<UiLocale, {
     location: "Location",
     contact: "Clinic contact",
     availability: "Open times",
-    availabilityHelp: "These are live openings from the clinic schedule. Contact the clinic to reserve; online self-booking is not enabled yet.",
+    availabilityHelp: "These are live times from the clinic. Call the clinic to reserve one.",
     callToReserve: "Call clinic",
-    bookingHelp: "Choose a time. Atlas will verify your Iraqi mobile number before the slot is reserved.",
+    bookingHelp: "Choose a time. Atlas verifies your mobile before booking.",
     bookTime: "Book",
     allTimes: "See all times",
     share: "Share profile",
@@ -55,6 +57,7 @@ const profileCopy: Record<UiLocale, {
     back: "Back to doctor search",
     unavailableTitle: "This doctor profile is unavailable.",
     unavailableHelp: "It may be unpublished or the link may be incorrect.",
+    myAppointments: "My appointments",
   },
   ku: {
     eyebrow: "پڕۆفایلی پزیشک",
@@ -64,9 +67,9 @@ const profileCopy: Record<UiLocale, {
     location: "شوێن",
     contact: "پەیوەندی کلینیک",
     availability: "کاتە بەردەستەکان",
-    availabilityHelp: "ئەم کاتانە بەردەستبوونی ڕاستەقینەی خشتەی کلینیکن. بۆ دانانی مەوعید پەیوەندی بە کلینیک بکە؛ مەوعیددانانی خۆکار هێشتا چالاک نییە.",
+    availabilityHelp: "ئەم کاتانە ڕاستەوخۆ لە خشتەی کلینیکەوە دێن. بۆ گرتنی کاتێک پەیوەندی بە کلینیک بکە.",
     callToReserve: "پەیوەندی بە کلینیک",
-    bookingHelp: "کاتێک هەڵبژێرە. Atlas پێش گرتنی کاتەکە ژمارەی مۆبایلی عێراقیت پشتڕاست دەکاتەوە.",
+    bookingHelp: "کاتێک هەڵبژێرە. Atlas پێش دانانی مەوعید ژمارەی مۆبایلەکەت پشتڕاست دەکاتەوە.",
     bookTime: "مەوعید دابنێ",
     allTimes: "هەموو کاتەکان ببینە",
     share: "پڕۆفایل هاوبەش بکە",
@@ -76,6 +79,7 @@ const profileCopy: Record<UiLocale, {
     back: "گەڕانەوە بۆ گەڕانی پزیشک",
     unavailableTitle: "ئەم پڕۆفایلەی پزیشک بەردەست نییە.",
     unavailableHelp: "لەوانەیە بڵاونەکرابێتەوە یان بەستەرەکە هەڵە بێت.",
+    myAppointments: "مەوعیدەکانم",
   },
   bd: {
     eyebrow: "پڕۆفایلا دکتۆری",
@@ -85,9 +89,9 @@ const profileCopy: Record<UiLocale, {
     location: "جه",
     contact: "پەیوەندیا کلینیکێ",
     availability: "دەمێن بەردەست",
-    availabilityHelp: "ئەڤ دەمە بەردەستبوونا ڕاستەقینە یا خشتەیا کلینیکێنە. بۆ دانانا وادەیێ پەیوەندی ب کلینیکێ بکە؛ وادەدانانا خۆکار هێشتا چالاک نینە.",
+    availabilityHelp: "ئەڤ دەمە ڕاستەوخۆ ژ خشتەیا کلینیکێ دهێن. بۆ گرتنا دەمەکێ پەیوەندی ب کلینیکێ بکە.",
     callToReserve: "پەیوەندی ب کلینیکێ",
-    bookingHelp: "دەمەکێ هەلبژێرە. Atlas بەری گرتنا دەمی ژمارا موبایلا عێراقێ یا تە پشتڕاست دکەت.",
+    bookingHelp: "دەمەکێ هەلبژێرە. Atlas بەری دانانا وادەیێ ژمارا موبایلا تە پشتڕاست دکەت.",
     bookTime: "وادە دابنێ",
     allTimes: "هەمی دەمێن ببینە",
     share: "پڕۆفایل پارڤە بکە",
@@ -97,6 +101,7 @@ const profileCopy: Record<UiLocale, {
     back: "ڤەگەڕە گەڕانا دکتۆران",
     unavailableTitle: "ئەڤ پڕۆفایلا دکتۆری بەردەست نینە.",
     unavailableHelp: "دبیت نەهاتبیتە بڵاوکرن یان لینک هەڵە بیت.",
+    myAppointments: "وادەیێن من",
   },
   ar: {
     eyebrow: "ملف الطبيب",
@@ -106,9 +111,9 @@ const profileCopy: Record<UiLocale, {
     location: "الموقع",
     contact: "رقم العيادة",
     availability: "الأوقات المتاحة",
-    availabilityHelp: "هذه أوقات متاحة فعلياً من جدول العيادة. تواصل مع العيادة للحجز؛ الحجز الذاتي عبر الإنترنت غير مفعّل بعد.",
+    availabilityHelp: "هذه الأوقات مباشرة من جدول العيادة. اتصل بالعيادة لحجز أحدها.",
     callToReserve: "اتصل بالعيادة",
-    bookingHelp: "اختر وقتاً. Atlas يتحقق من رقم موبايلك العراقي قبل حجز الوقت.",
+    bookingHelp: "اختر وقتاً. Atlas يتحقق من رقم موبايلك قبل الحجز.",
     bookTime: "احجز",
     allTimes: "عرض كل الأوقات",
     share: "مشاركة الملف",
@@ -118,6 +123,7 @@ const profileCopy: Record<UiLocale, {
     back: "العودة إلى بحث الأطباء",
     unavailableTitle: "ملف هذا الطبيب غير متاح.",
     unavailableHelp: "قد يكون غير منشور أو أن الرابط غير صحيح.",
+    myAppointments: "مواعيدي",
   },
 };
 
@@ -291,12 +297,7 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
 
   return (
     <main className="marketing-page atlas-care-profile-page">
-      <nav className="nav shell marketing-nav">
-        <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
-          <span className="app-brand-word">Atlas</span>
-        </Link>
-      </nav>
+      <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
 
       <script
         type="application/ld+json"
