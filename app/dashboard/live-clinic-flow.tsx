@@ -231,7 +231,7 @@ export function LiveClinicFlow({
       <div className="live-clinic-timing">
         <div className="live-clinic-copy">
           <strong>{t.timing}</strong>
-          <span>{flow.doctorName}</span>
+          <span data-atlas-user-content="true">{flow.doctorName}</span>
           <small>{t.help}</small>
         </div>
         <div className="live-clinic-options" role="group" aria-label={t.timing}>
@@ -258,7 +258,7 @@ export function LiveClinicFlow({
           <div className="live-patient-pills">
             {flow.signals.map((signal) => (
               <span className={`live-patient-pill is-${signal.signal}`} key={signal.appointmentId}>
-                <b>{signal.patientName}</b>
+                <b data-atlas-user-content="true">{signal.patientName}</b>
                 <span>· {signal.signal === "on_my_way" ? t.onWay : t.runningLate}</span>
               </span>
             ))}
