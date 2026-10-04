@@ -146,7 +146,14 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
           <strong>{state.message}</strong>
           {currentInviteUrl ? (
             <>
-              <div className="field-help" dir="ltr" style={{ overflowWrap: "anywhere", marginTop: 8 }}>{currentInviteUrl}</div>
+              <input
+                className="staff-invite-link-value"
+                value={currentInviteUrl ?? ""}
+                readOnly
+                dir="ltr"
+                aria-label={t.copy}
+                onFocus={(event) => event.currentTarget.select()}
+              />
               <div className="login-secondary-actions" style={{ marginTop: 10 }}>
                 <button className="button button-ghost button-small" type="button" onClick={() => void copyLink()}>{copied ? t.copied : t.copy}</button>
                 <button className="button button-ghost button-small" type="button" onClick={() => void shareLink()}>{t.share}</button>
@@ -156,6 +163,9 @@ export function InviteLinkForm({ clinicId, locale, doctors }: {
           ) : null}
         </div>
       ) : null}
+      <style jsx>{`
+        .staff-invite-link-value { width: 100%; min-width: 0; margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; background: var(--surface); color: var(--ink); font-size: 11px; }
+      `}</style>
     </section>
   );
 }
