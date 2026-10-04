@@ -20,6 +20,16 @@ test("future occupied slots page through the existing bounded booking horizon", 
   assert.match(source, /for \(let from = 0; from < OCCUPIED_SLOT_VIEW_LIMIT; from \+= OCCUPIED_SLOT_PAGE_SIZE\)/);
   assert.match(source, /\.lte\("appointment_at", bookingHorizonEnd\.toISOString\(\)\)/);
   assert.match(source, /\.order\("appointment_at", \{ ascending: true \}\)[\s\S]*\.order\("id", \{ ascending: true \}\)[\s\S]*\.range\(from, to\)/);
-  assert.match(source, /if \(page\.length < OCCUPIED_SLOT_PAGE_SIZE\) break/);
+  assert.match(source, /if \(page\.length < OCCUPIED_SLOT_PAGE_SIZE\) return \{ data: loaded, error: null, limited: false \}/);
   assert.match(source, /loadOccupiedAppointments\(\)/);
+});
+
+
+test("future availability discloses when occupied-slot paging reaches its safety cap", () => {
+  assert.match(source, /\.range\(OCCUPIED_SLOT_VIEW_LIMIT, OCCUPIED_SLOT_VIEW_LIMIT\)/);
+  assert.match(source, /limited: Boolean\(overflow\?\.length\)/);
+  assert.match(source, /limited: occupiedSlotsLimited/);
+  assert.match(source, /occupiedSlotsLimited \? <p className="notice workspace-notice" role="status">/);
+  assert.match(source, /days\.availabilityLimited\.replace\("\{count\}", localizeDigits\(OCCUPIED_SLOT_VIEW_LIMIT, locale\)\)/);
+  assert.match(source, /prevent double-booking when you save/);
 });
