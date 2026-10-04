@@ -318,7 +318,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       .order("name", { ascending: true }),
   ]);
 
-  if (membershipError || doctorsError) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} error={copy.loadFailed} clinicId={clinic.id} />;
+  if (doctorsError || (membershipError && clinic.owner_id !== userData.user.id)) return <SettingsUnavailable label={t.settingsTitle} back={t.backToSchedule} error={copy.loadFailed} clinicId={clinic.id} />;
 
   const canManage = clinic.owner_id === userData.user.id
     || membership?.role === "owner"
