@@ -47,5 +47,7 @@ test("fast appointment save feedback is announced to assistive technology", () =
   assert.match(client, /toast\.setAttribute\("role", "status"\)/);
   assert.match(client, /toast\.setAttribute\("aria-live", "polite"\)/);
   assert.match(client, /toast\.setAttribute\("aria-atomic", "true"\)/);
-  assert.match(client, /fail\(slotTaken = false\).*toast\.setAttribute\("role", "alert"\)/);
+  assert.match(client, /toast\.append\(main, detail\);\s*document\.body\.append\(toast\);/);
+  assert.match(client, /window\.requestAnimationFrame\(\(\) => \{/);
+  assert.match(client, /fail\(slotTaken = false\).*toast\.setAttribute\("role", "alert"\).*toast\.setAttribute\("aria-live", "assertive"\)/);
 });
