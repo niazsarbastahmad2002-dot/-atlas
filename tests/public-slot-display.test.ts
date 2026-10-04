@@ -27,7 +27,7 @@ test("public availability is useful without pretending self-booking is active", 
 test("public slot display preserves clinic navigation and theme-aware surfaces", () => {
   const page = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");
 
-  assert.match(page, /href=\{\`\/care\/\$\{profile\.clinic_slug\}\`\}/);
+  assert.match(page, /patientLocaleHref\(`\/care\/\$\{profile\.clinic_slug\}`, locale\)/);
   assert.doesNotMatch(page, /background:#fff/);
   assert.match(page, /background:var\(--surface\)/);
   assert.match(page, /background:var\(--surface-soft\)/);
