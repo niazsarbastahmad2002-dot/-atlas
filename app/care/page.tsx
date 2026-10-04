@@ -33,6 +33,13 @@ const careCopy: Record<UiLocale, {
   nextAvailable: string;
   openProfile: string;
   back: string;
+  patientHome: string;
+  myAppointments: string;
+  browseSpecialties: string;
+  availableSoon: string;
+  allDoctors: string;
+  noPublished: string;
+  noPublishedHelp: string;
 }> = {
   en: {
     language: "Language",
@@ -56,6 +63,13 @@ const careCopy: Record<UiLocale, {
     nextAvailable: "Next open time",
     openProfile: "View doctor",
     back: "Atlas home",
+    patientHome: "Atlas Patient",
+    myAppointments: "My appointments",
+    browseSpecialties: "Browse specialties",
+    availableSoon: "Available soon",
+    allDoctors: "All doctors",
+    noPublished: "No doctors are published on Atlas yet.",
+    noPublishedHelp: "Published doctors and real availability will appear here as clinics make them available.",
   },
   ku: {
     language: "زمان",
@@ -79,6 +93,13 @@ const careCopy: Record<UiLocale, {
     nextAvailable: "نزیکترین کاتی بەردەست",
     openProfile: "پڕۆفایلی پزیشک",
     back: "گەڕانەوە بۆ Atlas",
+    patientHome: "Atlas Patient",
+    myAppointments: "مەوعیدەکانم",
+    browseSpecialties: "بە پسپۆڕی بگەڕێ",
+    availableSoon: "کاتی نزیک بەردەستە",
+    allDoctors: "هەموو پزیشکەکان",
+    noPublished: "هێشتا هیچ پزیشکێک لە Atlas بڵاونەکراوەتەوە.",
+    noPublishedHelp: "کاتێک کلینیکەکان پزیشک و کاتە بەردەستە ڕاستەقینەکان بڵاودەکەنەوە، لێرە دەردەکەون.",
   },
   bd: {
     language: "زمان",
@@ -102,6 +123,13 @@ const careCopy: Record<UiLocale, {
     nextAvailable: "نێزیکترین دەمێ بەردەست",
     openProfile: "پڕۆفایلا دکتۆری",
     back: "ڤەگەڕە Atlas",
+    patientHome: "Atlas Patient",
+    myAppointments: "وادەیێن من",
+    browseSpecialties: "ب تایبەتمەندی بگەڕێ",
+    availableSoon: "دەمەکێ نێزیک بەردەستە",
+    allDoctors: "هەمی دکتۆر",
+    noPublished: "هێشتا چ دکتۆر ل Atlas نەهاتینە بڵاوکرن.",
+    noPublishedHelp: "دەمێ کلینیک دکتۆر و دەمێن ڕاستەقینە یێن بەردەست بڵاو دکەن، ل ڤێرێ دیار دبن.",
   },
   ar: {
     language: "اللغة",
@@ -125,6 +153,13 @@ const careCopy: Record<UiLocale, {
     nextAvailable: "أقرب وقت متاح",
     openProfile: "عرض الطبيب",
     back: "العودة إلى Atlas",
+    patientHome: "Atlas Patient",
+    myAppointments: "مواعيدي",
+    browseSpecialties: "تصفّح حسب الاختصاص",
+    availableSoon: "متاح قريباً",
+    allDoctors: "كل الأطباء",
+    noPublished: "لا يوجد أطباء منشورون على Atlas حالياً.",
+    noPublishedHelp: "عندما تنشر العيادات أطباءها وأوقاتهم المتاحة فعلياً، راح تظهر هنا.",
   },
 };
 
@@ -175,13 +210,25 @@ export default async function CarePage({ searchParams }: CarePageProps) {
     p_sort: sort,
   });
   const results = error ? [] : (data ?? []);
+  const browseSpecialties = hasSearch
+    ? []
+    : Array.from(new Set(
+        results
+          .map((doctor) => doctor.specialty?.trim())
+          .filter((value): value is string => Boolean(value)),
+      )).slice(0, 6);
+  const hasAvailableSoon = !hasSearch && results.some((doctor) => Boolean(doctor.next_available_at));
 
   return (
     <main className="marketing-page atlas-care-page">
       <nav className="nav shell marketing-nav">
-        <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
+        <Link className="app-brand atlas-marketing-brand atlas-patient-brand" href="/care" aria-label={copy.patientHome}>
           <span className="app-brand-mark" aria-hidden="true">A</span>
           <span className="app-brand-word">Atlas</span>
+          <span className="atlas-patient-brand-label" dir="ltr">Patient</span>
+        </Link>
+        <Link className="button button-ghost atlas-patient-account-link" href="/patient-account">
+          {copy.myAppointments}
         </Link>
       </nav>
 
@@ -194,6 +241,33 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         <div className="eyebrow">{copy.eyebrow}</div>
         <h1>{copy.title}</h1>
         <p className="hero-copy">{copy.intro}</p>
+
+        {!hasSearch && (browseSpecialties.length || hasAvailableSoon) ? (
+          <section className="atlas-care-browse" aria-label={copy.browseSpecialties}>
+            <strong>{copy.browseSpecialties}</strong>
+            <div className="atlas-care-browse-actions">
+              {hasAvailableSoon ? (
+                <Link
+                  className={`atlas-care-choice ${sort === "soonest" ? "is-active" : ""}`}
+                  href="/care?sort=soonest"
+                >
+                  <span aria-hidden="true">◷</span>
+                  {copy.availableSoon}
+                </Link>
+              ) : null}
+              {browseSpecialties.map((item) => (
+                <Link
+                  className="atlas-care-choice"
+                  key={item}
+                  href={`/care?specialty=${encodeURIComponent(item)}&sort=soonest`}
+                >
+                  <span className="atlas-care-choice-mark" aria-hidden="true">{item.slice(0, 1)}</span>
+                  {item}
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <form className="atlas-care-search" method="get">
           <label>
@@ -224,9 +298,12 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <div className="atlas-care-results">
             {results.map((doctor) => (
               <article className="atlas-care-result" key={`${doctor.clinic_slug}/${doctor.doctor_slug}`}>
-                <div>
-                  <strong>{doctor.doctor_name}</strong>
-                  <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
+                <div className="atlas-care-result-heading">
+                  <span className="atlas-care-doctor-mark" aria-hidden="true">{doctor.doctor_name.trim().slice(0, 1)}</span>
+                  <div>
+                    <strong>{doctor.doctor_name}</strong>
+                    <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
+                  </div>
                 </div>
                 <p><b>{copy.clinic}:</b> <Link href={`/care/${doctor.clinic_slug}`}>{doctor.clinic_name}</Link></p>
                 {(doctor.city || doctor.area) ? <p>{[doctor.area, doctor.city].filter(Boolean).join(" · ")}</p> : null}
@@ -245,14 +322,21 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <div className="atlas-care-empty">
             <strong>{copy.noResults}</strong>
             <p>{copy.noResultsHelp}</p>
+            <Link className="atlas-care-reset" href="/care">{copy.allDoctors}</Link>
           </div>
-        ) : null}
+        ) : (
+          <div className="atlas-care-empty atlas-care-empty-published">
+            <strong>{copy.noPublished}</strong>
+            <p>{copy.noPublishedHelp}</p>
+            <Link className="button button-ghost" href="/patient-account">{copy.myAppointments}</Link>
+          </div>
+        )}
 
         <Link className="atlas-care-back" href="/">{copy.back}</Link>
       </section>
 
       <style>{`
-        .atlas-care-page{min-height:100dvh}.atlas-care-shell{max-width:880px;padding-top:clamp(34px,7vh,72px);padding-bottom:70px}.atlas-care-language{max-width:650px;margin-bottom:30px}.atlas-care-language>.eyebrow{margin-bottom:10px}.atlas-care-search{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin:28px 0}.atlas-care-search label{display:grid;gap:7px}.atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}.atlas-care-search input,.atlas-care-search select{min-width:0;min-height:48px}.atlas-care-search .button{min-height:48px}.atlas-care-results{display:grid;gap:12px;margin-top:24px}.atlas-care-result{display:grid;gap:9px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-result>div{display:grid;gap:4px}.atlas-care-result strong{font-size:18px}.atlas-care-result span,.atlas-care-result p{color:var(--muted);font-size:12px;line-height:1.5}.atlas-care-result p{margin:0}.atlas-care-next-opening{color:var(--accent)!important;font-weight:720}.atlas-care-result .button{justify-self:start;text-decoration:none}.atlas-care-empty{margin-top:24px;padding:22px;border:1px dashed var(--line);border-radius:18px}.atlas-care-empty p{margin:7px 0 0;color:var(--muted)}.atlas-care-notice{margin-top:24px}.atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}@media(max-width:900px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search .button{width:100%}}
+        .atlas-care-page{min-height:100dvh}.marketing-nav{align-items:center;justify-content:space-between}.atlas-patient-brand{display:inline-flex;align-items:center;gap:8px}.atlas-patient-brand-label{border-inline-start:1px solid var(--line);padding-inline-start:8px;color:var(--accent);font-size:11px;font-weight:850;letter-spacing:.02em}.atlas-patient-account-link{min-height:42px;text-decoration:none}.atlas-care-shell{max-width:880px;padding-top:clamp(34px,7vh,72px);padding-bottom:70px}.atlas-care-language{max-width:650px;margin-bottom:30px}.atlas-care-language>.eyebrow{margin-bottom:10px}.atlas-care-browse{display:grid;gap:10px;margin:24px 0 8px}.atlas-care-browse>strong{font-size:12px}.atlas-care-browse-actions{display:flex;gap:8px;flex-wrap:wrap}.atlas-care-choice{display:inline-flex;align-items:center;gap:7px;min-height:46px;border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;text-decoration:none}.atlas-care-choice:hover,.atlas-care-choice.is-active{border-color:rgba(8,119,90,.35);background:var(--surface-soft);color:var(--accent)}.atlas-care-choice-mark{display:grid;width:24px;height:24px;place-items:center;border-radius:50%;background:var(--surface-soft);color:var(--accent);font-size:11px;font-weight:900}.atlas-care-search{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin:28px 0}.atlas-care-search label{display:grid;gap:7px}.atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}.atlas-care-search input,.atlas-care-search select{min-width:0;min-height:48px}.atlas-care-search .button{min-height:48px}.atlas-care-results{display:grid;gap:12px;margin-top:24px}.atlas-care-result{display:grid;gap:9px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-result-heading{display:flex!important;align-items:center;gap:12px}.atlas-care-result-heading>div{display:grid;gap:4px}.atlas-care-doctor-mark{display:grid!important;flex:0 0 auto;width:44px;height:44px;place-items:center;border-radius:14px;background:var(--surface-soft);color:var(--accent)!important;font-size:18px!important;font-weight:900}.atlas-care-result>div{display:grid;gap:4px}.atlas-care-result strong{font-size:18px}.atlas-care-result span,.atlas-care-result p{color:var(--muted);font-size:12px;line-height:1.5}.atlas-care-result p{margin:0}.atlas-care-next-opening{color:var(--accent)!important;font-weight:720}.atlas-care-result .button{justify-self:start;text-decoration:none}.atlas-care-empty{margin-top:24px;padding:22px;border:1px dashed var(--line);border-radius:18px}.atlas-care-empty p{margin:7px 0 0;color:var(--muted)}.atlas-care-empty-published{display:grid;gap:10px}.atlas-care-empty-published .button{justify-self:start;text-decoration:none}.atlas-care-reset{display:inline-block;margin-top:10px;color:var(--accent);font-size:12px;font-weight:800}.atlas-care-notice{margin-top:24px}.atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}@media(max-width:900px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search .button{width:100%}}
       `}</style>
     </main>
   );
