@@ -55,8 +55,8 @@ test("published clinics have a direct public profile route and doctors link back
   assert.match(clinic, /list_public_doctors/);
   assert.match(clinic, /safeSlug\(clinicSlug\)/);
   assert.doesNotMatch(clinic, /\.from\("appointments"\)|patient_name|patient_phone|reminder_/);
-  assert.match(search, /href=\{\`\/care\/\$\{doctor\.clinic_slug\}\`\}/);
-  assert.match(doctor, /href=\{\`\/care\/\$\{profile\.clinic_slug\}\`\}/);
+  assert.match(search, /patientLocaleHref\(`\/care\/\$\{doctor\.clinic_slug\}`, locale\)/);
+  assert.match(doctor, /patientLocaleHref\(`\/care\/\$\{profile\.clinic_slug\}`, locale\)/);
 });
 
 

@@ -20,7 +20,7 @@ test("doctor profile only advertises later times when real availability proves t
   assert.match(page, /\(slotError \|\| slotGroups\.length > 0 \|\| laterSlotAvailable\) \? \(/);
   assert.match(page, /copy\.noPreviewTimes/);
   assert.match(page, /copy\.noPreviewTimesHelp/);
-  assert.ok(page.includes('href={`/care/${clinicSlug}/${doctorSlug}/times`}'));
+  assert.match(page, /patientLocaleHref\(`\/care\/\$\{clinicSlug\}\/\$\{doctorSlug\}\/times`, locale\)/);
   assert.match(page, /!slotError \? \(/);
   assert.doesNotMatch(page, /\{slotGroups\.length \? \(\s*<section className="atlas-care-availability"/);
 });

@@ -26,7 +26,7 @@ test("online booking links remain gated by launch plus real phone readiness", ()
   assert.match(page, /readiness\?\.reachable/);
   assert.match(page, /readiness\.supabasePhoneEnabled/);
   assert.match(page, /!readiness\.signupDisabled/);
-  assert.match(page, /\/book\?slot=/);
+  assert.match(page, /patientLocaleHref\(`\/care\/\$\{clinicSlug\}\/\$\{doctorSlug\}\/book`, locale, \{ slot: slot\.slotAt \}\)/);
 });
 
 test("full availability is mobile-first and preserves 48px slot targets", () => {
