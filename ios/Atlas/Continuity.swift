@@ -20,6 +20,7 @@ struct AtlasContinuitySnapshot: Codable, Equatable {
     let doctorId: String?
     let doctorName: String?
     let syncedAt: String
+    var appointmentsTruncated: Bool? = nil
     let appointments: [AtlasContinuityAppointment]
 }
 

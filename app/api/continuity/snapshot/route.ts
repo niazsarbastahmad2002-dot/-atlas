@@ -91,11 +91,11 @@ export async function GET(request: Request) {
   const dayEnd = new Date(`${shiftBaghdadDay(today, 1)}T00:00:00+03:00`).toISOString();
 
   const [
-    { data: appointments, error: appointmentError },
+    { data: appointments, error: appointmentError, count: appointmentCount },
     { data: doctors, error: doctorsError },
   ] = await Promise.all([
     supabase.from("appointments")
-      .select("id, patient_name, doctor_id, doctor_name, appointment_at, created_at, status")
+      .select("id, patient_name, doctor_id, doctor_name, appointment_at, created_at, status", { count: "exact" })
       .eq("clinic_id", clinic.id)
       .is("voided_at", null)
       .gte("appointment_at", dayStart)
@@ -159,6 +159,7 @@ export async function GET(request: Request) {
       doctorId: selectedDoctor?.id ?? null,
       doctorName: selectedDoctor?.name ?? null,
       syncedAt: now.toISOString(),
+      appointmentsTruncated: appointmentCount !== null && appointmentCount > rows.length,
       appointments: appointmentsForSnapshot,
     },
   }, {

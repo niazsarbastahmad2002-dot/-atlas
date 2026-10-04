@@ -366,6 +366,15 @@ private struct AtlasContinuityOfflineView: View {
                         .padding(.horizontal, 20)
                         .padding(.vertical, 18)
 
+                        if snapshot.appointmentsTruncated == true {
+                            Text("This protected offline copy shows only the first 500 appointments from the last sync. Reconnect for the complete live schedule.")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.orange)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 12)
+                        }
+
                         if snapshot.appointments.isEmpty {
                             Text("No appointments were in the last synced clinic day.")
                                 .foregroundStyle(.secondary)

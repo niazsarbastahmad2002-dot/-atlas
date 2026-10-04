@@ -47,6 +47,7 @@
           synced: "Last synced",
           doctor: "Doctor",
           appointments: "appointments",
+          limited: "This protected offline copy shows only the first 500 appointments from the last sync. Reconnect for the complete live schedule.",
           notice: "No changes are sent while offline. Atlas will reload live data when the connection returns.",
           emptyTitle: "No offline schedule is available.",
           emptyCopy: "Connect to the internet and open Atlas once to prepare this device for offline viewing.",
@@ -61,6 +62,7 @@
           synced: "کۆتا هاوکاتکردن",
           doctor: "دکتۆر",
           appointments: "مەوعید",
+          limited: "ئەم کۆپییە پارێزراوەی ئۆفلاین تەنها یەکەم ٥٠٠ مەوعیدی دوا هاوکاتکردنەوە پیشان دەدات. بۆ خشتەی تەواوی ڕاستەوخۆ دووبارە بە ئینتەرنێت پەیوەست بە.",
           notice: "لە کاتی ئۆفلاین هیچ گۆڕانکارییەک نەنێردرێت. کاتێک ئینتەرنێت دەگەڕێتەوە Atlas داتای نوێ بار دەکاتەوە.",
           emptyTitle: "هیچ خشتەی ئۆفلاینێک بەردەست نییە.",
           emptyCopy: "بە ئینتەرنێت پەیوەست بە و Atlas یەکجار بکەرەوە بۆ ئامادەکردنی ئەم ئامێرە.",
@@ -75,6 +77,7 @@
           synced: "دوماهیک هاوکاتکرن",
           doctor: "دکتۆر",
           appointments: "وادە",
+          limited: "ئەڤ کۆپیا پاراستی یا ئۆفلاین تەنێ ٥٠٠ وادەیێن ئێکێ ژ دوماهیک هاوکاتکرنێ نیشان ددەت. بۆ خشتەیا تەمام یا ڕاستەوخۆ دووبارە گرێبەدە.",
           notice: "د دەمێ ئۆفلاین دا هیچ گۆڕین ناهێتە هنارتن. دەمێ ئینتەرنێت ڤەدگەڕیت Atlas زانیاریێن نوو بار دکەتەوە.",
           emptyTitle: "هیچ خشتەیەکا ئۆفلاین بەردەست نینە.",
           emptyCopy: "ب ئینتەرنێتێ گرێبەدە و Atlas جارەکێ ڤەکە بۆ ئامادەکرنا ڤی ئامێری بۆ دیتنا ئۆفلاین.",
@@ -89,6 +92,7 @@
           synced: "آخر مزامنة",
           doctor: "الطبيب",
           appointments: "مواعيد",
+          limited: "هذه النسخة المحمية بدون إنترنت تعرض أول ٥٠٠ موعد فقط من آخر مزامنة. أعد الاتصال لعرض الجدول المباشر الكامل.",
           notice: "لا يتم إرسال أي تغييرات أثناء انقطاع الإنترنت. سيعيد Atlas تحميل البيانات المباشرة عند عودة الاتصال.",
           emptyTitle: "لا يوجد جدول متاح بدون إنترنت.",
           emptyCopy: "اتصل بالإنترنت وافتح Atlas مرة واحدة لتجهيز هذا الجهاز للعرض دون إنترنت.",
@@ -196,6 +200,7 @@
 
         setText("clinic-name", String(snapshot.clinicName || "Atlas").slice(0, 120));
         setText("sync-copy", `${t.synced}: ${timeLabel(snapshot.syncedAt, locale)}`);
+        setText("notice", snapshot.appointmentsTruncated ? t.limited : t.notice);
         const summary = el("summary");
         summary.replaceChildren();
         const count = document.createElement("span");

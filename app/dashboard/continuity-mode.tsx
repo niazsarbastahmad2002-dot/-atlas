@@ -23,6 +23,7 @@ type ContinuitySnapshot = {
   doctorId: string | null;
   doctorName: string | null;
   syncedAt: string;
+  appointmentsTruncated: boolean;
   appointments: ContinuityAppointment[];
 };
 
