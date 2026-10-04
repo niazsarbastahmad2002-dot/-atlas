@@ -35,7 +35,10 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   }
   const clinic = clinics.find((item) => item.id === requestedClinic) ?? clinics[0];
 
-  const { data: membership } = await supabase.from("clinic_members").select("role").eq("clinic_id", clinic.id).eq("user_id", userData.user.id).maybeSingle();
+  const { data: membership, error: membershipError } = await supabase.from("clinic_members").select("role").eq("clinic_id", clinic.id).eq("user_id", userData.user.id).maybeSingle();
+  if (membershipError && clinic.owner_id !== userData.user.id) {
+    return <main className="center-page"><section className="auth-card"><div className="brand">Atlas</div><h1>{t.title}</h1><p className="notice notice-error">{t.loadFailed}</p><Link className="button" href={`/dashboard/settings?clinic=${clinic.id}`}>{t.back}</Link></section></main>;
+  }
   const canManageRecords = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   if (!canManageRecords) redirect(`/dashboard/settings?clinic=${clinic.id}`);
 
