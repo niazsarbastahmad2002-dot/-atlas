@@ -73,7 +73,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
       </header>
       {clinics.length > 1 ? <form className="clinic-switcher history-clinic-switcher" method="get"><label htmlFor="clinic-history">{t.clinic}</label><select id="clinic-history" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="button button-ghost button-small" type="submit">{t.open}</button></form> : null}
       {historyTruncated ? <p className="notice history-limit-notice" role="status">{t.limited.replace("{count}", localizeDigits(HISTORY_VIEW_LIMIT, locale))}</p> : null}
-      <HistoryClient clinicId={clinic.id} rows={rows} locale={locale} canDelete />
+      <HistoryClient key={clinic.id} clinicId={clinic.id} rows={rows} locale={locale} canDelete />
       <p className="history-privacy">{t.privacy}</p>
     </main>
   );
