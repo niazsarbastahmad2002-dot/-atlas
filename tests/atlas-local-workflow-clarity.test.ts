@@ -46,7 +46,7 @@ test("Atlas Local supports manual phone confirmation without adding automatic on
 
 test("Atlas Local workflow upgrade refreshes installed offline copies", () => {
   const worker = source("public/atlas-sw.js");
-  assert.match(worker, /const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v11"/);
+  assert.match(worker, /const ATLAS_OFFLINE_CACHE = "atlas-offline-shell-v12"/);
   assert.match(worker, /"\/atlas-local-polish\.js"/);
   assert.match(worker, /"\/atlas-local-responsive\.js"/);
 });
