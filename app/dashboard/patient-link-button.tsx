@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createPatientAccessLink } from "./patient-link-actions";
 
@@ -128,10 +128,19 @@ export function PatientLinkButton({
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const copyFallbackRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (state.link) setShowResult(true);
   }, [reminderLanguage, state.link]);
+
+  useEffect(() => {
+    if (!copyFailed) return;
+    window.requestAnimationFrame(() => {
+      copyFallbackRef.current?.focus();
+      copyFallbackRef.current?.select();
+    });
+  }, [copyFailed]);
 
   const initialLink = useMemo(() => {
     if (!state.link) return null;
@@ -207,6 +216,7 @@ export function PatientLinkButton({
               <>
                 <span className="field-help patient-link-copy-error" role="alert">{t.copyFailed}</span>
                 <input
+                  ref={copyFallbackRef}
                   className="patient-link-copy-fallback"
                   value={initialLink ?? ""}
                   readOnly
