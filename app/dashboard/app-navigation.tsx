@@ -107,6 +107,7 @@ function validRememberedSchedule(href: string | null) {
   try {
     const url = new URL(href, window.location.origin);
     if (url.pathname !== "/dashboard") return "/dashboard";
+    ["notice", "error", "after"].forEach((key) => url.searchParams.delete(key));
     const day = url.searchParams.get("day");
     if (!day) return `${url.pathname}${url.search}`;
     if (!isCalendarDay(day)) {
