@@ -30,6 +30,9 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   const { data: clinics, error: clinicsError } = await supabase.from("clinics").select("id, name, owner_id").order("created_at", { ascending: true });
   if (clinicsError || !clinics?.length) redirect("/dashboard");
   const requestedClinic = params.clinic && isUuid(params.clinic) ? params.clinic : null;
+  if (params.clinic && (!requestedClinic || !clinics.some((item) => item.id === requestedClinic))) {
+    redirect("/dashboard?error=clinic_unavailable");
+  }
   const clinic = clinics.find((item) => item.id === requestedClinic) ?? clinics[0];
 
   const { data: membership } = await supabase.from("clinic_members").select("role").eq("clinic_id", clinic.id).eq("user_id", userData.user.id).maybeSingle();
