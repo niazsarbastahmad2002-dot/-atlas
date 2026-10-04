@@ -10,7 +10,8 @@ test("staff directory reads continue beyond the first Supabase auth page", () =>
   assert.match(source, /listUsers\(\{ page, perPage: pageSize \}\)/);
   assert.match(source, /directoryUsers\.push\(\.\.\.directoryPage\.users\)/);
   assert.match(source, /if \(directoryPage\.users\.length < pageSize\) break/);
-  assert.match(source, /if \(page === maxPages\) throw new Error\("staff_directory_too_large"\)/);
+  assert.match(source, /listUsers\(\{ page: maxPages \+ 1, perPage: 1 \}\)/);
+  assert.match(source, /if \(overflowPage\.users\.length > 0\) throw new Error\("staff_directory_too_large"\)/);
   assert.match(source, /new Map\(directoryUsers\.map/);
   assert.match(source, /pendingRows = directoryUsers\.flatMap/);
 });
