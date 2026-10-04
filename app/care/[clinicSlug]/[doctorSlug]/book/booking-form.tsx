@@ -289,19 +289,26 @@ export function PatientBookingForm(props: BookingFormProps) {
         return;
       }
 
+      setAccessToken(verifiedAccessToken);
+
       const profileResponse = await fetch("/api/care/patient-profile", {
         headers: { Authorization: `Bearer ${verifiedAccessToken}` },
         cache: "no-store",
       });
-      const saved = await profileResponse.json().catch(() => null) as {
-        profile?: { displayName?: string; preferredLanguage?: UiLocale } | null;
-      } | null;
-      if (!profileResponse.ok) {
-        setError(t.failed);
+      if (profileResponse.status === 401) {
+        setAccessToken("");
+        setToken("");
+        setStep("details");
+        setError(t.incorrectCode);
         return;
       }
 
-      setAccessToken(verifiedAccessToken);
+      const saved = profileResponse.ok
+        ? await profileResponse.json().catch(() => null) as {
+            profile?: { displayName?: string; preferredLanguage?: UiLocale } | null;
+          } | null
+        : null;
+
       setPatientName(saved?.profile?.displayName ?? "");
       setPreferredLanguage(saved?.profile?.preferredLanguage ?? props.locale);
       setStep("profile");
@@ -356,8 +363,12 @@ export function PatientBookingForm(props: BookingFormProps) {
       if (booking?.status === "rate_limited") setError(t.rateLimited);
       else if (booking?.status === "slot_taken") setError(t.slotTaken);
       else if (booking?.status === "unavailable") setError(t.unavailable);
-      else if (booking?.status === "verification_required") setError(t.incorrectCode);
-      else setError(t.failed);
+      else if (booking?.status === "verification_required") {
+        setAccessToken("");
+        setToken("");
+        setStep("details");
+        setError(t.incorrectCode);
+      } else setError(t.failed);
     } catch {
       setError(t.failed);
     } finally {
