@@ -15,6 +15,14 @@ test("every patient appointment cancellation asks for confirmation", () => {
   assert.match(button, /window\.confirm\(confirmMessage\)/);
 });
 
+test("destructive confirmation buttons stay disabled until client confirmation can run", () => {
+  assert.match(button, /useState\(false\)/);
+  assert.match(button, /useEffect\(\(\) => \{[\s\S]*setHydrated\(true\)/);
+  assert.match(button, /pending \|\| Boolean\(confirmMessage && !hydrated\)/);
+  assert.match(button, /disabled=\{disabled\}/);
+  assert.match(button, /aria-disabled=\{disabled\}/);
+});
+
 test("cancellation confirmation is localized in all Patient languages", () => {
   assert.match(page, /cancelConfirm: "Cancel this appointment\?"/);
   assert.match(page, /cancelConfirm: "دڵنیایت دەتەوێت ئەم مەوعیدە هەڵوەشێنیتەوە\؟"/);

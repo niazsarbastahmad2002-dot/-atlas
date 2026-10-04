@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
 type PatientSubmitButtonProps = {
@@ -19,13 +19,21 @@ export function PatientSubmitButton({
   confirmMessage,
 }: PatientSubmitButtonProps) {
   const { pending } = useFormStatus();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  const disabled = pending || Boolean(confirmMessage && !hydrated);
+
   return (
     <button
       className={className}
       type="submit"
       formAction={formAction}
-      disabled={pending}
-      aria-disabled={pending}
+      disabled={disabled}
+      aria-disabled={disabled}
       onClick={(event) => {
         if (confirmMessage && !window.confirm(confirmMessage)) event.preventDefault();
       }}
