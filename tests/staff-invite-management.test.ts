@@ -66,3 +66,8 @@ test("staff invitation expiry follows the selected Atlas language and Baghdad ti
   assert.match(page, /formatLocalDateValue/);
   assert.match(page, /formatTimeValue/);
 });
+
+test("staff invitation state resets when switching clinic workspaces", () => {
+  const page = read("app/dashboard/staff/page.tsx");
+  assert.match(page, /<InviteLinkForm\s+key=\{clinic\.id\}\s+clinicId=\{clinic\.id\}/);
+});
