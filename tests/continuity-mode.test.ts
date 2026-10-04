@@ -10,7 +10,7 @@ test("continuity snapshot stays RLS-bound and deliberately minimal", () => {
   assert.match(route, /createClient\(\)/);
   assert.doesNotMatch(route, /createAdminClient|service_role|SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(route, /\.from\("appointments"\)/);
-  assert.match(route, /select\("id, patient_name, doctor_id, doctor_name, appointment_at, created_at, status"\)/);
+  assert.match(route, /select\("id, patient_name, doctor_id, doctor_name, appointment_at, created_at, status", \{ count: "exact" \}\)/);
   assert.doesNotMatch(route, /patient_phone|reminder_consent|reminder_language|message_content|access_token/);
   assert.match(route, /Cache-Control": "no-store"/);
   assert.match(route, /const today = baghdadDate\.format\(now\)/);
@@ -194,4 +194,22 @@ test("continuity scopes stale responses and serializes protected cache mutations
       < component.indexOf("requestId !== snapshotRequestRef.current"),
     "same-scope authorization clears must not be discarded merely because a newer refresh started",
   );
+});
+
+
+test("offline continuity discloses when today's protected schedule is capped", () => {
+  const route = source("app/api/continuity/snapshot/route.ts");
+  const component = source("app/dashboard/continuity-mode.tsx");
+  const page = source("public/atlas-offline.html");
+  const nativeStore = source("ios/Atlas/Continuity.swift");
+  const nativeApp = source("ios/Atlas/AtlasApp.swift");
+
+  assert.match(route, /count: appointmentCount/);
+  assert.match(route, /appointmentsTruncated: appointmentCount !== null && appointmentCount > rows\.length/);
+  assert.match(component, /appointmentsTruncated: boolean/);
+  assert.match(page, /snapshot\.appointmentsTruncated \? t\.limited : t\.notice/);
+  assert.match(page, /first 500 appointments/);
+  assert.match(nativeStore, /let appointmentsTruncated: Bool\?/);
+  assert.match(nativeApp, /snapshot\.appointmentsTruncated == true/);
+  assert.match(nativeApp, /first 500 appointments/);
 });
