@@ -23,7 +23,7 @@ const copy = {
     help: "Manual backup. The WhatsApp message includes the appointment itself; the private link is only for full details or changes.",
     copy: "Copy details link",
     copied: "Copied ✓",
-    copyFailed: "Could not copy the link. Press and hold the WhatsApp link or try again.",
+    copyFailed: "Could not copy automatically. Select the link below and copy it manually.",
     whatsapp: "Send on WhatsApp",
     back: "Back",
     title: "Your appointment",
@@ -39,7 +39,7 @@ const copy = {
     help: "ڕێگای دەستییە. خودی مەوعیدەکە لە پەیامی WhatsApp ـدا دەردەکەوێت؛ بەستەرە تایبەتەکە تەنها بۆ زانیاری تەواو یان گۆڕانکارییە.",
     copy: "بەستەری زانیاری کۆپی بکە",
     copied: "کۆپی کرا ✓",
-    copyFailed: "بەستەرەکە کۆپی نەکرا. دووبارە هەوڵ بدەوە یان لە WhatsApp بینێرە.",
+    copyFailed: "بەستەرەکە کۆپی نەکرا. بەستەرەکەی خوارەوە دیاری بکە و بە دەستی کۆپی بکە.",
     whatsapp: "لە WhatsApp بینێرە",
     back: "گەڕانەوە",
     title: "مەوعیدەکەت",
@@ -55,7 +55,7 @@ const copy = {
     help: "ڕێکا دەستییە. خودێ مەوعیدی د پەیاما WhatsApp دا دیار دبیت؛ لینکێ تایبەت تەنێ بۆ زانیاریێن تەمام یان گوهۆڕینێیە.",
     copy: "لینکێ زانیارییان کۆپی بکە",
     copied: "کۆپی بوو ✓",
-    copyFailed: "لینک نەهاتە کۆپیکرن. دووبارە هەوڵ بدە یان ل WhatsApp بهنێرە.",
+    copyFailed: "لینک نەهاتە کۆپیکرن. لینکێ ل خوارێ هەلبژێرە و ب دەستی کۆپی بکە.",
     whatsapp: "ل WhatsApp بهنێرە",
     back: "ڤەگەرە",
     title: "مەوعیدا تە",
@@ -71,7 +71,7 @@ const copy = {
     help: "خيار يدوي احتياطي. تفاصيل الموعد تظهر داخل رسالة واتساب نفسها؛ الرابط الخاص فقط للتفاصيل الكاملة أو التغيير.",
     copy: "نسخ رابط التفاصيل",
     copied: "تم النسخ ✓",
-    copyFailed: "ما كدرنا ننسخ الرابط. حاول مرة ثانية أو أرسله عبر واتساب.",
+    copyFailed: "ما كدرنا ننسخ الرابط تلقائياً. حدّد الرابط أدناه وانسخه يدوياً.",
     whatsapp: "إرسال عبر واتساب",
     back: "رجوع",
     title: "موعدك",
@@ -157,6 +157,12 @@ export function PatientLinkButton({
     return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join("\n"))}`;
   }, [initialLink, patientMessage, reminderLanguage, state.appointmentAt, state.doctorName, state.patientPhone]);
 
+  function closeShareResult() {
+    setCopyFailed(false);
+    setCopied(false);
+    setShowResult(false);
+  }
+
   async function copyLink() {
     if (!initialLink) return;
     try {
@@ -194,11 +200,23 @@ export function PatientLinkButton({
           </div>
           <div className="patient-link-share-actions">
             {whatsappUrl ? (
-              <a className="patient-link-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => setShowResult(false)}>{t.whatsapp}</a>
+              <a className="patient-link-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={closeShareResult}>{t.whatsapp}</a>
             ) : null}
             <button type="button" onClick={copyLink}>{copied ? t.copied : t.copy}</button>
-            {copyFailed ? <span className="field-help patient-link-copy-error" role="alert">{t.copyFailed}</span> : null}
-            <button className="patient-link-back" type="button" onClick={() => setShowResult(false)}>{t.back}</button>
+            {copyFailed ? (
+              <>
+                <span className="field-help patient-link-copy-error" role="alert">{t.copyFailed}</span>
+                <input
+                  className="patient-link-copy-fallback"
+                  value={initialLink ?? ""}
+                  readOnly
+                  dir="ltr"
+                  aria-label={t.copy}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+              </>
+            ) : null}
+            <button className="patient-link-back" type="button" onClick={closeShareResult}>{t.back}</button>
           </div>
         </div>
       ) : null}
@@ -213,6 +231,7 @@ export function PatientLinkButton({
         .patient-link-share-actions .patient-link-whatsapp { background: var(--accent); color: #fff; }
         .patient-link-share-actions .patient-link-back { background: transparent; color: var(--muted); }
         .patient-link-copy-error { flex-basis: 100%; text-align: start; }
+        .patient-link-copy-fallback { flex-basis: 100%; width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 9px 10px; background: #fff; color: var(--ink); font-size: 11px; }
         @media (max-width: 720px) { .patient-link-result { grid-template-columns: 1fr; align-items: stretch; } .patient-link-share-actions { width: 100%; justify-content: stretch; } .patient-link-share-actions button, .patient-link-share-actions a { flex: 1; } }
       `}</style>
     </div>
