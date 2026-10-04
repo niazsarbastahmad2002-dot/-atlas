@@ -452,7 +452,7 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
 function Unavailable({ copy, locale }: { copy: typeof profileCopy[UiLocale]; locale: UiLocale }) {
   const meta = uiLocaleMeta[locale];
   return (
-    <main className="marketing-page atlas-care-profile-page">
+    <main className="marketing-page atlas-care-profile-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
       <div className="center-page atlas-patient-unavailable-center">
         <section className="auth-card" lang={meta.language} dir={meta.direction}>

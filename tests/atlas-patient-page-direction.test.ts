@@ -20,6 +20,15 @@ test("Atlas Patient public care pages declare the active language and direction"
   }
 });
 
+test("unavailable Atlas Patient care shells keep the resolved language and direction", () => {
+  for (const path of pages.slice(1)) {
+    const page = source(path);
+    const unavailable = page.slice(page.indexOf("function Unavailable"));
+    assert.match(unavailable, /<main[^>]*lang=\{meta\.language\}[^>]*dir=\{meta\.direction\}/);
+    assert.match(unavailable, /AtlasPatientNav/);
+  }
+});
+
 test("RTL page direction keeps phone and time values direction-safe", () => {
   const clinic = source("app/care/[clinicSlug]/page.tsx");
   const doctor = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");

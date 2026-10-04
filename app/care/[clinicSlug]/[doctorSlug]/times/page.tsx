@@ -283,7 +283,7 @@ type TimesCopy = (typeof copy)[UiLocale];
 function Unavailable({ copy: t, locale, href }: { copy: TimesCopy; locale: UiLocale; href: string }) {
   const meta = uiLocaleMeta[locale];
   return (
-    <main className="marketing-page atlas-times-page">
+    <main className="marketing-page atlas-times-page" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
       <div className="center-page atlas-patient-unavailable-center">
         <section className="auth-card" lang={meta.language} dir={meta.direction}>
