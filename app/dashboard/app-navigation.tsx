@@ -280,6 +280,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
           <Link className="app-brand" href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "brand")} aria-label={t.openSchedule}>
             <span className="app-brand-mark" aria-hidden="true">A</span>
             <span className="app-brand-word">Atlas</span>
+            <span className="app-brand-product" aria-hidden="true">Doctor</span>
           </Link>
           <nav className="app-top-actions" aria-label={nav.navigation}>
             <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onMouseEnter={warm(scheduleHref)} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} aria-current={onSchedule ? "page" : undefined} title={t.schedule}>
@@ -327,7 +328,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       </nav>
 
       <style>{`
-        .atlas-ai-launcher{display:none;margin-top:8px;margin-bottom:2px}.atlas-ai-launcher>a{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.92);color:var(--accent);font-size:10.5px;font-weight:820;text-decoration:none;box-shadow:var(--shadow-sm)}.atlas-ai-launcher svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.atlas-ai-launcher small{border-radius:999px;padding:3px 6px;background:var(--accent-soft);font-size:8px;font-weight:850;text-transform:uppercase}@media(max-width:720px){.atlas-ai-launcher{display:flex;justify-content:flex-end}}
+        .app-brand-product{margin-inline-start:7px;border:1px solid var(--line);border-radius:999px;padding:3px 7px;background:var(--surface-soft);color:var(--ink-soft);font-size:9px;font-weight:850;letter-spacing:.02em;line-height:1;text-transform:uppercase}.atlas-ai-launcher{display:none;margin-top:8px;margin-bottom:2px}.atlas-ai-launcher>a{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.92);color:var(--accent);font-size:10.5px;font-weight:820;text-decoration:none;box-shadow:var(--shadow-sm)}.atlas-ai-launcher svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.atlas-ai-launcher small{border-radius:999px;padding:3px 6px;background:var(--accent-soft);font-size:8px;font-weight:850;text-transform:uppercase}@media(max-width:720px){.atlas-ai-launcher{display:flex;justify-content:flex-end}}
       `}</style>
     </>
   );
