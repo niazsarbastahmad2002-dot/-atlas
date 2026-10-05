@@ -173,6 +173,7 @@ export function AppointmentActions({
   useEffect(() => {
     setOptimisticStatus(status);
     setOptimisticRevision(revision);
+    setError(null);
   }, [revision, status]);
 
   const scheduledAt = new Date(appointmentAt).getTime();
