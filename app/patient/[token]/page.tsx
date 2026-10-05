@@ -454,7 +454,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
           : null;
 
   return (
-    <main className="patient-page">
+    <main className="patient-page" lang={text.lang} dir={text.dir}>
       <AtlasPatientNav
         locale={locale}
         actionLabel={patientNavLabel}
@@ -732,7 +732,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
 function Unavailable({ locale }: { locale: PatientLocale }) {
   const text = patientCopy[locale];
   return (
-    <main className="patient-page">
+    <main className="patient-page" lang={text.lang} dir={text.dir}>
       <AtlasPatientNav
         locale={locale}
         actionLabel={text.findCare}
