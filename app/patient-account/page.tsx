@@ -96,7 +96,7 @@ const copy: Record<UiLocale, {
     manageFailed: "Atlas could not open that appointment. Try again.",
     rateLimited: "Too many attempts. Wait a little and try again.",
     loadFailed: "Atlas could not load your appointments right now. Try again.",
-    statuses: { pending: "Pending", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "No-show" },
+    statuses: { pending: "Needs confirmation", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "Appointment ended" },
   },
   ku: {
     language: "زمان",
@@ -128,7 +128,7 @@ const copy: Record<UiLocale, {
     manageFailed: "Atlas نەیتوانی ئەم مەوعیدە بکاتەوە. دووبارە هەوڵبدەوە.",
     rateLimited: "هەوڵەکان زۆر بوون. کەمێک چاوەڕێ بکە و دووبارە هەوڵبدەوە.",
     loadFailed: "Atlas ئێستا نەیتوانی مەوعیدەکانت بار بکات. دووبارە هەوڵبدەوە.",
-    statuses: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراو", cancelled: "هەڵوەشاوە", completed: "تەواوبوو", no_show: "نەهات" },
+    statuses: { pending: "پشتڕاستکردنەوە پێویستە", confirmed: "پشتڕاستکراو", cancelled: "هەڵوەشاوە", completed: "تەواوبوو", no_show: "مەوعیدەکە تێپەڕی" },
   },
   bd: {
     language: "زمان",
@@ -160,7 +160,7 @@ const copy: Record<UiLocale, {
     manageFailed: "Atlas نەشیا ڤێ وادەیێ بکەتەڤە. جارەکا دی هەول بدە.",
     rateLimited: "هەول زۆر بوون. کەمەک چاوەرێ بکە و جارەکا دی هەول بدە.",
     loadFailed: "Atlas نوکە نەشیا وادەیێن تە بار بکەت. جارەکا دی هەول بدە.",
-    statuses: { pending: "چاڤەڕێ", confirmed: "پشتڕاستکری", cancelled: "هەلوەشاندی", completed: "تەمامبووی", no_show: "نەهات" },
+    statuses: { pending: "پشتڕاستکرن پێدڤییە", confirmed: "پشتڕاستکری", cancelled: "هەلوەشاندی", completed: "تەمامبووی", no_show: "وادە دەرباز بوو" },
   },
   ar: {
     language: "اللغة",
@@ -192,7 +192,7 @@ const copy: Record<UiLocale, {
     manageFailed: "تعذر على Atlas فتح هذا الموعد. حاول مرة ثانية.",
     rateLimited: "المحاولات كثيرة. انتظر قليلاً وحاول مرة ثانية.",
     loadFailed: "تعذر على Atlas تحميل مواعيدك الآن. حاول مرة ثانية.",
-    statuses: { pending: "قيد الانتظار", confirmed: "مؤكد", cancelled: "ملغي", completed: "مكتمل", no_show: "لم يحضر" },
+    statuses: { pending: "يحتاج تأكيد", confirmed: "مؤكد", cancelled: "ملغي", completed: "مكتمل", no_show: "انتهى الموعد" },
   },
 };
 
