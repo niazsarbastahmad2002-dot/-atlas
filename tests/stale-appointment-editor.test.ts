@@ -36,10 +36,10 @@ test("appointment detail edits compare against the status the editor opened with
 test("stale appointment edit feedback is localized in all Atlas interface languages", () => {
   const editor = read("app/dashboard/appointment-editor.tsx");
 
-  assert.match(editor, /This appointment changed elsewhere\\. The latest details are now loaded\\./);
-  assert.match(editor, /ئەم وادەیە لە شوێنێکی تر گۆڕدراوە[\\s\\S]*نوێترین زانیارییەکان بارکران/);
-  assert.match(editor, /ئەڤ وادەیە ل جهەکێ دی هاتیە گۆڕین[\\s\\S]*نووترین زانیاری هاتنە بارکرن/);
-  assert.match(editor, /تم تغيير هذا الموعد من مكان آخر[\\s\\S]*تم تحميل أحدث التفاصيل/);
+  assert.match(editor, /This appointment changed elsewhere\. The latest details are now loaded\./);
+  assert.match(editor, /ئەم وادەیە لە شوێنێکی تر گۆڕدراوە[\s\S]*نوێترین زانیارییەکان بارکران/);
+  assert.match(editor, /ئەڤ وادەیە ل جهەکێ دی هاتیە گۆڕین[\s\S]*نووترین زانیاری هاتنە بارکرن/);
+  assert.match(editor, /تم تغيير هذا الموعد من مكان آخر[\s\S]*تم تحميل أحدث التفاصيل/);
 });
 
 
