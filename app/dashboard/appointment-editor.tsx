@@ -47,7 +47,7 @@ const copy = {
     slotTaken: "That doctor already has an appointment at this time. Choose another time.",
     busy: "This appointment is still updating. Try again.",
     closed: "Reopen this appointment before changing its details.",
-    stale: "This appointment changed elsewhere. Loading the latest status.",
+    stale: "This appointment changed elsewhere. The latest details are now loaded.",
     failed: "The appointment could not be updated. Try again.",
   },
   ku: {
@@ -66,7 +66,7 @@ const copy = {
     slotTaken: "ئەم پزیشکە لەم کاتەدا وادەیەکی تری هەیە. کاتێکی تر هەڵبژێرە.",
     busy: "وادەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.",
     closed: "پێش گۆڕینی زانیارییەکان، وادەکە بکەرەوە.",
-    stale: "ئەم وادەیە لە شوێنێکی تر گۆڕدراوە. نوێترین دۆخ بار دەکرێتەوە.",
+    stale: "ئەم وادەیە لە شوێنێکی تر گۆڕدراوە. نوێترین زانیارییەکان بارکران.",
     failed: "وادەکە نوێ نەکرایەوە. دووبارە هەوڵ بدە.",
   },
   bd: {
@@ -85,7 +85,7 @@ const copy = {
     slotTaken: "ڤی دکتۆری ل ڤی دەمی وادە هەیە. دەمەکێ دی هەلبژێرە.",
     busy: "وادە هێشتا دهێتە نوێکرن. دووبارە هەول بدە.",
     closed: "بەری گۆڕینا زانیارییان، وادەیێ دووبارە ڤەکە.",
-    stale: "ئەڤ وادەیە ل جهەکێ دی هاتیە گۆڕین. نووترین بار دهێتە بارکرن.",
+    stale: "ئەڤ وادەیە ل جهەکێ دی هاتیە گۆڕین. نووترین زانیاری هاتنە بارکرن.",
     failed: "وادە نەهاتە نوێکرن. دووبارە هەول بدە.",
   },
   ar: {
@@ -104,7 +104,7 @@ const copy = {
     slotTaken: "لدى هذا الطبيب موعد في هذا الوقت. اختر وقتاً آخر.",
     busy: "الموعد قيد التحديث. حاول مرة أخرى.",
     closed: "أعد فتح الموعد قبل تغيير تفاصيله.",
-    stale: "تم تغيير هذا الموعد من مكان آخر. سيتم تحميل أحدث حالة.",
+    stale: "تم تغيير هذا الموعد من مكان آخر. تم تحميل أحدث التفاصيل.",
     failed: "تعذر تحديث الموعد. حاول مرة أخرى.",
   },
 } as const;
