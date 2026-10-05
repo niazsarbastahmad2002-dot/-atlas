@@ -42,7 +42,8 @@ test("same-card follow-up actions advance the local appointment revision after a
   const ui = read("app/dashboard/appointment-actions.tsx");
 
   assert.match(ui, /const \[optimisticRevision, setOptimisticRevision\] = useState\(revision\)/);
-  assert.match(ui, /setOptimisticRevision\(revision\)/);\n  assert.match(ui, /setOptimisticStatus\(status\);[\\s\\S]*setOptimisticRevision\(revision\);[\\s\\S]*setError\(null\);/);
+  assert.match(ui, /setOptimisticRevision\(revision\)/);
+  assert.match(ui, /setOptimisticStatus\(status\);[\s\S]*setOptimisticRevision\(revision\);[\s\S]*setError\(null\);/);
   assert.match(ui, /updateAppointmentStatusInline\(clinicId, appointmentId, previousStatus, optimisticRevision, nextStatus\)/);
   assert.match(ui, /setOptimisticRevision\(\(current\) => current \+ 1\)/);
   assert.match(ui, /archiveAppointmentInline\(clinicId, appointmentId, optimisticStatus, optimisticRevision\)/);
