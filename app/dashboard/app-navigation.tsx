@@ -194,18 +194,38 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     setVisiblePath(pathname);
 
     if (pathname === "/dashboard") {
-      const rawCandidate = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
-      const workspace = document.querySelector<HTMLElement>(".workspace-page");
-      const resolvedClinic = workspace?.dataset.atlasClinic ?? null;
-      const candidate = scheduleHrefForResolvedClinic(rawCandidate, resolvedClinic);
-      const canRemember = workspace?.dataset.atlasMemoryValid !== "false";
-      const current = canRemember ? candidate : todayScheduleFrom(candidate);
-      setScheduleHref(current);
-      try { window.localStorage.setItem(scheduleMemoryKey, current); } catch {}
+      const syncResolvedSchedule = () => {
+        const workspace = document.querySelector<HTMLElement>(".workspace-page[data-atlas-clinic]");
+        const resolvedClinic = workspace?.dataset.atlasClinic ?? null;
+        if (!resolvedClinic) return false;
 
-      const clinic = resolvedClinic ?? new URL(current, window.location.origin).searchParams.get("clinic");
-      setSettingsHref(clinic ? `/dashboard/settings?${new URLSearchParams({ clinic })}` : "/dashboard/settings");
-      return;
+        const rawCandidate = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
+        const candidate = scheduleHrefForResolvedClinic(rawCandidate, resolvedClinic);
+        const canRemember = workspace.dataset.atlasMemoryValid !== "false";
+        const current = canRemember ? candidate : todayScheduleFrom(candidate);
+        setScheduleHref(current);
+        try { window.localStorage.setItem(scheduleMemoryKey, current); } catch {}
+        setSettingsHref(`/dashboard/settings?${new URLSearchParams({ clinic: resolvedClinic })}`);
+        return true;
+      };
+
+      if (syncResolvedSchedule()) return;
+
+      // During a suspended client navigation, loading.tsx has no resolved clinic.
+      // Keep core links neutral until the real workspace mounts, then sync once.
+      setScheduleHref("/dashboard");
+      setSettingsHref("/dashboard/settings");
+      const root = document.querySelector(".app-content") ?? document.body;
+      const observer = new MutationObserver(() => {
+        if (syncResolvedSchedule()) observer.disconnect();
+      });
+      observer.observe(root, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-atlas-clinic", "data-atlas-memory-valid"],
+      });
+      return () => observer.disconnect();
     }
 
     let remembered = "/dashboard";
