@@ -345,7 +345,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                       {upcomingAppointments.map((appointment) => (
                         <article className="patient-account-appointment" key={appointment.appointment_id}>
                           <div className="patient-account-appointment-main">
-                            <span className="patient-account-status">
+                            <span className="patient-account-status" data-status={appointment.appointment_status}>
                               {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
                             </span>
                             <strong>{appointment.doctor_name}</strong>
@@ -377,7 +377,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                         {historyAppointments.map((appointment) => (
                           <article className="patient-account-appointment is-history" key={appointment.appointment_id}>
                             <div className="patient-account-appointment-main">
-                              <span className="patient-account-status">
+                              <span className="patient-account-status" data-status={appointment.appointment_status}>
                                 {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
                               </span>
                               <strong>{appointment.doctor_name}</strong>
@@ -473,7 +473,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-appointment{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}.patient-account-appointment.is-history{background:var(--surface)}
           .patient-account-appointment-main{display:grid;gap:5px;min-width:0}
           .patient-account-appointment-main strong{font-size:19px}.patient-account-appointment-main span,.patient-account-appointment-main time{font-size:12px;color:var(--muted)}
-          .patient-account-status{width:fit-content!important;border-radius:999px;padding:4px 8px!important;background:#effaf6;color:var(--accent)!important;font-size:10px!important;font-weight:850}
+          .patient-account-status{width:fit-content!important;border-radius:999px;padding:4px 8px!important;background:var(--warning-bg);color:var(--warning)!important;font-size:10px!important;font-weight:850}
+          .patient-account-status[data-status="confirmed"],.patient-account-status[data-status="completed"]{background:var(--success-bg);color:var(--success)!important}
+          .patient-account-status[data-status="cancelled"],.patient-account-status[data-status="no_show"]{background:var(--danger-bg);color:var(--danger)!important}
           .patient-account-manage{min-height:44px}
           .patient-account-empty,.patient-account-not-ready{display:grid;gap:10px;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}
           .patient-account-empty p,.patient-account-not-ready p{margin:0;line-height:1.55}
