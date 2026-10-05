@@ -42,10 +42,14 @@ const copy: Record<UiLocale, {
   signInTitle: string;
   hello: string;
   upcoming: string;
+  history: string;
+  noUpcoming: string;
+  noUpcomingHelp: string;
   noAppointments: string;
   noAppointmentsHelp: string;
   findCare: string;
   manage: string;
+  view: string;
   signOut: string;
   profileTitle: string;
   profileHelp: string;
@@ -69,11 +73,15 @@ const copy: Record<UiLocale, {
     intro: "See your appointments and keep your booking details together in one private place.",
     signInTitle: "Sign in to see your appointments",
     hello: "Hello",
-    upcoming: "Your appointments",
+    upcoming: "Upcoming",
+    history: "Past & cancelled",
+    noUpcoming: "No upcoming appointments.",
+    noUpcomingHelp: "When you book your next appointment with Atlas, it will appear here.",
     noAppointments: "No appointments yet.",
     noAppointmentsHelp: "Appointments you book with Atlas will appear here.",
     findCare: "Find care",
     manage: "Manage appointment",
+    view: "View appointment",
     signOut: "Sign out",
     profileTitle: "Your profile",
     profileHelp: "Atlas can reuse your name and language when you book. These details stay private.",
@@ -97,11 +105,15 @@ const copy: Record<UiLocale, {
     intro: "مەوعیدەکانت ببینە و زانیارییە پێویستەکانت لە یەک شوێنی تایبەتدا بپارێزە.",
     signInTitle: "بچۆ ژوورەوە بۆ بینینی مەوعیدەکانت",
     hello: "سڵاو",
-    upcoming: "مەوعیدەکانی تۆ",
+    upcoming: "مەوعیدە داهاتووەکان",
+    history: "پێشوو و هەڵوەشاوەکان",
+    noUpcoming: "هیچ مەوعیدێکی داهاتووت نییە.",
+    noUpcomingHelp: "کاتێک مەوعیدی داهاتووت لە Atlas دادەنێیت، لێرە دەردەکەوێت.",
     noAppointments: "هێشتا هیچ مەوعیدێکت نییە.",
     noAppointmentsHelp: "ئەو مەوعیدانەی لە Atlas دایدەنێیت لێرە دەردەکەون.",
     findCare: "چارەسەر بدۆزەرەوە",
     manage: "بەڕێوەبردنی مەوعید",
+    view: "بینینی مەوعید",
     signOut: "دەرچوون",
     profileTitle: "زانیارییەکانت",
     profileHelp: "Atlas ناو و زمانەکەت کاتێک مەوعید دادەنێیت دووبارە بەکاردەهێنێت. ئەم زانیارییانە تایبەتن.",
@@ -125,11 +137,15 @@ const copy: Record<UiLocale, {
     intro: "وادەیێن خۆ ببینە و زانیارییێن پێدڤی یێن خۆ ل جهەکێ تایبەت بپارێزە.",
     signInTitle: "بچۆ ژوور بۆ دیتنا وادەیێن خۆ",
     hello: "سلاڤ",
-    upcoming: "وادەیێن تە",
+    upcoming: "وادەیێن داهاتی",
+    history: "یێن بوری و هەلوەشاندی",
+    noUpcoming: "چ وادەیەکا داهاتی یا تە نینە.",
+    noUpcomingHelp: "دەمێ وادەیەکا داهاتی ل Atlas ددانی، ل ڤێرێ دیار دبیت.",
     noAppointments: "هێشتا چ وادەیەکا تە نینە.",
     noAppointmentsHelp: "وادەیێن کو تو ل Atlas ددانی ل ڤێرێ دیار دبن.",
     findCare: "دکتۆر بدیتەوە",
     manage: "وادەیێ بەڕێڤە ببە",
+    view: "وادەیێ ببینە",
     signOut: "دەرکەڤە",
     profileTitle: "زانیارییێن تە",
     profileHelp: "Atlas ناڤ و زمانێ تە دەمێ وادەیەکێ ددانی جارەکا دی ب کار دئینیت. ئەڤ زانیارییە تایبەتن.",
@@ -153,11 +169,15 @@ const copy: Record<UiLocale, {
     intro: "شوف مواعيدك وخلي معلومات الحجز الأساسية بمكان واحد خاص بيك.",
     signInTitle: "سجّل الدخول حتى تشوف مواعيدك",
     hello: "أهلاً",
-    upcoming: "مواعيدك",
+    upcoming: "المواعيد القادمة",
+    history: "السابقة والملغاة",
+    noUpcoming: "ما عندك مواعيد قادمة.",
+    noUpcomingHelp: "لما تحجز موعدك الجاي عبر Atlas راح يظهر هنا.",
     noAppointments: "ماكو مواعيد بعد.",
     noAppointmentsHelp: "المواعيد اللي تحجزها عبر Atlas راح تظهر هنا.",
     findCare: "ابحث عن رعاية",
     manage: "إدارة الموعد",
+    view: "عرض الموعد",
     signOut: "تسجيل الخروج",
     profileTitle: "معلوماتك",
     profileHelp: "Atlas يقدر يعيد استخدام اسمك ولغتك لما تحجز. هالمعلومات تبقى خاصة.",
@@ -189,6 +209,13 @@ function localeMeta(locale: UiLocale) {
     : locale === "ar"
       ? { lang: "ar-IQ", dir: "rtl" as const, dateLocale: "ar-IQ" }
       : { lang: locale === "ku" ? "ckb" : "ku", dir: "rtl" as const, dateLocale: "ckb-IQ" };
+}
+
+function isUpcomingAppointment(appointment: AccountAppointment, nowMs: number) {
+  const appointmentMs = new Date(appointment.appointment_at).getTime();
+  return Number.isFinite(appointmentMs)
+    && appointmentMs >= nowMs
+    && (appointment.appointment_status === "pending" || appointment.appointment_status === "confirmed");
 }
 
 function appointmentDate(value: string, locale: UiLocale) {
@@ -236,6 +263,10 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
     if (error || !Array.isArray(data)) appointmentsFailed = true;
     else appointments = data as AccountAppointment[];
   }
+
+  const nowMs = Date.now();
+  const upcomingAppointments = appointments.filter((appointment) => isUpcomingAppointment(appointment, nowMs));
+  const historyAppointments = appointments.filter((appointment) => !isUpcomingAppointment(appointment, nowMs));
 
   const readiness = session ? null : await getAtlasAuthReadiness();
   const signInReady = Boolean(
@@ -308,27 +339,64 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
               {appointmentsFailed ? (
                 <p className="notice notice-error" role="alert">{t.loadFailed}</p>
               ) : appointments.length ? (
-                <div className="patient-account-list">
-                  {appointments.map((appointment) => (
-                    <article className="patient-account-appointment" key={appointment.appointment_id}>
-                      <div className="patient-account-appointment-main">
-                        <span className="patient-account-status">
-                          {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
-                        </span>
-                        <strong>{appointment.doctor_name}</strong>
-                        {appointment.doctor_specialty ? <span>{appointment.doctor_specialty}</span> : null}
-                        <span>{appointment.clinic_name}</span>
-                        <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
+                <>
+                  {upcomingAppointments.length ? (
+                    <div className="patient-account-list">
+                      {upcomingAppointments.map((appointment) => (
+                        <article className="patient-account-appointment" key={appointment.appointment_id}>
+                          <div className="patient-account-appointment-main">
+                            <span className="patient-account-status">
+                              {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
+                            </span>
+                            <strong>{appointment.doctor_name}</strong>
+                            {appointment.doctor_specialty ? <span>{appointment.doctor_specialty}</span> : null}
+                            <span>{appointment.clinic_name}</span>
+                            <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
+                          </div>
+                          <form
+                            action={`/patient-account/api/appointments/${appointment.appointment_id}/manage?lang=${locale}`}
+                            method="post"
+                          >
+                            <button className="button patient-account-manage" type="submit">{t.manage}</button>
+                          </form>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="patient-account-empty">
+                      <strong>{t.noUpcoming}</strong>
+                      <p>{t.noUpcomingHelp}</p>
+                      <a className="button" href={findCareHref}>{t.findCare}</a>
+                    </div>
+                  )}
+
+                  {historyAppointments.length ? (
+                    <section className="patient-account-history" aria-label={t.history}>
+                      <h3>{t.history}</h3>
+                      <div className="patient-account-list">
+                        {historyAppointments.map((appointment) => (
+                          <article className="patient-account-appointment is-history" key={appointment.appointment_id}>
+                            <div className="patient-account-appointment-main">
+                              <span className="patient-account-status">
+                                {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
+                              </span>
+                              <strong>{appointment.doctor_name}</strong>
+                              {appointment.doctor_specialty ? <span>{appointment.doctor_specialty}</span> : null}
+                              <span>{appointment.clinic_name}</span>
+                              <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
+                            </div>
+                            <form
+                              action={`/patient-account/api/appointments/${appointment.appointment_id}/manage?lang=${locale}`}
+                              method="post"
+                            >
+                              <button className="button button-ghost patient-account-manage" type="submit">{t.view}</button>
+                            </form>
+                          </article>
+                        ))}
                       </div>
-                      <form
-                        action={`/patient-account/api/appointments/${appointment.appointment_id}/manage?lang=${locale}`}
-                        method="post"
-                      >
-                        <button className="button patient-account-manage" type="submit">{t.manage}</button>
-                      </form>
-                    </article>
-                  ))}
-                </div>
+                    </section>
+                  ) : null}
+                </>
               ) : (
                 <div className="patient-account-empty">
                   <strong>{t.noAppointments}</strong>
@@ -400,8 +468,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-profile-form{display:grid;gap:14px;margin-top:4px}.patient-account-profile-form label{display:grid;gap:6px}.patient-account-profile-form label>span{font-size:12px;font-weight:800}.patient-account-profile-form small{color:var(--muted);font-size:10.5px;line-height:1.5}.patient-account-profile-form input,.patient-account-profile-form select{width:100%;min-height:46px}.patient-account-profile-form button{min-height:48px}
           .patient-account-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}.patient-account-toolbar form{margin:0}
           .patient-account-appointments h2,.patient-account-signin-title{margin:18px 0 12px;font-size:20px}
+          .patient-account-history{margin-top:28px}.patient-account-history h3{margin:0 0 12px;color:var(--muted);font-size:14px}
           .patient-account-list{display:grid;gap:12px}
-          .patient-account-appointment{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}
+          .patient-account-appointment{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}.patient-account-appointment.is-history{background:var(--surface)}
           .patient-account-appointment-main{display:grid;gap:5px;min-width:0}
           .patient-account-appointment-main strong{font-size:19px}.patient-account-appointment-main span,.patient-account-appointment-main time{font-size:12px;color:var(--muted)}
           .patient-account-status{width:fit-content!important;border-radius:999px;padding:4px 8px!important;background:#effaf6;color:var(--accent)!important;font-size:10px!important;font-weight:850}
