@@ -93,7 +93,7 @@ const patientCopy = {
     privacy: "This page is private to this appointment.",
     unavailableEyebrow: "Private appointment link",
     unavailableTitle: "This link is unavailable.",
-    unavailableHelp: "It may be invalid, expired, replaced, or temporarily rate-limited. Contact the clinic for a new link.",
+    unavailableHelp: "If you booked through Atlas, try My appointments to open a fresh link. Otherwise, contact the clinic.",
   },
   ku: {
     lang: "ckb",
@@ -150,7 +150,7 @@ const patientCopy = {
     privacy: "ئەم پەڕەیە تەنها بۆ ئەم کاتەیە.",
     unavailableEyebrow: "بەستەری تایبەتی مەوعید",
     unavailableTitle: "ئەم بەستەرە بەردەست نییە.",
-    unavailableHelp: "لەوانەیە بەستەرەکە نادروست، بەسەرچوو یان گۆڕدرابێت، یان کاتێک سنووردار کرابێت. بۆ بەستەرێکی نوێ پەیوەندی بە کلینیکەوە بکە.",
+    unavailableHelp: "ئەگەر مەوعیدەکەت لە Atlas داناوە، لە «مەوعیدەکانم» دەتوانیت بەستەرێکی نوێ بکەیتەوە. ئەگەر نا، پەیوەندی بە کلینیکەوە بکە.",
   },
   bd: {
     lang: "ku",
@@ -207,7 +207,7 @@ const patientCopy = {
     privacy: "ئەڤ پەرە تەنێ بۆ ڤێ وادەیێیە.",
     unavailableEyebrow: "لینکێ تایبەت یێ وادەیێ",
     unavailableTitle: "ئەڤ لینکە بەردەست نینە.",
-    unavailableHelp: "دبیت لینک نەدروست بیت، دەمێ وێ دەرباز بووبیت یان هاتبیتە گوهۆڕین، یان بۆ ماوەیەک سنووردار بووبیت. بۆ لینکەکا نوو پەیوەندی ب کلینیکێ بکە.",
+    unavailableHelp: "ئەگەر وادەیا خۆ ل Atlas دانایە، ژ «وادەیێن من» دشێی لینکەکا نوو ڤەکەی. ئەگەر نە، پەیوەندی ب کلینیکێ بکە.",
   },
   ar: {
     lang: "ar-IQ",
@@ -264,7 +264,7 @@ const patientCopy = {
     privacy: "هاي الصفحة خاصة بهذا الموعد بس.",
     unavailableEyebrow: "رابط موعد خاص",
     unavailableTitle: "هذا الرابط غير متاح.",
-    unavailableHelp: "ممكن الرابط غير صالح، منتهي، متبدل، أو محدود مؤقتاً. تواصل ويا العيادة حتى تحصل على رابط جديد.",
+    unavailableHelp: "إذا حجزت موعدك عبر Atlas، جرّب «مواعيدي» حتى تفتح رابط جديد. إذا لا، تواصل ويا العيادة.",
   },
 } as const;
 
@@ -735,14 +735,22 @@ function Unavailable({ locale }: { locale: PatientLocale }) {
     <main className="patient-page" lang={text.lang} dir={text.dir}>
       <AtlasPatientNav
         locale={locale}
-        actionLabel={text.findCare}
-        actionHref={`/api/ui-language?locale=${locale}`}
+        actionLabel={text.myAppointments}
+        actionHref={`/patient-account?lang=${locale}`}
       />
       <div className="center-page patient-page-center">
         <section className="auth-card" lang={text.lang} dir={text.dir}>
           <div className="eyebrow">{text.unavailableEyebrow}</div>
           <h1>{text.unavailableTitle}</h1>
           <p className="quiet">{text.unavailableHelp}</p>
+          <div className="patient-unavailable-actions">
+            <a className="button" href={`/patient-account?lang=${locale}`}>{text.myAppointments}</a>
+            <a className="button button-ghost" href={`/api/ui-language?locale=${locale}`}>{text.findCare}</a>
+          </div>
+          <style>{`
+            .patient-unavailable-actions { display: grid; gap: 8px; margin-top: 20px; }
+            .patient-unavailable-actions .button { min-height: 48px; align-items: center; justify-content: center; text-decoration: none; }
+          `}</style>
         </section>
       </div>
     </main>
