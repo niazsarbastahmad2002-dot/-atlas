@@ -63,11 +63,12 @@ test("fast appointment completion cannot pull Atlas back after navigation", () =
   assert.match(client, /const submissionStillCurrent = \(\) => \(/);
   assert.match(client, /navigationGeneration === submissionNavigationGeneration/);
   assert.match(client, /form\.isConnected/);
-  assert.match(client, /if \(!submissionStillCurrent\(\)\) return;/);
-  assert.match(client, /catch \{[\s\S]*if \(submissionStillCurrent\(\)\) toast\.fail\(false\)/);
+  assert.match(client, /dismiss\(\) \{ toast\.remove\(\); \}/);
+  assert.match(client, /if \(!submissionStillCurrent\(\)\) \{ toast\.dismiss\(\); return; \}/);
+  assert.match(client, /catch \{[\s\S]*if \(submissionStillCurrent\(\)\) toast\.fail\(false\)[\s\S]*else toast\.dismiss\(\)/);
   assert.match(client, /document\.removeEventListener\("click", markNavigationIntent, true\)/);
 
-  const staleGuard = client.indexOf("if (!submissionStillCurrent()) return;");
+  const staleGuard = client.indexOf("if (!submissionStillCurrent()) { toast.dismiss(); return; }");
   const savedAppointmentSideEffect = client.indexOf("dataset.atlasSavedAppointmentId = result.appointmentId");
   const redirectSideEffect = client.indexOf("router.push(destination)");
   assert.ok(staleGuard >= 0 && staleGuard < savedAppointmentSideEffect);
