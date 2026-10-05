@@ -156,6 +156,7 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
   return {
     success(duplicate = false) { toast.classList.add("is-success"); detail.textContent = detailText; main.textContent = `✓ ${duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`; window.setTimeout(() => toast.remove(), duplicate ? 1200 : 700); },
     fail(slotTaken = false) { toast.classList.add("is-error"); toast.setAttribute("role", "alert"); toast.setAttribute("aria-live", "assertive"); detail.textContent = detailText; main.textContent = slotTaken ? fastSaveCopy[locale].slotTaken : fastSaveCopy[locale].failed; window.setTimeout(() => toast.remove(), 2600); },
+    dismiss() { toast.remove(); },
   };
 }
 
@@ -265,7 +266,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         const toast = showFastSaveToast(locale, patientName, appointmentAt);
         try {
           const result = await createAppointmentInline(formData);
-          if (!submissionStillCurrent()) return;
+          if (!submissionStillCurrent()) { toast.dismiss(); return; }
           if (!result.ok) { toast.fail(result.reason === "slot_taken"); return; }
           const destination = appointmentFormDestination({
             clinicId: String(formData.get("clinic_id") ?? ""),
@@ -290,6 +291,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           if (destination) router.push(destination); else router.refresh();
         } catch {
           if (submissionStillCurrent()) toast.fail(false);
+          else toast.dismiss();
         }
         finally {
           form.dataset.fastSaving = "false";
