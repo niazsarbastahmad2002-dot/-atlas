@@ -168,6 +168,35 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
 
   useEffect(() => {
     let routeActive = true;
+    let queuedNavigation: string | null = null;
+    const queueNavigationDuringFastSave = (event: MouseEvent) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor || anchor.download || (anchor.target && anchor.target !== "_self")) return;
+      const savingForm = document.querySelector<HTMLFormElement>('form.appointment-form[data-fast-saving="true"]');
+      if (!savingForm) return;
+
+      let destination: URL;
+      try {
+        destination = new URL(anchor.href, window.location.origin);
+      } catch {
+        return;
+      }
+      if (destination.origin !== window.location.origin) return;
+
+      const current = `${window.location.pathname}${window.location.search}`;
+      const next = `${destination.pathname}${destination.search}`;
+      if (next === current) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      queuedNavigation = `${destination.pathname}${destination.search}${destination.hash}`;
+    };
+    document.addEventListener("click", queueNavigationDuringFastSave, true);
+
     const preparedInputs = new WeakSet<HTMLInputElement>();
     const preparedForms = new WeakSet<HTMLFormElement>();
     const listenerCleanups = new Map<Element, () => void>();
@@ -246,7 +275,18 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         try {
           const result = await createAppointmentInline(formData);
           if (!submissionStillCurrent()) { toast.dismiss(); return; }
-          if (!result.ok) { toast.fail(result.reason === "slot_taken"); return; }
+          if (!result.ok) {
+            queuedNavigation = null;
+            toast.fail(result.reason === "slot_taken");
+            return;
+          }
+          const queuedDestination = queuedNavigation;
+          queuedNavigation = null;
+          if (queuedDestination) {
+            toast.success(Boolean(result.duplicate));
+            router.push(queuedDestination);
+            return;
+          }
           const destination = appointmentFormDestination({
             clinicId: String(formData.get("clinic_id") ?? ""),
             doctorId: String(formData.get("doctor_id") ?? ""),
@@ -269,6 +309,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           if (button) button.textContent = `✓ ${result.duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`;
           if (destination) router.push(destination); else router.refresh();
         } catch {
+          queuedNavigation = null;
           if (submissionStillCurrent()) toast.fail(false);
           else toast.dismiss();
         }
@@ -318,7 +359,9 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     observer.observe(observerRoot, { childList: true, subtree: true, characterData: true });
     return () => {
       routeActive = false;
+      queuedNavigation = null;
       observer.disconnect();
+      document.removeEventListener("click", queueNavigationDuringFastSave, true);
       document.querySelectorAll(".atlas-fast-save-toast").forEach((toast) => toast.remove());
       listenerCleanups.forEach((cleanup) => cleanup());
       listenerCleanups.clear();
