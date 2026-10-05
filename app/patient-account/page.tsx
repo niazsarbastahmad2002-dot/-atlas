@@ -263,7 +263,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           : null;
 
   return (
-    <main className="patient-account-page">
+    <main className="patient-account-page" lang={meta.lang} dir={meta.dir}>
       <AtlasPatientNav
         locale={locale}
         actionLabel={t.findCare}
