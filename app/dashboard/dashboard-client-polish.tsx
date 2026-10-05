@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { appointmentFormDestination } from "@/lib/dashboard-booking-navigation";
 import { formatTimeValue, localizeDigits, toAsciiDigits } from "@/lib/i18n/format";
@@ -156,12 +156,18 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
   return {
     success(duplicate = false) { toast.classList.add("is-success"); detail.textContent = detailText; main.textContent = `✓ ${duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`; window.setTimeout(() => toast.remove(), duplicate ? 1200 : 700); },
     fail(slotTaken = false) { toast.classList.add("is-error"); toast.setAttribute("role", "alert"); toast.setAttribute("aria-live", "assertive"); detail.textContent = detailText; main.textContent = slotTaken ? fastSaveCopy[locale].slotTaken : fastSaveCopy[locale].failed; window.setTimeout(() => toast.remove(), 2600); },
+    dismiss() { toast.remove(); },
   };
 }
 
 export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchKey = searchParams.toString();
+
   useEffect(() => {
+    let routeActive = true;
     const preparedInputs = new WeakSet<HTMLInputElement>();
     const preparedForms = new WeakSet<HTMLFormElement>();
     const listenerCleanups = new Map<Element, () => void>();
@@ -218,6 +224,12 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         if (form.dataset.fastSaving === "true") return;
         if (!form.checkValidity()) { form.reportValidity(); return; }
         const formData = new FormData(form);
+        const submissionLocation = `${window.location.pathname}${window.location.search}`;
+        const submissionStillCurrent = () => (
+          routeActive
+          && form.isConnected
+          && `${window.location.pathname}${window.location.search}` === submissionLocation
+        );
         const appointmentAt = String(formData.get("appointment_at") ?? "");
         const patientName = String(formData.get("patient_name") ?? "").trim();
         if (!appointmentAt) { showFastSaveToast(locale, patientName, "").fail(false); return; }
@@ -233,6 +245,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         const toast = showFastSaveToast(locale, patientName, appointmentAt);
         try {
           const result = await createAppointmentInline(formData);
+          if (!submissionStillCurrent()) { toast.dismiss(); return; }
           if (!result.ok) { toast.fail(result.reason === "slot_taken"); return; }
           const destination = appointmentFormDestination({
             clinicId: String(formData.get("clinic_id") ?? ""),
@@ -255,7 +268,10 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           toast.success(Boolean(result.duplicate));
           if (button) button.textContent = `✓ ${result.duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`;
           if (destination) router.push(destination); else router.refresh();
-        } catch { toast.fail(false); }
+        } catch {
+          if (submissionStillCurrent()) toast.fail(false);
+          else toast.dismiss();
+        }
         finally {
           form.dataset.fastSaving = "false";
           window.setTimeout(() => {
@@ -301,12 +317,14 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     const observerRoot = document.querySelector(".app-shell") ?? document.body;
     observer.observe(observerRoot, { childList: true, subtree: true, characterData: true });
     return () => {
+      routeActive = false;
       observer.disconnect();
+      document.querySelectorAll(".atlas-fast-save-toast").forEach((toast) => toast.remove());
       listenerCleanups.forEach((cleanup) => cleanup());
       listenerCleanups.clear();
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [locale, router]);
+  }, [locale, router, pathname, searchKey]);
 
   return (
     <style jsx global>{`
