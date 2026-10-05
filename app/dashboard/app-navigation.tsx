@@ -196,7 +196,8 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     if (pathname === "/dashboard") {
       const syncResolvedSchedule = () => {
         const workspace = document.querySelector<HTMLElement>(".workspace-page[data-atlas-clinic]");
-        const resolvedClinic = workspace?.dataset.atlasClinic ?? null;
+        if (!workspace) return false;
+        const resolvedClinic = workspace.dataset.atlasClinic ?? null;
         if (!resolvedClinic) return false;
 
         const rawCandidate = validRememberedSchedule(`${pathname}${searchKey ? `?${searchKey}` : ""}`);
