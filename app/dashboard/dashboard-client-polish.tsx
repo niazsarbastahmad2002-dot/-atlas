@@ -156,12 +156,38 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
   return {
     success(duplicate = false) { toast.classList.add("is-success"); detail.textContent = detailText; main.textContent = `✓ ${duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`; window.setTimeout(() => toast.remove(), duplicate ? 1200 : 700); },
     fail(slotTaken = false) { toast.classList.add("is-error"); toast.setAttribute("role", "alert"); toast.setAttribute("aria-live", "assertive"); detail.textContent = detailText; main.textContent = slotTaken ? fastSaveCopy[locale].slotTaken : fastSaveCopy[locale].failed; window.setTimeout(() => toast.remove(), 2600); },
+    dismiss() { toast.remove(); },
   };
 }
 
 export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
   const router = useRouter();
   useEffect(() => {
+    let navigationGeneration = 0;
+    const markNavigationIntent = (event: MouseEvent) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor || anchor.download || (anchor.target && anchor.target !== "_self")) return;
+
+      let destination: URL;
+      try {
+        destination = new URL(anchor.href, window.location.origin);
+      } catch {
+        return;
+      }
+      if (destination.origin !== window.location.origin) return;
+
+      const current = `${window.location.pathname}${window.location.search}`;
+      const next = `${destination.pathname}${destination.search}`;
+      if (next === current) return;
+
+      navigationGeneration += 1;
+      document.querySelectorAll(".atlas-fast-save-toast").forEach((toast) => toast.remove());
+    };
+    document.addEventListener("click", markNavigationIntent, true);
+
     const preparedInputs = new WeakSet<HTMLInputElement>();
     const preparedForms = new WeakSet<HTMLFormElement>();
     const listenerCleanups = new Map<Element, () => void>();
@@ -218,6 +244,13 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         if (form.dataset.fastSaving === "true") return;
         if (!form.checkValidity()) { form.reportValidity(); return; }
         const formData = new FormData(form);
+        const submissionNavigationGeneration = navigationGeneration;
+        const submissionLocation = `${window.location.pathname}${window.location.search}`;
+        const submissionStillCurrent = () => (
+          navigationGeneration === submissionNavigationGeneration
+          && form.isConnected
+          && `${window.location.pathname}${window.location.search}` === submissionLocation
+        );
         const appointmentAt = String(formData.get("appointment_at") ?? "");
         const patientName = String(formData.get("patient_name") ?? "").trim();
         if (!appointmentAt) { showFastSaveToast(locale, patientName, "").fail(false); return; }
@@ -233,6 +266,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         const toast = showFastSaveToast(locale, patientName, appointmentAt);
         try {
           const result = await createAppointmentInline(formData);
+          if (!submissionStillCurrent()) { toast.dismiss(); return; }
           if (!result.ok) { toast.fail(result.reason === "slot_taken"); return; }
           const destination = appointmentFormDestination({
             clinicId: String(formData.get("clinic_id") ?? ""),
@@ -255,7 +289,10 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           toast.success(Boolean(result.duplicate));
           if (button) button.textContent = `✓ ${result.duplicate ? fastSaveCopy[locale].duplicate : fastSaveCopy[locale].saved}`;
           if (destination) router.push(destination); else router.refresh();
-        } catch { toast.fail(false); }
+        } catch {
+          if (submissionStillCurrent()) toast.fail(false);
+          else toast.dismiss();
+        }
         finally {
           form.dataset.fastSaving = "false";
           window.setTimeout(() => {
@@ -302,6 +339,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     observer.observe(observerRoot, { childList: true, subtree: true, characterData: true });
     return () => {
       observer.disconnect();
+      document.removeEventListener("click", markNavigationIntent, true);
       listenerCleanups.forEach((cleanup) => cleanup());
       listenerCleanups.clear();
       if (frame) window.cancelAnimationFrame(frame);
