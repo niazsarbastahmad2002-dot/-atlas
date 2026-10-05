@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { appointmentFormDestination } from "@/lib/dashboard-booking-navigation";
 import { formatTimeValue, localizeDigits, toAsciiDigits } from "@/lib/i18n/format";
@@ -162,32 +162,12 @@ function showFastSaveToast(locale: UiLocale, patientName: string, appointmentAt:
 
 export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchKey = searchParams.toString();
+
   useEffect(() => {
-    let navigationGeneration = 0;
-    const markNavigationIntent = (event: MouseEvent) => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const anchor = target.closest<HTMLAnchorElement>("a[href]");
-      if (!anchor || anchor.download || (anchor.target && anchor.target !== "_self")) return;
-
-      let destination: URL;
-      try {
-        destination = new URL(anchor.href, window.location.origin);
-      } catch {
-        return;
-      }
-      if (destination.origin !== window.location.origin) return;
-
-      const current = `${window.location.pathname}${window.location.search}`;
-      const next = `${destination.pathname}${destination.search}`;
-      if (next === current) return;
-
-      navigationGeneration += 1;
-      document.querySelectorAll(".atlas-fast-save-toast").forEach((toast) => toast.remove());
-    };
-    document.addEventListener("click", markNavigationIntent, true);
-
+    let routeActive = true;
     const preparedInputs = new WeakSet<HTMLInputElement>();
     const preparedForms = new WeakSet<HTMLFormElement>();
     const listenerCleanups = new Map<Element, () => void>();
@@ -244,10 +224,9 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         if (form.dataset.fastSaving === "true") return;
         if (!form.checkValidity()) { form.reportValidity(); return; }
         const formData = new FormData(form);
-        const submissionNavigationGeneration = navigationGeneration;
         const submissionLocation = `${window.location.pathname}${window.location.search}`;
         const submissionStillCurrent = () => (
-          navigationGeneration === submissionNavigationGeneration
+          routeActive
           && form.isConnected
           && `${window.location.pathname}${window.location.search}` === submissionLocation
         );
@@ -338,13 +317,14 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     const observerRoot = document.querySelector(".app-shell") ?? document.body;
     observer.observe(observerRoot, { childList: true, subtree: true, characterData: true });
     return () => {
+      routeActive = false;
       observer.disconnect();
-      document.removeEventListener("click", markNavigationIntent, true);
+      document.querySelectorAll(".atlas-fast-save-toast").forEach((toast) => toast.remove());
       listenerCleanups.forEach((cleanup) => cleanup());
       listenerCleanups.clear();
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [locale, router]);
+  }, [locale, router, pathname, searchKey]);
 
   return (
     <style jsx global>{`
