@@ -17,13 +17,14 @@ test("signed account continuity controls My appointments in the shared header", 
   assert.match(page, /verifyPatientAccountContinuityMarker\(token, query\.account\)/);
 });
 
-test("private appointment and unavailable states keep Find care localized", () => {
+test("private appointment unavailable states keep localized recovery choices", () => {
   assert.match(page, /findCare: "Find care"/);
   assert.match(page, /findCare: "چارەسەر بدۆزەرەوە"/);
   assert.match(page, /findCare: "دکتۆر بدیتەوە"/);
   assert.match(page, /findCare: "ابحث عن رعاية"/);
-  assert.match(page, /function Unavailable[\s\S]*AtlasPatientNav[\s\S]*actionLabel=\{text\.findCare\}/);
-  assert.match(page, /actionHref=\{`\/api\/ui-language\?locale=\$\{locale\}`\}/);
+  assert.match(page, /function Unavailable[\s\S]*AtlasPatientNav[\s\S]*actionLabel=\{text\.myAppointments\}/);
+  assert.match(page, /actionHref=\{`\/patient-account\?lang=\$\{locale\}`\}/);
+  assert.match(page, /href=\{`\/api\/ui-language\?locale=\$\{locale\}`\}>\{text\.findCare\}/);
 });
 
 test("shared Patient shell does not alter appointment authorization or actions", () => {
