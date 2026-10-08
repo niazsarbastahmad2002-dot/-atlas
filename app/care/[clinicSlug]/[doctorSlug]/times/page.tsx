@@ -26,6 +26,7 @@ const copy: Record<UiLocale, {
   intro: string;
   readOnlyTitle: string;
   readOnlyIntro: string;
+  jumpToDay: string;
   noTimes: string;
   noTimesHelp: string;
   book: string;
@@ -41,6 +42,7 @@ const copy: Record<UiLocale, {
     intro: "These are live times from the clinic. Atlas checks your choice again before booking.",
     readOnlyTitle: "Available times",
     readOnlyIntro: "These are times from the clinic. Online booking is not open yet. Contact the clinic to reserve.",
+    jumpToDay: "Jump to day",
     noTimes: "No public appointment times are open right now.",
     noTimesHelp: "The clinic may add more times later. You can still contact the clinic directly.",
     book: "Book",
@@ -56,6 +58,7 @@ const copy: Record<UiLocale, {
     intro: "ئەم کاتانە ڕاستەوخۆ لە خشتەی کلینیکەوە دێن. Atlas پێش دانانی مەوعید کاتە هەڵبژێردراوەکەت دووبارە دەپشکنێت.",
     readOnlyTitle: "کاتە بەردەستەکان",
     readOnlyIntro: "ئەم کاتانە لە خشتەی کلینیکەوەن. هێشتا ناتوانیت لێرە مەوعید دابنێیت. پەیوەندی بە کلینیکەوە بکە.",
+    jumpToDay: "بڕۆ بۆ ڕۆژ",
     noTimes: "ئێستا هیچ کاتی گشتیی مەوعید بەردەست نییە.",
     noTimesHelp: "لەوانەیە کلینیک دواتر کاتی تر زیاد بکات. هێشتا دەتوانیت ڕاستەوخۆ پەیوەندی بکەیت.",
     book: "مەوعید دابنێ",
@@ -71,6 +74,7 @@ const copy: Record<UiLocale, {
     intro: "ئەڤ دەمە ڕاستەوخۆ ژ خشتەیا کلینیکێ دهێن. Atlas بەری دانانا وادەیێ دەمی هەلبژارتی جارەکا دی دپشکنیت.",
     readOnlyTitle: "دەمێن بەردەست",
     readOnlyIntro: "ئەڤ دەمە ژ خشتەیا کلینیکێ نە. هێشتا ل ڤێرێ ناتوانی وادە دابنەی. پەیوەندی ب کلینیکێ بکە.",
+    jumpToDay: "بڕۆ بۆ ڕۆژێ",
     noTimes: "نوکە هیچ دەمەکێ گشتی یێ وادەیێ بەردەست نینە.",
     noTimesHelp: "دبیت کلینیک پاشتر دەمێن دی زێدە بکەت. هێشتا دشێی ڕاستەوخۆ پەیوەندی بکەی.",
     book: "وادە دابنێ",
@@ -86,6 +90,7 @@ const copy: Record<UiLocale, {
     intro: "هذه أوقات مباشرة من جدول العيادة. Atlas يفحص اختيارك مرة ثانية قبل الحجز.",
     readOnlyTitle: "الأوقات المتاحة",
     readOnlyIntro: "هذه الأوقات من جدول العيادة. الحجز الإلكتروني مو متاح بعد. تواصل ويا العيادة حتى تحجز.",
+    jumpToDay: "اختر اليوم",
     noTimes: "لا توجد أوقات مواعيد عامة متاحة حالياً.",
     noTimesHelp: "قد تضيف العيادة أوقاتاً أخرى لاحقاً. تقدر تتواصل مع العيادة مباشرة.",
     book: "احجز",
@@ -247,10 +252,26 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
           <a className="button atlas-times-call-primary" href={`tel:${profile.public_phone}`}>{t.call}</a>
         ) : null}
 
+        {groups.length > 1 ? (
+          <nav className="atlas-times-day-jump" aria-label={t.jumpToDay}>
+            <div className="atlas-times-day-jump-scroll">
+              {groups.map((group) => (
+                <a
+                  key={group.dateKey}
+                  className="atlas-times-day-jump-link"
+                  href={`#atlas-day-${group.dateKey}`}
+                >
+                  {group.dateLabel}
+                </a>
+              ))}
+            </div>
+          </nav>
+        ) : null}
+
         {groups.length ? (
           <div className="atlas-times-days">
             {groups.map((group) => (
-              <section className="atlas-times-day" key={group.dateKey}>
+              <section className="atlas-times-day" id={`atlas-day-${group.dateKey}`} key={group.dateKey}>
                 <h2>{group.dateLabel}</h2>
                 <div className="atlas-times-grid">
                   {group.slots.map((slot) => bookingReady ? (
@@ -284,6 +305,12 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
       </article>
 
       <style>{`
+        .atlas-times-day-jump{margin:0 0 16px;min-width:0}
+        .atlas-times-day-jump-scroll{display:flex;gap:8px;overflow-x:auto;padding:3px 2px 10px;scroll-snap-type:x proximity;overscroll-behavior-inline:contain}
+        .atlas-times-day-jump-link{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;min-height:48px;max-width:240px;padding:10px 15px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;line-height:1.3;text-align:center;text-decoration:none;scroll-snap-align:start}
+        .atlas-times-day-jump-link:hover{border-color:var(--accent);color:var(--accent);background:var(--surface-soft)}
+        .atlas-times-day-jump-link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+        .atlas-times-day{scroll-margin-top:18px}
         .atlas-times-call-primary{display:inline-flex;min-height:48px;margin:0 0 22px;text-decoration:none}
         .atlas-times-page{min-height:100dvh}.atlas-times-shell{max-width:760px;padding-top:clamp(36px,7vh,76px);padding-bottom:78px}.atlas-times-shell h1{margin:8px 0 12px}.atlas-times-doctor{display:grid;gap:4px;margin-bottom:18px}.atlas-times-doctor>strong{font-size:20px}.atlas-times-doctor>span{color:var(--accent);font-size:13px;font-weight:780}.atlas-times-doctor>small{color:var(--muted);font-size:11px}.atlas-times-shell>.hero-copy{margin-bottom:28px}.atlas-times-days{display:grid;gap:12px}.atlas-times-day{padding:17px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-times-day h2{margin:0 0 12px;font-size:14px}.atlas-times-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.atlas-time-option{min-height:48px;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center;text-decoration:none}.atlas-time-option small{color:var(--accent);font-size:9.5px;font-weight:850}.atlas-time-option.is-readonly{border:1px solid var(--line);border-radius:12px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-times-empty{padding:20px;border:1px dashed var(--line);border-radius:18px}.atlas-times-empty p{margin:7px 0 0;color:var(--muted);font-size:12px}.atlas-times-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:24px}.atlas-times-actions .button{text-decoration:none}@media(max-width:620px){.atlas-times-call-primary{display:flex;width:100%;justify-content:center}.atlas-times-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-times-actions{display:grid}.atlas-times-actions .button{width:100%}}
       `}</style>
