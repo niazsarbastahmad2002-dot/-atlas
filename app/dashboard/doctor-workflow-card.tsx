@@ -164,6 +164,7 @@ function leadLabel(minutes: number, locale: UiLocale) {
 export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   const t = copy[locale];
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [availableDoctors, setAvailableDoctors] = useState<Workflow["doctors"]>([]);
   const [specialty, setSpecialty] = useState("");
   const [phone, setPhone] = useState("");
   const [interval, setInterval] = useState(15);
@@ -178,6 +179,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
 
   const apply = (data: Workflow) => {
     setWorkflow(data);
+    setAvailableDoctors(data.doctors);
     setSpecialty(data.doctorSpecialty ?? "");
     setPhone(data.receptionPhone ?? "");
     setInterval(data.appointmentIntervalMinutes);
@@ -203,6 +205,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
       apply(next);
     } catch {
       if (requestId !== loadRequestRef.current) return;
+      setWorkflow(null);
       setRetryDoctorId(requested);
       setState("load-failed");
     }
@@ -211,7 +214,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   useEffect(() => { void load(); }, [clinicId]);
 
   const save = () => {
-    if (!workflow || state === "saving") return;
+    if (!workflow || state === "saving" || state === "loading" || state === "load-failed") return;
     setState("saving");
     const body: Record<string, unknown> = {
       clinicId,
@@ -256,6 +259,12 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
       {!workflow && state === "load-failed" ? (
         <div className="atlas-workflow-load-error" role="alert">
           <p className="notice notice-error">{t.loadFailed}</p>
+          {availableDoctors.length > 1 ? (
+            <select aria-label={t.doctor} value="" onChange={(event) => void load(event.target.value)}>
+              <option value="" disabled>{t.doctor}</option>
+              {availableDoctors.map((doctor) => <option key={doctor.id} value={doctor.id} data-atlas-user-content="true">{doctor.name}</option>)}
+            </select>
+          ) : null}
           <button className="button button-ghost button-small" type="button" onClick={() => void load(retryDoctorId)}>{t.retry}</button>
         </div>
       ) : !workflow ? (
@@ -266,7 +275,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
             <label>
               <span>{t.doctor}</span>
               <select value={workflow.doctorId} disabled={controlsBusy} onChange={(event) => void load(event.target.value)}>
-                {workflow.doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
+                {workflow.doctors.map((doctor) => <option key={doctor.id} value={doctor.id} data-atlas-user-content="true">{doctor.name}</option>)}
               </select>
             </label>
           ) : (
@@ -323,7 +332,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
       )}
 
       <style>{`
-        .atlas-workflow-form{display:grid;gap:14px}.atlas-workflow-form>label,.atlas-workflow-section label,.atlas-workflow-details-body>label,.atlas-workflow-two label{display:grid;gap:6px;font-size:12px;font-weight:800}.atlas-workflow-form input,.atlas-workflow-form select{min-height:46px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);font:inherit}.atlas-workflow-form input:disabled{background:var(--surface-soft);color:var(--muted)}.atlas-workflow-doctor{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:12px 14px;background:var(--accent-faint)}.atlas-workflow-doctor span{color:var(--muted);font-size:11px;font-weight:750}.atlas-workflow-section{display:grid;gap:12px;margin:0;border:1px solid var(--line);border-radius:14px;padding:14px}.atlas-workflow-section legend{padding-inline:6px;color:var(--muted);font-size:11px;font-weight:850}.atlas-workflow-details{border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.atlas-workflow-details>summary{display:flex;min-height:56px;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;cursor:pointer;list-style:none}.atlas-workflow-details>summary::-webkit-details-marker{display:none}.atlas-workflow-details>summary span:first-child{display:grid;gap:2px}.atlas-workflow-details>summary small{color:var(--muted);font-size:10px;font-weight:600}.atlas-workflow-details-body{display:grid;gap:12px;border-top:1px solid var(--line);padding:14px}.atlas-workflow-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.atlas-workflow-provider{border-radius:12px;background:#fff}.atlas-workflow-provider>summary{padding:11px 12px;color:var(--accent);font-size:12px;font-weight:800;cursor:pointer}.atlas-workflow-status{min-height:18px;margin:0;color:var(--success);font-size:11px;font-weight:760}.atlas-workflow-inline-retry{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.atlas-workflow-inline-retry .notice{margin:0}.atlas-workflow-load-error{display:grid;justify-items:start;gap:10px}.atlas-workflow-load-error .notice{margin:0}.settings-skeleton{height:170px;border-radius:14px;background:var(--surface-soft)}@media(max-width:620px){.atlas-workflow-two{grid-template-columns:1fr}}
+        .atlas-workflow-form{display:grid;gap:14px}.atlas-workflow-form>label,.atlas-workflow-section label,.atlas-workflow-details-body>label,.atlas-workflow-two label{display:grid;gap:6px;font-size:12px;font-weight:800}.atlas-workflow-form input,.atlas-workflow-form select{min-height:46px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);font:inherit}.atlas-workflow-form input:disabled{background:var(--surface-soft);color:var(--muted)}.atlas-workflow-doctor{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:12px 14px;background:var(--accent-faint)}.atlas-workflow-doctor span{color:var(--muted);font-size:11px;font-weight:750}.atlas-workflow-section{display:grid;gap:12px;margin:0;border:1px solid var(--line);border-radius:14px;padding:14px}.atlas-workflow-section legend{padding-inline:6px;color:var(--muted);font-size:11px;font-weight:850}.atlas-workflow-details{border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.atlas-workflow-details>summary{display:flex;min-height:56px;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;cursor:pointer;list-style:none}.atlas-workflow-details>summary::-webkit-details-marker{display:none}.atlas-workflow-details>summary span:first-child{display:grid;gap:2px}.atlas-workflow-details>summary small{color:var(--muted);font-size:10px;font-weight:600}.atlas-workflow-details-body{display:grid;gap:12px;border-top:1px solid var(--line);padding:14px}.atlas-workflow-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.atlas-workflow-provider{border-radius:12px;background:#fff}.atlas-workflow-provider>summary{padding:11px 12px;color:var(--accent);font-size:12px;font-weight:800;cursor:pointer}.atlas-workflow-status{min-height:18px;margin:0;color:var(--success);font-size:11px;font-weight:760}.atlas-workflow-inline-retry{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.atlas-workflow-inline-retry .notice{margin:0}.atlas-workflow-load-error{display:grid;justify-items:start;gap:10px}.atlas-workflow-load-error .notice{margin:0}.atlas-workflow-load-error select{min-height:46px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);font:inherit;max-width:100%}.settings-skeleton{height:170px;border-radius:14px;background:var(--surface-soft)}@media(max-width:620px){.atlas-workflow-two{grid-template-columns:1fr}}
       `}</style>
     </section>
   );

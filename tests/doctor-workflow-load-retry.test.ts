@@ -28,3 +28,23 @@ test("doctor workflow retry remembers the doctor request that failed", () => {
   assert.match(source, /setRetryDoctorId\(requested\)/);
   assert.match(source, /void load\(retryDoctorId\)/);
 });
+
+test("failed doctor switches hide stale settings but retain an administrator doctor recovery picker", () => {
+  const loadFailure = source.indexOf('} catch {\n      if (requestId !== loadRequestRef.current) return;');
+  const clear = source.indexOf("setWorkflow(null);", loadFailure);
+  const retry = source.indexOf("setRetryDoctorId(requested);", loadFailure);
+  const failed = source.indexOf('setState("load-failed");', loadFailure);
+  assert.ok(loadFailure >= 0 && clear > loadFailure && clear < retry && retry < failed);
+
+  assert.match(source, /const \[availableDoctors, setAvailableDoctors\] = useState<Workflow\["doctors"\]>\(\[\]\)/);
+  assert.match(source, /setAvailableDoctors\(data\.doctors\)/);
+  assert.match(source, /availableDoctors\.length > 1 \? \(/);
+  assert.match(source, /availableDoctors\.map\(\(doctor\) => <option key=\{doctor\.id\} value=\{doctor\.id\} data-atlas-user-content="true">/);
+  assert.match(source, /<select aria-label=\{t\.doctor\} value="" onChange=\{\(event\) => void load\(event\.target\.value\)\}>/);
+  assert.match(source, /if \(!workflow \|\| state === "saving" \|\| state === "loading" \|\| state === "load-failed"\) return;/);
+});
+
+test("doctor selectors preserve persisted names in Sorani and Badini", () => {
+  const userNameOptions = source.match(/<option key=\{doctor\.id\} value=\{doctor\.id\} data-atlas-user-content="true">\{doctor\.name\}<\/option>/g) ?? [];
+  assert.equal(userNameOptions.length, 2, "both recovery and normal doctor selectors keep user names unchanged");
+});
