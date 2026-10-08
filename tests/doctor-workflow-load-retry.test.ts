@@ -39,7 +39,7 @@ test("failed doctor switches hide stale settings but retain an administrator doc
   assert.match(source, /const \[availableDoctors, setAvailableDoctors\] = useState<Workflow\["doctors"\]>\(\[\]\)/);
   assert.match(source, /setAvailableDoctors\(data\.doctors\)/);
   assert.match(source, /availableDoctors\.length > 1 \? \(/);
-  assert.match(source, /availableDoctors\.map\(\(doctor\) => <option key=\{doctor\.id\} value=\{doctor\.id\}>/);
+  assert.match(source, /availableDoctors\.map\(\(doctor\) => <option key=\{doctor\.id\} value=\{doctor\.id\} data-atlas-user-content="true">/);
   assert.match(source, /<select aria-label=\{t\.doctor\} value="" onChange=\{\(event\) => void load\(event\.target\.value\)\}>/);
   assert.match(source, /if \(!workflow \|\| state === "saving" \|\| state === "loading" \|\| state === "load-failed"\) return;/);
 });
