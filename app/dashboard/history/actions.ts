@@ -18,6 +18,24 @@ export async function deleteArchivedAppointments(
   }
 
   const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return { ok: false, error: "not_allowed" };
+
+  const [{ data: clinic, error: clinicError }, { data: membership, error: membershipError }] = await Promise.all([
+    supabase.from("clinics").select("id, owner_id").eq("id", clinicId).maybeSingle(),
+    supabase
+      .from("clinic_members")
+      .select("role")
+      .eq("clinic_id", clinicId)
+      .eq("user_id", userData.user.id)
+      .maybeSingle(),
+  ]);
+  if (clinicError || !clinic) return { ok: false, error: "not_allowed" };
+  const isClinicOwner = clinic.owner_id === userData.user.id;
+  if (!isClinicOwner && membershipError) return { ok: false, error: "not_allowed" };
+  const canDelete = isClinicOwner || membership?.role === "owner" || membership?.role === "manager";
+  if (!canDelete) return { ok: false, error: "not_allowed" };
+
   const { data, error } = await supabase
     .from("appointments")
     .delete()
