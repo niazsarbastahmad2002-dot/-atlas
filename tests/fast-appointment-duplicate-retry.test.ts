@@ -51,3 +51,34 @@ test("fast appointment save feedback is announced to assistive technology", () =
   assert.match(client, /window\.requestAnimationFrame\(\(\) => \{/);
   assert.match(client, /fail\(slotTaken = false\).*toast\.setAttribute\("role", "alert"\).*toast\.setAttribute\("aria-live", "assertive"\)/);
 });
+
+test("fast appointment completion cannot pull Atlas back after navigation", () => {
+  const client = read("app/dashboard/dashboard-client-polish.tsx");
+
+  assert.match(client, /usePathname/);
+  assert.match(client, /useSearchParams/);
+  assert.match(client, /const searchKey = searchParams\.toString\(\)/);
+  assert.match(client, /let routeActive = true/);
+  assert.match(client, /let queuedNavigation: string \| null = null/);
+  assert.match(client, /form\.appointment-form\[data-fast-saving="true"\]/);
+  assert.match(client, /document\.addEventListener\("click", queueNavigationDuringFastSave, true\)/);
+  assert.match(client, /event\.preventDefault\(\)[\s\S]*event\.stopImmediatePropagation\(\)/);
+  assert.match(client, /queuedNavigation = \`\$\{destination\.pathname\}\$\{destination\.search\}\$\{destination\.hash\}\`/);
+  assert.match(client, /const submissionStillCurrent = \(\) => \(/);
+  assert.match(client, /routeActive/);
+  assert.match(client, /form\.isConnected/);
+  assert.match(client, /dismiss\(\) \{ toast\.remove\(\); \}/);
+  assert.match(client, /if \(!submissionStillCurrent\(\)\) \{ toast\.dismiss\(\); return; \}/);
+  assert.match(client, /if \(!result\.ok\) \{[\s\S]*queuedNavigation = null;[\s\S]*toast\.fail/);
+  assert.match(client, /const queuedDestination = queuedNavigation;[\s\S]*queuedNavigation = null;[\s\S]*if \(queuedDestination\) \{[\s\S]*toast\.success\(Boolean\(result\.duplicate\)\);[\s\S]*router\.push\(queuedDestination\);[\s\S]*return;/);
+  assert.match(client, /catch \{[\s\S]*queuedNavigation = null;[\s\S]*if \(submissionStillCurrent\(\)\) toast\.fail\(false\)[\s\S]*else toast\.dismiss\(\)/);
+  assert.match(client, /routeActive = false;[\s\S]*queuedNavigation = null;[\s\S]*removeEventListener\("click", queueNavigationDuringFastSave, true\)/);
+  assert.match(client, /\[locale, router, pathname, searchKey\]/);
+  assert.doesNotMatch(client, /markNavigationIntent|navigationGeneration/);
+
+  const staleGuard = client.indexOf("if (!submissionStillCurrent()) { toast.dismiss(); return; }");
+  const savedAppointmentSideEffect = client.indexOf("dataset.atlasSavedAppointmentId = result.appointmentId");
+  const defaultRedirect = client.indexOf("router.push(destination)");
+  assert.ok(staleGuard >= 0 && staleGuard < savedAppointmentSideEffect);
+  assert.ok(staleGuard < defaultRedirect);
+});
