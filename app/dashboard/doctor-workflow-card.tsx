@@ -203,6 +203,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
       apply(next);
     } catch {
       if (requestId !== loadRequestRef.current) return;
+      setWorkflow(null);
       setRetryDoctorId(requested);
       setState("load-failed");
     }
@@ -211,7 +212,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
   useEffect(() => { void load(); }, [clinicId]);
 
   const save = () => {
-    if (!workflow || state === "saving") return;
+    if (!workflow || state === "saving" || state === "loading" || state === "load-failed") return;
     setState("saving");
     const body: Record<string, unknown> = {
       clinicId,
