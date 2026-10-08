@@ -24,6 +24,7 @@ const careCopy: Record<UiLocale, {
   specialty: string;
   specialtyPlaceholder: string;
   sort: string;
+  filters: string;
   sortName: string;
   sortSoonest: string;
   search: string;
@@ -45,8 +46,8 @@ const careCopy: Record<UiLocale, {
   en: {
     language: "Language",
     eyebrow: "Find care",
-    title: "Find a doctor without calling around.",
-    intro: "Search published Atlas clinic profiles by doctor, specialty, clinic, or city.",
+    title: "Find your doctor",
+    intro: "Doctors, clinics and their real open times.",
     query: "Doctor, clinic, or specialty",
     queryPlaceholder: "e.g. Orthopedics or Dr. Sara",
     city: "City",
@@ -54,6 +55,7 @@ const careCopy: Record<UiLocale, {
     specialty: "Specialty",
     specialtyPlaceholder: "e.g. Orthopedics",
     sort: "Sort by",
+    filters: "More filters",
     sortName: "Doctor name",
     sortSoonest: "Soonest open time",
     search: "Search",
@@ -75,8 +77,8 @@ const careCopy: Record<UiLocale, {
   ku: {
     language: "زمان",
     eyebrow: "دۆزینەوەی پزیشک",
-    title: "پزیشک بدۆزەرەوە بەبێ ئەوەی بە چەند کلینیکێک پەیوەندی بکەیت.",
-    intro: "لە پڕۆفایلی بڵاوکراوەکانی Atlas بە ناوی پزیشک، پسپۆڕی، کلینیک یان شار بگەڕێ.",
+    title: "پزیشکەکەت بدۆزەرەوە",
+    intro: "پزیشک، کلینیک و کاتە بەردەستە ڕاستەقینەکان.",
     query: "پزیشک، کلینیک یان پسپۆڕی",
     queryPlaceholder: "بۆ نموونە: ئێسک و جومگە",
     city: "شار",
@@ -84,6 +86,7 @@ const careCopy: Record<UiLocale, {
     specialty: "پسپۆڕی",
     specialtyPlaceholder: "بۆ نموونە: ئێسک و جومگە",
     sort: "ڕیزکردن",
+    filters: "فلتەرەکان",
     sortName: "ناوی پزیشک",
     sortSoonest: "نزیکترین کاتی بەردەست",
     search: "گەڕان",
@@ -105,8 +108,8 @@ const careCopy: Record<UiLocale, {
   bd: {
     language: "زمان",
     eyebrow: "دیتنا دکتۆری",
-    title: "دکتۆر بدیتەوە بێ کو پەیوەندی ب چەند کلینیکان بکەی.",
-    intro: "د پڕۆفایلێن بڵاوکری یێن Atlas دا ب ناڤێ دکتۆری، تایبەتمەندی، کلینیک یان باژێر بگەڕێ.",
+    title: "دکتۆرێ خۆ بدیتەوە",
+    intro: "دکتۆر، کلینیک و دەمێن ڕاستەقینە یێن بەردەست.",
     query: "دکتۆر، کلینیک یان تایبەتمەندی",
     queryPlaceholder: "بۆ نموونە: ئێسک و جومگە",
     city: "باژێر",
@@ -114,6 +117,7 @@ const careCopy: Record<UiLocale, {
     specialty: "تایبەتمەندی",
     specialtyPlaceholder: "بۆ نموونە: ئێسک و جومگە",
     sort: "ڕێزکرن",
+    filters: "فلتەرێن دی",
     sortName: "ناڤێ دکتۆری",
     sortSoonest: "نێزیکترین دەمێ بەردەست",
     search: "گەڕان",
@@ -135,8 +139,8 @@ const careCopy: Record<UiLocale, {
   ar: {
     language: "اللغة",
     eyebrow: "ابحث عن رعاية",
-    title: "اعثر على طبيب بدون الاتصالات المتكررة.",
-    intro: "ابحث في ملفات عيادات Atlas المنشورة باسم الطبيب أو الاختصاص أو العيادة أو المدينة.",
+    title: "ابحث عن طبيبك",
+    intro: "الأطباء والعيادات وأوقاتهم المتاحة الفعلية.",
     query: "الطبيب أو العيادة أو الاختصاص",
     queryPlaceholder: "مثلاً: عظام أو د. سارة",
     city: "المدينة",
@@ -144,6 +148,7 @@ const careCopy: Record<UiLocale, {
     specialty: "الاختصاص",
     specialtyPlaceholder: "مثلاً: عظام",
     sort: "ترتيب حسب",
+    filters: "خيارات البحث",
     sortName: "اسم الطبيب",
     sortSoonest: "أقرب وقت متاح",
     search: "بحث",
@@ -265,53 +270,75 @@ export default async function CarePage({ searchParams }: CarePageProps) {
 
         <form className="atlas-care-search" method="get">
           <input type="hidden" name="lang" value={locale} />
-          <label>
-            <span>{copy.query}</span>
-            <input name="q" defaultValue={query} placeholder={copy.queryPlaceholder} maxLength={80} />
-          </label>
-          <label>
-            <span>{copy.city}</span>
-            <input name="city" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
-          </label>
-          <label>
-            <span>{copy.specialty}</span>
-            <input name="specialty" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
-          </label>
-          <label>
-            <span>{copy.sort}</span>
-            <select name="sort" defaultValue={sort}>
-              <option value="name">{copy.sortName}</option>
-              <option value="soonest">{copy.sortSoonest}</option>
-            </select>
-          </label>
-          <button className="button" type="submit">{copy.search}</button>
+          <div className="atlas-care-search-primary">
+            <label>
+              <span>{copy.query}</span>
+              <input name="q" type="search" defaultValue={query} placeholder={copy.queryPlaceholder} maxLength={80} />
+            </label>
+            <button className="button" type="submit">{copy.search}</button>
+          </div>
+          <details className="atlas-care-filters" open={Boolean(city || specialty || sort === "soonest")}>
+            <summary>{copy.filters}{city || specialty ? <span className="atlas-care-filter-active" aria-hidden="true">●</span> : null}</summary>
+            <div className="atlas-care-search-extra">
+              <label>
+                <span>{copy.city}</span>
+                <input name="city" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
+              </label>
+              <label>
+                <span>{copy.specialty}</span>
+                <input name="specialty" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
+              </label>
+              <label>
+                <span>{copy.sort}</span>
+                <select name="sort" defaultValue={sort}>
+                  <option value="name">{copy.sortName}</option>
+                  <option value="soonest">{copy.sortSoonest}</option>
+                </select>
+              </label>
+              <button className="button button-ghost" type="submit">{copy.search}</button>
+            </div>
+          </details>
         </form>
 
         {error ? (
           <p className="notice notice-error atlas-care-notice" role="alert">{copy.unavailable}</p>
         ) : results.length ? (
           <div className="atlas-care-results">
-            {results.map((doctor) => (
-              <article className="atlas-care-result" key={`${doctor.clinic_slug}/${doctor.doctor_slug}`}>
-                <div className="atlas-care-result-heading">
-                  <span className="atlas-care-doctor-mark" aria-hidden="true">{doctor.doctor_name.trim().slice(0, 1)}</span>
-                  <div>
-                    <strong>{doctor.doctor_name}</strong>
-                    <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
+            {results.map((doctor) => {
+              const nextOpening = doctor.next_available_at
+                ? nextAvailabilityLabel(doctor.next_available_at, locale)
+                : null;
+              return (
+                <article className="atlas-care-result" key={`${doctor.clinic_slug}/${doctor.doctor_slug}`}>
+                  <div className="atlas-care-result-heading">
+                    <span className="atlas-care-doctor-mark" aria-hidden="true">{doctor.doctor_name.trim().slice(0, 1)}</span>
+                    <div className="atlas-care-doctor-details">
+                      <strong>{doctor.doctor_name}</strong>
+                      <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
+                    </div>
                   </div>
-                </div>
-                <p><b>{copy.clinic}:</b> <Link href={patientLocaleHref(`/care/${doctor.clinic_slug}`, locale)}>{doctor.clinic_name}</Link></p>
-                {(doctor.city || doctor.area) ? <p>{[doctor.area, doctor.city].filter(Boolean).join(" · ")}</p> : null}
-                {doctor.next_available_at && nextAvailabilityLabel(doctor.next_available_at, locale) ? (
-                  <p className="atlas-care-next-opening">
-                    <b>{copy.nextAvailable}:</b> {nextAvailabilityLabel(doctor.next_available_at, locale)}
-                  </p>
-                ) : null}
-                <Link className="button button-ghost button-small" href={patientLocaleHref(`/care/${doctor.clinic_slug}/${doctor.doctor_slug}`, locale)}>
-                  {copy.openProfile}
-                </Link>
-              </article>
-            ))}
+                  <div className="atlas-care-result-location">
+                    <Link href={patientLocaleHref(`/care/${doctor.clinic_slug}`, locale)}>{doctor.clinic_name}</Link>
+                    {doctor.city || doctor.area ? <span>{[doctor.area, doctor.city].filter(Boolean).join(" · ")}</span> : null}
+                  </div>
+                  {nextOpening ? (
+                    <Link
+                      className="atlas-care-next-opening"
+                      href={patientLocaleHref(`/care/${doctor.clinic_slug}/${doctor.doctor_slug}/times`, locale)}
+                      aria-label={`${copy.nextAvailable}: ${nextOpening}`}
+                    >
+                      <span>{copy.nextAvailable}</span>
+                      <strong dir="auto">{nextOpening}</strong>
+                      <span className="atlas-care-next-arrow" aria-hidden="true">↗</span>
+                    </Link>
+                  ) : null}
+                  <Link className="button button-ghost atlas-care-view-doctor" href={patientLocaleHref(`/care/${doctor.clinic_slug}/${doctor.doctor_slug}`, locale)}>
+                    {copy.openProfile}
+                    <span aria-hidden="true">›</span>
+                  </Link>
+                </article>
+              );
+            })}
           </div>
         ) : hasSearch ? (
           <div className="atlas-care-empty">
@@ -331,7 +358,56 @@ export default async function CarePage({ searchParams }: CarePageProps) {
       </section>
 
       <style>{`
-        .atlas-care-page{min-height:100dvh}.atlas-care-shell{max-width:880px;padding-top:clamp(34px,7vh,72px);padding-bottom:70px}.atlas-care-language{max-width:650px;margin-bottom:30px}.atlas-care-language>.eyebrow{margin-bottom:10px}.atlas-care-browse{display:grid;gap:10px;margin:24px 0 8px}.atlas-care-browse>strong{font-size:12px}.atlas-care-browse-actions{display:flex;gap:8px;flex-wrap:wrap}.atlas-care-choice{display:inline-flex;align-items:center;gap:7px;min-height:46px;border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;text-decoration:none}.atlas-care-choice:hover,.atlas-care-choice.is-active{border-color:rgba(8,119,90,.35);background:var(--surface-soft);color:var(--accent)}.atlas-care-choice-mark{display:grid;width:24px;height:24px;place-items:center;border-radius:50%;background:var(--surface-soft);color:var(--accent);font-size:11px;font-weight:900}.atlas-care-search{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin:28px 0}.atlas-care-search label{display:grid;gap:7px}.atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}.atlas-care-search input,.atlas-care-search select{min-width:0;min-height:48px}.atlas-care-search .button{min-height:48px}.atlas-care-results{display:grid;gap:12px;margin-top:24px}.atlas-care-result{display:grid;gap:9px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-result-heading{display:flex!important;align-items:center;gap:12px}.atlas-care-result-heading>div{display:grid;gap:4px}.atlas-care-doctor-mark{display:grid!important;flex:0 0 auto;width:44px;height:44px;place-items:center;border-radius:14px;background:var(--surface-soft);color:var(--accent)!important;font-size:18px!important;font-weight:900}.atlas-care-result>div{display:grid;gap:4px}.atlas-care-result strong{font-size:18px}.atlas-care-result span,.atlas-care-result p{color:var(--muted);font-size:12px;line-height:1.5}.atlas-care-result p{margin:0}.atlas-care-next-opening{color:var(--accent)!important;font-weight:720}.atlas-care-result .button{justify-self:start;text-decoration:none}.atlas-care-empty{margin-top:24px;padding:22px;border:1px dashed var(--line);border-radius:18px}.atlas-care-empty p{margin:7px 0 0;color:var(--muted)}.atlas-care-empty-published{display:grid;gap:10px}.atlas-care-empty-published .button{justify-self:start;text-decoration:none}.atlas-care-reset{display:inline-block;margin-top:10px;color:var(--accent);font-size:12px;font-weight:800}.atlas-care-notice{margin-top:24px}.atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}@media(max-width:900px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search .button{width:100%}}
+        .atlas-care-page{min-height:100dvh}
+        .atlas-care-shell{max-width:1020px;padding-top:clamp(20px,4vh,46px);padding-bottom:78px}
+        .atlas-care-language{max-width:650px;margin-bottom:22px}
+        .atlas-care-language>.eyebrow{margin-bottom:8px}
+        .atlas-care-shell>h1{font-size:clamp(32px,6vw,50px);letter-spacing:-.045em;line-height:1.12;margin:8px 0}
+        .atlas-care-shell>.hero-copy{font-size:14px;line-height:1.5;margin:0;color:var(--muted)}
+        .atlas-care-browse{display:grid;gap:10px;margin:24px 0 8px}
+        .atlas-care-browse>strong{font-size:12px}
+        .atlas-care-browse-actions{display:flex;gap:8px;flex-wrap:wrap}
+        .atlas-care-choice{display:inline-flex;align-items:center;gap:7px;min-height:46px;border:1px solid var(--line);border-radius:999px;padding:8px 13px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;text-decoration:none}
+        .atlas-care-choice:hover,.atlas-care-choice.is-active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+        .atlas-care-choice-mark{display:grid;width:24px;height:24px;place-items:center;border-radius:50%;background:var(--surface-soft);color:var(--accent);font-size:11px;font-weight:900}
+        .atlas-care-search{display:grid;grid-template-columns:1fr;gap:10px;margin:24px 0 6px}
+        .atlas-care-search-primary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow-sm)}
+        .atlas-care-search label{display:grid;gap:7px;min-width:0}
+        .atlas-care-search label span{font-size:11px;font-weight:800;color:var(--muted)}
+        .atlas-care-search input,.atlas-care-search select{min-width:0;min-height:48px}
+        .atlas-care-search-primary .button{min-height:48px;min-width:106px}
+        .atlas-care-filters{border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+        .atlas-care-filters>summary{min-height:44px;display:flex;gap:8px;align-items:center;padding:11px 15px;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}
+        .atlas-care-filters>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+        .atlas-care-filter-active{color:var(--accent);font-size:9px}
+        .atlas-care-search-extra{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;align-items:end;padding:12px 15px 15px;border-top:1px solid var(--line)}
+        .atlas-care-search-extra .button{min-height:48px}
+        .atlas-care-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
+        .atlas-care-result{display:flex;flex-direction:column;gap:14px;min-width:0;padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow-sm)}
+        .atlas-care-result-heading{display:flex!important;align-items:center;gap:12px;min-width:0}
+        .atlas-care-doctor-mark{display:grid!important;flex:0 0 auto;width:56px;height:56px;place-items:center;border-radius:18px;background:var(--accent-soft);color:var(--accent)!important;font-size:22px!important;font-weight:900}
+        .atlas-care-doctor-details{min-width:0;display:grid;gap:4px}
+        .atlas-care-doctor-details strong{font-size:18px;line-height:1.25;overflow-wrap:anywhere}
+        .atlas-care-doctor-details>span{color:var(--muted);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+        .atlas-care-result-location{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;min-width:0;font-size:12px;line-height:1.5}
+        .atlas-care-result-location a{color:var(--ink-soft);font-weight:800;text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
+        .atlas-care-result-location span{color:var(--muted)}
+        .atlas-care-next-opening{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:12px 14px;border:1px solid var(--accent-soft);border-radius:14px;background:var(--accent-faint);text-decoration:none;color:var(--accent)}
+        .atlas-care-next-opening>span:first-child{grid-column:1;font-size:10px;font-weight:800;opacity:.85}
+        .atlas-care-next-opening>strong{grid-column:1;font-size:14px;font-weight:850;line-height:1.4;overflow-wrap:anywhere}
+        .atlas-care-next-arrow{grid-column:2;grid-row:1/3;font-size:19px}
+        .atlas-care-view-doctor{display:flex;justify-content:space-between;gap:12px;min-height:48px;margin-top:auto;text-decoration:none}
+        .atlas-care-view-doctor>span{font-size:20px}
+        .atlas-care-empty{margin-top:24px;padding:25px;border:1px dashed var(--line);border-radius:20px;background:var(--surface)}
+        .atlas-care-empty p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+        .atlas-care-empty-published{display:grid;gap:10px;justify-items:start}
+        .atlas-care-empty-published .button{text-decoration:none}
+        .atlas-care-reset{display:inline-block;margin-top:10px;color:var(--accent);font-size:12px;font-weight:800}
+        .atlas-care-notice{margin-top:24px}
+        .atlas-care-back{display:inline-block;margin-top:28px;color:var(--muted);font-size:12px}
+        @media(max-width:900px){.atlas-care-search{grid-template-columns:1fr}.atlas-care-search-extra{grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-care-search-extra .button{grid-column:1/-1}}
+        @media(max-width:700px){.atlas-care-results{grid-template-columns:1fr}.atlas-care-shell{padding-top:18px}.atlas-care-search-extra{grid-template-columns:1fr}.atlas-care-result{padding:16px}.atlas-care-language{margin-bottom:20px}}
+        @media(max-width:380px){.atlas-care-search-primary{grid-template-columns:1fr}.atlas-care-search-primary .button{width:100%}}
       `}</style>
     </main>
   );
