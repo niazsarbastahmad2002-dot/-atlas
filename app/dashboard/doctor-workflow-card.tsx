@@ -262,7 +262,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
           {availableDoctors.length > 1 ? (
             <select aria-label={t.doctor} value="" onChange={(event) => void load(event.target.value)}>
               <option value="" disabled>{t.doctor}</option>
-              {availableDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
+              {availableDoctors.map((doctor) => <option key={doctor.id} value={doctor.id} data-atlas-user-content="true">{doctor.name}</option>)}
             </select>
           ) : null}
           <button className="button button-ghost button-small" type="button" onClick={() => void load(retryDoctorId)}>{t.retry}</button>
@@ -275,7 +275,7 @@ export function DoctorWorkflowCard({ clinicId, locale, canManage }: Props) {
             <label>
               <span>{t.doctor}</span>
               <select value={workflow.doctorId} disabled={controlsBusy} onChange={(event) => void load(event.target.value)}>
-                {workflow.doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
+                {workflow.doctors.map((doctor) => <option key={doctor.id} value={doctor.id} data-atlas-user-content="true">{doctor.name}</option>)}
               </select>
             </label>
           ) : (
