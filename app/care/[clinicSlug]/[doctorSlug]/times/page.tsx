@@ -24,6 +24,8 @@ const copy: Record<UiLocale, {
   eyebrow: string;
   title: string;
   intro: string;
+  readOnlyTitle: string;
+  readOnlyIntro: string;
   noTimes: string;
   noTimesHelp: string;
   book: string;
@@ -37,6 +39,8 @@ const copy: Record<UiLocale, {
     eyebrow: "Live appointment times",
     title: "Choose a time",
     intro: "These are live times from the clinic. Atlas checks your choice again before booking.",
+    readOnlyTitle: "Available times",
+    readOnlyIntro: "These are times from the clinic. Online booking is not open yet. Contact the clinic to reserve.",
     noTimes: "No public appointment times are open right now.",
     noTimesHelp: "The clinic may add more times later. You can still contact the clinic directly.",
     book: "Book",
@@ -50,6 +54,8 @@ const copy: Record<UiLocale, {
     eyebrow: "کاتە ڕاستەقینەکانی مەوعید",
     title: "کاتێک هەڵبژێرە",
     intro: "ئەم کاتانە ڕاستەوخۆ لە خشتەی کلینیکەوە دێن. Atlas پێش دانانی مەوعید کاتە هەڵبژێردراوەکەت دووبارە دەپشکنێت.",
+    readOnlyTitle: "کاتە بەردەستەکان",
+    readOnlyIntro: "ئەم کاتانە لە خشتەی کلینیکەوەن. هێشتا ناتوانیت لێرە مەوعید دابنێیت. پەیوەندی بە کلینیکەوە بکە.",
     noTimes: "ئێستا هیچ کاتی گشتیی مەوعید بەردەست نییە.",
     noTimesHelp: "لەوانەیە کلینیک دواتر کاتی تر زیاد بکات. هێشتا دەتوانیت ڕاستەوخۆ پەیوەندی بکەیت.",
     book: "مەوعید دابنێ",
@@ -63,6 +69,8 @@ const copy: Record<UiLocale, {
     eyebrow: "دەمێن ڕاستەقینە یێن وادەیێ",
     title: "دەمەکێ هەلبژێرە",
     intro: "ئەڤ دەمە ڕاستەوخۆ ژ خشتەیا کلینیکێ دهێن. Atlas بەری دانانا وادەیێ دەمی هەلبژارتی جارەکا دی دپشکنیت.",
+    readOnlyTitle: "دەمێن بەردەست",
+    readOnlyIntro: "ئەڤ دەمە ژ خشتەیا کلینیکێ نە. هێشتا ل ڤێرێ ناتوانی وادە دابنەی. پەیوەندی ب کلینیکێ بکە.",
     noTimes: "نوکە هیچ دەمەکێ گشتی یێ وادەیێ بەردەست نینە.",
     noTimesHelp: "دبیت کلینیک پاشتر دەمێن دی زێدە بکەت. هێشتا دشێی ڕاستەوخۆ پەیوەندی بکەی.",
     book: "وادە دابنێ",
@@ -76,6 +84,8 @@ const copy: Record<UiLocale, {
     eyebrow: "أوقات المواعيد الفعلية",
     title: "اختر وقتاً",
     intro: "هذه أوقات مباشرة من جدول العيادة. Atlas يفحص اختيارك مرة ثانية قبل الحجز.",
+    readOnlyTitle: "الأوقات المتاحة",
+    readOnlyIntro: "هذه الأوقات من جدول العيادة. الحجز الإلكتروني مو متاح بعد. تواصل ويا العيادة حتى تحجز.",
     noTimes: "لا توجد أوقات مواعيد عامة متاحة حالياً.",
     noTimesHelp: "قد تضيف العيادة أوقاتاً أخرى لاحقاً. تقدر تتواصل مع العيادة مباشرة.",
     book: "احجز",
@@ -226,13 +236,16 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
 
       <article className="shell atlas-times-shell">
         <div className="eyebrow">{t.eyebrow}</div>
-        <h1>{t.title}</h1>
+        <h1>{groups.length ? (bookingReady ? t.title : t.readOnlyTitle) : t.noTimes}</h1>
         <div className="atlas-times-doctor">
           <strong>{profile.doctor_name}</strong>
           <span>{profile.specialty}{profile.subspecialty ? ` · ${profile.subspecialty}` : ""}</span>
           <small>{profile.clinic_name}</small>
         </div>
-        <p className="hero-copy">{t.intro}</p>
+        {groups.length ? <p className="hero-copy">{bookingReady ? t.intro : t.readOnlyIntro}</p> : null}
+        {!bookingReady && phone && groups.length ? (
+          <a className="button atlas-times-call-primary" href={`tel:${profile.public_phone}`}>{t.call}</a>
+        ) : null}
 
         {groups.length ? (
           <div className="atlas-times-days">
@@ -260,7 +273,6 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
           </div>
         ) : (
           <div className="atlas-times-empty">
-            <strong>{t.noTimes}</strong>
             <p>{t.noTimesHelp}</p>
           </div>
         )}
@@ -272,7 +284,8 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
       </article>
 
       <style>{`
-        .atlas-times-page{min-height:100dvh}.atlas-times-shell{max-width:760px;padding-top:clamp(36px,7vh,76px);padding-bottom:78px}.atlas-times-shell h1{margin:8px 0 12px}.atlas-times-doctor{display:grid;gap:4px;margin-bottom:18px}.atlas-times-doctor>strong{font-size:20px}.atlas-times-doctor>span{color:var(--accent);font-size:13px;font-weight:780}.atlas-times-doctor>small{color:var(--muted);font-size:11px}.atlas-times-shell>.hero-copy{margin-bottom:28px}.atlas-times-days{display:grid;gap:12px}.atlas-times-day{padding:17px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-times-day h2{margin:0 0 12px;font-size:14px}.atlas-times-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.atlas-time-option{min-height:48px;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center;text-decoration:none}.atlas-time-option small{color:var(--accent);font-size:9.5px;font-weight:850}.atlas-time-option.is-readonly{border:1px solid var(--line);border-radius:12px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-times-empty{padding:20px;border:1px dashed var(--line);border-radius:18px}.atlas-times-empty p{margin:7px 0 0;color:var(--muted);font-size:12px}.atlas-times-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:24px}.atlas-times-actions .button{text-decoration:none}@media(max-width:620px){.atlas-times-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-times-actions{display:grid}.atlas-times-actions .button{width:100%}}
+        .atlas-times-call-primary{display:inline-flex;min-height:48px;margin:0 0 22px;text-decoration:none}
+        .atlas-times-page{min-height:100dvh}.atlas-times-shell{max-width:760px;padding-top:clamp(36px,7vh,76px);padding-bottom:78px}.atlas-times-shell h1{margin:8px 0 12px}.atlas-times-doctor{display:grid;gap:4px;margin-bottom:18px}.atlas-times-doctor>strong{font-size:20px}.atlas-times-doctor>span{color:var(--accent);font-size:13px;font-weight:780}.atlas-times-doctor>small{color:var(--muted);font-size:11px}.atlas-times-shell>.hero-copy{margin-bottom:28px}.atlas-times-days{display:grid;gap:12px}.atlas-times-day{padding:17px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-times-day h2{margin:0 0 12px;font-size:14px}.atlas-times-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.atlas-time-option{min-height:48px;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center;text-decoration:none}.atlas-time-option small{color:var(--accent);font-size:9.5px;font-weight:850}.atlas-time-option.is-readonly{border:1px solid var(--line);border-radius:12px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-times-empty{padding:20px;border:1px dashed var(--line);border-radius:18px}.atlas-times-empty p{margin:7px 0 0;color:var(--muted);font-size:12px}.atlas-times-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:24px}.atlas-times-actions .button{text-decoration:none}@media(max-width:620px){.atlas-times-call-primary{display:flex;width:100%;justify-content:center}.atlas-times-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-times-actions{display:grid}.atlas-times-actions .button{width:100%}}
       `}</style>
     </main>
   );
