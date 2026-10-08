@@ -28,3 +28,14 @@ test("doctor workflow retry remembers the doctor request that failed", () => {
   assert.match(source, /setRetryDoctorId\(requested\)/);
   assert.match(source, /void load\(retryDoctorId\)/);
 });
+
+test("failed doctor switches clear previous doctor settings before exposing retry", () => {
+  const failureStart = source.indexOf('} catch {\n      if (requestId !== loadRequestRef.current) return;');
+  const clear = source.indexOf("setWorkflow(null);", failureStart);
+  const retry = source.indexOf("setRetryDoctorId(requested);", failureStart);
+  const failed = source.indexOf('setState("load-failed");', failureStart);
+
+  assert.ok(failureStart >= 0 && clear > failureStart && clear < retry && retry < failed);
+  assert.match(source, /!workflow && state === "load-failed"/);
+  assert.match(source, /if \(!workflow \|\| state === "saving" \|\| state === "loading" \|\| state === "load-failed"\) return;/);
+});
