@@ -43,3 +43,8 @@ test("failed doctor switches hide stale settings but retain an administrator doc
   assert.match(source, /<select aria-label=\{t\.doctor\} value="" onChange=\{\(event\) => void load\(event\.target\.value\)\}>/);
   assert.match(source, /if \(!workflow \|\| state === "saving" \|\| state === "loading" \|\| state === "load-failed"\) return;/);
 });
+
+test("doctor selectors preserve persisted names in Sorani and Badini", () => {
+  const userNameOptions = source.match(/<option key=\{doctor\.id\} value=\{doctor\.id\} data-atlas-user-content="true">\{doctor\.name\}<\/option>/g) ?? [];
+  assert.equal(userNameOptions.length, 2, "both recovery and normal doctor selectors keep user names unchanged");
+});
