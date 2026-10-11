@@ -57,7 +57,8 @@ test("remove is a direct visible action with confirmation rather than a one-item
 test("schedule summary renders the six real receptionist outcomes without client-created cards", () => {
   const page = source("app/dashboard/page.tsx");
   const experience = source("app/dashboard/responsive-dashboard-experience.tsx");
-  assert.match(page, /className="stats workspace-stats schedule-summary"/);
+  assert.match(page, /className="clinic-command-center"/);
+  assert.match(page, /className="schedule-focus"/);
   assert.match(page, /All appointments/);
   assert.match(page, /Attendance not confirmed/);
   assert.match(page, /Attendance confirmed/);
@@ -68,9 +69,9 @@ test("schedule summary renders the six real receptionist outcomes without client
   assert.match(page, /هاتن پشتڕاست نەکراوە/);
   assert.match(page, /هاتن پشتڕاستکراوە/);
   assert.match(page, /سەردان تەواوبوو/);
-  assert.match(page, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
-  assert.match(page, /tone="no-show"/);
-  assert.match(page, /tone="cancelled"/);
+  assert.match(page, /\{ key: "no_show", label: summary\.noShow, count: noShow \}/);
+  assert.match(page, /\{ key: "cancelled", label: summary\.cancelled, count: cancelled \}/);
+  assert.match(page, /focusOptions\.map\(\(option\) => <a/);
   assert.doesNotMatch(experience, /createElement\("article"\)/);
 });
 
