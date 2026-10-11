@@ -233,7 +233,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     supabase.from("appointments").select("id, patient_name, patient_phone, contact_relationship, doctor_id, doctor_name, appointment_at, created_at, status, reminder_status, reminder_language, reminder_consent, appointment_revision", { count: "exact" }).eq("clinic_id", clinic.id).is("voided_at", null).gte("appointment_at", dayStart).lt("appointment_at", dayEnd).order("appointment_at", { ascending: true }).order("created_at", { ascending: true }).order("id", { ascending: true }).limit(DAILY_SCHEDULE_VIEW_LIMIT),
     loadOccupiedAppointments(),
     supabase.from("clinic_reminder_settings").select("enabled, lead_minutes, second_lead_minutes, default_reminder_language").eq("clinic_id", clinic.id).maybeSingle(),
-    (supabase as any).from("doctor_workflow_settings").select("doctor_id, default_reminder_language").eq("clinic_id", clinic.id),
+    (supabase as any).from("doctor_workflow_settings").select("doctor_id, appointment_interval_minutes, default_reminder_language").eq("clinic_id", clinic.id),
     supabase.from("doctors").select("id, name, active, display_order").eq("clinic_id", clinic.id).order("display_order", { ascending: true }).order("name", { ascending: true }),
   ]);
   if (membershipError || appointmentError || occupiedError || reminderSettingsError || workflowError || doctorsError) return <DashboardError locale={locale} />;
@@ -251,7 +251,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ?? activeDoctors[0]
     : activeDoctors[0] ?? null;
   const selectedDoctorId = multiDoctor ? selectedDoctor?.id ?? null : null;
-  const defaultReminderLanguage = (doctorWorkflowRows ?? []).find((row: { doctor_id: string; default_reminder_language: string }) => row.doctor_id === selectedDoctor?.id)?.default_reminder_language ?? reminderSettings?.default_reminder_language ?? "ku";
+  const selectedDoctorWorkflow = ((doctorWorkflowRows ?? []) as Array<{ doctor_id: string; appointment_interval_minutes: number; default_reminder_language: string }>)
+    .find((row) => row.doctor_id === selectedDoctor?.id);
+  const defaultReminderLanguage = selectedDoctorWorkflow?.default_reminder_language ?? reminderSettings?.default_reminder_language ?? "ku";
+  const doctorInterval = selectedDoctorWorkflow?.appointment_interval_minutes;
+  const bookingInterval = typeof doctorInterval === "number" && [5, 10, 15, 20, 30].includes(doctorInterval)
+    ? doctorInterval
+    : clinic.appointment_interval_minutes;
   const visibleRows = multiDoctor && selectedDoctor
     ? rows.filter((row) => row.doctor_id === selectedDoctor.id)
     : rows;
@@ -422,7 +428,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <option value="relative_caregiver">{contactRelationship.caregiver}</option>
           </select>
           <label htmlFor="doctor_id">{t.doctor}</label><input id="doctor_id" name="doctor_id" type="hidden" value={selectedDoctor?.id ?? ""} /><div className="composer-doctor-lock" aria-label={`${t.doctor}: ${selectedDoctor?.name ?? t.chooseDoctor}`}><strong data-atlas-user-content={selectedDoctor ? "true" : undefined}>{selectedDoctor?.name ?? t.chooseDoctor}</strong><span aria-hidden="true">✓</span></div>
-          <AppointmentTimeField key={`time:${selectedDay}:${selectedDoctor?.id ?? "none"}`} intervalMinutes={clinic.appointment_interval_minutes} min={minimumInput} max={maximumInput} initialDate={selectedDay} occupiedByDoctor={occupiedByDoctor} timeZoneLabel={t.erbilTime} locale={locale} />
+          <AppointmentTimeField key={`time:${selectedDay}:${selectedDoctor?.id ?? "none"}`} intervalMinutes={bookingInterval} min={minimumInput} max={maximumInput} initialDate={selectedDay} occupiedByDoctor={occupiedByDoctor} timeZoneLabel={t.erbilTime} locale={locale} />
           <label htmlFor="reminder_language">{t.reminderLanguage}</label><select id="reminder_language" name="reminder_language" defaultValue={defaultReminderLanguage}>{Object.entries(reminderLanguageLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
           <label className="checkbox-field consent-card" htmlFor="reminder_consent"><input id="reminder_consent" name="reminder_consent" type="checkbox" /><span>{t.reminderConsent}</span></label><p className="field-help">{t.reminderConsentHelp}</p><SubmitButton pendingLabel={t.saving} disabled={!selectedDoctor}>{t.saveAppointment}</SubmitButton>
         </form><div className={`reminder-note ${reminderSettings?.enabled ? "reminder-ready" : ""}`}><strong>{days.reminders}: </strong>{reminderSettings?.enabled ? reminderPlanLabel(reminderSettings.lead_minutes, reminderSettings.second_lead_minutes, locale) : t.reminderOff}</div><p className="composer-privacy">{t.privacyNote}</p></section> : null}
