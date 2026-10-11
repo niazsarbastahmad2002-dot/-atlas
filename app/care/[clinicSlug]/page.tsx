@@ -4,6 +4,7 @@ import { formatIraqiMobile } from "@/lib/appointments";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { ShareProfileButton } from "../share-profile-button";
+import { PatientProfileHero } from "@/app/care/patient-profile-hero";
 import { AtlasPatientNav } from "../patient-nav";
 import { patientLocaleHref, resolvePatientLocale } from "../patient-locale";
 
@@ -181,12 +182,11 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
     : null;
 
   return (
-    <main className="marketing-page atlas-care-clinic-page" lang={meta.language} dir={meta.direction}>
+    <main className="marketing-page atlas-care-clinic-page atlas-patient-detail" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
 
       <article className="shell atlas-care-clinic">
-        <div className="eyebrow">{copy.eyebrow}</div>
-        <h1>{clinic.display_name}</h1>
+        <PatientProfileHero kind="clinic" eyebrow={copy.eyebrow} title={clinic.display_name} subtitle={location || undefined} />
         <ShareProfileButton
           title={clinic.display_name}
           text={copy.shareText}
@@ -226,6 +226,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
             <div className="atlas-care-clinic-doctor-list">
               {doctors.map((doctor) => (
                 <article key={doctor.slug}>
+                  <span className="patient-mini-mark" aria-hidden="true">{doctor.display_name.trim().slice(0, 1)}</span>
                   <div>
                     <strong>{doctor.display_name}</strong>
                     <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
@@ -234,7 +235,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
                 </article>
               ))}
             </div>
-          ) : <p className="quiet">{copy.noDoctors}</p>}
+          ) : <div className="patient-detail-empty"><span className="patient-detail-empty-icon" aria-hidden="true">＋</span><p>{copy.noDoctors}</p><Link className="button button-ghost" href={patientLocaleHref("/care", locale)}>{copy.back}</Link></div>}
         </section>
 
         <Link className="button button-ghost atlas-care-clinic-back" href={patientLocaleHref("/care", locale)}>{copy.back}</Link>

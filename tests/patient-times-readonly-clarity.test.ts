@@ -14,7 +14,7 @@ test("patient sees read-only availability when verified booking is not ready", (
 });
 
 test("no-slots page shows an honest title without duplicate empty copy", () => {
-  assert.ok(page.includes(" : t.noTimes}</h1>"));
+  assert.match(page, /<PatientProfileHero[^>]*title=\{groups\.length \? \(bookingReady \? t\.title : t\.readOnlyTitle\) : t\.noTimes\}/);
   assert.doesNotMatch(page, /<strong>\{t\.noTimes\}<\/strong>/);
 });
 

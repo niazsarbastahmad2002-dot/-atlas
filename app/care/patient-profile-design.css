@@ -1,0 +1,56 @@
+/* Shared Atlas Patient profile and real availability design */
+.atlas-patient-detail{min-height:100dvh;background:var(--canvas);color:var(--ink)}
+.atlas-patient-detail :is(a,button):focus-visible{outline:3px solid #168f66;outline-offset:3px}
+.atlas-patient-detail :is(.atlas-care-clinic,.atlas-care-profile,.atlas-times-shell){max-width:1040px;width:min(100% - 32px,1040px);margin-inline:auto;padding-top:25px;padding-bottom:70px}
+.patient-profile-hero{position:relative;isolation:isolate;overflow:hidden;display:grid;align-items:center;min-height:232px;margin-bottom:18px;padding:clamp(22px,4vw,42px);border-radius:28px;background:linear-gradient(120deg,#0b392e,#105d46 65%,#177d5b);color:#fff;box-shadow:0 20px 44px rgba(5,66,48,.15)}
+.patient-profile-rings{position:absolute;z-index:-1;inset-inline-end:-115px;top:-125px;width:420px;height:420px;border:1px solid rgba(255,255,255,.16);border-radius:50%;box-shadow:0 0 0 39px rgba(255,255,255,.035),0 0 0 78px rgba(255,255,255,.025)}
+.patient-profile-inner{display:flex;align-items:center;gap:clamp(20px,4vw,34px);min-width:0}
+.patient-profile-mark{display:grid;flex:0 0 auto;place-items:center;width:clamp(75px,12vw,112px);height:clamp(75px,12vw,112px);border:1px solid rgba(255,255,255,.45);border-radius:26px;background:rgba(255,255,255,.14);font-size:clamp(36px,5vw,52px);font-weight:900;color:#fff}
+.patient-profile-heading{min-width:0;max-width:690px}
+.patient-profile-eyebrow{display:inline-flex;margin-bottom:13px;padding:6px 13px;border:1px solid rgba(255,255,255,.3);border-radius:999px;color:#ecfff3;background:rgba(255,255,255,.1);font-size:12px;font-weight:800}
+.patient-profile-heading h1{margin:0;color:#fff!important;font-size:clamp(29px,5vw,50px);line-height:1.17;letter-spacing:-.035em;overflow-wrap:anywhere}
+.patient-profile-heading p{margin:13px 0 0;color:#daf7e5!important;font-size:clamp(13px,2vw,17px);line-height:1.5}
+.atlas-patient-detail .atlas-profile-share-actions{margin:17px 0 24px}
+.atlas-patient-detail .atlas-profile-share-actions .button{min-height:48px}
+.atlas-patient-detail :is(.atlas-care-clinic-details,.atlas-care-profile-details){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:24px 0 30px;overflow:visible;border:0;background:transparent}
+.atlas-patient-detail :is(.atlas-care-clinic-details,.atlas-care-profile-details)>div{display:flex;flex-direction:column;gap:9px;min-width:0;padding:20px;border:1px solid var(--line);border-radius:19px;background:var(--surface);box-shadow:var(--shadow-sm)}
+.atlas-patient-detail :is(.atlas-care-clinic-details,.atlas-care-profile-details) dt{font-size:12px;font-weight:800;color:var(--muted)}
+.atlas-patient-detail :is(.atlas-care-clinic-details,.atlas-care-profile-details) dd{font-size:16px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
+.atlas-patient-detail .atlas-care-clinic-description,.atlas-patient-detail .atlas-care-bio{max-width:70ch;font-size:15px;line-height:1.7}
+.atlas-patient-detail .atlas-care-profile-specialty{gap:9px;margin-top:20px}
+.atlas-patient-detail .atlas-care-profile-clinic-link{min-height:52px;padding:13px 17px;border-radius:15px}
+.atlas-patient-detail .atlas-care-availability{padding:clamp(19px,3vw,30px);gap:19px;border-radius:24px;box-shadow:var(--shadow-sm)}
+.atlas-patient-detail .atlas-care-availability-heading h2{font-size:clamp(22px,3vw,29px);color:var(--ink)}
+.atlas-patient-detail .atlas-care-availability-heading p{font-size:13px;line-height:1.6}
+.atlas-patient-detail .atlas-care-availability-day{grid-template-columns:minmax(140px,210px) minmax(0,1fr);gap:15px;padding:17px 0}
+.atlas-patient-detail .atlas-care-availability-day>strong{font-size:15px;color:var(--ink);line-height:1.4}
+.atlas-patient-detail .atlas-care-availability-day>div{gap:9px}
+.atlas-patient-detail .atlas-care-availability-day>div>span,.atlas-patient-detail .atlas-care-slot-book{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 14px;border-radius:13px;border:1px solid var(--line);background:var(--surface-soft);color:var(--ink);font-size:14px;font-weight:850;text-decoration:none}
+.atlas-patient-detail .atlas-care-slot-book:hover{background:var(--accent-soft);border-color:var(--accent)}
+.atlas-patient-detail .atlas-care-availability-actions .button{min-height:50px}
+.atlas-patient-detail .atlas-care-clinic-doctors{margin-top:32px}
+.atlas-patient-detail .atlas-care-clinic-doctors h2{font-size:clamp(22px,3vw,30px)}
+.atlas-patient-detail .atlas-care-clinic-doctor-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.atlas-patient-detail .atlas-care-clinic-doctor-list article{display:grid;grid-template-columns:56px minmax(0,1fr);align-items:center;gap:13px;min-width:0;padding:19px;border-radius:20px;box-shadow:var(--shadow-sm)}
+.patient-mini-mark{display:grid!important;place-items:center;width:56px;height:56px;border-radius:18px;background:var(--accent-soft);color:var(--accent)!important;font-size:23px!important;font-weight:900}
+.atlas-patient-detail .atlas-care-clinic-doctor-list article>div{min-width:0}
+.atlas-patient-detail .atlas-care-clinic-doctor-list article strong{font-size:16px;overflow-wrap:anywhere}
+.atlas-patient-detail .atlas-care-clinic-doctor-list article .button{grid-column:1/-1;width:100%;min-height:48px;justify-content:center}
+.patient-detail-empty{display:grid;justify-items:center;gap:16px;padding:38px 20px;border:1px dashed var(--line);border-radius:22px;background:var(--surface);text-align:center}
+.patient-detail-empty-icon{display:grid;place-items:center;width:80px;height:80px;border-radius:24px;background:var(--accent-soft);color:var(--accent);font-size:43px}
+.patient-detail-empty p{max-width:45ch;margin:0;font-size:14px;color:var(--muted);line-height:1.6}
+.patient-detail-empty .button{min-height:48px}
+.atlas-patient-detail .atlas-times-doctor{display:flex;flex-wrap:wrap;gap:9px 16px;align-items:center;margin:16px 0 18px;padding:16px 19px;border:1px solid var(--line);border-radius:17px;background:var(--surface)}
+.atlas-patient-detail .atlas-times-doctor strong{color:var(--ink);font-size:16px}
+.atlas-patient-detail .atlas-times-doctor span{color:var(--accent);font-size:13px}
+.atlas-patient-detail .atlas-times-days{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:22px}
+.atlas-patient-detail .atlas-times-day{padding:23px;border-radius:22px;box-shadow:var(--shadow-sm)}
+.atlas-patient-detail .atlas-times-day h2{font-size:17px;color:var(--ink)}
+.atlas-patient-detail .atlas-times-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.atlas-patient-detail .atlas-time-option{min-height:56px;border-radius:14px;font-size:14px}
+.atlas-patient-detail .atlas-time-option.is-readonly{border-color:var(--line-strong);background:var(--surface-soft);color:var(--ink);font-size:14px}
+.atlas-patient-detail .atlas-times-day-jump-link{min-height:50px;border-radius:13px;background:var(--surface);color:var(--ink)}
+.atlas-patient-detail .atlas-times-actions .button{min-height:50px}
+@media(max-width:860px){.atlas-patient-detail .atlas-care-clinic-doctor-list,.atlas-patient-detail .atlas-times-days{grid-template-columns:1fr}}
+@media(max-width:680px){.atlas-patient-detail :is(.atlas-care-clinic,.atlas-care-profile,.atlas-times-shell){width:min(100% - 28px,1040px);padding-top:17px}.patient-profile-hero{min-height:0;padding:24px;border-radius:23px}.patient-profile-inner{flex-direction:column;align-items:flex-start;gap:17px}.patient-profile-mark{width:72px;height:72px;font-size:34px;border-radius:20px}.atlas-patient-detail :is(.atlas-care-clinic-details,.atlas-care-profile-details){grid-template-columns:1fr}.atlas-patient-detail .atlas-care-availability-day{grid-template-columns:1fr;gap:9px}.atlas-patient-detail .atlas-times-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.atlas-patient-detail *{transition:none!important}}
