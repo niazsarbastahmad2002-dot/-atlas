@@ -5,7 +5,7 @@ import test from "node:test";
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("first clinic name stays fixed while clinic creation is pending", () => {
-  const page = read("app/dashboard/page.tsx");
+  const page = read("app/dashboard/clinic-first-workspace.tsx");
   const input = read("app/dashboard/clinic-setup-name-input.tsx");
 
   assert.match(page, /import \{ ClinicSetupNameInput \} from "\.\/clinic-setup-name-input"/);
