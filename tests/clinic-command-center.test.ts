@@ -37,3 +37,18 @@ test("command center is responsive, keyboard-visible and localized in all Atlas 
   assert.match(page, /focusedRows\.length === 0/);
   assert.match(page, /workbench\.filteredEmpty/);
 });
+
+test("clinic command center finds patients in the currently scoped schedule", () => {
+  assert.match(page, /find: "Find a patient"/);
+  assert.match(page, /find: "دۆزینەوەی نەخۆش"/);
+  assert.match(page, /find: "دیتنا نەخۆشی"/);
+  assert.match(page, /find: "البحث عن مريض"/);
+  assert.match(page, /focusedRows\.length > 0 \? <a className="clinic-command-secondary" href="#atlas-appointment-search"/);
+  const search = readFileSync(new URL("../app/dashboard/mobile-appointment-experience.tsx", import.meta.url), "utf8");
+  assert.match(search, /search\.id = "atlas-appointment-search"/);
+  assert.match(search, /input\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(search, /document\.removeEventListener\("click", onFindPatient\)/);
+  const css = readFileSync(new URL("../app/atlas-responsive-final.css", import.meta.url), "utf8");
+  assert.match(css, /@media \(min-width: 561px\) \{/);
+  assert.match(css, /\.appointment-row\.is-atlas-phone-search-hidden \{ display: none; \}/);
+});
