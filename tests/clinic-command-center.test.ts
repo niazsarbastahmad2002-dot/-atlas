@@ -9,7 +9,8 @@ test("clinic command center prioritizes active work and booking without inventin
   assert.match(page, /pending \+ confirmed/);
   assert.match(page, /workbench\.review/);
   assert.match(page, /href="#new-appointment"/);
-  assert.match(page, /const nextAppointment = selectedDay === today/);
+  assert.match(page, /const nextAppointment = selectedDay >= today/);
+  assert.match(page, /selectedDay > today \|\| new Date\(row\.appointment_at\)\.getTime\(\) >= now - 5 \* 60 \* 1000/);
   assert.doesNotMatch(page, /const waitingPatients =/);
 });
 
