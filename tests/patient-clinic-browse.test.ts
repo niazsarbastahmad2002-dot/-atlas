@@ -20,7 +20,7 @@ test("clinic browse is sourced only from published doctors already returned by e
 
 test("patient can reach legitimate clinics without gaining membership or seeing fabricated results", () => {
   assert.match(clinics, /patientLocaleHref\(`\/care\/\$\{clinic\.clinic_slug\}`, locale\)/);
-  assert.match(clinics, /preview\\s*\\?\\s*<div/);
+  assert.match(clinics, /preview\s*\?\s*<div/);
   assert.match(clinics, /aria-disabled="true"/);
   assert.doesNotMatch(clinics, /\/book|service_role|patient_phone|clinic_members|supabase|\.rpc\(/i);
   assert.match(preview, /VERCEL_ENV !== "preview"/);
