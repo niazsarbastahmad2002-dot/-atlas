@@ -39,11 +39,11 @@ test("command center is responsive, keyboard-visible and localized in all Atlas 
 });
 
 test("clinic command center finds patients in the currently scoped schedule", () => {
-  assert.match(source, /find: "Find a patient"/);
-  assert.match(source, /find: "دۆزینەوەی نەخۆش"/);
-  assert.match(source, /find: "دیتنا نەخۆشی"/);
-  assert.match(source, /find: "البحث عن مريض"/);
-  assert.match(source, /focusedRows\.length > 0 \? <a className="clinic-command-secondary" href="#atlas-appointment-search"/);
+  assert.match(page, /find: "Find a patient"/);
+  assert.match(page, /find: "دۆزینەوەی نەخۆش"/);
+  assert.match(page, /find: "دیتنا نەخۆشی"/);
+  assert.match(page, /find: "البحث عن مريض"/);
+  assert.match(page, /focusedRows\.length > 0 \? <a className="clinic-command-secondary" href="#atlas-appointment-search"/);
   const search = readFileSync(new URL("../app/dashboard/mobile-appointment-experience.tsx", import.meta.url), "utf8");
   assert.match(search, /search\.id = "atlas-appointment-search"/);
   assert.match(search, /input\.focus\(\{ preventScroll: true \}\)/);
