@@ -11,7 +11,7 @@ test("Patient uses the original Atlas vector identity in both shared header and 
   assert.match(nav, /src="\/atlas-icon\.svg"/);
   assert.match(care, /src="\/atlas-mark\.svg"/);
   assert.match(care, /atlas-care-empty-symbol"><img src="\/atlas-icon\.svg"/);
-  assert.doesNotMatch(care, /atlas-care-orbit-heart">✳|atlas-care-empty-symbol">✳|atlas-care-empty-spark/);
+  assert.doesNotMatch(care, /atlas-care-orbit-heart">✳|atlas-care-empty-symbol">✳|className="atlas-care-empty-spark/);
 });
 
 test("language selection is compact, shared across Patient pages, and keeps deep links", () => {

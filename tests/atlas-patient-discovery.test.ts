@@ -27,7 +27,8 @@ test("visual browse choices come only from legitimately published doctor results
 test("patient discovery does not fake a photo when the public API does not expose one", () => {
   assert.match(page, /atlas-care-doctor-mark/);
   assert.match(page, /doctor\.doctor_name\.trim\(\)\.slice\(0, 1\)/);
-  assert.doesNotMatch(page, /<img|next\/image|doctor\.photo|avatar_url/i);
+  assert.match(page, /src="\/atlas-icon\.svg"/);
+  assert.doesNotMatch(page, /doctor\.photo|avatar_url|src=\{doctor\./i);
 });
 
 test("zero published doctors still leaves a useful patient experience", () => {
