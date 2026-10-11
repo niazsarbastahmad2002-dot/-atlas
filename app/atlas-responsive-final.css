@@ -335,3 +335,82 @@
     animation: none !important;
   }
 }
+
+/* Desktop receptionists need the same clinic-scoped patient lookup as iPad/phone. */
+@media (min-width: 561px) and (pointer: fine) {
+  .appointments-panel .atlas-phone-appointment-search {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 34px;
+    align-items: center;
+    gap: 9px;
+    min-height: 52px;
+    margin: 0 0 12px;
+    padding: 0 12px;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 14px;
+    background: var(--surface-soft);
+    color: var(--muted);
+  }
+  .appointments-panel .atlas-phone-appointment-search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-faint);
+  }
+  .appointments-panel .atlas-phone-search-icon,
+  .appointments-panel .atlas-phone-search-clear {
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+  }
+  .appointments-panel .atlas-phone-search-icon svg,
+  .appointments-panel .atlas-phone-search-clear svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .appointments-panel .atlas-phone-appointment-search input {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: 15px;
+  }
+  .appointments-panel .atlas-phone-appointment-search input::placeholder { color: var(--muted); }
+  .appointments-panel .atlas-phone-search-clear {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+  }
+  .appointments-panel .atlas-phone-search-clear[hidden],
+  .appointments-panel .atlas-phone-search-meta[hidden],
+  .appointments-panel .atlas-phone-search-empty[hidden] { display: none; }
+  .appointments-panel .atlas-phone-search-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 10px;
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+  .appointments-panel .atlas-phone-search-empty {
+    display: block;
+    margin: 0 0 12px;
+    padding: 12px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+    color: var(--ink-soft);
+  }
+  .appointments-panel .appointment-row.is-atlas-phone-search-hidden { display: none; }
+  .appointments-panel .appointment-row.is-atlas-phone-search-focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-faint);
+  }
+}
