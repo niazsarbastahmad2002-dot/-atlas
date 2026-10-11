@@ -49,6 +49,6 @@ test("clinic command center finds patients in the currently scoped schedule", ()
   assert.match(search, /input\.focus\(\{ preventScroll: true \}\)/);
   assert.match(search, /document\.removeEventListener\("click", onFindPatient\)/);
   const css = readFileSync(new URL("../app/atlas-responsive-final.css", import.meta.url), "utf8");
-  assert.match(css, /@media \(min-width: 561px\) and \(pointer: fine\)/);
+  assert.match(css, /@media \(min-width: 561px\) \{/);
   assert.match(css, /\.appointment-row\.is-atlas-phone-search-hidden \{ display: none; \}/);
 });
