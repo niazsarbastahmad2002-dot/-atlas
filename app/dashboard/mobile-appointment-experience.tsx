@@ -263,6 +263,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       if (!panel.querySelector(".atlas-phone-appointment-search")) {
         const search = document.createElement("div");
         search.className = "atlas-phone-appointment-search";
+        search.id = "atlas-appointment-search";
         search.setAttribute("role", "search");
 
         const label = document.createElement("label");
@@ -389,7 +390,20 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       return false;
     };
 
+    const onFindPatient = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const link = target.closest<HTMLAnchorElement>('a[data-atlas-find-patient="true"]');
+      if (!link) return;
+      const input = document.querySelector<HTMLInputElement>("#atlas-appointment-search input");
+      if (!input) return;
+      event.preventDefault();
+      input.scrollIntoView({ block: "center", behavior: "smooth" });
+      input.focus({ preventScroll: true });
+    };
+
     prepare();
+    document.addEventListener("click", onFindPatient);
     document.addEventListener("change", onChange);
     const observer = new MutationObserver((records) => {
       if (records.some(mutationNeedsPrepare)) schedulePrepare();
@@ -404,6 +418,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
     return () => {
       observer.disconnect();
       if (prepareFrame) window.cancelAnimationFrame(prepareFrame);
+      document.removeEventListener("click", onFindPatient);
       document.removeEventListener("change", onChange);
       document.querySelectorAll(".atlas-phone-appointment-search, .atlas-phone-search-meta, .atlas-phone-search-empty").forEach((node) => node.remove());
       document.querySelectorAll<HTMLElement>(".appointment-row.is-atlas-phone-managed").forEach((row) => {
