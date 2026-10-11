@@ -30,7 +30,7 @@ const OCCUPIED_SLOT_PAGE_SIZE = 500;
 const OCCUPIED_SLOT_VIEW_LIMIT = 5000;
 
 type DashboardPageProps = {
-  searchParams: Promise<{ clinic?: string; day?: string; doctor?: string; error?: string; notice?: string }>;
+  searchParams: Promise<{ clinic?: string; day?: string; doctor?: string; focus?: string; error?: string; notice?: string }>;
 };
 
 const dayCopy: Record<UiLocale, {
@@ -89,6 +89,16 @@ const summaryCopy: Record<UiLocale, {
   ar: { all: "كل المواعيد", notConfirmed: "الحضور غير مؤكد", confirmed: "الحضور مؤكد", completed: "انتهت الزيارة", noShow: "لم يحضر", cancelled: "ملغي" },
 };
 
+const workbenchCopy: Record<UiLocale, {
+  eyebrow: string; title: string; description: string; active: string; book: string;
+  next: string; review: string; filters: string; filteredEmpty: string; all: string;
+}> = {
+  en: { eyebrow: "Clinic operations", title: "Your clinic, at a glance", description: "See what needs attention and move straight to the next task.", active: "Active appointments", book: "Book an appointment", next: "Next scheduled", review: "Review unconfirmed", filters: "Focus the schedule", filteredEmpty: "No appointments match this view.", all: "Show all appointments" },
+  ku: { eyebrow: "کاروباری کلینیک", title: "دۆخی کلینیک بە یەک نیگا", description: "بزانە چی پێویستی بە سەرنجە و ڕاستەوخۆ دەست بە کاری داهاتوو بکە.", active: "وادە چالاکەکان", book: "وادە تۆمار بکە", next: "وادەی داهاتوو", review: "پشکنینی وادە پشتڕاستنەکراوەکان", filters: "خشتەکە ڕێک بخە", filteredEmpty: "هیچ وادەیەک لەم بەشەدا نییە.", all: "هەموو وادەکان پیشان بدە" },
+  bd: { eyebrow: "کارێن کلینیکێ", title: "بارودۆخێ کلینیکێ ب ئێک نێرین", description: "بزانە چ پێدڤی ب سەرنجێ هەیە و دەست ب کارێ پاشێ بکە.", active: "وادەیێن چالاک", book: "وادەیەک تۆمار بکە", next: "وادەیا پاشێ", review: "پشکنینا وادەیێن نەهاتینە پشتڕاستکرن", filters: "خشتەیێ ڕێک بخە", filteredEmpty: "چ وادە ل ڤێ بەشێ نینن.", all: "هەمی وادەیان نیشان بدە" },
+  ar: { eyebrow: "إدارة العيادة", title: "عيادتك بنظرة واحدة", description: "شوف شنو يحتاج متابعة وانتقل مباشرة للخطوة الجاية.", active: "المواعيد النشطة", book: "حجز موعد", next: "الموعد القادم", review: "مراجعة غير المؤكد", filters: "تصفية الجدول", filteredEmpty: "ماكو مواعيد تطابق هذا العرض.", all: "عرض كل المواعيد" },
+};
+
 function validBaghdadDay(value: string | undefined, fallback: string) {
   if (!value || !dayPattern.test(value)) return fallback;
   const date = new Date(`${value}T12:00:00+03:00`);
@@ -102,9 +112,10 @@ function shiftBaghdadDay(day: string, amount: number) {
   return baghdadDate.format(date);
 }
 
-function scheduleHref(clinicId: string, day: string, doctorId?: string | null) {
+function scheduleHref(clinicId: string, day: string, doctorId?: string | null, focus?: string) {
   const params = new URLSearchParams({ clinic: clinicId, day });
   if (doctorId) params.set("doctor", doctorId);
+  if (focus && focus !== "all") params.set("focus", focus);
   return `/dashboard?${params}`;
 }
 
@@ -137,6 +148,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const t = uiText(locale);
   const days = dayCopy[locale];
   const summary = summaryCopy[locale];
+  const workbench = workbenchCopy[locale];
   const contactRelationship = contactRelationshipCopy[locale];
   const messageError = getDashboardMessage(params.error);
   const notice = getDashboardMessage(params.notice);
@@ -238,6 +250,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const completed = visibleRows.filter((row) => row.status === "completed").length;
   const noShow = visibleRows.filter((row) => row.status === "no_show").length;
   const cancelled = visibleRows.filter((row) => row.status === "cancelled").length;
+  const focusStatuses = ["all", "pending", "confirmed", "completed", "no_show", "cancelled"] as const;
+  const focus = focusStatuses.find((item) => item === params.focus) ?? "all";
+  const focusedRows = focus === "all" ? visibleRows : visibleRows.filter((row) => row.status === focus);
+  const focusOptions = [
+    { key: "all", label: summary.all, count: visibleRows.length },
+    { key: "pending", label: summary.notConfirmed, count: pending },
+    { key: "confirmed", label: summary.confirmed, count: confirmed },
+    { key: "completed", label: summary.completed, count: completed },
+    { key: "no_show", label: summary.noShow, count: noShow },
+    { key: "cancelled", label: summary.cancelled, count: cancelled },
+  ];
 
   const appointmentOrder = new Map<string, number>();
   let activeOrder = 0;
@@ -249,7 +272,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const previousDay = shiftBaghdadDay(selectedDay, -1);
   const nextDay = shiftBaghdadDay(selectedDay, 1);
-  const nextAppointmentId = selectedDay === today ? visibleRows.find((row) => ["pending", "confirmed"].includes(row.status) && new Date(row.appointment_at).getTime() >= now - 5 * 60 * 1000)?.id ?? null : null;
+  const nextAppointment = selectedDay === today ? visibleRows.find((row) => ["pending", "confirmed"].includes(row.status) && new Date(row.appointment_at).getTime() >= now - 5 * 60 * 1000) ?? null : null;
+  const nextAppointmentId = nextAppointment?.id ?? null;
 
   const occupiedForSelectedDoctor = selectedDoctor
     ? (occupiedAppointments ?? []).filter((row) => row.doctor_id === selectedDoctor.id)
@@ -305,7 +329,29 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     {multiDoctor ? <nav className="doctor-schedule-tabs" aria-label={days.doctorSchedules}>{activeDoctors.map((doctor) => { const count = rows.filter((row) => row.doctor_id === doctor.id).length; const selected = doctor.id === selectedDoctor?.id; return <a href={scheduleHref(clinic.id, selectedDay, doctor.id)} className={selected ? "is-selected" : ""} aria-current={selected ? "page" : undefined} key={doctor.id}><strong data-atlas-user-content="true">{doctor.name}</strong><span>{localizeDigits(count, locale)}</span></a>; })}</nav> : null}
     {messageError || selectionError ? <p className="notice notice-error workspace-notice" role="alert">{messageError ?? selectionError}</p> : null}{notice ? <p className="notice notice-success workspace-notice" role="status">{notice}</p> : null}
     {scheduleTruncated ? <p className="notice workspace-notice" role="status">{days.limited.replaceAll("{count}", localizeDigits(rows.length, locale))}</p> : null}
-    <section className="stats workspace-stats schedule-summary" aria-label={days.appointments}><Stat label={summary.all} value={visibleRows.length} tone="total" locale={locale} /><Stat label={summary.notConfirmed} value={pending} tone="pending" locale={locale} /><Stat label={summary.confirmed} value={confirmed} tone="confirmed" locale={locale} /><Stat label={summary.completed} value={completed} tone="completed" locale={locale} /><Stat label={summary.noShow} value={noShow} tone="no-show" locale={locale} /><Stat label={summary.cancelled} value={cancelled} tone="cancelled" locale={locale} /></section>
+    <section className="clinic-command-center" aria-label={workbench.title}>
+      <div className="clinic-command-main">
+        <div className="eyebrow">{workbench.eyebrow} · {relativeDay ?? formatBaghdadDay(selectedDate, locale)}</div>
+        <h2>{workbench.title}</h2>
+        <p>{workbench.description}</p>
+        <div className="clinic-command-actions">
+          {canCreateOnSelectedDay && selectedDoctor ? <a className="clinic-command-primary" href="#new-appointment">+ {workbench.book}</a> : null}
+          {pending > 0 ? <a className="clinic-command-secondary" href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, "pending")}>{workbench.review} <span aria-hidden="true">↗</span></a> : null}
+        </div>
+      </div>
+      <div className="clinic-command-metrics">
+        <div className="clinic-command-active"><span>{workbench.active}</span><strong>{localizeDigits(pending + confirmed, locale)}</strong></div>
+        <a className="clinic-command-metric" href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, "pending")}><span>{summary.notConfirmed}</span><strong>{localizeDigits(pending, locale)}</strong></a>
+        <a className="clinic-command-metric" href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, "confirmed")}><span>{summary.confirmed}</span><strong>{localizeDigits(confirmed, locale)}</strong></a>
+        <div className="clinic-command-next"><span>{workbench.next}</span><strong>{nextAppointment ? formatTimeValue(toBaghdadInputValue(new Date(nextAppointment.appointment_at)).slice(11, 16), locale) : "—"}</strong></div>
+      </div>
+    </section>
+    <nav className="schedule-focus" aria-label={workbench.filters}>
+      <div className="schedule-focus-heading"><strong>{workbench.filters}</strong><span>{days.appointments}: {localizeDigits(visibleRows.length, locale)}</span></div>
+      <div className="schedule-focus-options">
+        {focusOptions.map((option) => <a key={option.key} className={focus === option.key ? "is-selected" : ""} href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, option.key)} aria-current={focus === option.key ? "page" : undefined}><span>{option.label}</span><strong>{localizeDigits(option.count, locale)}</strong></a>)}
+      </div>
+    </nav>
     <div className={`workspace-grid ${canCreateOnSelectedDay ? "" : "is-read-only-day"}`}>
       {canCreateOnSelectedDay ? <section className="panel appointment-composer" id="new-appointment"><div className="panel-heading composer-heading"><div><div className="eyebrow">{relativeDay ?? formatBaghdadDay(selectedDate, locale)}</div><h2>{t.newAppointment}</h2></div><span className="composer-shortcut" aria-hidden="true">+</span></div>
         {occupiedSlotsLimited ? <p className="notice workspace-notice" role="status">{days.availabilityLimited.replace("{count}", localizeDigits(OCCUPIED_SLOT_VIEW_LIMIT, locale))}</p> : null}
@@ -324,11 +370,43 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <label htmlFor="reminder_language">{t.reminderLanguage}</label><select id="reminder_language" name="reminder_language" defaultValue={defaultReminderLanguage}>{Object.entries(reminderLanguageLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
           <label className="checkbox-field consent-card" htmlFor="reminder_consent"><input id="reminder_consent" name="reminder_consent" type="checkbox" /><span>{t.reminderConsent}</span></label><p className="field-help">{t.reminderConsentHelp}</p><SubmitButton pendingLabel={t.saving} disabled={!selectedDoctor}>{t.saveAppointment}</SubmitButton>
         </form><div className={`reminder-note ${reminderSettings?.enabled ? "reminder-ready" : ""}`}><strong>{days.reminders}: </strong>{reminderSettings?.enabled ? reminderPlanLabel(reminderSettings.lead_minutes, reminderSettings.second_lead_minutes, locale) : t.reminderOff}</div><p className="composer-privacy">{t.privacyNote}</p></section> : null}
-      <section className="panel appointments-panel schedule-card"><div className="panel-heading schedule-heading"><div><div className="eyebrow">{relativeDay ?? t.schedule}</div><h2>{formatBaghdadDay(selectedDate, locale)}</h2><p className="panel-subtitle" data-atlas-user-content={selectedDoctor ? "true" : undefined}>{selectedDoctor?.name ?? t.todaySubheading}</p></div><div className="schedule-count-box" aria-label={`${days.appointments}: ${localizeDigits(visibleRows.length, locale)}`}><span>{days.appointments}</span><strong>{localizeDigits(visibleRows.length, locale)}</strong></div></div>
-        {visibleRows.length === 0 ? <div className="empty-state compact-empty"><div><strong>{days.empty}</strong><span>{days.emptyHelp}</span>{canCreateOnSelectedDay && selectedDoctor ? <a className="button button-small empty-state-action" href="#new-appointment">+ {days.add}</a> : null}</div></div> : <div className="appointment-list polished-appointment-list">{visibleRows.map((appointment) => { const status = isAppointmentStatus(appointment.status) ? appointment.status : "pending"; const editorDoctors = doctorRows.filter((doctor) => doctor.active || doctor.id === appointment.doctor_id).map((doctor) => ({ id: doctor.id, name: doctor.name })); const isNext = appointment.id === nextAppointmentId; const reminderLabel = reminderLabels[appointment.reminder_status]; const order = appointmentOrder.get(appointment.id); const canEditDetails = new Date(appointment.appointment_at).getTime() >= now - 60_000; return <article className={`appointment-row polished-appointment ${isNext ? "is-next-appointment" : ""}`} data-atlas-appointment-id={appointment.id} data-atlas-compact-time={formatTimeValue(toBaghdadInputValue(new Date(appointment.appointment_at)).slice(11, 16), locale)} key={appointment.id}>{isNext ? <div className="next-appointment-label">{days.nextUp}</div> : null}<div className="appointment-primary"><div className="patient-cell" data-atlas-user-content="true"><strong>{appointment.patient_name}</strong><span><bdi dir="ltr">{formatIraqiMobile(appointment.patient_phone)}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge" title={`${days.order} #${localizeDigits(order, locale)}`} aria-label={`${days.order} ${localizeDigits(order, locale)}`}>#{localizeDigits(order, locale)}</span> : null}<span className={`status status-${status}`}>{statusLabels[status]}</span>{reminderLabel ? <span className="status status-reminder">{reminderLabel}</span> : null}</div></div><dl className="appointment-details polished-details"><div><dt>{t.time}</dt><dd className="appointment-time-value">{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div><div><dt>{t.doctor}</dt><dd data-atlas-user-content="true">{appointment.doctor_name}</dd></div><div><dt>{t.reminderLanguage}</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div></dl>{canEditDetails ? <AppointmentEditor clinicId={clinic.id} appointmentId={appointment.id} revision={appointment.appointment_revision} status={status} patientName={appointment.patient_name} patientPhone={formatIraqiMobile(appointment.patient_phone)} contactRelationship={appointment.contact_relationship as "patient" | "parent_guardian" | "relative_caregiver"} doctorId={appointment.doctor_id} appointmentAt={appointment.appointment_at} reminderLanguage={appointment.reminder_language} reminderConsent={appointment.reminder_consent} doctors={editorDoctors} min={toBaghdadInputValue(new Date(Math.min(minimum.getTime(), new Date(appointment.appointment_at).getTime())))} max={maximumInput} locale={locale} /> : null}<AppointmentActions clinicId={clinic.id} appointmentId={appointment.id} revision={appointment.appointment_revision} status={status} appointmentAt={appointment.appointment_at} patientName={appointment.patient_name} locale={locale} reminderLanguage={appointment.reminder_language as UiLocale} /></article>; })}</div>}
+      <section className="panel appointments-panel schedule-card"><div className="panel-heading schedule-heading"><div><div className="eyebrow">{relativeDay ?? t.schedule}</div><h2>{formatBaghdadDay(selectedDate, locale)}</h2><p className="panel-subtitle" data-atlas-user-content={selectedDoctor ? "true" : undefined}>{selectedDoctor?.name ?? t.todaySubheading}</p></div><div className="schedule-count-box" aria-label={`${days.appointments}: ${localizeDigits(focusedRows.length, locale)}`}><span>{days.appointments}</span><strong>{localizeDigits(focusedRows.length, locale)}</strong></div></div>
+        {focusedRows.length === 0 ? <div className="empty-state compact-empty"><div><strong>{focus === "all" ? days.empty : workbench.filteredEmpty}</strong><span>{focus === "all" ? days.emptyHelp : summary[focus === "pending" ? "notConfirmed" : focus === "no_show" ? "noShow" : focus]}</span>{focus !== "all" ? <a className="button button-ghost button-small" href={scheduleHref(clinic.id, selectedDay, selectedDoctorId)}>{workbench.all}</a> : null}{canCreateOnSelectedDay && selectedDoctor ? <a className="button button-small empty-state-action" href="#new-appointment">+ {days.add}</a> : null}</div></div> : <div className="appointment-list polished-appointment-list">{focusedRows.map((appointment) => { const status = isAppointmentStatus(appointment.status) ? appointment.status : "pending"; const editorDoctors = doctorRows.filter((doctor) => doctor.active || doctor.id === appointment.doctor_id).map((doctor) => ({ id: doctor.id, name: doctor.name })); const isNext = appointment.id === nextAppointmentId; const reminderLabel = reminderLabels[appointment.reminder_status]; const order = appointmentOrder.get(appointment.id); const canEditDetails = new Date(appointment.appointment_at).getTime() >= now - 60_000; return <article className={`appointment-row polished-appointment ${isNext ? "is-next-appointment" : ""}`} data-atlas-appointment-id={appointment.id} data-atlas-compact-time={formatTimeValue(toBaghdadInputValue(new Date(appointment.appointment_at)).slice(11, 16), locale)} key={appointment.id}>{isNext ? <div className="next-appointment-label">{days.nextUp}</div> : null}<div className="appointment-primary"><div className="patient-cell" data-atlas-user-content="true"><strong>{appointment.patient_name}</strong><span><bdi dir="ltr">{formatIraqiMobile(appointment.patient_phone)}</bdi></span></div><div className="appointment-badges">{order ? <span className="appointment-order-badge" title={`${days.order} #${localizeDigits(order, locale)}`} aria-label={`${days.order} ${localizeDigits(order, locale)}`}>#{localizeDigits(order, locale)}</span> : null}<span className={`status status-${status}`}>{statusLabels[status]}</span>{reminderLabel ? <span className="status status-reminder">{reminderLabel}</span> : null}</div></div><dl className="appointment-details polished-details"><div><dt>{t.time}</dt><dd className="appointment-time-value">{formatBaghdadDateTime(new Date(appointment.appointment_at), locale)}</dd></div><div><dt>{t.doctor}</dt><dd data-atlas-user-content="true">{appointment.doctor_name}</dd></div><div><dt>{t.reminderLanguage}</dt><dd>{reminderLanguageLabels[appointment.reminder_language] ?? appointment.reminder_language}</dd></div></dl>{canEditDetails ? <AppointmentEditor clinicId={clinic.id} appointmentId={appointment.id} revision={appointment.appointment_revision} status={status} patientName={appointment.patient_name} patientPhone={formatIraqiMobile(appointment.patient_phone)} contactRelationship={appointment.contact_relationship as "patient" | "parent_guardian" | "relative_caregiver"} doctorId={appointment.doctor_id} appointmentAt={appointment.appointment_at} reminderLanguage={appointment.reminder_language} reminderConsent={appointment.reminder_consent} doctors={editorDoctors} min={toBaghdadInputValue(new Date(Math.min(minimum.getTime(), new Date(appointment.appointment_at).getTime())))} max={maximumInput} locale={locale} /> : null}<AppointmentActions clinicId={clinic.id} appointmentId={appointment.id} revision={appointment.appointment_revision} status={status} appointmentAt={appointment.appointment_at} patientName={appointment.patient_name} locale={locale} reminderLanguage={appointment.reminder_language as UiLocale} /></article>; })}</div>}
       </section>
     </div>
     <style>{`
+
+      .clinic-command-center{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:20px;margin:12px 0 18px;padding:clamp(20px,3vw,32px);border-radius:24px;background:linear-gradient(125deg,#102b32 0%,#153e43 62%,#1c5652 100%);color:#fff;box-shadow:0 16px 35px rgba(12,45,48,.16)}
+      .clinic-command-main{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0}
+      .clinic-command-main .eyebrow{color:#a7dfd1;font-size:12px;letter-spacing:.07em}
+      .clinic-command-main h2{margin:12px 0 9px;font-size:clamp(25px,3vw,39px);line-height:1.12;letter-spacing:-.035em;color:#fff}
+      .clinic-command-main p{max-width:43ch;margin:0;color:#d5e7e4;font-size:14px;line-height:1.65}
+      .clinic-command-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+      .clinic-command-actions a{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:12px;padding:11px 17px;font-size:13px;font-weight:800;text-decoration:none;transition:transform .15s ease,background .15s ease}
+      .clinic-command-actions a:hover{transform:translateY(-1px)}
+      .clinic-command-primary{background:#b8f0d9;color:#103d34}
+      .clinic-command-primary:hover{background:#d3fbe9}
+      .clinic-command-secondary{border:1px solid #86b9ae;background:rgba(255,255,255,.08);color:#fff}
+      .clinic-command-secondary:hover{background:rgba(255,255,255,.15)}
+      .clinic-command-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+      .clinic-command-metrics>*{display:flex;flex-direction:column;justify-content:space-between;min-height:102px;min-width:0;border:1px solid rgba(255,255,255,.19);border-radius:15px;padding:14px 16px;background:rgba(255,255,255,.09);color:#fff;text-decoration:none}
+      .clinic-command-metrics span{font-size:12px;font-weight:720;line-height:1.4;color:#d7ece7}
+      .clinic-command-metrics strong{margin-top:9px;font-size:clamp(23px,2.4vw,34px);font-weight:850;line-height:1.05;letter-spacing:-.02em;color:#fff}
+      .clinic-command-active{background:rgba(169,242,212,.18)!important;border-color:rgba(169,242,212,.42)!important}
+      .clinic-command-metric:hover{background:rgba(255,255,255,.17)}
+      .clinic-command-next strong{font-size:clamp(21px,2.1vw,29px)}
+      .schedule-focus{margin:0 0 18px;padding:15px 17px;border:1px solid var(--line);border-radius:18px;background:var(--surface,#fff)}
+      .schedule-focus-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:11px}
+      .schedule-focus-heading strong{font-size:14px;color:var(--ink)}
+      .schedule-focus-heading>span{font-size:12px;font-weight:700;color:var(--ink-soft)}
+      .schedule-focus-options{display:flex;flex-wrap:wrap;gap:8px}
+      .schedule-focus-options a{display:inline-flex;align-items:center;gap:9px;min-height:44px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);font-size:12px;font-weight:750;line-height:1.35;text-decoration:none}
+      .schedule-focus-options a strong{display:inline-grid;min-width:24px;min-height:24px;place-items:center;border-radius:8px;background:#edf2f0;color:#1a5146;font-size:12px}
+      .schedule-focus-options a.is-selected{border-color:#166f5c;background:#e9f6ef;color:#125b4b;box-shadow:inset 0 0 0 1px #166f5c}
+      .schedule-focus-options a.is-selected strong{background:#166f5c;color:#fff}
+      .schedule-focus-options a:focus-visible,.clinic-command-actions a:focus-visible,.clinic-command-metric:focus-visible{outline:3px solid #f1c85c;outline-offset:3px}
+      @media(max-width:900px){.clinic-command-center{grid-template-columns:1fr}.clinic-command-metrics>*{min-height:94px}}
+      @media(max-width:600px){.clinic-command-center{padding:19px;border-radius:19px;gap:19px}.clinic-command-main h2{font-size:27px}.clinic-command-actions{width:100%}.clinic-command-actions a{flex:1 1 160px}.clinic-command-metrics>*{min-height:89px;padding:12px}.clinic-command-metrics strong{font-size:27px}.schedule-focus{padding:13px}.schedule-focus-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.schedule-focus-options a{justify-content:space-between;min-width:0;padding:8px 10px}.schedule-focus-options a span{overflow-wrap:anywhere}}
       .workspace-grid.is-read-only-day{grid-template-columns:1fr}
       .workspace-grid.is-read-only-day .appointments-panel{min-width:0}
       .schedule-summary{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
