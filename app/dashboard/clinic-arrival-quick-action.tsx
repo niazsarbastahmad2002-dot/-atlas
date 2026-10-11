@@ -103,10 +103,11 @@ export function ClinicArrivalQuickAction({
         className="clinic-arrival-quick-button"
         onClick={update}
         disabled={pending || done || tooEarly}
-        title={tooEarly ? t.tooEarly : undefined}
+        aria-describedby={tooEarly ? "clinic-quick-hint-" + appointmentId : undefined}
       >
         {pending ? t.saving : done ? t.saved : status === "pending" ? t.confirm : t.complete}
       </button>
+      {tooEarly ? <span id={"clinic-quick-hint-" + appointmentId} className="clinic-arrival-quick-hint">{t.tooEarly}</span> : null}
       {error ? <span className="clinic-arrival-quick-error" role="alert">{error}</span> : null}
     </div>
   );
