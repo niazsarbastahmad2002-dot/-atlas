@@ -5,6 +5,7 @@ import test from "node:test";
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 const care = source("app/care/page.tsx");
+const directoryCard = source("app/care/patient-directory-card.tsx");
 const clinic = source("app/care/[clinicSlug]/page.tsx");
 const doctor = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");
 const times = source("app/care/[clinicSlug]/[doctorSlug]/times/page.tsx");
@@ -29,7 +30,7 @@ test("Atlas Patient care routes prefer an explicit supported language before the
 test("Patient discovery keeps language through search and navigation", () => {
   assert.match(care, /name="lang" value=\{locale\}/);
   assert.match(care, /patientLocaleHref\("\/care", locale, \{ sort: "soonest" \}\)/);
-  assert.match(care, /patientLocaleHref\(`\/care\/\$\{doctor\.clinic_slug\}\/\$\{doctor\.doctor_slug\}`, locale\)/);
+  assert.match(directoryCard, /patientLocaleHref\(`\/care\/\$\{doctor\.clinic_slug\}\/\$\{doctor\.doctor_slug\}`, locale\)/);
   assert.match(care, /patientLocaleHref\("\/patient-account", locale\)/);
   assert.match(clinic, /patientLocaleHref\(`\/care\/\$\{clinicSlug\}\/\$\{doctor\.slug\}`, locale\)/);
   assert.match(doctor, /patientLocaleHref\(`\/care\/\$\{profile\.clinic_slug\}`, locale\)/);

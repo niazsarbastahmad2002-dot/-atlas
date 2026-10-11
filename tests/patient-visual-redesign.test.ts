@@ -4,6 +4,7 @@ import test from "node:test";
 
 const page = readFileSync(new URL("../app/care/page.tsx", import.meta.url), "utf8");
 const nav = readFileSync(new URL("../app/care/patient-nav.tsx", import.meta.url), "utf8");
+const card = readFileSync(new URL("../app/care/patient-directory-card.tsx", import.meta.url), "utf8");
 
 test("Patient wordmark stays dark and visible against light navigation in all routes", () => {
   assert.match(nav, /atlas-patient-brand \.app-brand-word\{color:#153e2c!important;opacity:1!important;visibility:visible!important/);
@@ -35,6 +36,6 @@ test("Redesign preserves real directory, existing availability, and no live book
   assert.match(page, /search_public_doctors_with_availability/);
   assert.match(page, /p_limit: 30/);
   assert.match(page, /nextAvailabilityLabel\(doctor\.next_available_at, locale\)/);
-  assert.match(page, /atlas-care-next-opening/);
+  assert.match(card, /atlas-care-next-opening/);
   assert.doesNotMatch(page, /fakeDoctor|mockDoctor|\.from\("appointments"\)|service_role|\/book\b/i);
 });
