@@ -70,6 +70,8 @@ test("completion is disabled until appointment time while status updates are pen
   const quick = readFileSync(new URL("../app/dashboard/clinic-arrival-quick-action.tsx", import.meta.url), "utf8");
   assert.match(quick, /appointmentTime <= now \+ 5 \* 60_000/);
   assert.match(quick, /status === "confirmed" && !completionReady/);
+  assert.match(quick, /aria-describedby=\{tooEarly \? "clinic-quick-hint-" \+ appointmentId : undefined\}/);
+  assert.match(quick, /className="clinic-arrival-quick-hint"/);
   assert.match(quick, /disabled=\{pending \|\| done \|\| tooEarly\}/);
   assert.match(quick, /requestInFlight\.current/);
   assert.match(quick, /window\.setInterval\(updateClock, 30_000\)/);
