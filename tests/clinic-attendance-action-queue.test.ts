@@ -57,6 +57,7 @@ test("today's front desk queue offers direct attendance actions using the curren
   assert.match(page, /selectedDay === today \? <ClinicArrivalQuickAction/);
   assert.match(page, /clinicId=\{clinic\.id\}/);
   assert.match(page, /appointmentId=\{appointment\.id\}/);
+  assert.match(page, /patientName=\{appointment\.patient_name\}/);
   assert.match(page, /revision=\{appointment\.appointment_revision\}/);
   assert.match(page, /status=\{lane\.status\}/);
   assert.match(page, /appointmentAt=\{appointment\.appointment_at\}/);
@@ -74,6 +75,7 @@ test("completion is disabled until appointment time while status updates are pen
   assert.match(quick, /className="clinic-arrival-quick-hint"/);
   assert.match(quick, /disabled=\{pending \|\| done \|\| tooEarly\}/);
   assert.match(quick, /requestInFlight\.current/);
+  assert.match(quick, /aria-label=\{actionLabel \+ ": " \+ patientName\}/);
   assert.match(quick, /window\.setInterval\(updateClock, 30_000\)/);
   assert.match(quick, /window\.clearInterval\(interval\)/);
 });
