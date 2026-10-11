@@ -38,3 +38,13 @@ test("the public care page preserves genuine data and booking safety", () => {
   assert.match(care, /atlas-care-empty-published/);
   assert.doesNotMatch(care, /\.from\("appointments"\)|ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED|doctor\.photo/);
 });
+
+test("private Patient pages retain their existing secure language link behavior without duplicate selectors", () => {
+  const account = source("app/patient-account/page.tsx");
+  const appointment = source("app/patient/[token]/page.tsx");
+  assert.match(account, /actionHref=\{findCareHref\}[\s\S]*?hideLanguageSwitcher/);
+  assert.match(account, /className="patient-account-languages"/);
+  assert.match(appointment, /actionHref=\{patientNavHref\}[\s\S]*?hideLanguageSwitcher/);
+  assert.match(appointment, /patientLanguageHref\(token, option\.locale, reminderView, accountMarker\)/);
+  assert.match(nav, /!hideLanguageSwitcher \? <PatientLanguageSwitcher locale=\{locale\} \/>/);
+});

@@ -6,6 +6,7 @@ type AtlasPatientNavProps = {
   myAppointments?: string;
   actionLabel?: string;
   actionHref?: string;
+  hideLanguageSwitcher?: boolean;
 };
 
 export function AtlasPatientNav({
@@ -13,6 +14,7 @@ export function AtlasPatientNav({
   myAppointments,
   actionLabel,
   actionHref,
+  hideLanguageSwitcher = false,
 }: AtlasPatientNavProps) {
   const label = actionLabel ?? myAppointments ?? "My appointments";
   const href = actionHref ?? `/patient-account?lang=${locale}`;
@@ -33,7 +35,7 @@ export function AtlasPatientNav({
         <span className="atlas-patient-brand-label" dir="ltr">Patient</span>
       </a>
       <div className="atlas-patient-nav-actions">
-        <PatientLanguageSwitcher locale={locale} />
+        {!hideLanguageSwitcher ? <PatientLanguageSwitcher locale={locale} /> : null}
         <a
         className="button button-ghost atlas-patient-account-link"
         href={href}
