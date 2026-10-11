@@ -30,4 +30,9 @@ test("first clinic launch keeps Sorani, Badini, Arabic and English paths and mob
   assert.match(onboarding, /className="atlas-first-clinic-grid"/);
   assert.match(onboarding, /aria-labelledby="first-clinic-roadmap-heading"/);
   assert.match(onboarding, /<ClinicSetupNameInput/);
+  assert.match(onboarding, /background:var\(--surface\)/);
+  assert.match(onboarding, /background:var\(--surface-soft\)/);
+  assert.match(onboarding, /background:var\(--warning-bg\)/);
+  assert.doesNotMatch(onboarding, /background:(?:#fff|#ffffff|white|#ecefea)/);
+  assert.doesNotMatch(onboarding, /border-color:rgba\(31,90,67/);
 });
