@@ -440,26 +440,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .clinic-command-active{background:rgba(169,242,212,.18)!important;border-color:rgba(169,242,212,.42)!important}
       .clinic-command-metric:hover{background:rgba(255,255,255,.17)}
       .clinic-command-next strong{font-size:clamp(21px,2.1vw,29px)}
-      .clinic-arrival-board{display:grid;gap:16px;margin:0 0 18px;padding:clamp(17px,2.2vw,24px);border:1px solid #d3e5de;border-radius:22px;background:linear-gradient(130deg,#f8fcfa,#f0f8f5)}
-      .clinic-arrival-heading h2{margin:5px 0 4px;font-size:clamp(20px,2vw,25px);letter-spacing:-.025em;line-height:1.2;color:#153c34}
-      .clinic-arrival-heading p{margin:0;color:#3e6156;font-size:13px;line-height:1.5}
-      .clinic-arrival-heading .eyebrow{font-size:11px;font-weight:800;color:#286b56}
+      .clinic-arrival-board{display:grid;gap:16px;margin:0 0 18px;padding:clamp(17px,2.2vw,24px);border:1px solid var(--line);border-radius:22px;background:linear-gradient(130deg,var(--surface-soft),var(--surface))}
+      .clinic-arrival-heading h2{margin:5px 0 4px;font-size:clamp(20px,2vw,25px);letter-spacing:-.025em;line-height:1.2;color:var(--ink)}
+      .clinic-arrival-heading p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
+      .clinic-arrival-heading .eyebrow{font-size:11px;font-weight:800;color:var(--accent)}
       .clinic-arrival-lanes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-      .clinic-arrival-lane{min-width:0;border:1px solid #d4e4dd;border-radius:17px;padding:15px;background:#fff}
-      .clinic-arrival-lane.is-pending{border-top:4px solid #aa7923}
-      .clinic-arrival-lane.is-confirmed{border-top:4px solid #257c61}
+      .clinic-arrival-lane{min-width:0;border:1px solid var(--line);border-radius:17px;padding:15px;background:var(--surface)}
+      .clinic-arrival-lane.is-pending{border-top:4px solid var(--warning)}
+      .clinic-arrival-lane.is-confirmed{border-top:4px solid var(--success)}
       .clinic-arrival-lane-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
-      .clinic-arrival-lane-heading h3{display:flex;align-items:center;gap:9px;min-width:0;margin:0;font-size:14px;font-weight:850;line-height:1.35;color:#18382f}
-      .clinic-arrival-count{display:grid;min-width:30px;min-height:30px;place-items:center;border-radius:9px;background:#eaf4ef;color:#174f3e;font-size:15px;font-weight:900}
-      .clinic-arrival-lane.is-pending .clinic-arrival-count{background:#fff2d8;color:#815a13}
-      .clinic-arrival-lane-heading>a{flex:none;color:#176f55;font-size:12px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+      .clinic-arrival-lane-heading h3{display:flex;align-items:center;gap:9px;min-width:0;margin:0;font-size:14px;font-weight:850;line-height:1.35;color:var(--ink)}
+      .clinic-arrival-count{display:grid;min-width:30px;min-height:30px;place-items:center;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:15px;font-weight:900}
+      .clinic-arrival-lane.is-pending .clinic-arrival-count{background:var(--warning-bg);color:var(--warning)}
+      .clinic-arrival-lane-heading>a{flex:none;color:var(--accent);font-size:12px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
       .clinic-arrival-items{display:grid;gap:7px;margin:0;padding:0;list-style:none}
-      .clinic-arrival-items a{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px;min-height:64px;border:1px solid #e1e9e5;border-radius:12px;padding:10px 12px;color:#183b33;background:#fbfdfc;text-decoration:none;transition:border-color .15s,background .15s}
-      .clinic-arrival-items a:hover{border-color:#6eaf97;background:#f0faf4}
+      .clinic-arrival-items a{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px;min-height:64px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--ink);background:var(--surface-soft);text-decoration:none;transition:border-color .15s,background .15s}
+      .clinic-arrival-items a:hover{border-color:var(--accent);background:var(--accent-faint)}
       .clinic-arrival-patient{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:850}
-      .clinic-arrival-time{font-size:14px;font-weight:850;color:#176349}
-      .clinic-arrival-open{grid-column:1/-1;font-size:11px;font-weight:700;color:#35695a}
-      .clinic-arrival-empty{margin:0;border-radius:12px;padding:16px;background:#f5f8f6;color:#426358;font-size:13px;line-height:1.5}
+      .clinic-arrival-time{font-size:14px;font-weight:850;color:var(--accent)}
+      .clinic-arrival-open{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--ink-soft)}
+      .clinic-arrival-empty{margin:0;border-radius:12px;padding:16px;background:var(--surface-soft);color:var(--ink-soft);font-size:13px;line-height:1.5}
       .clinic-arrival-lane a:focus-visible{outline:3px solid #ca8221;outline-offset:3px}
       .appointment-row[id^="atlas-appointment-"]{scroll-margin-top:90px}
       .appointment-row:target{outline:3px solid #178060;outline-offset:3px;box-shadow:0 0 0 7px rgba(23,128,96,.12)}
