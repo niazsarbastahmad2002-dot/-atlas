@@ -91,12 +91,12 @@ const summaryCopy: Record<UiLocale, {
 
 const workbenchCopy: Record<UiLocale, {
   eyebrow: string; title: string; description: string; active: string; book: string;
-  next: string; review: string; filters: string; filteredEmpty: string; all: string;
+  next: string; review: string; find: string; filters: string; filteredEmpty: string; all: string;
 }> = {
-  en: { eyebrow: "Clinic operations", title: "Your clinic, at a glance", description: "See what needs attention and move straight to the next task.", active: "Active appointments", book: "Book an appointment", next: "Next scheduled", review: "Review unconfirmed", filters: "Focus the schedule", filteredEmpty: "No appointments match this view.", all: "Show all appointments" },
-  ku: { eyebrow: "کاروباری کلینیک", title: "دۆخی کلینیک بە یەک نیگا", description: "بزانە چی پێویستی بە سەرنجە و ڕاستەوخۆ دەست بە کاری داهاتوو بکە.", active: "وادە چالاکەکان", book: "وادە تۆمار بکە", next: "وادەی داهاتوو", review: "پشکنینی وادە پشتڕاستنەکراوەکان", filters: "خشتەکە ڕێک بخە", filteredEmpty: "هیچ وادەیەک لەم بەشەدا نییە.", all: "هەموو وادەکان پیشان بدە" },
-  bd: { eyebrow: "کارێن کلینیکێ", title: "بارودۆخێ کلینیکێ ب ئێک نێرین", description: "بزانە چ پێدڤی ب سەرنجێ هەیە و دەست ب کارێ پاشێ بکە.", active: "وادەیێن چالاک", book: "وادەیەک تۆمار بکە", next: "وادەیا پاشێ", review: "پشکنینا وادەیێن نەهاتینە پشتڕاستکرن", filters: "خشتەیێ ڕێک بخە", filteredEmpty: "چ وادە ل ڤێ بەشێ نینن.", all: "هەمی وادەیان نیشان بدە" },
-  ar: { eyebrow: "إدارة العيادة", title: "عيادتك بنظرة واحدة", description: "شوف شنو يحتاج متابعة وانتقل مباشرة للخطوة الجاية.", active: "المواعيد النشطة", book: "حجز موعد", next: "الموعد القادم", review: "مراجعة غير المؤكد", filters: "تصفية الجدول", filteredEmpty: "ماكو مواعيد تطابق هذا العرض.", all: "عرض كل المواعيد" },
+  en: { eyebrow: "Clinic operations", title: "Your clinic, at a glance", description: "See what needs attention and move straight to the next task.", active: "Active appointments", book: "Book an appointment", next: "Next scheduled", review: "Review unconfirmed", find: "Find a patient", filters: "Focus the schedule", filteredEmpty: "No appointments match this view.", all: "Show all appointments" },
+  ku: { eyebrow: "کاروباری کلینیک", title: "دۆخی کلینیک بە یەک نیگا", description: "بزانە چی پێویستی بە سەرنجە و ڕاستەوخۆ دەست بە کاری داهاتوو بکە.", active: "وادە چالاکەکان", book: "وادە تۆمار بکە", next: "وادەی داهاتوو", review: "پشکنینی وادە پشتڕاستنەکراوەکان", find: "دۆزینەوەی نەخۆش", filters: "خشتەکە ڕێک بخە", filteredEmpty: "هیچ وادەیەک لەم بەشەدا نییە.", all: "هەموو وادەکان پیشان بدە" },
+  bd: { eyebrow: "کارێن کلینیکێ", title: "بارودۆخێ کلینیکێ ب ئێک نێرین", description: "بزانە چ پێدڤی ب سەرنجێ هەیە و دەست ب کارێ پاشێ بکە.", active: "وادەیێن چالاک", book: "وادەیەک تۆمار بکە", next: "وادەیا پاشێ", review: "پشکنینا وادەیێن نەهاتینە پشتڕاستکرن", find: "دیتنا نەخۆشی", filters: "خشتەیێ ڕێک بخە", filteredEmpty: "چ وادە ل ڤێ بەشێ نینن.", all: "هەمی وادەیان نیشان بدە" },
+  ar: { eyebrow: "إدارة العيادة", title: "عيادتك بنظرة واحدة", description: "شوف شنو يحتاج متابعة وانتقل مباشرة للخطوة الجاية.", active: "المواعيد النشطة", book: "حجز موعد", next: "الموعد القادم", review: "مراجعة غير المؤكد", find: "البحث عن مريض", filters: "تصفية الجدول", filteredEmpty: "ماكو مواعيد تطابق هذا العرض.", all: "عرض كل المواعيد" },
 };
 
 function validBaghdadDay(value: string | undefined, fallback: string) {
@@ -337,6 +337,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="clinic-command-actions">
           {canCreateOnSelectedDay && selectedDoctor ? <a className="clinic-command-primary" href="#new-appointment">+ {workbench.book}</a> : null}
           {pending > 0 ? <a className="clinic-command-secondary" href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, "pending")}>{workbench.review} <span aria-hidden="true">↗</span></a> : null}
+          {focusedRows.length > 0 ? <a className="clinic-command-secondary" href="#atlas-appointment-search" data-atlas-find-patient="true">{workbench.find} <span aria-hidden="true">⌕</span></a> : null}
         </div>
       </div>
       <div className="clinic-command-metrics">
