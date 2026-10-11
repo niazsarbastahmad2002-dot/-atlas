@@ -16,6 +16,7 @@ import { SubmitButton } from "@/app/components/submit-button";
 import { ClinicFirstWorkspace } from "./clinic-first-workspace";
 import { createAppointment } from "./actions";
 import { AppointmentActions } from "./appointment-actions";
+import { ClinicArrivalQuickAction } from "./clinic-arrival-quick-action";
 import { AppointmentEditor } from "./appointment-editor";
 import { AppointmentTimeField } from "./appointment-time-field";
 import { LiveClinicClock } from "./live-clinic-clock";
@@ -386,6 +387,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   <span className="clinic-arrival-time"><bdi dir="ltr">{formatTimeValue(toBaghdadInputValue(new Date(appointment.appointment_at)).slice(11, 16), locale)}</bdi></span>
                   <span className="clinic-arrival-open">{arrivalCopy.open} <span aria-hidden="true">↗</span></span>
                 </a>
+                {selectedDay === today ? <ClinicArrivalQuickAction
+                  key={`${appointment.id}:${appointment.appointment_revision}:${lane.status}`}
+                  clinicId={clinic.id}
+                  appointmentId={appointment.id}
+                  patientName={appointment.patient_name}
+                  revision={appointment.appointment_revision}
+                  status={lane.status}
+                  appointmentAt={appointment.appointment_at}
+                  locale={locale}
+                /> : null}
               </li>)}</ul>
             : <p className="clinic-arrival-empty">{lane.empty}</p>}
         </section>)}
@@ -454,16 +465,25 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .clinic-arrival-lane.is-pending .clinic-arrival-count{background:var(--warning-bg);color:var(--warning)}
       .clinic-arrival-lane-heading>a{flex:none;color:var(--accent);font-size:12px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
       .clinic-arrival-items{display:grid;gap:7px;margin:0;padding:0;list-style:none}
-      .clinic-arrival-items a{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px;min-height:64px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--ink);background:var(--surface-soft);text-decoration:none;transition:border-color .15s,background .15s}
+      .clinic-arrival-items li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:9px;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface-soft)}
+      .clinic-arrival-items a{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px;min-height:64px;border-radius:10px;padding:9px;color:var(--ink);background:var(--surface-soft);text-decoration:none;transition:border-color .15s,background .15s}
       .clinic-arrival-items a:hover{border-color:var(--accent);background:var(--accent-faint)}
       .clinic-arrival-patient{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:850}
       .clinic-arrival-time{font-size:14px;font-weight:850;color:var(--accent)}
       .clinic-arrival-open{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--ink-soft)}
+      .clinic-arrival-quick{display:grid;justify-items:stretch;gap:5px;max-width:210px}
+      .clinic-arrival-quick-button{min-height:46px;border:1px solid var(--accent);border-radius:11px;padding:9px 13px;background:var(--accent);color:#fff;font:inherit;font-size:12px;font-weight:850;line-height:1.3;cursor:pointer;touch-action:manipulation}
+      .clinic-arrival-quick-button:hover:not(:disabled){filter:brightness(1.08)}
+      .clinic-arrival-quick-button:disabled{cursor:not-allowed;opacity:.58}
+      .clinic-arrival-quick-button:focus-visible{outline:3px solid #ca8221;outline-offset:3px}
+      .clinic-arrival-quick-hint{font-size:11px;line-height:1.4;color:var(--ink-soft)}
+      .clinic-arrival-quick-error{font-size:11px;line-height:1.4;color:var(--danger);max-width:200px}
+      @media(max-width:1100px){.clinic-arrival-items li{grid-template-columns:1fr}.clinic-arrival-quick{max-width:none}.clinic-arrival-quick-button{width:100%}}
       .clinic-arrival-empty{margin:0;border-radius:12px;padding:16px;background:var(--surface-soft);color:var(--ink-soft);font-size:13px;line-height:1.5}
       .clinic-arrival-lane a:focus-visible{outline:3px solid #ca8221;outline-offset:3px}
       .appointment-row[id^="atlas-appointment-"]{scroll-margin-top:90px}
       .appointment-row:target{outline:3px solid #178060;outline-offset:3px;box-shadow:0 0 0 7px rgba(23,128,96,.12)}
-      @media(max-width:700px){.clinic-arrival-lanes{grid-template-columns:1fr}.clinic-arrival-board{border-radius:18px}.clinic-arrival-lane{padding:13px}.clinic-arrival-items a{min-height:60px}}
+      @media(max-width:700px){.clinic-arrival-lanes{grid-template-columns:1fr}.clinic-arrival-board{border-radius:18px}.clinic-arrival-lane{padding:13px}.clinic-arrival-items li{grid-template-columns:1fr}.clinic-arrival-items a{min-height:60px}.clinic-arrival-quick{max-width:none}.clinic-arrival-quick-button{width:100%}}
       .schedule-focus{margin:0 0 18px;padding:15px 17px;border:1px solid var(--line);border-radius:18px;background:var(--surface,#fff)}
       .schedule-focus-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:11px}
       .schedule-focus-heading strong{font-size:14px;color:var(--ink)}
