@@ -37,6 +37,7 @@ const copy = {
 export function ClinicArrivalQuickAction({
   clinicId,
   appointmentId,
+  patientName,
   revision,
   status,
   appointmentAt,
@@ -44,6 +45,7 @@ export function ClinicArrivalQuickAction({
 }: {
   clinicId: string;
   appointmentId: string;
+  patientName: string;
   revision: number;
   status: QueueStatus;
   appointmentAt: string;
@@ -56,6 +58,7 @@ export function ClinicArrivalQuickAction({
   const [error, setError] = useState("");
   const requestInFlight = useRef(false);
   const t = copy[locale];
+  const actionLabel = status === "pending" ? t.confirm : t.complete;
 
   useEffect(() => {
     const updateClock = () => setNow(Date.now());
@@ -103,6 +106,7 @@ export function ClinicArrivalQuickAction({
         className="clinic-arrival-quick-button"
         onClick={update}
         disabled={pending || done || tooEarly}
+        aria-label={actionLabel + ": " + patientName}
         aria-describedby={tooEarly ? "clinic-quick-hint-" + appointmentId : undefined}
       >
         {pending ? t.saving : done ? t.saved : status === "pending" ? t.confirm : t.complete}
