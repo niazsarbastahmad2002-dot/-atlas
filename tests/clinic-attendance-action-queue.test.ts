@@ -30,3 +30,24 @@ test("action lanes distinguish attendance confirmation from physical waiting cla
   assert.match(page, /@media\(max-width:700px\)\{\.clinic-arrival-lanes\{grid-template-columns:1fr\}/);
   assert.match(page, /\.appointment-row:target\{/);
 });
+
+test("queue surfaces use theme tokens in both light and dark appearance", () => {
+  assert.match(page, /\.clinic-arrival-board\{[^\n]*background:linear-gradient\(130deg,var\(--surface-soft\),var\(--surface\)\)/);
+  assert.match(page, /\.clinic-arrival-lane\{[^\n]*background:var\(--surface\)/);
+  assert.match(page, /\.clinic-arrival-items a\{[^\n]*color:var\(--ink\);background:var\(--surface-soft\)/);
+  assert.match(page, /\.clinic-arrival-lane\.is-pending \.clinic-arrival-count\{background:var\(--warning-bg\);color:var\(--warning\)/);
+});
+
+test("phone queue links expand appointment actions on direct and in-app hash navigation", () => {
+  const mobile = readFileSync(new URL("../app/dashboard/mobile-appointment-experience.tsx", import.meta.url), "utf8");
+  assert.match(mobile, /window\.location\.hash\.startsWith\("#atlas-appointment-"\)/);
+  assert.match(mobile, /document\.getElementById\(targetId\)/);
+  assert.match(mobile, /row\?\.matches\("\.polished-appointment-list \.appointment-row\.is-atlas-phone-managed"\)/);
+  assert.match(mobile, /if \(row === lastExpandedHashRow\) return/);
+  assert.match(mobile, /if \(!row\.classList\.contains\("is-atlas-phone-expanded"\)\)/);
+  assert.match(mobile, /querySelector<HTMLButtonElement>\("\.atlas-phone-appointment-summary"\)\?\.click\(\)/);
+  assert.match(mobile, /row\.scrollIntoView\(\{ block: "start" \}\)/);
+  assert.match(mobile, /document\.querySelectorAll<HTMLElement>\("\.polished-appointment-list"\)\.forEach\(prepareList\);\s*expandHashTarget\(\)/);
+  assert.match(mobile, /window\.addEventListener\("hashchange", schedulePrepare\)/);
+  assert.match(mobile, /window\.removeEventListener\("hashchange", schedulePrepare\)/);
+});
