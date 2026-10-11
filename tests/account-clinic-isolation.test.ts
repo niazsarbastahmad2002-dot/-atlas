@@ -7,6 +7,7 @@ const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.
 test("sign-in does not grant clinic access without an explicit clinic or invitation path", () => {
   const activation = source("app/auth/activate/route.ts");
   const dashboard = source("app/dashboard/page.tsx");
+  const firstWorkspace = source("app/dashboard/clinic-first-workspace.tsx");
   const actions = source("app/dashboard/actions.ts");
 
   assert.match(activation, /supabase\.auth\.getUser\(\)/);
@@ -14,7 +15,8 @@ test("sign-in does not grant clinic access without an explicit clinic or invitat
   assert.doesNotMatch(activation, /readPendingStaffInvitations|clinic_members|role: "receptionist"|\.upsert\(|createAdminClient/);
 
   assert.match(dashboard, /if \(!clinics\?\.length\)/);
-  assert.match(dashboard, /form action=\{createClinic\}/);
+  assert.match(dashboard, /<ClinicFirstWorkspace locale=\{locale\} error=\{messageError\}/);
+  assert.match(firstWorkspace, /form action=\{createClinic\}/);
 
   assert.match(actions, /export async function createClinic/);
   assert.match(actions, /\.insert\(\{ name, owner_id: userId \}\)/);
