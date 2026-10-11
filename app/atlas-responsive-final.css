@@ -336,8 +336,8 @@
   }
 }
 
-/* Desktop receptionists need the same clinic-scoped patient lookup as iPad/phone. */
-@media (min-width: 561px) and (pointer: fine) {
+/* Desktop and keyboard-only receptionists need the same scoped lookup as iPad/phone. */
+@media (min-width: 561px) {
   .appointments-panel .atlas-phone-appointment-search {
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr) 34px;
