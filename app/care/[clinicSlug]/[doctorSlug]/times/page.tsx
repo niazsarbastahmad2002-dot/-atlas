@@ -5,6 +5,7 @@ import { formatIraqiMobile } from "@/lib/appointments";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
+import { PatientProfileHero } from "@/app/care/patient-profile-hero";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 
@@ -236,12 +237,11 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
     : null;
 
   return (
-    <main className="marketing-page atlas-times-page" lang={meta.language} dir={meta.direction}>
+    <main className="marketing-page atlas-times-page atlas-patient-detail" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
 
       <article className="shell atlas-times-shell">
-        <div className="eyebrow">{t.eyebrow}</div>
-        <h1>{groups.length ? (bookingReady ? t.title : t.readOnlyTitle) : t.noTimes}</h1>
+        <PatientProfileHero kind="times" eyebrow={t.eyebrow} title={groups.length ? (bookingReady ? t.title : t.readOnlyTitle) : t.noTimes} subtitle={profile.doctor_name} />
         <div className="atlas-times-doctor">
           <strong>{profile.doctor_name}</strong>
           <span>{profile.specialty}{profile.subspecialty ? ` · ${profile.subspecialty}` : ""}</span>

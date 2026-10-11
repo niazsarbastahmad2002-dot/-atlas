@@ -6,6 +6,7 @@ import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { ShareProfileButton } from "../../share-profile-button";
+import { PatientProfileHero } from "@/app/care/patient-profile-hero";
 import { AtlasPatientNav } from "../../patient-nav";
 import { patientLocaleHref, resolvePatientLocale } from "../../patient-locale";
 
@@ -346,7 +347,7 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
   }
 
   return (
-    <main className="marketing-page atlas-care-profile-page" lang={meta.language} dir={meta.direction}>
+    <main className="marketing-page atlas-care-profile-page atlas-patient-detail" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
 
       <script
@@ -354,8 +355,7 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
         dangerouslySetInnerHTML={{ __html: doctorStructuredDataJson }}
       />
       <article className="shell atlas-care-profile">
-        <div className="eyebrow">{copy.eyebrow}</div>
-        <h1>{profile.doctor_name}</h1>
+        <PatientProfileHero kind="doctor" eyebrow={copy.eyebrow} title={profile.doctor_name} subtitle={profile.specialty} />
         <div className="atlas-care-profile-specialty">
           <strong>{profile.specialty}</strong>
           {profile.subspecialty ? <span>{profile.subspecialty}</span> : null}
