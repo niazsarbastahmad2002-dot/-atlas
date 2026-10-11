@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { PatientDirectoryCard } from "@/app/care/patient-directory-card";
+import { PatientClinicBrowse, type PatientClinicBrowseItem } from "@/app/care/patient-clinic-browse";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
@@ -38,6 +39,8 @@ const careCopy: Record<UiLocale, {
   patientHome: string;
   myAppointments: string;
   browseSpecialties: string;
+  browseClinics: string;
+  viewClinic: string;
   availableSoon: string;
   allDoctors: string;
   noPublished: string;
@@ -73,6 +76,8 @@ const careCopy: Record<UiLocale, {
     patientHome: "Atlas Patient",
     myAppointments: "My appointments",
     browseSpecialties: "Browse specialties",
+    browseClinics: "Explore clinics",
+    viewClinic: "View clinic",
     availableSoon: "Available soon",
     allDoctors: "All doctors",
     noPublished: "No doctors are published on Atlas yet.",
@@ -108,6 +113,8 @@ const careCopy: Record<UiLocale, {
     patientHome: "Atlas Patient",
     myAppointments: "مەوعیدەکانم",
     browseSpecialties: "بە پسپۆڕی بگەڕێ",
+    browseClinics: "کلینیکەکان بدۆزەرەوە",
+    viewClinic: "بینینی کلینیک",
     availableSoon: "کاتی نزیک بەردەستە",
     allDoctors: "هەموو پزیشکەکان",
     noPublished: "هێشتا هیچ پزیشکێک لە Atlas بڵاونەکراوەتەوە.",
@@ -143,6 +150,8 @@ const careCopy: Record<UiLocale, {
     patientHome: "Atlas Patient",
     myAppointments: "وادەیێن من",
     browseSpecialties: "ب تایبەتمەندی بگەڕێ",
+    browseClinics: "کلینیکان بدیتەوە",
+    viewClinic: "دیتنا کلینیکێ",
     availableSoon: "دەمەکێ نێزیک بەردەستە",
     allDoctors: "هەمی دکتۆر",
     noPublished: "هێشتا چ دکتۆر ل Atlas نەهاتینە بڵاوکرن.",
@@ -178,6 +187,8 @@ const careCopy: Record<UiLocale, {
     patientHome: "Atlas Patient",
     myAppointments: "مواعيدي",
     browseSpecialties: "تصفّح حسب الاختصاص",
+    browseClinics: "تصفّح العيادات",
+    viewClinic: "عرض العيادة",
     availableSoon: "متاح قريباً",
     allDoctors: "كل الأطباء",
     noPublished: "لا يوجد أطباء منشورون على Atlas حالياً.",
@@ -246,6 +257,16 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           .filter((value): value is string => Boolean(value)),
       )).slice(0, 6);
   const hasAvailableSoon = !hasSearch && results.some((doctor) => Boolean(doctor.next_available_at));
+  // Discoverable clinics are derived ONLY from currently published, returned doctor associations.
+  // No additional clinic query, unverified profile, or synthetic production entry is introduced.
+  const browseClinics: PatientClinicBrowseItem[] = hasSearch ? [] : Array.from(
+    new Map(results.map((doctor) => [doctor.clinic_slug, {
+      clinic_slug: doctor.clinic_slug,
+      clinic_name: doctor.clinic_name,
+      city: doctor.city,
+      area: doctor.area,
+    }])).values(),
+  ).slice(0, 6);
 
   return (
     <main className="marketing-page atlas-care-page" lang={meta.language} dir={meta.direction}>
@@ -330,6 +351,15 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         ) : null}
 
 
+
+        {!error && browseClinics.length ? (
+          <PatientClinicBrowse
+            clinics={browseClinics}
+            locale={locale}
+            title={copy.browseClinics}
+            actionLabel={copy.viewClinic}
+          />
+        ) : null}
 
         {error ? (
           <p className="notice notice-error atlas-care-notice" role="alert">{copy.unavailable}</p>

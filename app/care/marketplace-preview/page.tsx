@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PatientDirectoryCard, type PublicDoctorCard } from "@/app/care/patient-directory-card";
+import { PatientClinicBrowse } from "@/app/care/patient-clinic-browse";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { resolvePatientLocale } from "@/app/care/patient-locale";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
@@ -35,6 +36,13 @@ export default async function FictionalPatientPreview({ searchParams }: { search
             <PatientDirectoryCard key={doctor.doctor_slug} doctor={doctor} locale={locale} nextOpening={index === 1 ? null : timestamp} preview />
           ))}
         </div>
+        <PatientClinicBrowse
+          clinics={fictitious.map((item) => ({ clinic_slug: item.clinic_slug, clinic_name: item.clinic_name, city: item.city, area: item.area }))}
+          locale={locale}
+          title="Fictional clinic browse — visual test only"
+          actionLabel="View clinic"
+          preview
+        />
         <section style={{marginTop:28,padding:24,background:"var(--surface)",border:"1px solid var(--line)",borderRadius:24}}>
           <h2 style={{margin:0}}>Fictional availability layout</h2>
           <p style={{color:"var(--muted)"}}>Example only. No schedule or booking database is connected.</p>
