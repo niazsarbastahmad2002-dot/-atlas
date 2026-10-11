@@ -40,7 +40,9 @@ test("Badini reminder language is accepted by appointment and doctor settings va
 
 test("new appointments use the selected doctor's reminder language default", () => {
   assert.match(dashboard, /doctor_workflow_settings/);
-  assert.match(dashboard, /defaultReminderLanguage = \(doctorWorkflowRows/);
+  assert.match(dashboard, /selectedDoctorWorkflow = \(\(doctorWorkflowRows/);
+  assert.match(dashboard, /\.find\(\(row\) => row\.doctor_id === selectedDoctor\?\.id\)/);
+  assert.match(dashboard, /defaultReminderLanguage = selectedDoctorWorkflow\?\.default_reminder_language/);
 });
 
 test("Iraqi Arabic patient and WhatsApp copy uses simple Iraqi wording", () => {
