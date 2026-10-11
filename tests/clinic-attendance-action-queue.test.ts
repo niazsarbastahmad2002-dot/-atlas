@@ -51,3 +51,41 @@ test("phone queue links expand appointment actions on direct and in-app hash nav
   assert.match(mobile, /window\.addEventListener\("hashchange", schedulePrepare\)/);
   assert.match(mobile, /window\.removeEventListener\("hashchange", schedulePrepare\)/);
 });
+
+test("today's front desk queue offers direct attendance actions using the current appointment revision", () => {
+  const quick = readFileSync(new URL("../app/dashboard/clinic-arrival-quick-action.tsx", import.meta.url), "utf8");
+  assert.match(page, /selectedDay === today \? <ClinicArrivalQuickAction/);
+  assert.match(page, /clinicId=\{clinic\.id\}/);
+  assert.match(page, /appointmentId=\{appointment\.id\}/);
+  assert.match(page, /revision=\{appointment\.appointment_revision\}/);
+  assert.match(page, /status=\{lane\.status\}/);
+  assert.match(page, /appointmentAt=\{appointment\.appointment_at\}/);
+  assert.match(quick, /status === "pending" \? "confirmed" : "completed"/);
+  assert.match(quick, /updateAppointmentStatusInline\([\s\S]*clinicId, appointmentId, status, revision, nextStatus/);
+  assert.match(quick, /result\.reason === "stale"/);
+  assert.match(quick, /router\.refresh\(\)/);
+});
+
+test("completion is disabled until appointment time while status updates are pending", () => {
+  const quick = readFileSync(new URL("../app/dashboard/clinic-arrival-quick-action.tsx", import.meta.url), "utf8");
+  assert.match(quick, /appointmentTime <= now \+ 5 \* 60_000/);
+  assert.match(quick, /status === "confirmed" && !completionReady/);
+  assert.match(quick, /disabled=\{pending \|\| done \|\| tooEarly\}/);
+  assert.match(quick, /requestInFlight\.current/);
+  assert.match(quick, /window\.setInterval\(updateClock, 30_000\)/);
+  assert.match(quick, /window\.clearInterval\(interval\)/);
+});
+
+test("arrival quick actions have localized labels and remain touch-friendly", () => {
+  const quick = readFileSync(new URL("../app/dashboard/clinic-arrival-quick-action.tsx", import.meta.url), "utf8");
+  for (const locale of ["en", "ku", "bd", "ar"]) {
+    assert.match(quick, new RegExp('\\b' + locale + ': \\{'));
+  }
+  assert.match(quick, /Confirm attendance/);
+  assert.match(quick, /هاتن پشتڕاست بکەرەوە/);
+  assert.match(quick, /تأكيد الحضور/);
+  assert.match(page, /\.clinic-arrival-quick-button\{[^\n]*min-height:46px/);
+  assert.match(page, /\.clinic-arrival-quick-button:focus-visible/);
+  assert.match(page, /\.clinic-arrival-quick\{[^\n]*max-width:210px/);
+  assert.match(page, /\.clinic-arrival-items li\{[^\n]*grid-template-columns:minmax\(0,1fr\) auto/);
+});
