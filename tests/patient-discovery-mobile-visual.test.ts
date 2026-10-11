@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const page = readFileSync(new URL("../app/care/page.tsx", import.meta.url), "utf8");
+const card = readFileSync(new URL("../app/care/patient-directory-card.tsx", import.meta.url), "utf8");
 
 test("Patient discovery shows one prominent search with progressive filters in every language", () => {
   assert.match(page, /className="atlas-care-search-primary"/);
@@ -16,10 +17,10 @@ test("Patient discovery shows one prominent search with progressive filters in e
 
 test("responsive doctor cards reveal only published real openings, and link to a read-only times page", () => {
   assert.match(page, /search_public_doctors_with_availability/);
-  assert.match(page, /const nextOpening = doctor\.next_available_at/);
-  assert.match(page, /\{nextOpening \? \(/);
-  assert.match(page, /atlas-care-next-opening/);
-  assert.ok(page.includes('`/care/${doctor.clinic_slug}/${doctor.doctor_slug}/times`'));
+  assert.match(page, /nextAvailabilityLabel\(doctor\.next_available_at, locale\)/);
+  assert.match(card, /nextOpening \? \(/);
+  assert.match(card, /atlas-care-next-opening/);
+  assert.ok(card.includes('`/care/${doctor.clinic_slug}/${doctor.doctor_slug}/times`'));
   assert.match(page, /@media\(max-width:700px\)\{\.atlas-care-results\{grid-template-columns:1fr\}/);
   assert.doesNotMatch(page, /doctor\.photo|fakeDoctor|hardcodedSpecialties/i);
 });

@@ -50,14 +50,14 @@ test("Atlas home gives patients a first-class path into care discovery", () => {
 
 test("published clinics have a direct public profile route and doctors link back to it", () => {
   const clinic = source("app/care/[clinicSlug]/page.tsx");
-  const search = source("app/care/page.tsx");
+  const directoryCard = source("app/care/patient-directory-card.tsx");
   const doctor = source("app/care/[clinicSlug]/[doctorSlug]/page.tsx");
 
   assert.match(clinic, /get_public_clinic_profile/);
   assert.match(clinic, /list_public_doctors/);
   assert.match(clinic, /safeSlug\(clinicSlug\)/);
   assert.doesNotMatch(clinic, /\.from\("appointments"\)|patient_name|patient_phone|reminder_/);
-  assert.match(search, /patientLocaleHref\(`\/care\/\$\{doctor\.clinic_slug\}`, locale\)/);
+  assert.match(directoryCard, /patientLocaleHref\(`\/care\/\$\{doctor\.clinic_slug\}`, locale\)/);
   assert.match(doctor, /patientLocaleHref\(`\/care\/\$\{profile\.clinic_slug\}`, locale\)/);
 });
 

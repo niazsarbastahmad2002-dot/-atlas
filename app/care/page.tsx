@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
+import { PatientDirectoryCard } from "@/app/care/patient-directory-card";
 import { formatLocalDateValue, formatTimeValue } from "@/lib/i18n/format";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
@@ -336,41 +337,14 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <section className="atlas-care-directory" aria-label={copy.resultsTitle}>
             <div className="atlas-care-directory-heading"><h2>{copy.resultsTitle}</h2><span>{results.length}</span></div>
           <div className="atlas-care-results">
-            {results.map((doctor) => {
-              const nextOpening = doctor.next_available_at
-                ? nextAvailabilityLabel(doctor.next_available_at, locale)
-                : null;
-              return (
-                <article className="atlas-care-result" key={`${doctor.clinic_slug}/${doctor.doctor_slug}`}>
-                  <div className="atlas-care-result-heading">
-                    <span className="atlas-care-doctor-mark" aria-hidden="true">{doctor.doctor_name.trim().slice(0, 1)}</span>
-                    <div className="atlas-care-doctor-details">
-                      <strong>{doctor.doctor_name}</strong>
-                      <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
-                    </div>
-                  </div>
-                  <div className="atlas-care-result-location">
-                    <Link href={patientLocaleHref(`/care/${doctor.clinic_slug}`, locale)}>{doctor.clinic_name}</Link>
-                    {doctor.city || doctor.area ? <span>{[doctor.area, doctor.city].filter(Boolean).join(" · ")}</span> : null}
-                  </div>
-                  {nextOpening ? (
-                    <Link
-                      className="atlas-care-next-opening"
-                      href={patientLocaleHref(`/care/${doctor.clinic_slug}/${doctor.doctor_slug}/times`, locale)}
-                      aria-label={`${copy.nextAvailable}: ${nextOpening}`}
-                    >
-                      <span>{copy.nextAvailable}</span>
-                      <strong dir="auto">{nextOpening}</strong>
-                      <span className="atlas-care-next-arrow" aria-hidden="true">↗</span>
-                    </Link>
-                  ) : null}
-                  <Link className="button button-ghost atlas-care-view-doctor" href={patientLocaleHref(`/care/${doctor.clinic_slug}/${doctor.doctor_slug}`, locale)}>
-                    {copy.openProfile}
-                    <span aria-hidden="true">›</span>
-                  </Link>
-                </article>
-              );
-            })}
+            {results.map((doctor) => (
+              <PatientDirectoryCard
+                key={`${doctor.clinic_slug}/${doctor.doctor_slug}`}
+                doctor={doctor}
+                locale={locale}
+                nextOpening={doctor.next_available_at ? nextAvailabilityLabel(doctor.next_available_at, locale) : null}
+              />
+            ))}
           </div>
           </section>
         ) : hasSearch ? (

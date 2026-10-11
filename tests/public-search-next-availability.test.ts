@@ -35,13 +35,14 @@ test("next-availability search is explicitly public like the underlying director
 
 test("public care search displays the next real Baghdad opening when one exists", () => {
   const page = source("app/care/page.tsx");
+  const card = source("app/care/patient-directory-card.tsx");
 
   assert.match(page, /search_public_doctors_with_availability/);
   assert.match(page, /doctor\.next_available_at/);
   assert.match(page, /timeZone: "Asia\/Baghdad"/);
   assert.match(page, /formatLocalDateValue/);
   assert.match(page, /formatTimeValue/);
-  assert.match(page, /atlas-care-next-opening/);
+  assert.match(card, /atlas-care-next-opening/);
 });
 
 test("reschedule migration filename matches the applied Supabase history", () => {

@@ -4,6 +4,7 @@ import test from "node:test";
 
 const page = readFileSync(new URL("../app/care/page.tsx", import.meta.url), "utf8");
 const patientNav = readFileSync(new URL("../app/care/patient-nav.tsx", import.meta.url), "utf8");
+const doctorCard = readFileSync(new URL("../app/care/patient-directory-card.tsx", import.meta.url), "utf8");
 
 test("care discovery is clearly the Atlas Patient front door", () => {
   assert.match(page, /AtlasPatientNav/);
@@ -25,8 +26,8 @@ test("visual browse choices come only from legitimately published doctor results
 });
 
 test("patient discovery does not fake a photo when the public API does not expose one", () => {
-  assert.match(page, /atlas-care-doctor-mark/);
-  assert.match(page, /doctor\.doctor_name\.trim\(\)\.slice\(0, 1\)/);
+  assert.match(doctorCard, /atlas-care-doctor-mark/);
+  assert.match(doctorCard, /doctor\.doctor_name\.trim\(\)\.slice\(0, 1\)/);
   assert.match(page, /src="\/atlas-icon\.svg"/);
   assert.doesNotMatch(page, /doctor\.photo|avatar_url|src=\{doctor\./i);
 });
