@@ -32,7 +32,9 @@ test("public directory draft includes all four Atlas interface languages", () =>
     assert.match(search, new RegExp(`\\b${locale}: \\{`));
     assert.match(profile, new RegExp(`\\b${locale}: \\{`));
   }
-  assert.match(search, /LoginLanguagePicker/);
+  assert.match(search, /AtlasPatientNav/);
+  const nav = source("app/care/patient-nav.tsx");
+  assert.match(nav, /PatientLanguageSwitcher/);
 });
 
 

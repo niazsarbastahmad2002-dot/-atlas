@@ -299,6 +299,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
         locale={locale}
         actionLabel={t.findCare}
         actionHref={findCareHref}
+        hideLanguageSwitcher
       />
       <div className="center-page patient-account-center">
       <section className="auth-card patient-account-card" lang={meta.lang} dir={meta.dir}>

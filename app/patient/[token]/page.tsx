@@ -459,6 +459,7 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
         locale={locale}
         actionLabel={patientNavLabel}
         actionHref={patientNavHref}
+        hideLanguageSwitcher
       />
       <div className="center-page patient-page-center">
       <section className="auth-card patient-card" lang={text.lang} dir={text.dir}>
