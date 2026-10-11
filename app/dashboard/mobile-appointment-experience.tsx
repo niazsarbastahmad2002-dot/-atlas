@@ -358,9 +358,32 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       });
     };
 
+    let lastExpandedHashRow: HTMLElement | null = null;
+    const expandHashTarget = () => {
+      if (!window.location.hash.startsWith("#atlas-appointment-")) {
+        lastExpandedHashRow = null;
+        return;
+      }
+      let targetId: string;
+      try {
+        targetId = decodeURIComponent(window.location.hash.slice(1));
+      } catch {
+        return;
+      }
+      const row = document.getElementById(targetId);
+      if (!row?.matches(".polished-appointment-list .appointment-row.is-atlas-phone-managed")) return;
+      if (row === lastExpandedHashRow) return;
+      lastExpandedHashRow = row;
+      if (!row.classList.contains("is-atlas-phone-expanded")) {
+        row.querySelector<HTMLButtonElement>(".atlas-phone-appointment-summary")?.click();
+      }
+      row.scrollIntoView({ block: "start" });
+    };
+
     const prepare = () => {
       resetSearchForScheduleChange();
       document.querySelectorAll<HTMLElement>(".polished-appointment-list").forEach(prepareList);
+      expandHashTarget();
     };
 
     const schedulePrepare = () => {
@@ -403,6 +426,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
     };
 
     prepare();
+    window.addEventListener("hashchange", schedulePrepare);
     document.addEventListener("click", onFindPatient);
     document.addEventListener("change", onChange);
     const observer = new MutationObserver((records) => {
@@ -418,6 +442,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
     return () => {
       observer.disconnect();
       if (prepareFrame) window.cancelAnimationFrame(prepareFrame);
+      window.removeEventListener("hashchange", schedulePrepare);
       document.removeEventListener("click", onFindPatient);
       document.removeEventListener("change", onChange);
       document.querySelectorAll(".atlas-phone-appointment-search, .atlas-phone-search-meta, .atlas-phone-search-empty").forEach((node) => node.remove());
