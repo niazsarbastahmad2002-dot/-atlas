@@ -400,8 +400,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .schedule-focus-heading strong{font-size:14px;color:var(--ink)}
       .schedule-focus-heading>span{font-size:12px;font-weight:700;color:var(--ink-soft)}
       .schedule-focus-options{display:flex;flex-wrap:wrap;gap:8px}
-      .schedule-focus-options a{display:inline-flex;align-items:center;gap:9px;min-height:44px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);font-size:12px;font-weight:750;line-height:1.35;text-decoration:none}
-      .schedule-focus-options a strong{display:inline-grid;min-width:24px;min-height:24px;place-items:center;border-radius:8px;background:#edf2f0;color:#1a5146;font-size:12px}
+      .schedule-focus-options a{display:inline-flex;align-items:center;gap:9px;min-height:44px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:750;line-height:1.35;text-decoration:none}
+      .schedule-focus-options a strong{display:inline-grid;min-width:24px;min-height:24px;place-items:center;border-radius:8px;background:var(--surface-soft);color:var(--ink);font-size:12px}
       .schedule-focus-options a.is-selected{border-color:#166f5c;background:#e9f6ef;color:#125b4b;box-shadow:inset 0 0 0 1px #166f5c}
       .schedule-focus-options a.is-selected strong{background:#166f5c;color:#fff}
       .schedule-focus-options a:focus-visible,.clinic-command-actions a:focus-visible,.clinic-command-metric:focus-visible{outline:3px solid #f1c85c;outline-offset:3px}
