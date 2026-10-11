@@ -475,7 +475,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .clinic-arrival-quick-button:hover:not(:disabled){filter:brightness(1.08)}
       .clinic-arrival-quick-button:disabled{cursor:not-allowed;opacity:.58}
       .clinic-arrival-quick-button:focus-visible{outline:3px solid #ca8221;outline-offset:3px}
+      .clinic-arrival-quick-hint{font-size:11px;line-height:1.4;color:var(--ink-soft)}
       .clinic-arrival-quick-error{font-size:11px;line-height:1.4;color:var(--danger);max-width:200px}
+      @media(max-width:1100px){.clinic-arrival-items li{grid-template-columns:1fr}.clinic-arrival-quick{max-width:none}.clinic-arrival-quick-button{width:100%}}
       .clinic-arrival-empty{margin:0;border-radius:12px;padding:16px;background:var(--surface-soft);color:var(--ink-soft);font-size:13px;line-height:1.5}
       .clinic-arrival-lane a:focus-visible{outline:3px solid #ca8221;outline-offset:3px}
       .appointment-row[id^="atlas-appointment-"]{scroll-margin-top:90px}
