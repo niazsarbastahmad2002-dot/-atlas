@@ -391,6 +391,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   key={`${appointment.id}:${appointment.appointment_revision}:${lane.status}`}
                   clinicId={clinic.id}
                   appointmentId={appointment.id}
+                  patientName={appointment.patient_name}
                   revision={appointment.appointment_revision}
                   status={lane.status}
                   appointmentAt={appointment.appointment_at}
