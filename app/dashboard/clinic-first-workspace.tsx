@@ -167,8 +167,8 @@ export function ClinicFirstWorkspace({ locale, error }: { locale: UiLocale; erro
         .atlas-first-clinic-intro h1{max-width:750px;font-size:clamp(32px,4vw,54px);line-height:1.08;letter-spacing:-.045em;margin:9px 0 17px}
         .atlas-first-clinic-intro p{max-width:690px;color:var(--ink-soft);font-size:clamp(15px,1.45vw,18px);line-height:1.65}
         .atlas-first-clinic-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,1fr);gap:18px;align-items:stretch}
-        .atlas-first-clinic-primary,.atlas-first-clinic-join{border:1px solid var(--line);border-radius:24px;padding:clamp(24px,3vw,40px);background:#fff;box-shadow:var(--shadow-sm)}
-        .atlas-first-clinic-primary{border-color:rgba(31,90,67,.22);box-shadow:0 16px 48px rgba(31,90,67,.09)}
+        .atlas-first-clinic-primary,.atlas-first-clinic-join{border:1px solid var(--line);border-radius:24px;padding:clamp(24px,3vw,40px);background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
+        .atlas-first-clinic-primary{border-color:var(--line-strong);box-shadow:var(--shadow-md)}
         .atlas-first-clinic-step{display:flex;gap:10px;align-items:center;color:var(--accent);font-size:12px;font-weight:850}
         .atlas-first-clinic-step span{display:grid;place-items:center;min-width:34px;min-height:34px;border-radius:10px;background:var(--accent-soft);font-variant-numeric:tabular-nums}
         .atlas-first-clinic-primary h2{margin:24px 0 12px;font-size:clamp(22px,2.4vw,29px);line-height:1.2;letter-spacing:-.025em}
@@ -179,14 +179,14 @@ export function ClinicFirstWorkspace({ locale, error }: { locale: UiLocale; erro
         .atlas-first-clinic-primary .stack-form button{min-height:52px;font-weight:850}
         .atlas-first-clinic-join{background:var(--surface-soft)}
         .atlas-first-clinic-join>p{margin-top:24px}
-        .atlas-first-clinic-invite-instruction{padding:19px;border-inline-start:4px solid var(--accent);border-radius:12px;background:white;color:var(--ink-soft);font-size:13px;line-height:1.65}
-        .atlas-first-clinic-roadmap{margin-top:22px;padding:clamp(24px,3vw,36px);border:1px solid var(--line);border-radius:24px;background:#fff}
+        .atlas-first-clinic-invite-instruction{padding:19px;border-inline-start:4px solid var(--accent);border-radius:12px;background:var(--surface);color:var(--ink-soft);font-size:13px;line-height:1.65}
+        .atlas-first-clinic-roadmap{margin-top:22px;padding:clamp(24px,3vw,36px);border:1px solid var(--line);border-radius:24px;background:var(--surface);color:var(--ink)}
         .atlas-first-clinic-roadmap h2{margin:0 0 8px;font-size:clamp(21px,2.5vw,27px);letter-spacing:-.025em}
         .atlas-first-clinic-roadmap header p{max-width:720px;color:var(--muted);font-size:14px;line-height:1.6}
         .atlas-first-clinic-roadmap ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0;padding:0;list-style:none}
         .atlas-first-clinic-roadmap li{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--line);border-radius:16px;padding:17px 14px;background:var(--surface-soft)}
         .atlas-first-clinic-stage-number{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:900;font-size:12px}
-        .atlas-first-clinic-roadmap li:nth-child(n+3) .atlas-first-clinic-stage-number{background:#ecefea;color:var(--muted)}
+        .atlas-first-clinic-roadmap li:nth-child(n+3) .atlas-first-clinic-stage-number{background:var(--surface);border:1px solid var(--line-strong);color:var(--muted)}
         .atlas-first-clinic-roadmap li strong{display:block;font-size:13px;line-height:1.3}
         .atlas-first-clinic-roadmap li p{margin:8px 0;color:var(--ink-soft);font-size:12px;line-height:1.55}
         .atlas-first-clinic-roadmap li small{color:var(--accent);font-size:11px;font-weight:800}
