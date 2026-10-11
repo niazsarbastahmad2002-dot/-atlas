@@ -54,12 +54,10 @@ test("phone schedule exposes the same six real appointment metrics in a compact 
   const dashboard = source("app/dashboard/page.tsx");
   assert.match(experience, /atlas-phone-six-stats/);
   assert.doesNotMatch(experience, /upsertTabletStat/);
-  assert.match(dashboard, /tone="total"/);
-  assert.match(dashboard, /tone="pending"/);
-  assert.match(dashboard, /tone="confirmed"/);
-  assert.match(dashboard, /tone="completed"/);
-  assert.match(dashboard, /tone="no-show"/);
-  assert.match(dashboard, /tone="cancelled"/);
+  for (const status of ["all", "pending", "confirmed", "completed", "no_show", "cancelled"]) {
+    assert.match(dashboard, new RegExp(`key: "${status}"`));
+  }
+  assert.match(dashboard, /schedule-focus-options\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css, /@media \(max-width: 699px\)/);
   assert.match(css, /\.schedule-summary\.atlas-phone-six-stats/);
   assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
