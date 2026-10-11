@@ -272,7 +272,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const previousDay = shiftBaghdadDay(selectedDay, -1);
   const nextDay = shiftBaghdadDay(selectedDay, 1);
-  const nextAppointment = selectedDay === today ? visibleRows.find((row) => ["pending", "confirmed"].includes(row.status) && new Date(row.appointment_at).getTime() >= now - 5 * 60 * 1000) ?? null : null;
+  const nextAppointment = selectedDay >= today ? visibleRows.find((row) => ["pending", "confirmed"].includes(row.status) && (selectedDay > today || new Date(row.appointment_at).getTime() >= now - 5 * 60 * 1000)) ?? null : null;
   const nextAppointmentId = nextAppointment?.id ?? null;
 
   const occupiedForSelectedDoctor = selectedDoctor
