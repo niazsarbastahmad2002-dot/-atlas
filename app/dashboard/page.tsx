@@ -11,6 +11,7 @@ import { formatLeadTime, formatTimeValue, localizeDigits } from "@/lib/i18n/form
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { formatBaghdadDateTime, formatBaghdadDay, uiLocaleMeta, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { getDashboardMessage } from "@/lib/messages";
+import { clinicPriorities } from "@/lib/clinic-priorities";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
 import { ClinicPriorityBoard } from "./clinic-priority-board";
@@ -103,12 +104,12 @@ const workbenchCopy: Record<UiLocale, {
 
 const arrivalBoardCopy: Record<UiLocale, {
   title: string; subtitle: string; needsConfirmation: string; attendanceConfirmed: string;
-  viewAll: string; open: string; noPending: string; noConfirmed: string;
+  viewAll: string; open: string; noPending: string; noConfirmed: string; showFullQueue: string;
 }> = {
-  en: { title: "Front-desk action queue", subtitle: "Open an appointment to update its status or details.", needsConfirmation: "Attendance not confirmed", attendanceConfirmed: "Attendance confirmed", viewAll: "View all", open: "Open appointment", noPending: "No appointments need confirmation.", noConfirmed: "No confirmed attendance yet." },
-  ku: { title: "ڕیزی کاری ڕیسێپشن", subtitle: "وادەیەک بکەرەوە بۆ نوێکردنەوەی دۆخ یان زانیارییەکانی.", needsConfirmation: "هاتن پشتڕاست نەکراوە", attendanceConfirmed: "هاتن پشتڕاستکراوە", viewAll: "هەمووی ببینە", open: "وادەکە بکەرەوە", noPending: "هیچ وادەیەک چاوەڕێی پشتڕاستکردنەوە نییە.", noConfirmed: "هێشتا هیچ هاتنێک پشتڕاست نەکراوە." },
-  bd: { title: "ڕێزا کارێن ڕیسێپشنێ", subtitle: "وادەیەک ڤەکە بۆ نووکرنا بار یان زانیارییان.", needsConfirmation: "هاتن نەهاتیە پشتڕاستکرن", attendanceConfirmed: "هاتن پشتڕاستکریە", viewAll: "هەمی ببینە", open: "وادەیێ ڤەکە", noPending: "چ وادە چاوەڕێی پشتڕاستکرنێ نینن.", noConfirmed: "هێشتا چ هاتن نەهاتینە پشتڕاستکرن." },
-  ar: { title: "قائمة عمل الاستقبال", subtitle: "افتح الموعد لتحديث حالته أو تفاصيله.", needsConfirmation: "الحضور غير مؤكد", attendanceConfirmed: "الحضور مؤكد", viewAll: "عرض الكل", open: "فتح الموعد", noPending: "ماكو مواعيد تحتاج تأكيد حضور.", noConfirmed: "ماكو حضور مؤكد لحد الآن." },
+  en: { title: "Front-desk action queue", subtitle: "Open an appointment to update its status or details.", needsConfirmation: "Attendance not confirmed", attendanceConfirmed: "Attendance confirmed", viewAll: "View all", open: "Open appointment", noPending: "No appointments need confirmation.", noConfirmed: "No confirmed attendance yet.", showFullQueue: "All active patients" },
+  ku: { title: "ڕیزی کاری ڕیسێپشن", subtitle: "وادەیەک بکەرەوە بۆ نوێکردنەوەی دۆخ یان زانیارییەکانی.", needsConfirmation: "هاتن پشتڕاست نەکراوە", attendanceConfirmed: "هاتن پشتڕاستکراوە", viewAll: "هەمووی ببینە", open: "وادەکە بکەرەوە", noPending: "هیچ وادەیەک چاوەڕێی پشتڕاستکردنەوە نییە.", noConfirmed: "هێشتا هیچ هاتنێک پشتڕاست نەکراوە.", showFullQueue: "هەموو نەخۆشە چالاکەکان" },
+  bd: { title: "ڕێزا کارێن ڕیسێپشنێ", subtitle: "وادەیەک ڤەکە بۆ نووکرنا بار یان زانیارییان.", needsConfirmation: "هاتن نەهاتیە پشتڕاستکرن", attendanceConfirmed: "هاتن پشتڕاستکریە", viewAll: "هەمی ببینە", open: "وادەیێ ڤەکە", noPending: "چ وادە چاوەڕێی پشتڕاستکرنێ نینن.", noConfirmed: "هێشتا چ هاتن نەهاتینە پشتڕاستکرن.", showFullQueue: "هەمی نەخۆشێن چالاک" },
+  ar: { title: "قائمة عمل الاستقبال", subtitle: "افتح الموعد لتحديث حالته أو تفاصيله.", needsConfirmation: "الحضور غير مؤكد", attendanceConfirmed: "الحضور مؤكد", viewAll: "عرض الكل", open: "فتح الموعد", noPending: "ماكو مواعيد تحتاج تأكيد حضور.", noConfirmed: "ماكو حضور مؤكد لحد الآن.", showFullQueue: "كل المرضى النشطين" },
 };
 
 function validBaghdadDay(value: string | undefined, fallback: string) {
@@ -275,6 +276,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const pendingQueue = visibleRows.filter((row) => row.status === "pending").slice(0, 3);
   const confirmedQueue = visibleRows.filter((row) => row.status === "confirmed").slice(0, 3);
   const hasArrivalQueue = pending > 0 || confirmed > 0;
+  const hasImmediatePriority = clinicPriorities(visibleRows, now, selectedDay === today).length > 0;
   const arrivalLanes = [
     { status: "pending" as const, label: arrivalCopy.needsConfirmation, count: pending, appointments: pendingQueue, empty: arrivalCopy.noPending },
     { status: "confirmed" as const, label: arrivalCopy.attendanceConfirmed, count: confirmed, appointments: confirmedQueue, empty: arrivalCopy.noConfirmed },
@@ -388,7 +390,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         status: row.status,
       }))}
     />
-    {hasArrivalQueue ? <section className="clinic-arrival-board" aria-labelledby="clinic-arrival-heading">
+    {hasArrivalQueue ? <details
+      className="clinic-arrival-disclosure"
+      key={`${clinic.id}:${selectedDoctor?.id ?? "none"}:${selectedDay}`}
+      open={!hasImmediatePriority}
+    >
+      <summary className="clinic-arrival-disclosure-summary">
+        <span className="clinic-arrival-disclosure-label">{arrivalCopy.showFullQueue}</span>
+        <span className="clinic-arrival-disclosure-counts">
+          <span>{arrivalCopy.needsConfirmation}: <strong>{localizeDigits(pending, locale)}</strong></span>
+          <span>{arrivalCopy.attendanceConfirmed}: <strong>{localizeDigits(confirmed, locale)}</strong></span>
+        </span>
+        <span className="clinic-arrival-disclosure-chevron" aria-hidden="true">⌄</span>
+      </summary>
+      <section className="clinic-arrival-board" aria-labelledby="clinic-arrival-heading">
       <div className="clinic-arrival-heading">
         <div>
           <div className="eyebrow">{relativeDay ?? formatBaghdadDay(selectedDate, locale)}</div>
@@ -423,7 +438,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             : <p className="clinic-arrival-empty">{lane.empty}</p>}
         </section>)}
       </div>
-    </section> : null}
+      </section>
+    </details> : null}
     <nav className="schedule-focus" aria-label={workbench.filters}>
       <strong className="schedule-focus-label">{workbench.filters}</strong>
       <div className="schedule-focus-options">
@@ -494,6 +510,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .clinic-priority-actions a:focus-visible,.clinic-priority-patient:focus-visible{outline:3px solid #ca8221;outline-offset:3px}
       @media(max-width:1020px){.clinic-priority-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
       @media(max-width:700px){.clinic-priority-grid{grid-template-columns:1fr}.clinic-priority-card{padding:14px}.clinic-priority-card p{min-height:0}.clinic-priority-actions .clinic-arrival-quick{flex:1 1 175px}}
+      .clinic-arrival-disclosure{margin:0 0 18px;border:1px solid var(--line-strong);border-radius:18px;background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden}
+      .clinic-arrival-disclosure-summary{display:flex;align-items:center;gap:12px;min-height:66px;padding:12px 17px;cursor:pointer;list-style:none}
+      .clinic-arrival-disclosure-summary::-webkit-details-marker{display:none}
+      .clinic-arrival-disclosure-label{flex:1;min-width:0;color:var(--ink);font-size:15px;font-weight:850}
+      .clinic-arrival-disclosure-counts{display:flex;flex-wrap:wrap;gap:6px 12px;color:var(--ink-soft);font-size:12px;line-height:1.45}
+      .clinic-arrival-disclosure-counts strong{color:var(--ink);font-size:13px}
+      .clinic-arrival-disclosure-chevron{flex:none;color:var(--accent);font-size:24px;font-weight:800;transition:transform .15s}
+      .clinic-arrival-disclosure[open] .clinic-arrival-disclosure-chevron{transform:rotate(180deg)}
+      .clinic-arrival-disclosure-summary:focus-visible{outline:3px solid #ca8221;outline-offset:-3px;border-radius:16px}
+      .clinic-arrival-disclosure .clinic-arrival-board{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}
+      @media(max-width:700px){.clinic-arrival-disclosure-summary{flex-wrap:wrap;gap:6px 12px}.clinic-arrival-disclosure-label{flex-basis:calc(100% - 40px)}.clinic-arrival-disclosure-counts{order:3;width:100%}.clinic-arrival-disclosure-chevron{margin-inline-start:auto}}
       .clinic-arrival-board{display:grid;gap:16px;margin:0 0 18px;padding:clamp(17px,2.2vw,24px);border:1px solid var(--line);border-radius:22px;background:linear-gradient(130deg,var(--surface-soft),var(--surface))}
       .clinic-arrival-heading h2{margin:5px 0 4px;font-size:clamp(20px,2vw,25px);letter-spacing:-.025em;line-height:1.2;color:var(--ink)}
       .clinic-arrival-heading p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
