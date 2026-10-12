@@ -13,6 +13,7 @@ import { formatBaghdadDateTime, formatBaghdadDay, uiLocaleMeta, uiText, type UiL
 import { getDashboardMessage } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
+import { ClinicPriorityBoard } from "./clinic-priority-board";
 import { ClinicFirstWorkspace } from "./clinic-first-workspace";
 import { createAppointment } from "./actions";
 import { AppointmentActions } from "./appointment-actions";
@@ -372,6 +373,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="clinic-command-next"><span>{workbench.next}</span><strong>{nextAppointment ? formatTimeValue(toBaghdadInputValue(new Date(nextAppointment.appointment_at)).slice(11, 16), locale) : "—"}</strong></div>
       </div>
     </section>
+    <ClinicPriorityBoard
+      key={`${clinic.id}:${selectedDoctor?.id ?? "none"}:${selectedDay}`}
+      clinicId={clinic.id}
+      selectedDay={selectedDay}
+      selectedDoctorId={selectedDoctorId}
+      locale={locale}
+      nowAtRender={now}
+      isToday={selectedDay === today}
+      appointments={visibleRows.filter((row) => row.status === "pending" || row.status === "confirmed").map((row) => ({
+        id: row.id,
+        patient_name: row.patient_name,
+        appointment_at: row.appointment_at,
+        appointment_revision: row.appointment_revision,
+        status: row.status,
+      }))}
+    />
     {hasArrivalQueue ? <section className="clinic-arrival-board" aria-labelledby="clinic-arrival-heading">
       <div className="clinic-arrival-heading">
         <div>
@@ -457,6 +474,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .clinic-command-active{background:rgba(169,242,212,.18)!important;border-color:rgba(169,242,212,.42)!important}
       .clinic-command-metric:hover{background:rgba(255,255,255,.17)}
       .clinic-command-next strong{font-size:clamp(21px,2.1vw,29px)}
+      .clinic-priority-board{display:grid;gap:17px;margin:0 0 18px;padding:clamp(18px,2.4vw,25px);border:1px solid var(--line-strong);border-radius:22px;background:var(--surface);box-shadow:var(--shadow-sm)}
+      .clinic-priority-heading .eyebrow{color:var(--accent);font-size:11px;font-weight:850}
+      .clinic-priority-heading h2{margin:5px 0 5px;font-size:clamp(22px,2.3vw,29px);line-height:1.2;letter-spacing:-.025em;color:var(--ink)}
+      .clinic-priority-heading p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
+      .clinic-priority-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+      .clinic-priority-card{display:flex;min-width:0;flex-direction:column;gap:12px;border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:16px;padding:16px;background:var(--surface-soft)}
+      .clinic-priority-card.is-attendance{border-top-color:var(--warning)}
+      .clinic-priority-card.is-finish{border-top-color:var(--success)}
+      .clinic-priority-top{display:flex;justify-content:space-between;align-items:start;gap:10px}
+      .clinic-priority-top strong{font-size:13px;font-weight:850;color:var(--ink);line-height:1.4}
+      .clinic-priority-top span{font-size:11px;color:var(--ink-soft);text-align:end}
+      .clinic-priority-patient{display:flex;min-width:0;justify-content:space-between;gap:10px;align-items:baseline;border-radius:9px;color:var(--ink);text-decoration:none;font-size:17px;font-weight:850}
+      .clinic-priority-patient span{min-width:0;overflow-wrap:anywhere}
+      .clinic-priority-patient bdi{flex:none;color:var(--accent);font-size:15px;font-weight:850}
+      .clinic-priority-card p{margin:0;min-height:37px;color:var(--ink-soft);font-size:12px;line-height:1.5}
+      .clinic-priority-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto}
+      .clinic-priority-actions .clinic-arrival-quick{flex:1;min-width:min(100%,165px);max-width:none}
+      .clinic-priority-actions>a{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);font-size:12px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+      .clinic-priority-actions a:focus-visible,.clinic-priority-patient:focus-visible{outline:3px solid #ca8221;outline-offset:3px}
+      @media(max-width:1020px){.clinic-priority-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media(max-width:700px){.clinic-priority-grid{grid-template-columns:1fr}.clinic-priority-card{padding:14px}.clinic-priority-card p{min-height:0}.clinic-priority-actions .clinic-arrival-quick{flex:1 1 175px}}
       .clinic-arrival-board{display:grid;gap:16px;margin:0 0 18px;padding:clamp(17px,2.2vw,24px);border:1px solid var(--line);border-radius:22px;background:linear-gradient(130deg,var(--surface-soft),var(--surface))}
       .clinic-arrival-heading h2{margin:5px 0 4px;font-size:clamp(20px,2vw,25px);letter-spacing:-.025em;line-height:1.2;color:var(--ink)}
       .clinic-arrival-heading p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
