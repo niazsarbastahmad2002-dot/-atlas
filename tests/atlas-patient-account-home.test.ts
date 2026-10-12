@@ -31,7 +31,7 @@ test("patient account copy is short and patient-facing across Atlas languages", 
   assert.match(page, /noAppointments: "No appointments yet\."/);
   assert.match(page, /signInTitle: "بچۆ ژوورەوە بۆ بینینی مەوعیدەکانت"/);
   assert.match(page, /signInTitle: "بچۆ ژوور بۆ دیتنا وادەیێن خۆ"/);
-  assert.match(page, /signInTitle: "سجّل الدخول لعرض مواعيدك"/);
+  assert.match(page, /signInTitle: "سجّل الدخول حتى تشوف مواعيدك"/);
   assert.doesNotMatch(page, /without giving access to clinic workspaces|verified self-booked appointments/i);
 });
 
