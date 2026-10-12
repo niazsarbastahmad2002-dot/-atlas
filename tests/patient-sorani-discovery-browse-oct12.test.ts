@@ -42,6 +42,13 @@ test("New pages only derive listings from existing publication-gated public sear
   assert.match(explore, /error \? <p className="notice notice-error"/);
 });
 
+test("Browse titles and descriptions follow the selected Patient language, including metadata", () => {
+  assert.match(explore, /generateMetadata\(\{ params, searchParams \}: PageProps\)/);
+  assert.match(explore, /resolvePatientLocale\(search\.lang\)/);
+  assert.match(explore, /copy\[locale\]\.titles\[kind\]/);
+  assert.match(explore, /copy\[locale\]\.descriptions\[kind\]/);
+});
+
 test("Browse navigation and mobile styles remain touch-friendly and localized", () => {
   assert.match(care, /atlas-care-more-pages/);
   assert.match(care, /min-height:48px/);
