@@ -78,7 +78,9 @@ test("receptionist schedule counts use the selected Atlas digit system", () => {
   assert.match(dashboard, /localizeDigits\(order, locale\)/);
   assert.match(dashboard, /function Stat\([\s\S]*locale: UiLocale[\s\S]*localizeDigits\(value, locale\)/);
   assert.match(dashboard, /focusOptions\.map\(\(option\) => <a/);
-  assert.match(dashboard, /localizeDigits\(pending, locale\)/);\n  assert.match(dashboard, /localizeDigits\(confirmed, locale\)/);\n  assert.doesNotMatch(dashboard, /localizeDigits\(option\.count, locale\)/);
+  assert.match(dashboard, /localizeDigits\(pending, locale\)/);
+  assert.match(dashboard, /localizeDigits\(confirmed, locale\)/);
+  assert.doesNotMatch(dashboard, /localizeDigits\(option\.count, locale\)/);
   assert.match(dashboard, /localizeDigits\(focusedRows\.length, locale\)/);
 });
 
