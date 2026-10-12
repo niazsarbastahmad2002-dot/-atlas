@@ -244,7 +244,7 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
         <PatientProfileHero kind="times" eyebrow={t.eyebrow} title={groups.length ? (bookingReady ? t.title : t.readOnlyTitle) : t.noTimes} subtitle={profile.doctor_name} />
         <div className="atlas-times-doctor">
           <strong><bdi>{profile.doctor_name}</bdi></strong>
-          <span><bdi>{profile.specialty}{profile.subspecialty ? ` · ${profile.subspecialty}` : ""}</bdi></span>
+          <span><bdi>{profile.specialty}</bdi>{profile.subspecialty ? <> · <bdi>{profile.subspecialty}</bdi></> : null}</span>
           <small><bdi>{profile.clinic_name}</bdi></small>
         </div>
         {groups.length ? <p className="hero-copy">{bookingReady ? t.intro : t.readOnlyIntro}</p> : null}
