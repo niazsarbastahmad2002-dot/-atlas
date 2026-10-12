@@ -128,7 +128,7 @@ const copy: Record<UiLocale, {
     manageFailed: "Atlas نەیتوانی ئەم مەوعیدە بکاتەوە. دووبارە هەوڵبدەوە.",
     rateLimited: "هەوڵەکان زۆر بوون. کەمێک چاوەڕێ بکە و دووبارە هەوڵبدەوە.",
     loadFailed: "Atlas ئێستا نەیتوانی مەوعیدەکانت بار بکات. دووبارە هەوڵبدەوە.",
-    statuses: { pending: "پشتڕاستکردنەوە پێویستە", confirmed: "پشتڕاستکراو", cancelled: "هەڵوەشاوە", completed: "تەواوبوو", no_show: "مەوعیدەکە تێپەڕی" },
+    statuses: { pending: "پشتڕاستکردنەوە پێویستە", confirmed: "پشتڕاستکراو", cancelled: "هەڵوەشاوە", completed: "تەواوبوو", no_show: "بە نەهاتن تۆمارکراوە" },
   },
   bd: {
     language: "زمان",
@@ -160,7 +160,7 @@ const copy: Record<UiLocale, {
     manageFailed: "Atlas نەشیا ڤێ وادەیێ بکەتەڤە. جارەکا دی هەول بدە.",
     rateLimited: "هەول زۆر بوون. کەمەک چاوەرێ بکە و جارەکا دی هەول بدە.",
     loadFailed: "Atlas نوکە نەشیا وادەیێن تە بار بکەت. جارەکا دی هەول بدە.",
-    statuses: { pending: "پشتڕاستکرن پێدڤییە", confirmed: "پشتڕاستکری", cancelled: "هەلوەشاندی", completed: "تەمامبووی", no_show: "وادە دەرباز بوو" },
+    statuses: { pending: "پشتڕاستکرن پێدڤییە", confirmed: "پشتڕاستکری", cancelled: "هەلوەشاندی", completed: "تەمامبووی", no_show: "وەک نەهاتن هاتییە تۆمارکرن" },
   },
   ar: {
     language: "اللغة",
@@ -192,7 +192,7 @@ const copy: Record<UiLocale, {
     manageFailed: "تعذر على Atlas فتح هذا الموعد. حاول مرة ثانية.",
     rateLimited: "المحاولات كثيرة. انتظر قليلاً وحاول مرة ثانية.",
     loadFailed: "تعذر على Atlas تحميل مواعيدك الآن. حاول مرة ثانية.",
-    statuses: { pending: "يحتاج تأكيد", confirmed: "مؤكد", cancelled: "ملغي", completed: "مكتمل", no_show: "انتهى الموعد" },
+    statuses: { pending: "يحتاج تأكيد", confirmed: "مؤكد", cancelled: "ملغي", completed: "مكتمل", no_show: "مسجّل كعدم حضور" },
   },
 };
 
