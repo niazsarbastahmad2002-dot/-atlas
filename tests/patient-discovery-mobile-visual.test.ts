@@ -10,7 +10,7 @@ test("Patient discovery shows one prominent search with progressive filters in e
   assert.match(page, /type="search" defaultValue=\{query\}/);
   assert.match(page, /<details className="atlas-care-filters" open=\{Boolean\(city \|\| specialty \|\| sort === "soonest"\)\}>/);
   assert.match(page, /filters: "More filters"/);
-  assert.match(page, /filters: "فلتەرەکان"/);
+  assert.match(page, /filters: "گەڕانی وردتر"/);
   assert.match(page, /filters: "فلتەرێن دی"/);
   assert.match(page, /filters: "خيارات البحث"/);
 });
