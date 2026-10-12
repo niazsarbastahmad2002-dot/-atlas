@@ -17,15 +17,21 @@ test("public card names and clinic locations isolate Latin names in Kurdish or A
   assert.match(card, /<h3><bdi>\{doctor\.doctor_name\}<\/bdi><\/h3>/);
   assert.match(card, /<bdi>\{doctor\.specialty\}/);
   assert.match(card, /<bdi>\{doctor\.clinic_name\}<\/bdi>/);
-  assert.match(card, /<bdi>\{location\}<\/bdi>/);
+  assert.match(card, /<bdi>\{doctor\.area\}<\/bdi>/);
+  assert.match(card, /<bdi>\{doctor\.city\}<\/bdi>/);
+  assert.match(card, /<bdi>\{doctor\.subspecialty\}<\/bdi>/);
   assert.match(card, /patientLocaleHref\(/);
 });
 
 test("clinic and doctor profiles preserve layout direction without changing published identities", () => {
   assert.match(hero, /<h1><bdi>\{title\}<\/bdi><\/h1>/);
   assert.match(hero, /<p><bdi>\{subtitle\}<\/bdi><\/p>/);
+  assert.match(hero, /subtitleParts\.map/);
   assert.match(clinic, /<bdi>\{doctor\.display_name\}<\/bdi>/);
-  assert.match(clinic, /<bdi>\{location\}<\/bdi>/);
+  assert.match(clinic, /subtitleParts=\{locationParts\}/);
+  assert.match(clinic, /<bdi>\{part\}<\/bdi>/);
+  assert.match(doctor, /<bdi>\{part\}<\/bdi>/);
+  assert.match(times, /<bdi>\{profile\.subspecialty\}<\/bdi>/);
   assert.match(doctor, /<bdi>\{profile\.clinic_name\}<\/bdi>/);
   assert.match(doctor, /<bdi>\{profile\.specialty\}<\/bdi>/);
   assert.match(doctor, /get_public_doctor_profile/);
