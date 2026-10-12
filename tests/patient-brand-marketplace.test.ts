@@ -9,7 +9,7 @@ const language = source("app/care/patient-language-switcher.tsx");
 
 test("Patient uses the original Atlas vector identity in both shared header and directory", () => {
   assert.match(nav, /src="\/atlas-icon\.svg"/);
-  assert.match(care, /src="\/atlas-mark\.svg"/);
+  assert.match(care, /className="atlas-care-journey-art"[\s\S]*src="\/atlas-icon\.svg"/);
   assert.match(care, /atlas-care-empty-symbol"><img src="\/atlas-icon\.svg"/);
   assert.doesNotMatch(care, /atlas-care-orbit-heart">✳|atlas-care-empty-symbol">✳|className="atlas-care-empty-spark/);
 });
@@ -24,7 +24,7 @@ test("language selection is compact, shared across Patient pages, and keeps deep
 });
 
 test("iPad and mobile layouts use restrained artwork and compact hero/empty directory", () => {
-  assert.match(care, /min-height:235px/);
+  assert.match(care, /\.atlas-care-empty-published\{grid-template-columns:112px minmax\(0,1fr\)/);
   assert.match(care, /\.atlas-care-hero-main\{min-width:0;padding:clamp\(24px/);
   assert.match(care, /@media\(max-width:850px\)/);
   assert.match(care, /@media\(max-width:700px\)/);

@@ -15,7 +15,7 @@ test("Patient wordmark stays dark and visible against light navigation in all ro
 test("Find Care has a prominent visual hero and meaningful tablet/mobile compositions", () => {
   assert.match(page, /className="atlas-care-hero"/);
   assert.match(page, /className="atlas-care-journey"/);
-  assert.match(page, /atlas-care-hero\{display:grid;grid-template-columns:/);
+  assert.match(page, /\.atlas-care-hero\{grid-template-columns:minmax\(0,1fr\) 230px\}/);
   assert.match(page, /@media\(max-width:850px\)/);
   assert.match(page, /@media\(max-width:700px\)/);
   assert.match(page, /@media\(max-width:440px\)/);

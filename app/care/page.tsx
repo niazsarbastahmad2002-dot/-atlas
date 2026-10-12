@@ -323,9 +323,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           </div>
           <aside className="atlas-care-journey" aria-label={copy.patientHome}>
             <div className="atlas-care-journey-art" aria-hidden="true">
-              <span className="atlas-care-orbit atlas-care-orbit-one" />
-              <span className="atlas-care-orbit atlas-care-orbit-two" />
-              <span className="atlas-care-orbit-heart"><img src="/atlas-mark.svg" width="116" height="116" alt="" /></span>
+              <img src="/atlas-icon.svg" width="64" height="64" alt="" />
             </div>
             <div className="atlas-care-journey-steps">
               <div><span aria-hidden="true">01</span><strong>{copy.stepFind}</strong></div>
@@ -397,8 +395,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         ) : (
           <section className="atlas-care-empty atlas-care-empty-published" aria-labelledby="atlas-care-empty-heading">
             <div className="atlas-care-empty-art" aria-hidden="true">
-              <span className="atlas-care-empty-ring" />
-              <span className="atlas-care-empty-symbol"><img src="/atlas-icon.svg" width="90" height="90" alt="" /></span>
+              <span className="atlas-care-empty-symbol"><img src="/atlas-icon.svg" width="64" height="64" alt="" /></span>
             </div>
             <div className="atlas-care-empty-content">
               <span className="atlas-care-empty-kicker">{copy.resultsTitle}</span>
@@ -514,6 +511,54 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         @media(max-width:850px){.atlas-care-hero{grid-template-columns:minmax(0,1.35fr) minmax(205px,.75fr)}.atlas-care-hero-main{padding:24px}.atlas-care-journey{padding:16px}.atlas-care-orbit-heart{inset-inline-end:15px;top:15px;width:76px;height:76px}.atlas-care-orbit-heart img{width:64px;height:64px}}
         @media(max-width:700px){.atlas-care-results{grid-template-columns:1fr}.atlas-care-hero{grid-template-columns:1fr;border-radius:24px}.atlas-care-hero-main{padding:clamp(25px,6vw,36px)}.atlas-care-hero-main h1{font-size:clamp(36px,9vw,51px)}.atlas-care-journey{min-height:0;padding:15px;background:#c9ead4}.atlas-care-journey-art{display:none}.atlas-care-journey-steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.atlas-care-journey-steps>div{flex-direction:column;align-items:flex-start;gap:6px;min-height:85px;padding:10px}.atlas-care-journey-steps span{width:26px;height:26px;flex-basis:26px;font-size:10px}.atlas-care-journey-steps strong{font-size:11px}.atlas-care-results{grid-template-columns:1fr}.atlas-care-empty-published{grid-template-columns:1fr}.atlas-care-empty-art{min-height:165px}.atlas-care-empty-ring{width:140px;height:140px}.atlas-care-empty-symbol{width:90px;height:90px;font-size:57px}}
         @media(max-width:440px){.atlas-care-search-primary{grid-template-columns:1fr}.atlas-care-search-primary .button{width:100%}.atlas-care-language{justify-content:flex-start;flex-wrap:wrap}.atlas-care-journey-steps strong{font-size:10px}.atlas-care-result{padding:18px}}
+
+        /* October iPad review: the journey and empty state are content, not oversized decoration. */
+        .atlas-care-hero{grid-template-columns:minmax(0,1fr) 230px}
+        .atlas-care-hero-main{padding:clamp(22px,3vw,36px)}
+        .atlas-care-hero-main h1{font-size:clamp(32px,3.8vw,49px);max-width:18ch}
+        .atlas-care-search{margin-top:18px}
+        .atlas-care-journey{justify-content:center;gap:22px;padding:20px;background:#d8eee0}
+        .atlas-care-journey-art{position:static;z-index:auto;display:flex;align-items:center;justify-content:center;overflow:visible}
+        .atlas-care-journey-art img{display:block;width:64px;height:64px;object-fit:contain;border-radius:16px;box-shadow:0 7px 22px rgba(12,65,43,.12)}
+        .atlas-care-journey-steps{gap:9px}
+        .atlas-care-journey-steps>div{min-height:48px;padding:9px 11px}
+        .atlas-care-journey-steps strong{font-size:13px}
+        .atlas-care-empty-published{grid-template-columns:112px minmax(0,1fr);gap:22px;min-height:0;padding:24px;background:var(--surface);box-shadow:var(--shadow-sm)}
+        .atlas-care-empty-art{min-height:112px;width:112px;border-radius:20px;background:#e9f5ec}
+        .atlas-care-empty-symbol{width:70px;height:70px;border-radius:17px;box-shadow:none}
+        .atlas-care-empty-symbol img{width:70px;height:70px}
+        .atlas-care-empty-content h2{font-size:clamp(22px,2.7vw,30px)}
+        .atlas-care-empty-content p{font-size:13px;line-height:1.5}
+        .atlas-care-empty-kicker{margin-bottom:7px}
+        .atlas-care-empty-action{margin-top:12px}
+        @media(max-width:1200px){
+          .atlas-care-hero{grid-template-columns:minmax(0,1fr)}
+          .atlas-care-journey{flex-direction:row;justify-content:stretch;padding:12px 16px;gap:0}
+          .atlas-care-journey-art{display:none}
+          .atlas-care-journey-steps{width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+          .atlas-care-journey-steps>div{flex-direction:row;align-items:center;min-width:0;min-height:54px;gap:8px}
+          .atlas-care-journey-steps strong{font-size:12px}
+          .atlas-care-hero-main h1{max-width:none}
+        }
+        @media(max-width:700px){
+          .atlas-care-journey{min-height:0;padding:10px;background:#d8eee0}
+          .atlas-care-journey-steps>div{flex-direction:column;align-items:flex-start;min-height:76px}
+          .atlas-care-empty-published{grid-template-columns:80px minmax(0,1fr);gap:14px;padding:17px}
+          .atlas-care-empty-art{min-height:80px;width:80px;border-radius:16px}
+          .atlas-care-empty-symbol,.atlas-care-empty-symbol img{width:56px;height:56px}
+          .atlas-care-empty-content h2{font-size:clamp(20px,5vw,26px)}
+          .atlas-care-empty-content p{font-size:12px}
+        }
+        @media(max-width:390px){
+          .atlas-care-empty-published{grid-template-columns:1fr}
+          .atlas-care-empty-art{width:64px;min-height:64px}
+          .atlas-care-empty-symbol,.atlas-care-empty-symbol img{width:48px;height:48px}
+        }
+        :root[data-theme="dark"] .atlas-care-journey,:root[data-theme="dark"] .atlas-care-empty-art{background:#1b4735}
+        :root[data-theme="dark"] .atlas-care-empty-published{background:var(--surface)}
+        @media(prefers-color-scheme:dark){:root[data-theme="system"] .atlas-care-journey,:root[data-theme="system"] .atlas-care-empty-art{background:#1b4735}:root[data-theme="system"] .atlas-care-empty-published{background:var(--surface)}}
+        :root[data-theme="dark"] .atlas-care-journey-steps>div,:root[data-theme="dark"] .atlas-care-journey-steps strong{color:#153d2c}
+        @media(prefers-color-scheme:dark){:root[data-theme="system"] .atlas-care-journey-steps>div,:root[data-theme="system"] .atlas-care-journey-steps strong{color:#153d2c}}
         @media(prefers-reduced-motion:reduce){.atlas-care-page *{scroll-behavior:auto;transition:none!important}}
       `}</style>
     </main>
