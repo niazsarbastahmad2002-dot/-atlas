@@ -59,7 +59,7 @@ export function PatientDirectoryCard({
         <span className="atlas-care-doctor-mark" aria-hidden="true">{doctor.doctor_name.trim().slice(0, 1)}</span>
         <div className="atlas-care-doctor-details">
           <h3><bdi>{doctor.doctor_name}</bdi></h3>
-          <p><bdi>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</bdi></p>
+          <p><bdi>{doctor.specialty}</bdi>{doctor.subspecialty ? <> · <bdi>{doctor.subspecialty}</bdi></> : null}</p>
         </div>
       </div>
       <div className="atlas-marketplace-card-info">
@@ -67,7 +67,7 @@ export function PatientDirectoryCard({
           <PatientLineIcon kind="clinic" />
           {preview ? <span><bdi>{doctor.clinic_name}</bdi></span> : <Link href={clinicHref}><bdi>{doctor.clinic_name}</bdi></Link>}
         </div>
-        {location ? <div className="atlas-marketplace-card-line"><PatientLineIcon kind="location" /><span><bdi>{location}</bdi></span></div> : null}
+        {location ? <div className="atlas-marketplace-card-line"><PatientLineIcon kind="location" /><span>{doctor.area ? <bdi>{doctor.area}</bdi> : null}{doctor.area && doctor.city ? " · " : null}{doctor.city ? <bdi>{doctor.city}</bdi> : null}</span></div> : null}
       </div>
       {nextOpening ? (
         preview ? (
