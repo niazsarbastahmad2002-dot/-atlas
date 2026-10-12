@@ -279,7 +279,8 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
     && readiness.supabasePhoneEnabled
     && !readiness.signupDisabled
   );
-  const location = [profile.address_text, profile.area, profile.city].filter(Boolean).join(" · ");
+  const locationParts = [profile.address_text, profile.area, profile.city].filter((part): part is string => Boolean(part));
+  const location = locationParts.join(" · ");
   const phone = profile.public_phone
     ? (profile.country_code === "IQ" ? formatIraqiMobile(profile.public_phone) : profile.public_phone)
     : null;
@@ -438,7 +439,7 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
           <div><dt>{copy.clinic}</dt><dd><Link href={patientLocaleHref(`/care/${profile.clinic_slug}`, locale)}><bdi>{profile.clinic_name}</bdi></Link></dd></div>
           <div><dt>{copy.specialty}</dt><dd><bdi>{profile.specialty}</bdi></dd></div>
           {profile.subspecialty ? <div><dt>{copy.subspecialty}</dt><dd><bdi>{profile.subspecialty}</bdi></dd></div> : null}
-          {location ? <div><dt>{copy.location}</dt><dd><bdi>{location}</bdi></dd></div> : null}
+          {location ? <div><dt>{copy.location}</dt><dd>{locationParts.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}</dd></div> : null}
           {phone ? (
             <div>
               <dt>{copy.contact}</dt>
