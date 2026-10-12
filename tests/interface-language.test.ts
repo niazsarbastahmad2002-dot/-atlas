@@ -73,12 +73,14 @@ test("settings action results stay in the selected Atlas language", () => {
 test("receptionist schedule counts use the selected Atlas digit system", () => {
   const dashboard = read("app/dashboard/page.tsx");
 
-  assert.match(dashboard, /localizeDigits\(visibleRows\.length, locale\)/);
+  assert.match(dashboard, /localizeDigits\(pending \+ confirmed, locale\)/);
   assert.match(dashboard, /localizeDigits\(count, locale\)/);
   assert.match(dashboard, /localizeDigits\(order, locale\)/);
   assert.match(dashboard, /function Stat\([\s\S]*locale: UiLocale[\s\S]*localizeDigits\(value, locale\)/);
   assert.match(dashboard, /focusOptions\.map\(\(option\) => <a/);
-  assert.match(dashboard, /localizeDigits\(option\.count, locale\)/);
+  assert.match(dashboard, /localizeDigits\(pending, locale\)/);
+  assert.match(dashboard, /localizeDigits\(confirmed, locale\)/);
+  assert.doesNotMatch(dashboard, /localizeDigits\(option\.count, locale\)/);
   assert.match(dashboard, /localizeDigits\(focusedRows\.length, locale\)/);
 });
 

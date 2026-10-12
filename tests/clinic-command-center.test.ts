@@ -52,3 +52,14 @@ test("clinic command center finds patients in the currently scoped schedule", ()
   assert.match(css, /@media \(min-width: 561px\) \{/);
   assert.match(css, /\.appointment-row\.is-atlas-phone-search-hidden \{ display: none; \}/);
 });
+
+test("clinic overview owns the counts while schedule focus is a compact filtering toolbar", () => {
+  assert.match(page, /className="clinic-command-metrics"/);
+  assert.match(page, /className="schedule-focus-label"/);
+  assert.match(page, /className="schedule-focus-options"/);
+  assert.match(page, /focusOptions\.map\(\(option\) => <a[^\n]*>\{option\.label\}<\/a>\)/);
+  assert.doesNotMatch(page, /schedule-focus-heading/);
+  assert.doesNotMatch(page, /schedule-focus-options a strong/);
+  assert.match(page, /\.schedule-focus\{display:flex;flex-wrap:wrap/);
+  assert.match(page, /\.schedule-focus-options a\{[^\n]*min-height:44px/);
+});
