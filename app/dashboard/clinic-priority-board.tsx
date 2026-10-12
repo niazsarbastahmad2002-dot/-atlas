@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toBaghdadInputValue } from "@/lib/appointments";
+import { baghdadDate } from "@/lib/i18n/config";
 import { formatTimeValue, localizeDigits } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { clinicPriorities, type ClinicAttentionAppointment } from "@/lib/clinic-priorities";
@@ -35,7 +36,6 @@ export function ClinicPriorityBoard({
   selectedDoctorId,
   locale,
   nowAtRender,
-  isToday,
 }: {
   appointments: PriorityAppointment[];
   clinicId: string;
@@ -43,7 +43,6 @@ export function ClinicPriorityBoard({
   selectedDoctorId: string | null;
   locale: UiLocale;
   nowAtRender: number;
-  isToday: boolean;
 }) {
   const [now, setNow] = useState(nowAtRender);
   useEffect(() => {
@@ -57,6 +56,7 @@ export function ClinicPriorityBoard({
     };
   }, []);
 
+  const isToday = baghdadDate.format(new Date(now)) === selectedDay;
   const priorities = clinicPriorities(appointments, now, isToday);
   if (priorities.length === 0) return null;
   const t = copy[locale];
