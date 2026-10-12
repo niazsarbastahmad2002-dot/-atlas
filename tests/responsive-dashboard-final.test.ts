@@ -111,3 +111,15 @@ test("dashboard server output includes all six receptionist outcome metrics befo
   assert.match(dashboard, /\{ key: "cancelled", label: summary\.cancelled, count: cancelled \}/);
   assert.match(dashboard, /focusOptions\.map\(\(option\) => <a/);
 });
+
+test("schedule is first in both reading and visual order on desktop, iPad and phone", () => {
+  const css = source("app/globals.css");
+  const dashboard = source("app/dashboard/page.tsx");
+  assert.ok(dashboard.indexOf('className="panel appointments-panel schedule-card"') < dashboard.indexOf('className="panel appointment-composer"'));
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) 360px;/);
+  assert.match(css, /@media \(max-width: 1080px\) \{[\s\S]*?\.workspace-grid \{ grid-template-columns: minmax\(0, 1fr\) 330px; \}/);
+  assert.match(css, /@media \(max-width: 900px\) \{[\s\S]*?\.workspace-grid \{ grid-template-columns: 1fr; \}/);
+  assert.match(css, /\.appointment-composer \{ position: static; scroll-margin-top: 84px; \}/);
+  assert.match(dashboard, /className="panel appointment-composer" id="new-appointment"/);
+  assert.match(dashboard, /href="#new-appointment"/);
+});
