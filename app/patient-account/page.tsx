@@ -96,7 +96,7 @@ const copy: Record<UiLocale, {
     manageFailed: "Atlas could not open that appointment. Try again.",
     rateLimited: "Too many attempts. Wait a little and try again.",
     loadFailed: "Atlas could not load your appointments right now. Try again.",
-    statuses: { pending: "Needs confirmation", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "Appointment ended" },
+    statuses: { pending: "Needs confirmation", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "Marked as missed" },
   },
   ku: {
     language: "زمان",
