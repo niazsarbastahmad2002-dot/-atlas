@@ -81,7 +81,7 @@ const careCopy: Record<UiLocale, {
     availableSoon: "Available soon",
     allDoctors: "All doctors",
     noPublished: "No doctors are published on Atlas yet.",
-    noPublishedHelp: "Clinics will appear here once they publish their doctors. You can still manage existing appointments.",
+    noPublishedHelp: "Published doctor profiles will appear here when clinics make them public. You can still view your appointments.",
     stepFind: "Find a doctor",
     stepTimes: "See real times",
     stepContact: "Contact clinic",
@@ -91,7 +91,7 @@ const careCopy: Record<UiLocale, {
     language: "زمان",
     eyebrow: "دۆزینەوەی پزیشک",
     title: "پزیشکەکەت بدۆزەرەوە",
-    intro: "پزیشک و کلینیک بدۆزەرەوە و کاتە بەردەستەکانیان ببینە.",
+    intro: "پزیشک یان کلینیک بدۆزەرەوە و کاتە بەردەستەکانی پزیشکەکان ببینە.",
     query: "پزیشک، کلینیک یان پسپۆڕی",
     queryPlaceholder: "ناوی پزیشک، کلینیک یان پسپۆڕی بنووسە",
     city: "شار",
@@ -103,8 +103,8 @@ const careCopy: Record<UiLocale, {
     sortName: "ناوی پزیشک",
     sortSoonest: "نزیکترین کاتی بەردەست",
     search: "گەڕان",
-    noResults: "هێشتا هیچ پزیشکێکی بڵاوکراوە لەم گەڕانەدا نەدۆزرایەوە.",
-    noResultsHelp: "گەڕانەکە فراوانتر بکە یان یەکێک لە فلتەرەکان لاببە.",
+    noResults: "هیچ پزیشکێکی بڵاوکراوە بە گەڕانەکەت نەدۆزرایەوە.",
+    noResultsHelp: "وشەیەکی گشتیتر بنووسە یان فلتەرەکان کەم بکەرەوە.",
     unavailable: "گەڕان بۆ پزیشک بە شێوەیەکی کاتی بەردەست نییە.",
     clinic: "کلینیک",
     nextAvailable: "نزیکترین کاتی بەردەست",
@@ -115,13 +115,13 @@ const careCopy: Record<UiLocale, {
     browseSpecialties: "بە پسپۆڕی بگەڕێ",
     browseClinics: "کلینیکەکان بدۆزەرەوە",
     viewClinic: "بینینی کلینیک",
-    availableSoon: "کاتی نزیک بەردەستە",
+    availableSoon: "نزیکترین کاتە بەردەستەکان",
     allDoctors: "هەموو پزیشکەکان",
     noPublished: "هێشتا هیچ پزیشکێک لە Atlas بڵاو نەکراوەتەوە.",
     noPublishedHelp: "کاتێک کلینیکەکان پڕۆفایلی پزیشکەکانیان بڵاو دەکەنەوە، لێرە دەردەکەون. دەتوانیت مەوعیدەکانت ببینیت.",
     stepFind: "پزیشک بدۆزەرەوە",
     stepTimes: "کاتەکان ببینە",
-    stepContact: "پەیوەندی بە کلینیک",
+    stepContact: "پەیوەندی بە کلینیک بکە",
     resultsTitle: "پزیشکەکان",
   },
   bd: {
@@ -177,8 +177,8 @@ const careCopy: Record<UiLocale, {
     sortName: "اسم الطبيب",
     sortSoonest: "أقرب وقت متاح",
     search: "ابحث",
-    noResults: "لا توجد ملفات تعريف منشورة لأطباء تطابق بحثك حاليًا.",
-    noResultsHelp: "جرّب البحث بكلمات أعمّ أو أزِل أحد عوامل التصفية.",
+    noResults: "لم نجد أطباء منشورين يطابقون بحثك.",
+    noResultsHelp: "جرّب كلمات أبسط أو أزل أحد عوامل التصفية.",
     unavailable: "البحث العام عن الأطباء غير متاح مؤقتاً.",
     clinic: "العيادة",
     nextAvailable: "أقرب وقت متاح",
@@ -239,6 +239,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
   const sortValue = bounded(params.sort, 20);
   const sort = sortValue === "soonest" ? "soonest" : "name";
   const hasSearch = Boolean(query || city || specialty);
+  const hasActiveFilters = hasSearch || sort === "soonest";
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("search_public_doctors_with_availability", {
@@ -319,7 +320,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
               <button className="button button-ghost" type="submit">{copy.search}</button>
             </div>
           </details>
-          {hasSearch ? <Link className="atlas-care-clear-filters" href={patientLocaleHref("/care", locale)}>{copy.allDoctors} <span aria-hidden="true">↗</span></Link> : null}
+          {hasActiveFilters ? <Link className="atlas-care-clear-filters" href={patientLocaleHref("/care", locale)}>{copy.allDoctors} <span aria-hidden="true">↗</span></Link> : null}
         </form>
           </div>
           <aside className="atlas-care-journey" aria-label={copy.patientHome}>
