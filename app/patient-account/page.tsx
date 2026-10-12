@@ -108,7 +108,7 @@ const copy: Record<UiLocale, {
     upcoming: "مەوعیدە داهاتووەکان",
     history: "پێشوو و هەڵوەشاوەکان",
     noUpcoming: "هیچ مەوعیدێکی داهاتووت نییە.",
-    noUpcomingHelp: "کاتێک مەوعیدی داهاتووت لە Atlas دادەنێیت، لێرە دەردەکەوێت.",
+    noUpcomingHelp: "مەوعیدە داهاتووەکانی پەیوەست بە هەژمارەکەت لێرە دەردەکەون.",
     noAppointments: "هێشتا هیچ مەوعیدێکت نییە.",
     noAppointmentsHelp: "ئەو مەوعیدانەی لە Atlas دایدەنێیت لێرە دەردەکەون.",
     findCare: "چارەسەر بدۆزەرەوە",
