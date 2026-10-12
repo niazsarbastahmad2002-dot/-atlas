@@ -15,7 +15,7 @@ test("Patient clinic, doctor, and time pages share one display-only hero", () =>
     assert.match(page, /atlas-patient-detail/);
   }
   assert.match(hero, /kind: "clinic" \| "doctor" \| "times"/);
-  assert.match(hero, /<h1>\{title\}<\/h1>/);
+  assert.match(hero, /<h1><bdi>\{title\}<\/bdi><\/h1>/);
   assert.doesNotMatch(hero, /<img|fakePhoto/i);
 });
 

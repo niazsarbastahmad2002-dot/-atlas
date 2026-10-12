@@ -5,10 +5,11 @@ type Props = {
   eyebrow: string;
   title: string;
   subtitle?: string | null;
+  subtitleParts?: string[];
 };
 
 // A truthful visual identity, never a fake professional photograph.
-export function PatientProfileHero({ kind, eyebrow, title, subtitle }: Props) {
+export function PatientProfileHero({ kind, eyebrow, title, subtitle, subtitleParts }: Props) {
   const mark = kind === "clinic" ? "+" : kind === "times" ? "◷" : title.trim().slice(0, 1);
   return (
     <header className={`patient-profile-hero patient-profile-${kind}`}>
@@ -17,8 +18,8 @@ export function PatientProfileHero({ kind, eyebrow, title, subtitle }: Props) {
         <span className="patient-profile-mark" aria-hidden="true">{mark}</span>
         <div className="patient-profile-heading">
           <span className="patient-profile-eyebrow">{eyebrow}</span>
-          <h1>{title}</h1>
-          {subtitle ? <p>{subtitle}</p> : null}
+          <h1><bdi>{title}</bdi></h1>
+          {subtitleParts?.length ? <p>{subtitleParts.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}</p> : subtitle ? <p><bdi>{subtitle}</bdi></p> : null}
         </div>
       </div>
     </header>

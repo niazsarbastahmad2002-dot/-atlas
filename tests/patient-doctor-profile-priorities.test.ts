@@ -12,7 +12,7 @@ test("Doctor profile shows clinic identity and real availability before long det
   assert.ok(clinic > -1 && available > clinic && bio > available && details > bio);
   // The bio/details must remain outside the availability condition (including zero-slot profiles).
   assert.match(page, /<\/section>\s*\) : null\}\s*\{profile\.bio \?/);
-  assert.match(page, /\{copy\.clinic\}: \{profile\.clinic_name\}/);
+  assert.match(page, /\{copy\.clinic\}: <bdi>\{profile\.clinic_name\}<\/bdi>/);
   assert.match(page, /min-height:44px/);
 });
 

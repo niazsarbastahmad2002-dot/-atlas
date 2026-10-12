@@ -326,7 +326,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
 
         {session ? (
           <>
-            {session.display_name ? <p className="patient-account-hello">{t.hello}, <strong>{session.display_name}</strong></p> : null}
+            {session.display_name ? <p className="patient-account-hello">{t.hello}, <strong><bdi>{session.display_name}</bdi></strong></p> : null}
 
             <div className="patient-account-toolbar">
               <a className="button button-ghost" href={findCareHref}>{t.findCare}</a>
@@ -349,9 +349,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                             <span className="patient-account-status" data-status={appointment.appointment_status}>
                               {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
                             </span>
-                            <strong>{appointment.doctor_name}</strong>
-                            {appointment.doctor_specialty ? <span>{appointment.doctor_specialty}</span> : null}
-                            <span>{appointment.clinic_name}</span>
+                            <strong><bdi>{appointment.doctor_name}</bdi></strong>
+                            {appointment.doctor_specialty ? <span><bdi>{appointment.doctor_specialty}</bdi></span> : null}
+                            <span><bdi>{appointment.clinic_name}</bdi></span>
                             <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
                           </div>
                           <form
@@ -381,9 +381,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                               <span className="patient-account-status" data-status={appointment.appointment_status}>
                                 {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
                               </span>
-                              <strong>{appointment.doctor_name}</strong>
-                              {appointment.doctor_specialty ? <span>{appointment.doctor_specialty}</span> : null}
-                              <span>{appointment.clinic_name}</span>
+                              <strong><bdi>{appointment.doctor_name}</bdi></strong>
+                              {appointment.doctor_specialty ? <span><bdi>{appointment.doctor_specialty}</bdi></span> : null}
+                              <span><bdi>{appointment.clinic_name}</bdi></span>
                               <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
                             </div>
                             <form
