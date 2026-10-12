@@ -52,20 +52,38 @@ test("right-now queue respects the appointment-time grace window", () => {
   );
 });
 
-test("priority cards stay scoped to the authorized schedule with direct actions", () => {
+test("priority board stays within authorized current workspace rows", () => {
   const page = readFileSync(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /const priorities = clinicPriorities\(visibleRows, now, selectedDay === today\)/);
-  assert.match(page, /priorities\.length > 0 \? <section className="clinic-priority-board"/);
-  assert.match(page, /scheduleHref\(clinic\.id, selectedDay, selectedDoctorId, appointment\.status\)/);
-  assert.match(page, /appointmentId=\{appointment\.id\}/);
-  assert.match(page, /revision=\{appointment\.appointment_revision\}/);
-  assert.match(page, /status=\{kind === "attendance" \? "pending" : "confirmed"\}/);
-  assert.match(page, /kind !== "soon" \? <ClinicArrivalQuickAction/);
-  assert.match(page, /data-atlas-user-content="true">\{appointment\.patient_name\}/);
+  const board = readFileSync(new URL("../app/dashboard/clinic-priority-board.tsx", import.meta.url), "utf8");
+
+  assert.match(page, /<ClinicPriorityBoard/);
+  assert.match(page, /key=\{\`\$\{clinic\.id\}:\$\{selectedDoctor\?\.id \?\? "none"\}:\$\{selectedDay\}\`\}/);
+  assert.match(page, /appointments=\{visibleRows\.filter\(\(row\) => row\.status === "pending" \|\| row\.status === "confirmed"\)/);
+  assert.match(page, /clinicId=\{clinic\.id\}/);
+  assert.match(page, /nowAtRender=\{now\}/);
+  assert.match(page, /isToday=\{selectedDay === today\}/);
+  assert.match(board, /clinicPriorities\(appointments, now, isToday\)/);
+  assert.match(board, /appointmentHref\(clinicId, selectedDay, selectedDoctorId, appointment\.status, appointment\.id\)/);
+  assert.match(board, /appointmentId=\{appointment\.id\}/);
+  assert.match(board, /revision=\{appointment\.appointment_revision\}/);
+  assert.match(board, /status=\{kind === "attendance" \? "pending" : "confirmed"\}/);
+  assert.match(board, /kind !== "soon" \? <ClinicArrivalQuickAction/);
+  assert.match(board, /data-atlas-user-content="true">\{appointment\.patient_name\}/);
   assert.match(page, /\.clinic-priority-grid\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(page, /@media\(max-width:700px\)\{\.clinic-priority-grid\{grid-template-columns:1fr\}/);
   for (const locale of ["en", "ku", "bd", "ar"]) {
-    assert.match(page, new RegExp(`\\b${locale}: \\{ eyebrow:`));
+    assert.match(board, new RegExp(`\\b${locale}: \\{ eyebrow:`));
   }
-  assert.match(page, /not automatic arrival or no-show decisions/);
+  assert.match(board, /not automatic arrival or no-show decisions/);
+});
+
+test("priority cards recompute while reception keeps a draft open without whole-page refresh", () => {
+  const board = readFileSync(new URL("../app/dashboard/clinic-priority-board.tsx", import.meta.url), "utf8");
+  assert.match(board, /useState\(nowAtRender\)/);
+  assert.match(board, /setNow\(Date\.now\(\)\)/);
+  assert.match(board, /window\.setInterval\(update, 30_000\)/);
+  assert.match(board, /window\.clearInterval\(timer\)/);
+  assert.match(board, /document\.addEventListener\("visibilitychange", update\)/);
+  assert.match(board, /document\.removeEventListener\("visibilitychange", update\)/);
+  assert.doesNotMatch(board, /router\.refresh\(\)|window\.location\.reload\(/);
 });
