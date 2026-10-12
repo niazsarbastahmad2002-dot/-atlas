@@ -643,7 +643,9 @@ label { color: var(--ink-soft); }
 @media (max-width: 900px) {
   .feature-grid { grid-template-columns: 1fr; }
   .workspace-grid { grid-template-columns: 1fr; }
-  .appointment-composer { position: static; }
+  /* Front desk sees the live schedule before the longer booking form on iPad portrait and phones. */
+  .workspace-grid > .appointments-panel { order: 1; }
+  .workspace-grid > .appointment-composer { order: 2; position: static; scroll-margin-top: 84px; }
   .schedule-card { min-height: 0; }
   .settings-grid { grid-template-columns: 1fr; }
   .settings-card-wide { grid-column: auto; }
