@@ -303,7 +303,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <div className="atlas-care-search-primary">
             <label>
               <span>{copy.query}</span>
-              <input name="q" type="search" defaultValue={query} placeholder={copy.queryPlaceholder} maxLength={80} />
+              <input name="q" dir="auto" type="search" defaultValue={query} placeholder={copy.queryPlaceholder} maxLength={80} />
             </label>
             <button className="button" type="submit">{copy.search}<span aria-hidden="true">↗</span></button>
           </div>
@@ -312,12 +312,12 @@ export default async function CarePage({ searchParams }: CarePageProps) {
             <div className="atlas-care-search-extra">
               <label>
                 <span>{copy.city}</span>
-                <input name="city" list="atlas-patient-cities" autoComplete="off" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
+                <input name="city" dir="auto" list="atlas-patient-cities" autoComplete="off" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
                 <datalist id="atlas-patient-cities">{citySuggestions.map((item) => <option key={item} value={item} />)}</datalist>
               </label>
               <label>
                 <span>{copy.specialty}</span>
-                <input name="specialty" list="atlas-patient-specialties" autoComplete="off" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
+                <input name="specialty" dir="auto" list="atlas-patient-specialties" autoComplete="off" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
                 <datalist id="atlas-patient-specialties">{specialtySuggestions.map((item) => <option key={item} value={item} />)}</datalist>
               </label>
               <label>
