@@ -30,7 +30,7 @@ test("Private appointments explain the no-show status without treating it as a c
   assert.match(account, /no_show: "وەک نەهاتن هاتییە تۆمارکرن"/);
   assert.match(account, /no_show: "مسجّل كعدم حضور"/);
   assert.match(appointment, /noShow: "This appointment was marked as missed\."/);
-  assert.match(appointment, /noShow: "سُجّل عدم حضورك لهذا الموعد\."/);
+  assert.match(appointment, /noShow: "مسجّل إنك ما حضرت لهذا الموعد\."/);
   assert.match(account, /admin\.rpc\("list_patient_account_appointments_service"/);
   assert.match(appointment, /isPatientToken\(token\)/);
 });
