@@ -380,7 +380,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       selectedDoctorId={selectedDoctorId}
       locale={locale}
       nowAtRender={now}
-      isToday={selectedDay === today}
       appointments={visibleRows.filter((row) => row.status === "pending" || row.status === "confirmed").map((row) => ({
         id: row.id,
         patient_name: row.patient_name,
