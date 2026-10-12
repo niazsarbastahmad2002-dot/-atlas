@@ -170,7 +170,8 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
   const clinic = Array.isArray(clinicData) ? clinicData[0] : undefined;
   if (clinicError || doctorsError || !clinic) return <Unavailable copy={copy} locale={locale} />;
 
-  const location = [clinic.address_text, clinic.area, clinic.city].filter(Boolean).join(" · ");
+  const locationParts = [clinic.address_text, clinic.area, clinic.city].filter((part): part is string => Boolean(part));
+  const location = locationParts.join(" · ");
   const directionsDestination = clinic.address_text
     ? [clinic.address_text, clinic.area, clinic.city, clinic.country_code].filter(Boolean).join(", ")
     : "";
@@ -186,7 +187,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
       <AtlasPatientNav locale={locale} myAppointments={copy.myAppointments} />
 
       <article className="shell atlas-care-clinic">
-        <PatientProfileHero kind="clinic" eyebrow={copy.eyebrow} title={clinic.display_name} subtitle={location || undefined} />
+        <PatientProfileHero kind="clinic" eyebrow={copy.eyebrow} title={clinic.display_name} subtitleParts={locationParts} />
         <ShareProfileButton
           title={clinic.display_name}
           text={copy.shareText}
@@ -202,7 +203,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
               <div>
                 <dt>{copy.location}</dt>
                 <dd>
-                  <span><bdi>{location}</bdi></span>
+                  <span>{locationParts.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}</span>
                   {directionsUrl ? (
                     <a className="atlas-clinic-directions-link" href={directionsUrl} target="_blank" rel="noreferrer">
                       {copy.directions}
@@ -229,7 +230,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
                   <span className="patient-mini-mark" aria-hidden="true">{doctor.display_name.trim().slice(0, 1)}</span>
                   <div>
                     <strong><bdi>{doctor.display_name}</bdi></strong>
-                    <span><bdi>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</bdi></span>
+                    <span><bdi>{doctor.specialty}</bdi>{doctor.subspecialty ? <> · <bdi>{doctor.subspecialty}</bdi></> : null}</span>
                   </div>
                   <Link className="button button-ghost button-small" href={patientLocaleHref(`/care/${clinicSlug}/${doctor.slug}`, locale)}>{copy.openDoctor}</Link>
                 </article>
