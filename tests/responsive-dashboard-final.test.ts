@@ -112,13 +112,14 @@ test("dashboard server output includes all six receptionist outcome metrics befo
   assert.match(dashboard, /focusOptions\.map\(\(option\) => <a/);
 });
 
-test("iPad portrait and phone front desk shows today's schedule before the long booking form", () => {
+test("schedule is first in both reading and visual order on desktop, iPad and phone", () => {
   const css = source("app/globals.css");
   const dashboard = source("app/dashboard/page.tsx");
-  assert.match(css, /@media \(max-width: 900px\) \{[\s\S]*?\.workspace-grid > \.appointments-panel \{ order: 1; \}/);
-  assert.match(css, /\.workspace-grid > \.appointment-composer \{ order: 2; position: static; scroll-margin-top: 84px; \}/);
-  assert.match(css, /@media \(max-width: 1080px\) \{[\s\S]*?\.workspace-grid \{ grid-template-columns: 330px minmax\(0, 1fr\); \}/);
+  assert.ok(dashboard.indexOf('className="panel appointments-panel schedule-card"') < dashboard.indexOf('className="panel appointment-composer"'));
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) 360px;/);
+  assert.match(css, /@media \(max-width: 1080px\) \{[\s\S]*?\.workspace-grid \{ grid-template-columns: minmax\(0, 1fr\) 330px; \}/);
+  assert.match(css, /@media \(max-width: 900px\) \{[\s\S]*?\.workspace-grid \{ grid-template-columns: 1fr; \}/);
+  assert.match(css, /\.appointment-composer \{ position: static; scroll-margin-top: 84px; \}/);
   assert.match(dashboard, /className="panel appointment-composer" id="new-appointment"/);
   assert.match(dashboard, /href="#new-appointment"/);
-  assert.match(dashboard, /className="panel appointments-panel schedule-card"/);
 });
