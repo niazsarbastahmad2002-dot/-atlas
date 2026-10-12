@@ -40,7 +40,7 @@ export function PatientClinicBrowse({
               <span className="atlas-clinic-browse-icon"><ClinicLineIcon /></span>
               <span className="atlas-clinic-browse-details">
                 <strong dir="auto">{clinic.clinic_name}</strong>
-                {[clinic.area, clinic.city].filter(Boolean).length ? <small dir="auto">{[clinic.area, clinic.city].filter(Boolean).join(" · ")}</small> : null}
+                {clinic.area || clinic.city ? <small>{clinic.area ? <bdi>{clinic.area}</bdi> : null}{clinic.area && clinic.city ? " · " : null}{clinic.city ? <bdi>{clinic.city}</bdi> : null}</small> : null}
               </span>
               <span className="atlas-clinic-browse-action">{actionLabel}<span aria-hidden="true">↗</span></span>
             </>
