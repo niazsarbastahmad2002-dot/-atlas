@@ -483,6 +483,48 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-login-card,.patient-account-login-form{display:grid;gap:14px}.patient-account-login-form label{display:grid;gap:6px}.patient-account-login-form label>span{font-size:12px;font-weight:800}.patient-account-login-form label small{color:var(--muted);font-size:10.5px;line-height:1.5}
           .patient-account-code-heading{display:grid;gap:6px}.patient-account-code-heading p{margin:0;color:var(--muted);font-size:12px}.patient-account-login-actions{display:flex;gap:8px;flex-wrap:wrap}
           @media(max-width:620px){.patient-account-appointment{grid-template-columns:1fr}.patient-account-manage{width:100%}}
+
+          /* Patient visit hub — readable statuses and one obvious next appointment. */
+          .patient-account-page{background:radial-gradient(ellipse at top,#e6f2e9 0,var(--canvas) 54%);color:var(--ink)}
+          .patient-account-center{padding-block:18px 65px}
+          .patient-account-card{border:1px solid var(--line);border-radius:27px;background:var(--surface);box-shadow:0 20px 60px rgba(15,56,36,.08)}
+          .patient-account-card:has(.patient-account-appointments){width:min(100%,960px)}
+          .patient-account-card>.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.075em}
+          .patient-account-card>h1{margin:6px 0 11px;font-size:clamp(32px,4vw,48px);line-height:1.12;letter-spacing:-.05em;color:var(--ink)}
+          .patient-account-languages{margin:0 0 24px;gap:8px}
+          .patient-account-languages a{min-height:43px;display:grid;place-items:center;padding:9px 7px;border-radius:12px;font-size:12px;background:var(--surface-soft);color:var(--ink)}
+          .patient-account-languages a[aria-current="page"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+          .patient-account-intro{font-size:14px;max-width:590px}
+          .patient-account-toolbar{align-items:center;margin:20px 0 29px}
+          .patient-account-appointments h2{font-size:clamp(23px,2.8vw,30px);letter-spacing:-.04em;color:var(--ink);margin-block:0 16px}
+          .patient-account-list{gap:13px}
+          .patient-account-appointment{position:relative;grid-template-columns:minmax(0,1fr) auto;min-height:145px;gap:20px;padding:23px;border-radius:20px;border-color:var(--line-strong);background:var(--surface);box-shadow:0 6px 20px rgba(9,62,38,.04)}
+          .patient-account-list>.patient-account-appointment:first-child:not(.is-history){border-inline-start:4px solid var(--accent);background:var(--surface-soft)}
+          .patient-account-appointment-main{gap:7px}
+          .patient-account-appointment-main strong{color:var(--ink);font-size:clamp(20px,2.7vw,25px);line-height:1.25;letter-spacing:-.03em}
+          .patient-account-appointment-main time{font-size:14px;font-weight:790;color:var(--ink)}
+          .patient-account-status{min-height:25px;display:inline-flex;align-items:center;padding:4px 10px!important;border-radius:999px;font-size:11px!important;letter-spacing:.01em}
+          .patient-account-manage{min-height:49px;border-radius:12px;min-width:128px}
+          .patient-account-history{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
+          .patient-account-history h3{font-size:16px;color:var(--ink)}
+          .patient-account-appointment.is-history{min-height:120px;box-shadow:none;background:var(--surface-soft)}
+          .patient-account-empty,.patient-account-not-ready{border-radius:19px;padding:25px;background:var(--surface-soft);border-color:var(--line-strong)}
+          .patient-account-profile{margin-top:33px;padding:23px;border-radius:20px;background:var(--surface-soft)}
+          .patient-account-profile h2{font-size:22px}
+          .patient-account-page :is(a,button,input,select):focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+          :root[data-theme="dark"] .patient-account-page{background:var(--canvas)}
+          @media(prefers-color-scheme:dark){:root[data-theme="system"] .patient-account-page{background:var(--canvas)}}
+          @media(max-width:700px){
+            .patient-account-center{padding:11px 11px 36px}
+            .patient-account-card{padding:21px 17px;border-radius:22px}
+            .patient-account-languages{gap:5px;margin-bottom:21px}
+            .patient-account-languages a{font-size:10px;min-height:42px;padding:7px 3px}
+            .patient-account-card>h1{font-size:clamp(28px,6.6vw,38px)}
+            .patient-account-appointment{grid-template-columns:1fr;padding:18px;min-height:0;gap:15px}
+            .patient-account-manage{width:100%}
+            .patient-account-profile{padding:17px}
+          }
+
         `}</style>
       </section>
       </div>
