@@ -9,7 +9,7 @@ test("home presents patient discovery and professional workspace as separate Atl
   assert.match(page, /atlas-patient-entry[^>]*href="\/care"|href="\/care"[^>]*atlas-patient-entry/);
   assert.match(page, /atlas-professional-entry[^>]*href="\/dashboard"|href="\/dashboard"[^>]*atlas-professional-entry/);
   assert.match(page, /patientTitle: "Find care"/);
-  assert.match(page, /professionalTitle: "Clinic workspace"/);
+  assert.match(page, /professionalTitle: "Run a clinic or center"/);
   assert.match(page, /Patient discovery is public\. Clinic work stays private\./);
 });
 

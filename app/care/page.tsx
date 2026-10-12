@@ -56,11 +56,11 @@ const careCopy: Record<UiLocale, {
     title: "Find your doctor",
     intro: "Doctors, clinics and their real open times.",
     query: "Doctor, clinic, or specialty",
-    queryPlaceholder: "e.g. Orthopedics or Dr. Sara",
+    queryPlaceholder: "Search by name, clinic or specialty",
     city: "City",
-    cityPlaceholder: "e.g. Erbil",
+    cityPlaceholder: "Search cities",
     specialty: "Specialty",
-    specialtyPlaceholder: "e.g. Orthopedics",
+    specialtyPlaceholder: "Search specialties",
     sort: "Sort by",
     filters: "More filters",
     sortName: "Doctor name",
@@ -93,11 +93,11 @@ const careCopy: Record<UiLocale, {
     title: "پزیشکەکەت بدۆزەرەوە",
     intro: "پزیشک، کلینیک و کاتە بەردەستە ڕاستەقینەکان.",
     query: "پزیشک، کلینیک یان پسپۆڕی",
-    queryPlaceholder: "بۆ نموونە: ئێسک و جومگە",
+    queryPlaceholder: "ناوی پزیشک، کلینیک یان پسپۆڕی بنووسە",
     city: "شار",
-    cityPlaceholder: "بۆ نموونە: هەولێر",
+    cityPlaceholder: "بە ناوی شار بگەڕێ",
     specialty: "پسپۆڕی",
-    specialtyPlaceholder: "بۆ نموونە: ئێسک و جومگە",
+    specialtyPlaceholder: "بە پسپۆڕی بگەڕێ",
     sort: "ڕیزکردن",
     filters: "فلتەرەکان",
     sortName: "ناوی پزیشک",
@@ -130,11 +130,11 @@ const careCopy: Record<UiLocale, {
     title: "دکتۆرێ خۆ بدیتەوە",
     intro: "دکتۆر، کلینیک و دەمێن ڕاستەقینە یێن بەردەست.",
     query: "دکتۆر، کلینیک یان تایبەتمەندی",
-    queryPlaceholder: "بۆ نموونە: ئێسک و جومگە",
+    queryPlaceholder: "ب ناڤێ دکتۆری یان کلینیکێ بگەڕێ",
     city: "باژێر",
-    cityPlaceholder: "بۆ نموونە: هەولێر",
+    cityPlaceholder: "ب ناڤێ باژێری بگەڕێ",
     specialty: "تایبەتمەندی",
-    specialtyPlaceholder: "بۆ نموونە: ئێسک و جومگە",
+    specialtyPlaceholder: "ب تایبەتمەندی بگەڕێ",
     sort: "ڕێزکرن",
     filters: "فلتەرێن دی",
     sortName: "ناڤێ دکتۆری",
@@ -167,11 +167,11 @@ const careCopy: Record<UiLocale, {
     title: "ابحث عن طبيبك",
     intro: "الأطباء والعيادات وأوقاتهم المتاحة الفعلية.",
     query: "الطبيب أو العيادة أو الاختصاص",
-    queryPlaceholder: "مثلاً: عظام أو د. سارة",
+    queryPlaceholder: "ابحث بالاسم أو العيادة أو الاختصاص",
     city: "المدينة",
-    cityPlaceholder: "مثلاً: أربيل",
+    cityPlaceholder: "ابحث عن مدينة",
     specialty: "الاختصاص",
-    specialtyPlaceholder: "مثلاً: عظام",
+    specialtyPlaceholder: "ابحث عن اختصاص",
     sort: "ترتيب حسب",
     filters: "خيارات البحث",
     sortName: "اسم الطبيب",
@@ -256,6 +256,15 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           .map((doctor) => doctor.specialty?.trim())
           .filter((value): value is string => Boolean(value)),
       )).slice(0, 6);
+  // Suggestions come only from the public, published-doctor search response.
+  // These are helpful hints, not a complete city/specialty catalogue.
+  const citySuggestions = Array.from(new Set(
+    results.map((doctor) => doctor.city?.trim()).filter((value): value is string => Boolean(value)),
+  )).sort((a, b) => a.localeCompare(b)).slice(0, 30);
+  const specialtySuggestions = Array.from(new Set(
+    results.map((doctor) => doctor.specialty?.trim())
+      .filter((value): value is string => Boolean(value)),
+  )).sort((a, b) => a.localeCompare(b)).slice(0, 30);
   const hasAvailableSoon = !hasSearch && results.some((doctor) => Boolean(doctor.next_available_at));
   // Discoverable clinics are derived ONLY from currently published, returned doctor associations.
   // No additional clinic query, unverified profile, or synthetic production entry is introduced.
@@ -292,11 +301,13 @@ export default async function CarePage({ searchParams }: CarePageProps) {
             <div className="atlas-care-search-extra">
               <label>
                 <span>{copy.city}</span>
-                <input name="city" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
+                <input name="city" list="atlas-patient-cities" autoComplete="off" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
+                <datalist id="atlas-patient-cities">{citySuggestions.map((item) => <option key={item} value={item} />)}</datalist>
               </label>
               <label>
                 <span>{copy.specialty}</span>
-                <input name="specialty" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
+                <input name="specialty" list="atlas-patient-specialties" autoComplete="off" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
+                <datalist id="atlas-patient-specialties">{specialtySuggestions.map((item) => <option key={item} value={item} />)}</datalist>
               </label>
               <label>
                 <span>{copy.sort}</span>

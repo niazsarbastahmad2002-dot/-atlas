@@ -33,11 +33,11 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
   en: {
     languageLabel: "Choose your language",
     eyebrow: "Connected care",
-    title: "Find care or run your clinic — one Atlas.",
-    hero: "Patients can discover published doctors and clinics with real availability. Clinics and staff use a separate private workspace for scheduling and patient communication.",
+    title: "Your care. Your clinic. One Atlas.",
+    hero: "Choose where to begin.",
     patientTitle: "Find care",
     patientDescription: "Search doctors, clinics, specialties, locations, and real open times.",
-    professionalTitle: "Clinic workspace",
+    professionalTitle: "Run a clinic or center",
     professionalDescription: "Open Atlas Online for reception, appointments, staff, and clinic operations.",
     localTitle: "Atlas Local",
     localDescription: "Use this device without internet.",
@@ -57,11 +57,11 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
   ku: {
     languageLabel: "زمانەکەت هەڵبژێرە",
     eyebrow: "پەیوەندییەکانی تەندروستی",
-    title: "چارەسەر بدۆزەرەوە یان کلینیکەکەت بەڕێوەببە — هەمووی لە Atlas.",
-    hero: "نەخۆش دەتوانێت پزیشک و کلینیکی بڵاوکراوە و کاتە بەردەستە ڕاستەقینەکان بدۆزێتەوە. کلینیک و ستاف لە شوێنی کاری تایبەتی خۆیاندا مەوعید و پەیوەندی بە نەخۆش بەڕێوەدەبەن.",
+    title: "چارەسەر و کلینیک، هەمووی لە Atlas.",
+    hero: "شوێنی دەستپێکردن هەڵبژێرە.",
     patientTitle: "چارەسەر بدۆزەرەوە",
     patientDescription: "بە پزیشک، کلینیک، پسپۆڕی، شوێن یان کاتی بەردەست بگەڕێ.",
-    professionalTitle: "شوێنی کاری کلینیک",
+    professionalTitle: "بەڕێوەبردنی کلینیک یان سەنتەر",
     professionalDescription: "Atlas Online بکەرەوە بۆ ڕیسێپشن، مەوعید، ستاف و کاری کلینیک.",
     localTitle: "Atlas Local",
     localDescription: "لەسەر ئەم ئامێرە بەبێ ئینتەرنێت کار بکە.",
@@ -82,10 +82,10 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     languageLabel: "زمانێ خۆ هەلبژێرە",
     eyebrow: "پەیوەندیێن تەندروستی",
     title: "دکتۆر بدیتەوە یان کلینیکا خۆ بەڕێڤە ببە — هەمی ل Atlas.",
-    hero: "نەخۆش دکارن دکتۆر و کلینیکێن بڵاوکری و دەمێن ڕاستەقینە یێن بەردەست بدینەوە. کلینیک و ستاف د شوێنێ کارێ تایبەت دا وادە و پەیوەندیا نەخۆشان بەڕێڤە دبەن.",
+    hero: "ڕێکا دەستپێکرنێ هەلبژێرە.",
     patientTitle: "دکتۆر بدیتەوە",
     patientDescription: "ب دکتۆر، کلینیک، تایبەتمەندی، جه یان دەمێ بەردەست بگەڕێ.",
-    professionalTitle: "شوێنێ کارێ کلینیکێ",
+    professionalTitle: "بەڕێڤەبرنا کلینیک یان سەنتەری",
     professionalDescription: "Atlas Online بکەڤە بۆ ڕیسێپشن، وادە، ستاف و کارێ کلینیکێ.",
     localTitle: "Atlas Local",
     localDescription: "ل سەر ڤی ئامێری بێ ئینتەرنێت کار بکە.",
@@ -106,10 +106,10 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     languageLabel: "اختار لغتك",
     eyebrow: "رعاية مترابطة",
     title: "ابحث عن رعاية أو أدِر عيادتك — كله داخل Atlas.",
-    hero: "المريض يقدر يلقى أطباء وعيادات منشورة ويشوف الأوقات المتاحة فعلياً. العيادات والموظفون يستخدمون مساحة خاصة منفصلة للجدول والتواصل مع المرضى.",
+    hero: "اختر من أين تبدأ.",
     patientTitle: "ابحث عن رعاية",
     patientDescription: "ابحث حسب الطبيب أو العيادة أو الاختصاص أو الموقع أو الوقت المتاح.",
-    professionalTitle: "مساحة العيادة",
+    professionalTitle: "إدارة عيادة أو مركز",
     professionalDescription: "افتح Atlas Online للاستقبال والمواعيد والموظفين وعمليات العيادة.",
     localTitle: "Atlas Local",
     localDescription: "استخدمه على هذا الجهاز بدون إنترنت.",
@@ -141,7 +141,7 @@ export default async function HomePage() {
     <main className="marketing-page atlas-simple-home">
       <nav className="nav shell marketing-nav">
         <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
+          <span className="app-brand-mark" aria-hidden="true"><img src="/atlas-icon.svg" width="44" height="44" alt="" /></span>
           <span className="app-brand-word">Atlas</span>
         </Link>
       </nav>
@@ -157,10 +157,12 @@ export default async function HomePage() {
         <p className="hero-copy">{copy.hero}</p>
         <div className="hero-actions atlas-home-actions" aria-label="Choose how to use Atlas">
           <Link className="button atlas-mode-button atlas-patient-entry" href="/care">
+            <span className="atlas-mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5M11 7v8M7 11h8"/></svg></span>
             <strong>{copy.patientTitle}</strong>
             <span>{copy.patientDescription}</span>
           </Link>
           <Link className="button button-ghost atlas-mode-button atlas-professional-entry" href="/dashboard">
+            <span className="atlas-mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M12 7v8M8 11h8M7 21v-4h10v4"/></svg></span>
             <strong>{copy.professionalTitle}</strong>
             <span>{copy.professionalDescription}</span>
           </Link>
@@ -193,6 +195,20 @@ export default async function HomePage() {
 
       <style>{`
         .atlas-simple-home{min-height:100dvh}.atlas-marketing-brand .app-brand-word{color:var(--ink);opacity:1}.atlas-simple-hero{max-width:850px;padding-top:clamp(54px,9vh,96px);padding-bottom:42px}.atlas-home-language{max-width:650px;margin-bottom:34px}.atlas-home-language>.eyebrow{margin-bottom:10px}.atlas-home-language .login-language-picker{max-width:650px}.atlas-simple-hero h1{max-width:720px}.atlas-simple-hero .hero-copy{max-width:650px}.atlas-home-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:650px}.atlas-mode-button{min-height:74px;display:grid;align-content:center;justify-items:start;gap:4px;text-align:start;text-decoration:none}.atlas-mode-button strong{font-size:14px}.atlas-mode-button span{font-size:10.5px;font-weight:650;opacity:.82}.atlas-local-mode{color:var(--accent);background:rgba(255,255,255,.8);border-color:rgba(8,119,90,.2)}.atlas-local-mode:hover{background:#fff;border-color:rgba(8,119,90,.35)}.atlas-mode-note{max-width:650px;margin-top:12px;font-size:11.5px}.atlas-home-secondary-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.atlas-home-secondary-actions .atlas-demo-link{margin-top:0}.atlas-local-link{display:grid;gap:2px;min-height:48px;align-content:center;text-align:start;text-decoration:none}.atlas-local-link strong{font-size:12px}.atlas-local-link span{font-size:10px;opacity:.82}.atlas-demo-link{display:inline-flex;margin-top:9px;min-height:40px;align-items:center;justify-content:center;color:var(--accent);font-size:12px;font-weight:800;text-decoration:none}.atlas-scope-note{max-width:620px;margin-top:18px}.atlas-simple-essentials{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-simple-essentials>div{display:grid;gap:6px;padding:18px;background:#fff}.atlas-simple-essentials strong{font-size:13px}.atlas-simple-essentials span{color:var(--muted);font-size:12px;line-height:1.55}.atlas-simple-footer{display:flex;gap:16px;flex-wrap:wrap;padding-top:26px;padding-bottom:48px;color:var(--muted);font-size:12px}.atlas-simple-footer a{color:inherit}@media(max-width:680px){.atlas-simple-essentials{grid-template-columns:1fr}.atlas-simple-hero{padding-top:38px}.atlas-home-actions{grid-template-columns:1fr}}
+        .atlas-simple-hero{max-width:1060px;padding-top:clamp(24px,5vh,56px)}
+        .atlas-simple-hero h1{max-width:780px;font-size:clamp(36px,6vw,66px);line-height:1.1;letter-spacing:-.045em}
+        .atlas-simple-hero .hero-copy{font-size:clamp(14px,2vw,18px);max-width:540px}
+        .atlas-home-actions{max-width:900px;gap:16px;margin-top:30px}
+        .atlas-mode-button{min-height:192px;border-radius:24px;padding:24px;align-content:space-between;justify-items:start;gap:8px;box-shadow:var(--shadow-sm)}
+        .atlas-mode-button strong{font-size:clamp(20px,2.8vw,28px);line-height:1.2}
+        .atlas-mode-button span:not(.atlas-mode-icon){font-size:13px;line-height:1.5;font-weight:600}
+        .atlas-mode-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.17)}
+        .atlas-mode-icon svg{width:29px;height:29px}
+        .atlas-professional-entry .atlas-mode-icon{background:var(--accent-soft);color:var(--accent)}
+        .atlas-simple-home .atlas-marketing-brand .app-brand-mark{background:transparent;overflow:hidden}
+        .atlas-simple-home .atlas-marketing-brand .app-brand-mark img{display:block;width:44px;height:44px;object-fit:contain}
+        .atlas-mode-button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+        @media(max-width:680px){.atlas-mode-button{min-height:142px;padding:19px}.atlas-home-actions{gap:12px}}
       `}</style>
     </main>
   );
