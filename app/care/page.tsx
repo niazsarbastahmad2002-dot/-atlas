@@ -564,13 +564,13 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         /* Patient marketplace — October premium visual system; preserves the published-only data boundary. */
         .atlas-care-page{background:radial-gradient(ellipse at 50% -170px,#dfefe4 0,#f4f7f4 43%,#f4f7f4 100%);color:#112f26}
         .atlas-care-shell{max-width:1180px;padding-top:10px;padding-bottom:68px}
-        .atlas-care-hero{position:relative;grid-template-columns:minmax(0,1.55fr) minmax(260px,.68fr);border:1px solid #d8e7db;border-radius:29px;background:#fff;box-shadow:0 22px 60px rgba(17,52,37,.10)}
+        .atlas-care-hero{position:relative;grid-template-columns:minmax(0,1.55fr) minmax(260px,.68fr);border:1px solid #d8e7db;border-radius:29px;background:var(--surface);box-shadow:0 22px 60px rgba(17,52,37,.10)}
         .atlas-care-hero-main{position:relative;background:linear-gradient(136deg,#fff 0%,#f8fcf9 73%,#eef8f1 100%);color:#123629;padding:clamp(30px,4.5vw,58px)}
         .atlas-care-hero-main>.eyebrow{display:inline-flex;align-items:center;min-height:30px;margin:0;padding:5px 12px;border:1px solid #bfdfca;border-radius:999px;background:#eaf6ee;color:#1c6344!important;font-size:11px;letter-spacing:.07em;font-weight:860}
         .atlas-care-hero-main h1{margin:17px 0 13px;color:#103b2d!important;font-size:clamp(39px,5vw,68px);line-height:1.04;letter-spacing:-.058em;max-width:13ch}
         .atlas-care-hero-main>.hero-copy{color:#526b5d!important;max-width:570px;font-size:clamp(15px,1.6vw,18px);line-height:1.65}
         .atlas-care-search{margin-top:29px;gap:11px}
-        .atlas-care-search-primary{border:1px solid #c9decf;padding:7px;border-radius:19px;background:#fff;box-shadow:0 11px 29px rgba(24,70,43,.09)}
+        .atlas-care-search-primary{border:1px solid #c9decf;padding:7px;border-radius:19px;background:var(--surface);box-shadow:0 11px 29px rgba(24,70,43,.09)}
         .atlas-care-search-primary label{padding-inline-start:13px}
         .atlas-care-search-primary label span{color:#456554;font-size:11px;letter-spacing:.01em}
         .atlas-care-search-primary input{background:transparent;color:#103b2d;font-size:16px;font-weight:620}
@@ -578,12 +578,12 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         .atlas-care-search-primary .button{display:flex;align-items:center;justify-content:center;gap:12px;min-width:120px;min-height:54px;border-radius:13px;background:#0e6d4e;color:#fff;font-weight:850;box-shadow:0 5px 15px rgba(14,109,78,.19)}
         .atlas-care-search-primary .button span{font-size:20px;color:#fff}
         .atlas-care-search-primary .button:hover{background:#095b41;color:#fff}
-        .atlas-care-filters{border:1px solid #d5e5d9;background:#fff;border-radius:14px}
+        .atlas-care-filters{border:1px solid #d5e5d9;background:var(--surface);border-radius:14px}
         .atlas-care-filters>summary{min-height:44px;padding:10px 15px;color:#185c43;font-weight:780}
         .atlas-care-filters>summary:focus-visible{outline-color:#16815f}
-        .atlas-care-search-extra{background:#fff;border-color:#e2ece4;padding:15px}
+        .atlas-care-search-extra{background:var(--surface);border-color:#e2ece4;padding:15px}
         .atlas-care-search-extra label span{color:#446454}
-        .atlas-care-search-extra :is(input,select){border:1px solid #d5e4da;border-radius:11px;background:#fff;color:#143c2b}
+        .atlas-care-search-extra :is(input,select){border:1px solid #d5e4da;border-radius:11px;background:var(--surface);color:#143c2b}
         .atlas-care-search-extra .button{border-color:#bcd8c7;background:#e9f5ec;color:#195940}
         .atlas-care-clear-filters{display:inline-flex;align-items:center;gap:8px;justify-self:start;min-height:36px;color:#146948;font-size:12px;font-weight:800;text-decoration:underline;text-underline-offset:4px}
         .atlas-care-journey{justify-content:center;gap:25px;background:radial-gradient(circle at 110% -10%,#25775a 0,#114d3d 48%,#08382f 100%);color:#fff;padding:clamp(20px,3vw,34px)}
@@ -594,7 +594,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         .atlas-care-journey-steps strong{font-size:clamp(12px,1.4vw,15px);color:#fff}
         .atlas-care-browse{margin-top:25px;gap:12px}
         .atlas-care-browse>strong{font-size:17px;color:#173e2e}
-        .atlas-care-choice{border:1px solid #cbded0;background:#fff;color:#17543b;box-shadow:0 3px 12px rgba(16,52,30,.04)}
+        .atlas-care-choice{border:1px solid #cbded0;background:var(--surface);color:#17543b;box-shadow:0 3px 12px rgba(16,52,30,.04)}
         .atlas-care-choice:hover,.atlas-care-choice.is-active{background:#e5f6e9;border-color:#6ea88b}
         .atlas-care-directory{margin-top:30px}
         .atlas-care-directory-heading h2{color:#153b2b;font-size:clamp(23px,2.7vw,31px)}
