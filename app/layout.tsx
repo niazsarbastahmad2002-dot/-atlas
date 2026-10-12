@@ -39,6 +39,7 @@ import "./atlas-ipad-summary-final.css";
 import "./atlas-apple-voice-safety.css";
 import "./atlas-real-device-safety-final.css";
 import "./atlas-final-readability.css";
+import "./atlas-workspace-finder.css";
 
 const atlasKurdishFont = Noto_Sans_Arabic({
   subsets: ["arabic"],
