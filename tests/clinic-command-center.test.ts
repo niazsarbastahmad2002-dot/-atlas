@@ -43,7 +43,8 @@ test("clinic command center finds patients in the currently scoped schedule", ()
   assert.match(page, /find: "دۆزینەوەی نەخۆش"/);
   assert.match(page, /find: "دیتنا نەخۆشی"/);
   assert.match(page, /find: "البحث عن مريض"/);
-  assert.match(page, /focusedRows\.length > 0 \? <a className="clinic-command-secondary" href="#atlas-appointment-search"/);
+  assert.match(page, /visibleRows\.length > 0 \? <a className="clinic-command-secondary"/);
+  assert.match(page, /focus === "all" \? "#atlas-appointment-search" : \`\$\{scheduleHref\(clinic\.id, selectedDay, selectedDoctorId\)\}#atlas-appointment-search\`/);
   const search = readFileSync(new URL("../app/dashboard/mobile-appointment-experience.tsx", import.meta.url), "utf8");
   assert.match(search, /search\.id = "atlas-appointment-search"/);
   assert.match(search, /input\.focus\(\{ preventScroll: true \}\)/);
