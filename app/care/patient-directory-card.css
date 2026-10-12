@@ -25,3 +25,22 @@
 /* The legacy care-page dark override must never hide real slot labels. */
 :root[data-theme="dark"] .atlas-marketplace-card .atlas-marketplace-card-time strong{color:var(--ink)!important}
 @media(prefers-color-scheme:dark){:root[data-theme="system"] .atlas-marketplace-card .atlas-marketplace-card-time strong{color:var(--ink)!important}}
+
+
+/* Premium published-profile cards; never imply a time that the schedule has not returned. */
+.atlas-care-result.atlas-marketplace-card{position:relative;overflow:hidden;gap:17px;border:1px solid var(--line);border-radius:24px;padding:23px;background:var(--surface);box-shadow:0 10px 30px rgba(11,55,33,.07);transition:box-shadow .18s ease,border-color .18s ease}
+.atlas-care-result.atlas-marketplace-card::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;height:4px;background:linear-gradient(90deg,#125e46,#76d2a5)}
+.atlas-marketplace-card .atlas-care-doctor-mark{width:67px;height:67px;border-radius:20px;background:linear-gradient(145deg,#e3f6ea,#c9e9d4);color:#124f38!important;font-size:28px;box-shadow:inset 0 0 0 1px #b8ddc5}
+.atlas-marketplace-card .atlas-care-doctor-details h3{font-size:clamp(20px,2.1vw,25px);font-weight:870;letter-spacing:-.026em}
+.atlas-marketplace-card .atlas-care-doctor-details p{font-size:13px;font-weight:650}
+.atlas-marketplace-card-info{gap:10px;padding:5px 0}
+.atlas-marketplace-card-line{align-items:flex-start;font-size:13px}
+.atlas-marketplace-card-line svg{margin-top:1px}
+.atlas-care-result.atlas-marketplace-card .atlas-care-next-opening.atlas-marketplace-card-time{min-height:84px;padding:16px;background:var(--surface-soft);border:1px solid var(--line-strong);border-radius:16px}
+.atlas-marketplace-card-time strong{font-size:17px;font-weight:880}
+.atlas-marketplace-card-time-action{padding:7px 9px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:11px}
+.atlas-marketplace-card-no-times{min-height:84px;border-radius:16px;font-weight:620}
+.atlas-marketplace-card .atlas-marketplace-card-profile{min-height:50px;margin-top:auto;padding-inline:17px;border-radius:12px}
+@media(hover:hover){.atlas-care-result.atlas-marketplace-card:hover{border-color:var(--line-strong);box-shadow:0 18px 39px rgba(11,55,33,.11)}}
+@media(max-width:680px){.atlas-care-result.atlas-marketplace-card{padding:18px;gap:14px}.atlas-marketplace-card .atlas-care-doctor-mark{width:58px;height:58px}}
+@media(prefers-reduced-motion:reduce){.atlas-care-result.atlas-marketplace-card{transition:none}}

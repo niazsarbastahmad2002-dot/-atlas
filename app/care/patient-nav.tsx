@@ -30,7 +30,7 @@ export function AtlasPatientNav({
         href={careHref}
         aria-label="Atlas Patient"
       >
-        <span className="app-brand-mark atlas-patient-logo" aria-hidden="true"><img src="/atlas-icon.svg" width="44" height="44" alt="" /></span>
+        <span className="app-brand-mark atlas-patient-logo" aria-hidden="true"><img src="/atlas-icon.svg" width="44" height="44" alt="" loading="eager" decoding="sync" /></span>
         <span className="app-brand-word">Atlas</span>
         <span className="atlas-patient-brand-label" dir="ltr">Patient</span>
       </a>
@@ -69,6 +69,38 @@ export function AtlasPatientNav({
         
         .atlas-patient-brand-label{border-inline-start:1px solid var(--line);padding-inline-start:8px;color:var(--accent);font-size:11px;font-weight:850;letter-spacing:.02em}
         .atlas-patient-account-link{min-height:42px;text-decoration:none}
+
+        /* Patient chrome: compact, accessible, and one recognizable Atlas identity. */
+        .atlas-patient-nav{width:min(100% - 32px,1180px);min-height:74px;padding-block:9px;gap:15px}
+        .atlas-patient-nav .atlas-patient-brand{flex:none;min-width:0;gap:8px;padding:4px 11px 4px 4px;border:1px solid #deebe0;border-radius:16px;box-shadow:0 3px 14px rgba(14,55,33,.045)}
+        .atlas-patient-nav .atlas-patient-brand .atlas-patient-logo{background:#082a23 url("/atlas-icon.svg") center/cover no-repeat!important;border-radius:12px}
+        .atlas-patient-nav .atlas-patient-brand .app-brand-word{font-size:22px;letter-spacing:-.05em}
+        .atlas-patient-nav .atlas-patient-brand-label{color:#287356;font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+        .atlas-patient-nav-actions{gap:9px}
+        .atlas-patient-nav .atlas-patient-language{min-height:44px;padding-inline:11px;border-radius:12px;box-shadow:0 3px 14px rgba(14,55,33,.035)}
+        .atlas-patient-nav .atlas-patient-language select{min-height:42px;min-width:99px;max-width:123px;font-size:12px}
+        .atlas-patient-nav .atlas-patient-account-link{min-height:44px;border-radius:12px;white-space:nowrap;padding-inline:15px;box-shadow:0 3px 14px rgba(14,55,33,.035)}
+        @media(max-width:700px){.atlas-patient-nav{width:min(100% - 22px,1180px)}}
+        @media(max-width:660px){
+          .atlas-patient-nav{flex-wrap:nowrap;gap:8px;min-height:64px}
+          .atlas-patient-nav-actions{width:auto;flex:0 1 auto;gap:6px;min-width:0}
+          .atlas-patient-nav .atlas-patient-brand{padding-inline-end:8px}
+          .atlas-patient-nav .atlas-patient-logo,.atlas-patient-nav .atlas-patient-logo img{width:37px;height:37px}
+          .atlas-patient-nav .atlas-patient-language{padding-inline:5px}
+          .atlas-patient-nav .atlas-patient-language select{min-width:75px;max-width:99px;font-size:11px}
+          .atlas-patient-nav .atlas-patient-account-link{padding-inline:9px;font-size:11px}
+        }
+        @media(max-width:430px){
+          .atlas-patient-nav .atlas-patient-brand-label{display:none}
+          .atlas-patient-nav .atlas-patient-brand .app-brand-word{font-size:18px}
+          .atlas-patient-nav .atlas-patient-brand{gap:5px}
+        }
+        @media(max-width:360px){
+          .atlas-patient-nav{gap:5px}
+          .atlas-patient-nav .atlas-patient-brand .app-brand-word{font-size:16px}
+          .atlas-patient-nav .atlas-patient-language select{min-width:68px;max-width:80px;font-size:10px}
+        }
+
       `}</style>
     </nav>
   );
