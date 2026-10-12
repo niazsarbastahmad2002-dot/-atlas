@@ -358,6 +358,21 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       });
     };
 
+    let lastFocusedFinderRoute = "";
+    const focusFinderHashTarget = () => {
+      if (window.location.hash !== "#atlas-appointment-search") {
+        lastFocusedFinderRoute = "";
+        return;
+      }
+      const route = `${window.location.pathname}${window.location.search}`;
+      if (lastFocusedFinderRoute === route) return;
+      const input = document.querySelector<HTMLInputElement>("#atlas-appointment-search input");
+      if (!input) return;
+      lastFocusedFinderRoute = route;
+      input.scrollIntoView({ block: "center", behavior: "smooth" });
+      input.focus({ preventScroll: true });
+    };
+
     let lastExpandedHashRow: HTMLElement | null = null;
     const expandHashTarget = () => {
       if (!window.location.hash.startsWith("#atlas-appointment-")) {
@@ -384,6 +399,7 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       resetSearchForScheduleChange();
       document.querySelectorAll<HTMLElement>(".polished-appointment-list").forEach(prepareList);
       expandHashTarget();
+      focusFinderHashTarget();
     };
 
     const schedulePrepare = () => {
@@ -418,6 +434,8 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       if (!(target instanceof Element)) return;
       const link = target.closest<HTMLAnchorElement>('a[data-atlas-find-patient="true"]');
       if (!link) return;
+      const destination = new URL(link.href, window.location.origin);
+      if (destination.pathname !== window.location.pathname || destination.search !== window.location.search) return;
       const input = document.querySelector<HTMLInputElement>("#atlas-appointment-search input");
       if (!input) return;
       event.preventDefault();
