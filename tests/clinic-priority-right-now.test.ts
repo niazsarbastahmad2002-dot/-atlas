@@ -61,7 +61,7 @@ test("priority board stays within authorized current workspace rows", () => {
   assert.match(page, /appointments=\{visibleRows\.filter\(\(row\) => row\.status === "pending" \|\| row\.status === "confirmed"\)/);
   assert.match(page, /clinicId=\{clinic\.id\}/);
   assert.match(page, /nowAtRender=\{now\}/);
-  assert.match(page, /isToday=\{selectedDay === today\}/);
+  assert.match(board, /const isToday = baghdadDate\.format\(new Date\(now\)\) === selectedDay/);
   assert.match(board, /clinicPriorities\(appointments, now, isToday\)/);
   assert.match(board, /appointmentHref\(clinicId, selectedDay, selectedDoctorId, appointment\.status, appointment\.id\)/);
   assert.match(board, /appointmentId=\{appointment\.id\}/);
