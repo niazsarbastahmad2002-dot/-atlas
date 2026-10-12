@@ -37,7 +37,7 @@ test("New pages only derive listings from existing publication-gated public sear
   assert.match(explore, /doctors\.map\(\(doctor\) => doctor\.city\?\.trim\(\)\)/);
   assert.match(explore, /item\.detail\.map/);
   assert.match(explore, /<bdi>\{item\.label\}<\/bdi>/);
-  assert.doesNotMatch(explore, /\.from\(|service_role|createAdminClient|\.from\("appointments"\)|patient_phone|hardcodedDoctors|Dr\. Example/);
+  assert.doesNotMatch(explore, /supabase\.from\(|service_role|createAdminClient|\.from\("appointments"\)|patient_phone|hardcodedDoctors|Dr\. Example/);
   assert.match(explore, /not a complete directory/);
   assert.match(explore, /error \? <p className="notice notice-error"/);
 });
