@@ -11,7 +11,7 @@ import { formatLeadTime, formatTimeValue, localizeDigits } from "@/lib/i18n/form
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { formatBaghdadDateTime, formatBaghdadDay, uiLocaleMeta, uiText, type UiLocale } from "@/lib/i18n/ui";
 import { getDashboardMessage } from "@/lib/messages";
-import { clinicPriorities } from "@/lib/clinic-priorities";
+import { ClinicArrivalDisclosure } from "./clinic-arrival-disclosure";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/app/components/submit-button";
 import { ClinicPriorityBoard } from "./clinic-priority-board";
@@ -276,7 +276,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const pendingQueue = visibleRows.filter((row) => row.status === "pending").slice(0, 3);
   const confirmedQueue = visibleRows.filter((row) => row.status === "confirmed").slice(0, 3);
   const hasArrivalQueue = pending > 0 || confirmed > 0;
-  const hasImmediatePriority = clinicPriorities(visibleRows, now, selectedDay === today).length > 0;
   const arrivalLanes = [
     { status: "pending" as const, label: arrivalCopy.needsConfirmation, count: pending, appointments: pendingQueue, empty: arrivalCopy.noPending },
     { status: "confirmed" as const, label: arrivalCopy.attendanceConfirmed, count: confirmed, appointments: confirmedQueue, empty: arrivalCopy.noConfirmed },
@@ -390,19 +389,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         status: row.status,
       }))}
     />
-    {hasArrivalQueue ? <details
-      className="clinic-arrival-disclosure"
+    {hasArrivalQueue ? <ClinicArrivalDisclosure
       key={`${clinic.id}:${selectedDoctor?.id ?? "none"}:${selectedDay}`}
-      open={!hasImmediatePriority}
-    >
-      <summary className="clinic-arrival-disclosure-summary">
+      appointments={visibleRows.map(({ id, status, appointment_at }) => ({ id, status, appointment_at }))}
+      selectedDay={selectedDay}
+      nowAtRender={now}
+      summary={<>
         <span className="clinic-arrival-disclosure-label">{arrivalCopy.showFullQueue}</span>
         <span className="clinic-arrival-disclosure-counts">
           <span>{arrivalCopy.needsConfirmation}: <strong>{localizeDigits(pending, locale)}</strong></span>
           <span>{arrivalCopy.attendanceConfirmed}: <strong>{localizeDigits(confirmed, locale)}</strong></span>
         </span>
         <span className="clinic-arrival-disclosure-chevron" aria-hidden="true">⌄</span>
-      </summary>
+      </>}
+    >
       <section className="clinic-arrival-board" aria-labelledby="clinic-arrival-heading">
       <div className="clinic-arrival-heading">
         <div>
@@ -439,7 +439,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </section>)}
       </div>
       </section>
-    </details> : null}
+    </ClinicArrivalDisclosure> : null}
     <nav className="schedule-focus" aria-label={workbench.filters}>
       <strong className="schedule-focus-label">{workbench.filters}</strong>
       <div className="schedule-focus-options">
