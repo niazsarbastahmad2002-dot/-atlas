@@ -35,7 +35,7 @@ test("empty and unavailable availability states are patient-facing in every Atla
   assert.match(page, /No open times in the next 7 days\./);
   assert.match(page, /لە حەوت ڕۆژی داهاتوودا هیچ کاتێکی بەردەست نییە\./);
   assert.match(page, /د حەفت ڕۆژێن داهاتی دا چ دەمەکێ بەردەست نینە\./);
-  assert.match(page, /لا توجد أوقات متاحة خلال الأيام السبعة القادمة\./);
+  assert.match(page, /ماكو أوقات متاحة خلال السبعة أيام الجاية\./);
   assert.match(page, /Open times are temporarily unavailable\./);
   assert.match(page, /کاتە بەردەستەکان ئێستا نیشان نادرێن\./);
 });
