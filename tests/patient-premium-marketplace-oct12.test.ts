@@ -31,7 +31,7 @@ test("original Atlas identity remains visible in compact Patient navigation and 
 });
 
 test("search reset saves taps but results and timestamps still come only from published records", () => {
-  assert.match(care, /hasSearch \? <Link className="atlas-care-clear-filters"/);
+  assert.match(care, /hasActiveFilters \? <Link className="atlas-care-clear-filters"/);
   assert.match(care, /search_public_doctors_with_availability/);
   assert.match(care, /p_limit: 30/);
   assert.match(care, /nextAvailabilityLabel\(doctor\.next_available_at, locale\)/);
