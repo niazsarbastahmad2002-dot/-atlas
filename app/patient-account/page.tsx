@@ -76,7 +76,7 @@ const copy: Record<UiLocale, {
     upcoming: "Upcoming",
     history: "Past & cancelled",
     noUpcoming: "No upcoming appointments.",
-    noUpcomingHelp: "When you book your next appointment with Atlas, it will appear here.",
+    noUpcomingHelp: "Upcoming appointments linked to your patient account will appear here.",
     noAppointments: "No appointments yet.",
     noAppointmentsHelp: "Appointments you book with Atlas will appear here.",
     findCare: "Find care",
