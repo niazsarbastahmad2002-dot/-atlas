@@ -194,7 +194,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
           copiedLabel={copy.copied}
           whatsappLabel={copy.whatsapp}
         />
-        {clinic.description ? <p className="hero-copy atlas-care-clinic-description">{clinic.description}</p> : null}
+        {clinic.description ? <p className="hero-copy atlas-care-clinic-description"><bdi>{clinic.description}</bdi></p> : null}
 
         {(location || phone) ? (
           <dl className="atlas-care-clinic-details">
@@ -202,7 +202,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
               <div>
                 <dt>{copy.location}</dt>
                 <dd>
-                  <span>{location}</span>
+                  <span><bdi>{location}</bdi></span>
                   {directionsUrl ? (
                     <a className="atlas-clinic-directions-link" href={directionsUrl} target="_blank" rel="noreferrer">
                       {copy.directions}
@@ -228,8 +228,8 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
                 <article key={doctor.slug}>
                   <span className="patient-mini-mark" aria-hidden="true">{doctor.display_name.trim().slice(0, 1)}</span>
                   <div>
-                    <strong>{doctor.display_name}</strong>
-                    <span>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</span>
+                    <strong><bdi>{doctor.display_name}</bdi></strong>
+                    <span><bdi>{doctor.specialty}{doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}</bdi></span>
                   </div>
                   <Link className="button button-ghost button-small" href={patientLocaleHref(`/care/${clinicSlug}/${doctor.slug}`, locale)}>{copy.openDoctor}</Link>
                 </article>
