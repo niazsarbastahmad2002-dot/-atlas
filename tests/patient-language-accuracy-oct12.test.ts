@@ -10,7 +10,7 @@ const account = read("app/patient-account/page.tsx");
 const appointment = read("app/patient/[token]/page.tsx");
 
 test("Patient discovery has meaningful Sorani and Arabic no-results copy", () => {
-  assert.match(discovery, /noResults: "هیچ پزیشکێکی بڵاوکراوە بە گەڕانەکەت نەدۆزرایەوە\."/);
+  assert.match(discovery, /noResults: "هیچ دکتۆرێک بەم گەڕانە نەدۆزرایەوە\."/);
   assert.match(discovery, /noResults: "لم نجد أطباء منشورين يطابقون بحثك\."/);
   assert.match(discovery, /const hasActiveFilters = hasSearch \|\| sort === "soonest"/);
   assert.match(discovery, /hasActiveFilters \? <Link className="atlas-care-clear-filters"/);

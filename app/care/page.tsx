@@ -40,6 +40,8 @@ const careCopy: Record<UiLocale, {
   myAppointments: string;
   browseSpecialties: string;
   browseClinics: string;
+  browseLocations: string;
+  browsePagesLabel: string;
   viewClinic: string;
   availableSoon: string;
   allDoctors: string;
@@ -77,6 +79,8 @@ const careCopy: Record<UiLocale, {
     myAppointments: "My appointments",
     browseSpecialties: "Browse specialties",
     browseClinics: "Explore clinics",
+    browseLocations: "Browse cities",
+    browsePagesLabel: "Explore more",
     viewClinic: "View clinic",
     availableSoon: "Available soon",
     allDoctors: "All doctors",
@@ -89,40 +93,42 @@ const careCopy: Record<UiLocale, {
   },
   ku: {
     language: "زمان",
-    eyebrow: "دۆزینەوەی پزیشک",
-    title: "پزیشکەکەت بدۆزەرەوە",
-    intro: "پزیشک یان کلینیک بدۆزەرەوە و کاتە بەردەستەکانی پزیشکەکان ببینە.",
-    query: "پزیشک، کلینیک یان پسپۆڕی",
-    queryPlaceholder: "ناوی پزیشک، کلینیک یان پسپۆڕی بنووسە",
+    eyebrow: "گەڕان بۆ دکتۆر",
+    title: "دکتۆرێک بدۆزەوە",
+    intro: "بە ناوی دکتۆر، کلینیک یان پسپۆڕی بگەڕێ. کاتە بەردەستەکانیش ببینە.",
+    query: "دکتۆر، کلینیک یان پسپۆڕی",
+    queryPlaceholder: "ناو یان پسپۆڕی بنووسە",
     city: "شار",
-    cityPlaceholder: "بە ناوی شار بگەڕێ",
+    cityPlaceholder: "ناوی شار بنووسە",
     specialty: "پسپۆڕی",
-    specialtyPlaceholder: "بە پسپۆڕی بگەڕێ",
+    specialtyPlaceholder: "پسپۆڕی بنووسە",
     sort: "ڕیزکردن",
-    filters: "فلتەرەکان",
-    sortName: "ناوی پزیشک",
-    sortSoonest: "نزیکترین کاتی بەردەست",
+    filters: "گەڕانی وردتر",
+    sortName: "بەپێی ناوی دکتۆر",
+    sortSoonest: "بەپێی نزیکترین کات",
     search: "گەڕان",
-    noResults: "هیچ پزیشکێکی بڵاوکراوە بە گەڕانەکەت نەدۆزرایەوە.",
-    noResultsHelp: "وشەیەکی گشتیتر بنووسە یان فلتەرەکان کەم بکەرەوە.",
-    unavailable: "گەڕان بۆ پزیشک بە شێوەیەکی کاتی بەردەست نییە.",
+    noResults: "هیچ دکتۆرێک بەم گەڕانە نەدۆزرایەوە.",
+    noResultsHelp: "ناوەکە بگۆڕە یان هەندێک هەڵبژاردە لاببە.",
+    unavailable: "گەڕان ئێستا کار ناکات. دواتر هەوڵ بدەوە.",
     clinic: "کلینیک",
     nextAvailable: "نزیکترین کاتی بەردەست",
-    openProfile: "پڕۆفایلی پزیشک",
+    openProfile: "بینینی دکتۆر",
     back: "گەڕانەوە بۆ Atlas",
     patientHome: "Atlas Patient",
     myAppointments: "مەوعیدەکانم",
-    browseSpecialties: "بە پسپۆڕی بگەڕێ",
-    browseClinics: "کلینیکەکان بدۆزەرەوە",
+    browseSpecialties: "پسپۆڕییەکان",
+    browseClinics: "کلینیکەکان",
+    browseLocations: "شارەکان",
+    browsePagesLabel: "گەڕان بە پێی",
     viewClinic: "بینینی کلینیک",
-    availableSoon: "نزیکترین کاتە بەردەستەکان",
-    allDoctors: "هەموو پزیشکەکان",
-    noPublished: "هێشتا هیچ پزیشکێک لە Atlas بڵاو نەکراوەتەوە.",
-    noPublishedHelp: "کاتێک کلینیکەکان پڕۆفایلی پزیشکەکانیان بڵاو دەکەنەوە، لێرە دەردەکەون. دەتوانیت مەوعیدەکانت ببینیت.",
-    stepFind: "پزیشک بدۆزەرەوە",
-    stepTimes: "کاتەکان ببینە",
-    stepContact: "پەیوەندی بە کلینیک بکە",
-    resultsTitle: "پزیشکەکان",
+    availableSoon: "نزیکترین کاتی بەردەست",
+    allDoctors: "هەموو دکتۆرەکان",
+    noPublished: "هێشتا هیچ دکتۆرێک لە Atlas بڵاو نەکراوەتەوە.",
+    noPublishedHelp: "کاتێک کلینیکەکان دکتۆرەکانیان بڵاو بکەنەوە، لێرە دەردەکەون. دەتوانیت مەوعیدەکانت ببینیت.",
+    stepFind: "دکتۆر بدۆزەوە",
+    stepTimes: "کاتە بەردەستەکان ببینە",
+    stepContact: "بۆ گرتنی کات پەیوەندی بکە",
+    resultsTitle: "دکتۆرەکان",
   },
   bd: {
     language: "زمان",
@@ -150,7 +156,9 @@ const careCopy: Record<UiLocale, {
     patientHome: "Atlas Patient",
     myAppointments: "وادەیێن من",
     browseSpecialties: "ب تایبەتمەندی بگەڕێ",
-    browseClinics: "کلینیکان بدیتەوە",
+    browseClinics: "کلینیکان ببینە",
+    browseLocations: "باژێران ببینە",
+    browsePagesLabel: "گەڕانا پتر",
     viewClinic: "دیتنا کلینیکێ",
     availableSoon: "دەمەکێ نێزیک بەردەستە",
     allDoctors: "هەمی دکتۆر",
@@ -187,7 +195,9 @@ const careCopy: Record<UiLocale, {
     patientHome: "Atlas Patient",
     myAppointments: "مواعيدي",
     browseSpecialties: "تصفّح حسب الاختصاص",
-    browseClinics: "تصفّح العيادات",
+    browseClinics: "العيادات",
+    browseLocations: "المدن",
+    browsePagesLabel: "تصفّح أكثر",
     viewClinic: "عرض العيادة",
     availableSoon: "متاح قريباً",
     allDoctors: "كل الأطباء",
@@ -293,7 +303,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <div className="atlas-care-search-primary">
             <label>
               <span>{copy.query}</span>
-              <input name="q" type="search" defaultValue={query} placeholder={copy.queryPlaceholder} maxLength={80} />
+              <input name="q" dir="auto" type="search" defaultValue={query} placeholder={copy.queryPlaceholder} maxLength={80} />
             </label>
             <button className="button" type="submit">{copy.search}<span aria-hidden="true">↗</span></button>
           </div>
@@ -302,12 +312,12 @@ export default async function CarePage({ searchParams }: CarePageProps) {
             <div className="atlas-care-search-extra">
               <label>
                 <span>{copy.city}</span>
-                <input name="city" list="atlas-patient-cities" autoComplete="off" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
+                <input name="city" dir="auto" list="atlas-patient-cities" autoComplete="off" defaultValue={city} placeholder={copy.cityPlaceholder} maxLength={100} />
                 <datalist id="atlas-patient-cities">{citySuggestions.map((item) => <option key={item} value={item} />)}</datalist>
               </label>
               <label>
                 <span>{copy.specialty}</span>
-                <input name="specialty" list="atlas-patient-specialties" autoComplete="off" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
+                <input name="specialty" dir="auto" list="atlas-patient-specialties" autoComplete="off" defaultValue={specialty} placeholder={copy.specialtyPlaceholder} maxLength={120} />
                 <datalist id="atlas-patient-specialties">{specialtySuggestions.map((item) => <option key={item} value={item} />)}</datalist>
               </label>
               <label>
@@ -334,6 +344,12 @@ export default async function CarePage({ searchParams }: CarePageProps) {
             </div>
           </aside>
         </div>
+        <nav className="atlas-care-more-pages" aria-label={copy.browsePagesLabel}>
+          <span>{copy.browsePagesLabel}</span>
+          <Link href={patientLocaleHref("/explore/clinics", locale)}>{copy.browseClinics}<span aria-hidden="true">›</span></Link>
+          <Link href={patientLocaleHref("/explore/specialties", locale)}>{copy.browseSpecialties}<span aria-hidden="true">›</span></Link>
+          <Link href={patientLocaleHref("/explore/locations", locale)}>{copy.browseLocations}<span aria-hidden="true">›</span></Link>
+        </nav>
         {!hasSearch && (browseSpecialties.length || hasAvailableSoon) ? (
           <section className="atlas-care-browse" aria-label={copy.browseSpecialties}>
             <strong>{copy.browseSpecialties}</strong>
@@ -679,6 +695,12 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           :root[data-theme="system"] .atlas-care-journey-steps>div,:root[data-theme="system"] .atlas-care-journey-steps strong{color:#fff!important}
         }
 
+        .atlas-care-more-pages{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:20px 0 6px}
+        .atlas-care-more-pages>span{font-size:12px;color:var(--muted);font-weight:800;margin-inline-end:3px}
+        .atlas-care-more-pages>a{display:inline-flex;align-items:center;justify-content:space-between;gap:14px;min-height:48px;padding:10px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px;font-weight:800}
+        .atlas-care-more-pages>a:hover{border-color:var(--accent);color:var(--accent)}
+        .atlas-care-more-pages>a span{font-size:19px;color:var(--accent)}
+        @media(max-width:480px){.atlas-care-more-pages>span{flex-basis:100%}.atlas-care-more-pages>a{flex:1 1 100%;width:100%}}
         @media(prefers-reduced-motion:reduce){.atlas-care-page *{scroll-behavior:auto;transition:none!important}}
       `}</style>
     </main>
