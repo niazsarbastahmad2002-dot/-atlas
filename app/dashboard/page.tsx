@@ -409,9 +409,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       </div>
     </section> : null}
     <nav className="schedule-focus" aria-label={workbench.filters}>
-      <div className="schedule-focus-heading"><strong>{workbench.filters}</strong><span>{days.appointments}: {localizeDigits(visibleRows.length, locale)}</span></div>
+      <strong className="schedule-focus-label">{workbench.filters}</strong>
       <div className="schedule-focus-options">
-        {focusOptions.map((option) => <a key={option.key} className={focus === option.key ? "is-selected" : ""} href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, option.key)} aria-current={focus === option.key ? "page" : undefined}><span>{option.label}</span><strong>{localizeDigits(option.count, locale)}</strong></a>)}
+        {focusOptions.map((option) => <a key={option.key} className={focus === option.key ? "is-selected" : ""} href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, option.key)} aria-current={focus === option.key ? "page" : undefined}>{option.label}</a>)}
       </div>
     </nav>
     <div className={`workspace-grid ${canCreateOnSelectedDay ? "" : "is-read-only-day"}`}>
@@ -490,18 +490,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .appointment-row[id^="atlas-appointment-"]{scroll-margin-top:90px}
       .appointment-row:target{outline:3px solid #178060;outline-offset:3px;box-shadow:0 0 0 7px rgba(23,128,96,.12)}
       @media(max-width:700px){.clinic-arrival-lanes{grid-template-columns:1fr}.clinic-arrival-board{border-radius:18px}.clinic-arrival-lane{padding:13px}.clinic-arrival-items li{grid-template-columns:1fr}.clinic-arrival-items a{min-height:60px}.clinic-arrival-quick{max-width:none}.clinic-arrival-quick-button{width:100%}}
-      .schedule-focus{margin:0 0 18px;padding:15px 17px;border:1px solid var(--line);border-radius:18px;background:var(--surface,#fff)}
-      .schedule-focus-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:11px}
-      .schedule-focus-heading strong{font-size:14px;color:var(--ink)}
-      .schedule-focus-heading>span{font-size:12px;font-weight:700;color:var(--ink-soft)}
-      .schedule-focus-options{display:flex;flex-wrap:wrap;gap:8px}
-      .schedule-focus-options a{display:inline-flex;align-items:center;gap:9px;min-height:44px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:750;line-height:1.35;text-decoration:none}
-      .schedule-focus-options a strong{display:inline-grid;min-width:24px;min-height:24px;place-items:center;border-radius:8px;background:var(--surface-soft);color:var(--ink);font-size:12px}
+      .schedule-focus{display:flex;flex-wrap:wrap;align-items:center;gap:10px 15px;margin:0 0 14px;padding:11px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}
+      .schedule-focus-label{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap}
+      .schedule-focus-options{display:flex;flex-wrap:wrap;gap:7px}
+      .schedule-focus-options a{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:750;line-height:1.3;text-decoration:none}
       .schedule-focus-options a.is-selected{border-color:#166f5c;background:#e9f6ef;color:#125b4b;box-shadow:inset 0 0 0 1px #166f5c}
-      .schedule-focus-options a.is-selected strong{background:#166f5c;color:#fff}
       .schedule-focus-options a:focus-visible,.clinic-command-actions a:focus-visible,.clinic-command-metric:focus-visible{outline:3px solid #f1c85c;outline-offset:3px}
       @media(max-width:900px){.clinic-command-center{grid-template-columns:1fr}.clinic-command-metrics>*{min-height:94px}}
-      @media(max-width:600px){.clinic-command-center{padding:19px;border-radius:19px;gap:19px}.clinic-command-main h2{font-size:27px}.clinic-command-actions{width:100%}.clinic-command-actions a{flex:1 1 160px}.clinic-command-metrics>*{min-height:89px;padding:12px}.clinic-command-metrics strong{font-size:27px}.schedule-focus{padding:13px}.schedule-focus-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.schedule-focus-options a{justify-content:space-between;min-width:0;padding:8px 10px}.schedule-focus-options a span{overflow-wrap:anywhere}}
+      @media(max-width:600px){.clinic-command-center{padding:19px;border-radius:19px;gap:19px}.clinic-command-main h2{font-size:27px}.clinic-command-actions{width:100%}.clinic-command-actions a{flex:1 1 160px}.clinic-command-metrics>*{min-height:89px;padding:12px}.clinic-command-metrics strong{font-size:27px}.schedule-focus{padding:11px}.schedule-focus-label{width:100%}.schedule-focus-options{display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}.schedule-focus-options a{justify-content:center;min-width:0;text-align:center;padding:8px 10px;overflow-wrap:anywhere}}
       .workspace-grid.is-read-only-day{grid-template-columns:1fr}
       .workspace-grid.is-read-only-day .appointments-panel{min-width:0}
       .schedule-summary{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
