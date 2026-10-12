@@ -28,7 +28,7 @@ test("Unpublished directory displays a truthful useful illustrated empty state",
   assert.match(page, /\{copy\.noPublished\}/);
   assert.match(page, /patientLocaleHref\("\/patient-account", locale\)/);
   assert.match(page, /stepContact: "Contact clinic"/);
-  assert.match(page, /stepContact: "پەیوەندی بە کلینیک بکە"/);
+  assert.match(page, /stepContact: "بۆ گرتنی کات پەیوەندی بکە"/);
   assert.match(page, /stepContact: "تواصل مع العيادة"/);
 });
 
