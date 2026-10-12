@@ -23,7 +23,7 @@ test("past and cancelled appointments stay visible without looking actionable", 
 
 test("patients with history but no upcoming visit get a direct find-care next step", () => {
   assert.match(page, /noUpcoming: "No upcoming appointments\."/);
-  assert.match(page, /noUpcomingHelp: "When you book your next appointment with Atlas, it will appear here\."/);
+  assert.match(page, /noUpcomingHelp: "Upcoming appointments linked to your patient account will appear here\."/);
   assert.match(page, /upcomingAppointments\.length \? \(/);
   assert.match(page, /href=\{findCareHref\}>\{t\.findCare\}/);
 });
