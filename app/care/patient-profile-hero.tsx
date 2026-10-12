@@ -17,8 +17,8 @@ export function PatientProfileHero({ kind, eyebrow, title, subtitle }: Props) {
         <span className="patient-profile-mark" aria-hidden="true">{mark}</span>
         <div className="patient-profile-heading">
           <span className="patient-profile-eyebrow">{eyebrow}</span>
-          <h1>{title}</h1>
-          {subtitle ? <p>{subtitle}</p> : null}
+          <h1><bdi>{title}</bdi></h1>
+          {subtitle ? <p><bdi>{subtitle}</bdi></p> : null}
         </div>
       </div>
     </header>
