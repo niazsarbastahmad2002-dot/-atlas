@@ -362,7 +362,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="clinic-command-actions">
           {canCreateOnSelectedDay && selectedDoctor ? <a className="clinic-command-primary" href="#new-appointment">+ {workbench.book}</a> : null}
           {pending > 0 ? <a className="clinic-command-secondary" href={scheduleHref(clinic.id, selectedDay, selectedDoctorId, "pending")}>{workbench.review} <span aria-hidden="true">↗</span></a> : null}
-          {focusedRows.length > 0 ? <a className="clinic-command-secondary" href="#atlas-appointment-search" data-atlas-find-patient="true">{workbench.find} <span aria-hidden="true">⌕</span></a> : null}
+          {visibleRows.length > 0 ? <a className="clinic-command-secondary" href={focus === "all" ? "#atlas-appointment-search" : `${scheduleHref(clinic.id, selectedDay, selectedDoctorId)}#atlas-appointment-search`} data-atlas-find-patient="true">{workbench.find} <span aria-hidden="true">⌕</span></a> : null}
         </div>
       </div>
       <div className="clinic-command-metrics">

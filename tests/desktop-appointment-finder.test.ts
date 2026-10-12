@@ -23,7 +23,8 @@ test("desktop and large iPad schedules expose the existing appointment finder, n
   assert.match(mobile, /const activeList = currentList\(\)/);
   assert.match(mobile, /applyFilter\(activeList\)/);
   assert.match(mobile, /setText\(countNode, `\$\{localizeDigits\(visible, locale\)\}/);
-  assert.match(dashboard, /href="#atlas-appointment-search" data-atlas-find-patient="true"/);
+  assert.match(dashboard, /focus === "all" \? "#atlas-appointment-search" : \`\$\{scheduleHref\(clinic\.id, selectedDay, selectedDoctorId\)\}#atlas-appointment-search\`/);
+  assert.match(dashboard, /data-atlas-find-patient="true"/);
 });
 
 test("the shared finder handles Kurdish/Arabic names and mixed Iraqi phone digits", () => {
