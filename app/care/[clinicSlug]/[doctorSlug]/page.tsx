@@ -357,11 +357,11 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
       <article className="shell atlas-care-profile">
         <PatientProfileHero kind="doctor" eyebrow={copy.eyebrow} title={profile.doctor_name} subtitle={profile.specialty} />
         <div className="atlas-care-profile-specialty">
-          <strong>{profile.specialty}</strong>
-          {profile.subspecialty ? <span>{profile.subspecialty}</span> : null}
+          <strong><bdi>{profile.specialty}</bdi></strong>
+          {profile.subspecialty ? <span><bdi>{profile.subspecialty}</bdi></span> : null}
         </div>
         <Link className="atlas-care-profile-clinic-link" href={patientLocaleHref(`/care/${profile.clinic_slug}`, locale)}>
-          <span>{copy.clinic}: {profile.clinic_name}</span>
+          <span>{copy.clinic}: <bdi>{profile.clinic_name}</bdi></span>
           <span aria-hidden="true">›</span>
         </Link>
         <ShareProfileButton
@@ -432,13 +432,13 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
           </section>
         ) : null}
 
-        {profile.bio ? <p className="hero-copy atlas-care-bio">{profile.bio}</p> : null}
+        {profile.bio ? <p className="hero-copy atlas-care-bio"><bdi>{profile.bio}</bdi></p> : null}
 
         <dl className="atlas-care-profile-details">
-          <div><dt>{copy.clinic}</dt><dd><Link href={patientLocaleHref(`/care/${profile.clinic_slug}`, locale)}>{profile.clinic_name}</Link></dd></div>
-          <div><dt>{copy.specialty}</dt><dd>{profile.specialty}</dd></div>
-          {profile.subspecialty ? <div><dt>{copy.subspecialty}</dt><dd>{profile.subspecialty}</dd></div> : null}
-          {location ? <div><dt>{copy.location}</dt><dd>{location}</dd></div> : null}
+          <div><dt>{copy.clinic}</dt><dd><Link href={patientLocaleHref(`/care/${profile.clinic_slug}`, locale)}><bdi>{profile.clinic_name}</bdi></Link></dd></div>
+          <div><dt>{copy.specialty}</dt><dd><bdi>{profile.specialty}</bdi></dd></div>
+          {profile.subspecialty ? <div><dt>{copy.subspecialty}</dt><dd><bdi>{profile.subspecialty}</bdi></dd></div> : null}
+          {location ? <div><dt>{copy.location}</dt><dd><bdi>{location}</bdi></dd></div> : null}
           {phone ? (
             <div>
               <dt>{copy.contact}</dt>
