@@ -8,7 +8,7 @@ test("patient search supports typed city and specialty with published-only brows
   assert.match(care, /const citySuggestions = Array\.from\(new Set\(/);
   assert.match(care, /const specialtySuggestions = Array\.from\(new Set\(/);
   assert.match(care, /results\.map\(\(doctor\) => doctor\.city\?\.trim\(\)\)/);
-  assert.match(care, /results\.flatMap\(\(doctor\) => \[doctor\.specialty\?\.trim\(\), doctor\.subspecialty\?\.trim\(\)\]\)/);
+  assert.match(care, /results\.map\(\(doctor\) => doctor\.specialty\?\.trim\(\)\)/);
   assert.match(care, /name="city" list="atlas-patient-cities"/);
   assert.match(care, /name="specialty" list="atlas-patient-specialties"/);
   assert.match(care, /<datalist id="atlas-patient-cities">/);

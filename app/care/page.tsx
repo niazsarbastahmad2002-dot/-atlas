@@ -262,7 +262,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
     results.map((doctor) => doctor.city?.trim()).filter((value): value is string => Boolean(value)),
   )).sort((a, b) => a.localeCompare(b)).slice(0, 30);
   const specialtySuggestions = Array.from(new Set(
-    results.flatMap((doctor) => [doctor.specialty?.trim(), doctor.subspecialty?.trim()])
+    results.map((doctor) => doctor.specialty?.trim())
       .filter((value): value is string => Boolean(value)),
   )).sort((a, b) => a.localeCompare(b)).slice(0, 30);
   const hasAvailableSoon = !hasSearch && results.some((doctor) => Boolean(doctor.next_available_at));
