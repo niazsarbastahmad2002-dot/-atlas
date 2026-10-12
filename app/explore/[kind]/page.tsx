@@ -96,11 +96,12 @@ const copy: Record<UiLocale, {
   },
 };
 
-export async function generateMetadata({ params }: Pick<PageProps, "params">): Promise<Metadata> {
-  const { kind } = await params;
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+  const [{ kind }, search] = await Promise.all([params, searchParams]);
+  const locale = await resolvePatientLocale(search.lang);
   return {
-    title: isExploreKind(kind) ? `${copy.en.titles[kind]} — Atlas Patient` : "Atlas Patient",
-    description: "Browse only published doctor information on Atlas.",
+    title: isExploreKind(kind) ? `${copy[locale].titles[kind]} — Atlas Patient` : "Atlas Patient",
+    description: isExploreKind(kind) ? copy[locale].descriptions[kind] : undefined,
   };
 }
 
