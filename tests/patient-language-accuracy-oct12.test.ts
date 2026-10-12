@@ -17,11 +17,11 @@ test("Patient discovery has meaningful Sorani and Arabic no-results copy", () =>
 });
 
 test("Patient profiles and time views use clear, honest read-only booking text", () => {
-  assert.match(doctor, /noPreviewTimes: "لا توجد أوقات متاحة خلال الأيام السبعة القادمة\."/);
-  assert.match(times, /الحجز عبر Atlas غير متاح حاليًا/);
+  assert.match(doctor, /noPreviewTimes: "ماكو أوقات متاحة خلال السبعة أيام الجاية\."/);
+  assert.match(times, /الحجز عن طريق Atlas مو مفعّل هسه/);
   assert.match(times, /دانانی مەوعید لە Atlas هێشتا چالاک نییە/);
   assert.match(times, /readOnlyIntro/);
-  assert.doesNotMatch(times, /تواصل ويا العيادة حتى تحجز/);
+  assert.match(times, /تواصل ويا العيادة حتى تحجز/);
 });
 
 test("Private appointments explain the no-show status without treating it as a completed visit", () => {
@@ -37,7 +37,7 @@ test("Private appointments explain the no-show status without treating it as a c
 
 test("Empty-account language never implies public booking is switched on", () => {
   assert.match(account, /noUpcomingHelp: "Upcoming appointments linked to your patient account will appear here\."/);
-  assert.match(account, /noUpcomingHelp: "ستظهر هنا المواعيد القادمة المرتبطة بحسابك\."/);
+  assert.match(account, /noUpcomingHelp: "إذا صار عندك موعد جاي مرتبط بحسابك، راح يطلع هنا\."/);
   assert.doesNotMatch(account, /When you book your next appointment with Atlas|لما تحجز موعدك الجاي عبر Atlas/);
   assert.match(account, /robots: \{ index: false, follow: false \}/);
 });
