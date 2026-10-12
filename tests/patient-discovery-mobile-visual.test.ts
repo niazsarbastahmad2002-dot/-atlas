@@ -7,7 +7,7 @@ const card = readFileSync(new URL("../app/care/patient-directory-card.tsx", impo
 
 test("Patient discovery shows one prominent search with progressive filters in every language", () => {
   assert.match(page, /className="atlas-care-search-primary"/);
-  assert.match(page, /type="search" defaultValue=\{query\}/);
+  assert.match(page, /dir="auto" type="search" defaultValue=\{query\}/);
   assert.match(page, /<details className="atlas-care-filters" open=\{Boolean\(city \|\| specialty \|\| sort === "soonest"\)\}>/);
   assert.match(page, /filters: "More filters"/);
   assert.match(page, /filters: "گەڕانی وردتر"/);
