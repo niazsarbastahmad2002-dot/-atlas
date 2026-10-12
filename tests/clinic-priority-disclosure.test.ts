@@ -16,12 +16,17 @@ test("full front-desk queue is secondary when immediate priorities already exist
   assert.ok(clinicPriorities(urgent, now, true).length > 0);
   assert.deepEqual(clinicPriorities(urgent, now, false), []);
 
-  assert.match(page, /const hasImmediatePriority = clinicPriorities\(visibleRows, now, selectedDay === today\)\.length > 0/);
+  const disclosure = readFileSync(new URL("../app/dashboard/clinic-arrival-disclosure.tsx", import.meta.url), "utf8");
   assert.match(page, /<ClinicPriorityBoard/);
-  assert.match(page, /<details[\s\S]*className="clinic-arrival-disclosure"[\s\S]*open=\{!hasImmediatePriority\}/);
-  assert.match(page, /<summary className="clinic-arrival-disclosure-summary">/);
+  assert.match(page, /<ClinicArrivalDisclosure/);
+  assert.match(page, /appointments=\{visibleRows\.map\(\(\{ id, status, appointment_at \}\) => \(\{ id, status, appointment_at \}\)\)\}/);
+  assert.match(page, /selectedDay=\{selectedDay\}/);
+  assert.match(page, /nowAtRender=\{now\}/);
+  assert.match(disclosure, /clinicPriorities\(appointments, now, isToday\)/);
+  assert.match(disclosure, /open=\{!hasImmediatePriority\}/);
+  assert.match(disclosure, /<summary className="clinic-arrival-disclosure-summary">\{summary\}<\/summary>/);
   assert.match(page, /<section className="clinic-arrival-board"/);
-  assert.match(page, /<\/section>\s*<\/details> : null/);
+  assert.match(page, /<\/section>\s*<\/ClinicArrivalDisclosure> : null/);
 });
 
 test("expanded reception queue preserves all status actions and workspace isolation", () => {
@@ -35,6 +40,13 @@ test("expanded reception queue preserves all status actions and workspace isolat
   assert.match(page, /revision=\{appointment\.appointment_revision\}/);
   assert.match(page, /status=\{lane\.status\}/);
   assert.match(page, /selectedDay === today \? <ClinicArrivalQuickAction/);
+  const disclosure = readFileSync(new URL("../app/dashboard/clinic-arrival-disclosure.tsx", import.meta.url), "utf8");
+  assert.match(disclosure, /window\.setInterval\(update, 30_000\)/);
+  assert.match(disclosure, /document\.addEventListener\("visibilitychange", update\)/);
+  assert.match(disclosure, /document\.removeEventListener\("visibilitychange", update\)/);
+  assert.match(disclosure, /lastPriorityRef\.current === hasImmediatePriority/);
+  assert.match(disclosure, /detailsRef\.current\.open = !hasImmediatePriority/);
+  assert.doesNotMatch(disclosure, /router\.refresh\(\)|window\.location\.reload\(/);
   assert.match(page, /clinic-arrival-disclosure-summary:focus-visible/);
   assert.match(page, /@media\(max-width:700px\)\{\.clinic-arrival-disclosure-summary/);
   for (const locale of ["en", "ku", "bd", "ar"]) {
