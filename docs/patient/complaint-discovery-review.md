@@ -67,3 +67,14 @@ These are **not exclusive** and not ordered by clinical quality. Never use them 
 **Published specialty accuracy:** Instead of linking using hard-coded English specialty names, the specialties page independently retrieves only the first 30 genuinely published public doctor records via the existing search RPC. The selected complaint and warning answer are never sent. Only an exact specialty label actually present in that bounded public result can form a specialty-filter link; a curated alias table helps recognize published spelling variants. If nothing matches the sample, show a clearly bounded/no-claims explanation and an unfiltered browse link. This is not a complete specialty taxonomy or nationwide provider directory. No private doctor notes/records are read and no extra database schema is introduced.
 
 These conditions supersede the earlier draft description of direct links using English specialty strings. **A clinician-approved normalized, multilingual specialty taxonomy with complete provider coverage is still future work and is not implemented in this slice.**
+
+
+## Page 05 — Suggested Specialties, separate presentation review
+
+The Page 05 branch adds **short, four-language explanations of the general scope of each already-listed specialty**, plus an explicit comparison control. It does **not** add or change complaint-to-specialty mappings, safety-question logic, publication rules or public-search RPCs. The patient can return to the complaint, compare another existing suggestion or bypass the guide with direct published-doctor search.
+
+- Explanations are **not medical advice** and must receive qualified clinical and native Sorani/Badini/Iraqi Arabic language review before release, alongside the underlying catalog and questions. In particular, review whether the general descriptions might mislead patients for each complaint.
+- The existing answer gate means **Yes/unsure or no answer must never display specialty suggestions**; a persistent global emergency note stays visible even after a No response.
+- Doctor actions filter only by specialty labels in the bounded, published-only public doctor sample; a missed label does not prove that no appropriate care exists. Public appointment slots remain read-only and are never invented.
+- Verify Page 05 on actual iPhone, iPad, desktop and assistive technologies, including 320px width, RTL comparison, screen-reader button expansion, back/forward navigation and language switching.
+- The server feature flag and noindex protection remain mandatory. **Do not merge, deploy, or publicly enable** this guided clinical-routing feature without separate founder approval and documented clinical/four-language sign-off.
