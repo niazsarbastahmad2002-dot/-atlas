@@ -5,9 +5,9 @@ import type { ComplaintId } from "@/lib/patient/complaint-guide";
 
 type FlowValue = {
   complaint: ComplaintId | null;
-  emergencyAnswer: "yes" | "no" | null;
+  emergencyAnswer: "yes" | "no" | "unsure" | null;
   chooseComplaint: (id: ComplaintId) => void;
-  answerEmergency: (answer: "yes" | "no") => void;
+  answerEmergency: (answer: "yes" | "no" | "unsure") => void;
   reset: () => void;
 };
 
@@ -17,7 +17,7 @@ const FlowContext = createContext<FlowValue | null>(null);
 
 export function PatientComplaintFlowProvider({ children }: { children: ReactNode }) {
   const [complaint, setComplaint] = useState<ComplaintId | null>(null);
-  const [emergencyAnswer, setEmergencyAnswer] = useState<"yes" | "no" | null>(null);
+  const [emergencyAnswer, setEmergencyAnswer] = useState<"yes" | "no" | "unsure" | null>(null);
 
   const chooseComplaint = (id: ComplaintId) => {
     setComplaint(id);
