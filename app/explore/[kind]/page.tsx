@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 import { createClient } from "@/lib/supabase/server";
+import { patientSpecialtyDetails, publishedSubspecialties } from "@/lib/patient-specialties";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,9 @@ const copy: Record<UiLocale, {
   unavailable: string;
   viewClinic: string;
   viewDoctors: string;
+  specialtySource: string;
+  specialtyFocus: string;
+  specialtyGuidance: string;
 }> = {
   en: {
     titles: { clinics: "Clinics", specialties: "Specialties", locations: "Cities" },
@@ -45,6 +49,9 @@ const copy: Record<UiLocale, {
     unavailable: "We could not load these results. Please try again later.",
     viewClinic: "View clinic",
     viewDoctors: "View doctors",
+    specialtySource: "Published specialty",
+    specialtyFocus: "Focus areas listed by clinics",
+    specialtyGuidance: "These descriptions explain fields of medicine, not which doctor you personally need. Only published doctors are shown; clinic-listed focus areas are not independently credential-verified.",
   },
   ku: {
     titles: { clinics: "کلینیکەکان", specialties: "پسپۆڕییەکان", locations: "شارەکان" },
@@ -61,6 +68,9 @@ const copy: Record<UiLocale, {
     unavailable: "ئێستا ناتوانین زانیارییەکان پیشان بدەین. دواتر هەوڵ بدەوە.",
     viewClinic: "کلینیک ببینە",
     viewDoctors: "دکتۆرەکان ببینە",
+    specialtySource: "پسپۆڕیی بڵاوکراوە",
+    specialtyFocus: "بوارە تایبەتەکانی ناوبراو لەلایەن کلینیکەکان",
+    specialtyGuidance: "ئەم ڕوونکردنەوانە تەنها بۆ ناسینی پسپۆڕییەکانن، نەک دیاریکردنی دکتۆر بۆ تۆ. تەنها دکتۆرە بڵاوکراوەکان پیشان دەدرێن؛ بوارە تایبەتەکان بە سەربەخۆ پشتڕاست نەکراونەتەوە.",
   },
   bd: {
     titles: { clinics: "کلینیک", specialties: "تایبەتمەندی", locations: "باژێر" },
@@ -77,6 +87,9 @@ const copy: Record<UiLocale, {
     unavailable: "نوکە نەشێین زانیارییان نیشان بدەین. پاشتر جارەکا دی هەول بدە.",
     viewClinic: "کلینیکێ ببینە",
     viewDoctors: "دکتۆران ببینە",
+    specialtySource: "تایبەتمەندیا بڵاوکری",
+    specialtyFocus: "بوارێن تایبەت یێن کلینیکان نڤیساندین",
+    specialtyGuidance: "ئەڤ ڕوونکرنە تەنێ بۆ ناسینا تایبەتمەندییانە، نە بۆ هەلبژارتنا دکتۆری بۆ تە. تەنێ دکتۆرێن بڵاوکری دهێن نیشاندان؛ ئەڤ بوارێن تایبەت سەربەخۆ نەهاتین پشتڕاستکرن.",
   },
   ar: {
     titles: { clinics: "العيادات", specialties: "الاختصاصات", locations: "المدن" },
@@ -93,6 +106,9 @@ const copy: Record<UiLocale, {
     unavailable: "ما گدرنا نحمّل النتائج هسه. جرّب بعدين.",
     viewClinic: "شوف العيادة",
     viewDoctors: "شوف الأطباء",
+    specialtySource: "الاختصاص المنشور",
+    specialtyFocus: "مجالات دقيقة تذكرها العيادات",
+    specialtyGuidance: "هاي الشروحات للتعريف بالاختصاصات، مو لتحديد الطبيب المناسب لحالتك. نعرض فقط الأطباء المنشورين، والمجالات الدقيقة المذكورة من العيادات مو موثّقة بشكل مستقل.",
   },
 };
 
@@ -169,15 +185,44 @@ export default async function PatientExplorePage({ params, searchParams }: PageP
             <Link key={tab} href={patientLocaleHref(`/explore/${tab}`, locale)} aria-current={kind === tab ? "page" : undefined}>{t.titles[tab]}</Link>
           ))}
         </nav>
+        {kind === "specialties" ? <p className="atlas-explore-guidance">{t.specialtyGuidance}</p> : null}
         {error ? <p className="notice notice-error" role="alert">{t.unavailable}</p> : items.length ? (
           <section className="atlas-explore-grid" aria-label={t.titles[kind]}>
-            {items.map((item) => (
-              <Link className="atlas-explore-card" href={item.href} key={item.key}>
-                <span className="atlas-explore-card-name"><bdi>{item.label}</bdi></span>
-                {item.detail.length ? <small>{item.detail.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}</small> : null}
-                <span className="atlas-explore-card-action">{kind === "clinics" ? t.viewClinic : t.viewDoctors} <span aria-hidden="true">↗</span></span>
-              </Link>
-            ))}
+            {items.map((item) => {
+              if (kind === "specialties") {
+                const details = patientSpecialtyDetails(item.label, locale);
+                const focusAreas = publishedSubspecialties(doctors, item.label);
+                return (
+                  <article className="atlas-explore-card atlas-explore-specialty" key={item.key}>
+                    <Link className="atlas-explore-specialty-main" href={item.href}>
+                      <span className="atlas-explore-card-name"><bdi>{details?.name ?? item.label}</bdi></span>
+                      {details && details.name !== item.label ? <small className="atlas-explore-original">{t.specialtySource}: <bdi>{item.label}</bdi></small> : null}
+                      {details ? <span className="atlas-explore-about">{details.about}</span> : null}
+                      <span className="atlas-explore-card-action">{t.viewDoctors} <span aria-hidden="true">↗</span></span>
+                    </Link>
+                    {focusAreas.length ? (
+                      <div className="atlas-explore-focus">
+                        <span className="atlas-explore-focus-label">{t.specialtyFocus}</span>
+                        <div className="atlas-explore-focus-links">
+                          {focusAreas.map((focus) => (
+                            <Link key={focus} href={patientLocaleHref("/care", locale, { specialty: item.label, q: focus })}>
+                              <bdi>{focus}</bdi>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              }
+              return (
+                <Link className="atlas-explore-card" href={item.href} key={item.key}>
+                  <span className="atlas-explore-card-name"><bdi>{item.label}</bdi></span>
+                  {item.detail.length ? <small>{item.detail.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}</small> : null}
+                  <span className="atlas-explore-card-action">{kind === "clinics" ? t.viewClinic : t.viewDoctors} <span aria-hidden="true">↗</span></span>
+                </Link>
+              );
+            })}
           </section>
         ) : (
           <section className="atlas-explore-empty">
@@ -198,9 +243,19 @@ export default async function PatientExplorePage({ params, searchParams }: PageP
         .atlas-explore-tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0 24px}
         .atlas-explore-tabs a{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:9px 18px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:800;text-decoration:none}
         .atlas-explore-tabs a[aria-current="page"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+        .atlas-explore-guidance{margin:0 0 19px;max-width:850px;color:var(--muted);font-size:13px;line-height:1.75}
         .atlas-explore-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
         .atlas-explore-card{display:flex;flex-direction:column;gap:9px;justify-content:center;min-height:130px;min-width:0;padding:21px;border:1px solid var(--line);border-radius:19px;background:var(--surface);text-decoration:none;color:var(--ink);box-shadow:var(--shadow-sm)}
         .atlas-explore-card-name{font-size:clamp(17px,2vw,21px);font-weight:850;overflow-wrap:anywhere}
+        .atlas-explore-specialty{justify-content:space-between;gap:15px}
+        .atlas-explore-specialty-main{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0;text-decoration:none;color:inherit}
+        .atlas-explore-specialty-main:hover .atlas-explore-card-name{text-decoration:underline;text-underline-offset:3px}
+        .atlas-explore-original{font-weight:550}
+        .atlas-explore-about{color:var(--muted);font-size:14px;line-height:1.65}
+        .atlas-explore-focus{padding-top:13px;border-top:1px solid var(--line)}
+        .atlas-explore-focus-label{display:block;margin-bottom:9px;color:var(--muted);font-size:12px;font-weight:750}
+        .atlas-explore-focus-links{display:flex;flex-wrap:wrap;gap:8px}
+        .atlas-explore-focus-links a{display:inline-flex;align-items:center;min-height:44px;max-width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--canvas);color:var(--accent);font-size:13px;font-weight:750;text-decoration:none;overflow-wrap:anywhere}
         .atlas-explore-card small{font-size:13px;color:var(--muted);line-height:1.55}
         .atlas-explore-card-action{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--accent);font-weight:800}
         .atlas-explore-card-action span{font-size:18px}
