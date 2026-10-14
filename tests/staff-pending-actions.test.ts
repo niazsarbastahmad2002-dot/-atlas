@@ -15,8 +15,8 @@ test("clinic access administration disables consequential submit buttons while p
 
   assert.match(page, /revokeManualStaffInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{text\.revokeInviteConfirm\.replace\("\{doctor\}", invitation\.doctor_name\)\}/);
   assert.match(page, /cancelPendingInvitation[\s\S]*<ConfirmSubmitButton[\s\S]*confirmMessage=\{text\.removePendingConfirm\}/);
-  assert.match(page, /updateStaffRole[\s\S]*<SubmitButton className="" pendingLabel=\{text\.working\}>\{text\.saveRole\}<\/SubmitButton>/);
-  assert.match(page, /removeStaffMember[\s\S]*<ConfirmSubmitButton[\s\S]*className="danger-link"[\s\S]*pendingLabel=\{text\.working\}[\s\S]*confirmMessage=\{text\.removeConfirm\.replace\("\{person\}", member\.identity\)\}/);
+  assert.match(page, /updateStaffRole[\s\S]*<SubmitButton className="button button-small" pendingLabel=\{text\.working\}>\{text\.saveRole\}<\/SubmitButton>/);
+  assert.match(page, /removeStaffMember[\s\S]*<ConfirmSubmitButton[\s\S]*className=\{styles\.dangerButton\}[\s\S]*pendingLabel=\{text\.working\}[\s\S]*confirmMessage=\{text\.removeConfirm\.replace\("\{person\}", member\.identity\)\}/);
   assert.match(page, /transferClinicAdministrator[\s\S]*<SubmitButton className="button button-small" pendingLabel=\{text\.working\}>\{text\.transferButton\}<\/SubmitButton>/);
 });
 
@@ -58,7 +58,7 @@ test("staff role and administrator transfer fields lock with their pending serve
 
   assert.match(page, /import \{ PendingFormFields \} from "\.\/pending-form-fields"/);
   assert.ok((page.match(/<PendingFormFields>/g) ?? []).length >= 2);
-  assert.match(page, /updateStaffRole[\s\S]*<PendingFormFields>[\s\S]*name="role"[\s\S]*name="assigned_doctor_id"[\s\S]*<SubmitButton className="" pendingLabel=\{text\.working\}>\{text\.saveRole\}<\/SubmitButton>[\s\S]*<\/PendingFormFields>/);
+  assert.match(page, /updateStaffRole[\s\S]*<PendingFormFields>[\s\S]*name="role"[\s\S]*name="assigned_doctor_id"[\s\S]*<SubmitButton className="button button-small" pendingLabel=\{text\.working\}>\{text\.saveRole\}<\/SubmitButton>[\s\S]*<\/PendingFormFields>/);
   assert.match(page, /transferClinicAdministrator[\s\S]*<PendingFormFields>[\s\S]*name="new_administrator_id"[\s\S]*name="confirm_transfer"[\s\S]*<\/PendingFormFields>/);
   assert.match(fields, /useFormStatus\(\)/);
   assert.match(fields, /disabled=\{pending\}/);
