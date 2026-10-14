@@ -41,10 +41,10 @@ test("public directory draft includes all four Atlas interface languages", () =>
 test("Atlas home gives patients a first-class path into care discovery", () => {
   const home = source("app/page.tsx");
   assert.match(home, /className="button atlas-mode-button atlas-patient-entry" href="\/care"/);
-  assert.match(home, /patientTitle: "Find care"/);
-  assert.match(home, /patientTitle: "چارەسەر بدۆزەرەوە"/);
-  assert.match(home, /patientTitle: "دکتۆر بدیتەوە"/);
-  assert.match(home, /patientTitle: "ابحث عن رعاية"/);
+  assert.match(home, /patientTitle: "Find Care"/);
+  assert.match(home, /patientTitle: "پزیشک و کلینیک بدۆزەرەوە"/);
+  assert.match(home, /patientTitle: "دکتۆر و کلینیک بدیتەوە"/);
+  assert.match(home, /patientTitle: "ابحث عن رعاية طبية"/);
 });
 
 
