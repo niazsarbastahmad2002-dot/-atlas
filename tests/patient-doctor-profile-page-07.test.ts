@@ -18,13 +18,12 @@ test("doctor profile uses published-only data and keeps public booking gated", (
   assert.match(source, /<span key=\{time\.slotAt\} dir="auto">\{time\.label\}<\/span>/);
 });
 
-test("availability remains visible when there are no slots or the RPC fails", () => {
-  assert.match(source, /<section className="atlas-care-availability"/);
-  assert.match(source, /slotError \? \(/);
+test("availability only appears with proven slots or a genuine service error", () => {
+  assert.match(source, /if \(!slotError && slotGroups\.length === 0\)/);
+  assert.match(source, /p_from_date: baghdadDateKeyAfterDays\(7\)/);
+  assert.match(source, /\{\(slotError \|\| slotGroups\.length > 0 \|\| laterSlotAvailable\) \? \(/);
   assert.match(source, /copy\.availabilityUnavailable/);
   assert.match(source, /copy\.noPreviewTimes/);
-  assert.doesNotMatch(source, /\{\(slotError \|\| slotGroups\.length > 0/);
-  assert.doesNotMatch(source, /list_public_doctor_slots_page/);
 });
 
 test("directions require a clinic street address rather than an approximate city", () => {
