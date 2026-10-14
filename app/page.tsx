@@ -41,7 +41,7 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
     demo: "Try a sample clinic",
     patientAccount: "My appointments",
     modeNote: "Patient discovery is public. Clinic work stays private. Atlas Local is separate from cloud data.",
-    scope: "Scheduling and communication only — keep medical notes in your clinic's approved record system.",
+    scope: "Scheduling and patient communication only — keep medical notes in your clinic's approved record system.",
     support: "Support",
     privacy: "Privacy",
     terms: "Terms",
