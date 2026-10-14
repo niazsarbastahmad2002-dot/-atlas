@@ -66,6 +66,7 @@ export function ComplaintScreen({ locale, step }: { locale: UiLocale; step: Step
                 <span>{copy.searchLabel}</span>
                 <input type="search" dir="auto" value={term} onChange={(event) => setTerm(event.target.value)} placeholder={copy.searchPlaceholder} autoComplete="off" maxLength={80} />
               </label>
+              <p className="atlas-complaint-emergency-short" role="note">{copy.globalDanger}</p>
               {match.length ? (
                 <div className="atlas-complaint-grid">
                   {match.map((entry) => (
