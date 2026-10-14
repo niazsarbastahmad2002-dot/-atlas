@@ -22,7 +22,7 @@ test("selection has safe, localized loading and retryable error states", () => {
   assert.match(source, /role="status" aria-live="polite" aria-busy="true"/);
   assert.match(source, /if \(clinicsError\)/);
   assert.match(source, /role="alert"/);
-  assert.match(source, /href="\/dashboard\/select-clinic" prefetch=\{false\}/);
+  assert.match(source, /<a className="button" href="\/dashboard\/select-clinic">\{t\.retry\}<\/a>/);
   assert.doesNotMatch(source, /if \(clinicsError\) redirect/);
 });
 
