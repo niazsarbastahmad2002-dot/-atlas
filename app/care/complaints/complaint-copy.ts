@@ -15,6 +15,7 @@ type FlowCopy = {
   riskYes: string;
   riskNo: string;
   riskUnanswered: string;
+  globalDanger: string;
   emergencyTitle: string;
   emergencyHelp: string;
   emergencyAction: string;
@@ -45,6 +46,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     riskYes: "Yes / I am not sure",
     riskNo: "No",
     riskUnanswered: "Choose an answer before continuing.",
+    globalDanger: "New severe chest pain, serious breathing difficulty, sudden weakness or trouble speaking? Seek emergency help now—do not use routine search.",
     emergencyTitle: "Please seek urgent medical help",
     emergencyHelp: "Do not wait for an Atlas appointment. Go to the nearest emergency department or contact your local emergency service. If symptoms are severe or rapidly worsening, get urgent help even if your answer above was No.",
     emergencyAction: "Emergency care is more important than routine search",
@@ -73,6 +75,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     riskYes: "بەڵێ / دڵنیانیم",
     riskNo: "نەخێر",
     riskUnanswered: "پێش بەردەوامبوون وەڵامێک هەڵبژێرە.",
+    globalDanger: "ئەگەر ئازاری توندی سنگ، کێشەی زۆری هەناسەدان، لاوازیی لەناکاو یان کێشەی قسەکردنت هەیە، ئێستا داوای فریاکەوتن بکە.",
     emergencyTitle: "تکایە زوو یارمەتی پزیشکی وەربگرە",
     emergencyHelp: "چاوەڕێی مەوعیدی Atlas مەکە. بچۆ بۆ نزیکترین بەشی فریاکەوتن یان پەیوەندی بە فریاکەوتنی ناوچەکەت بکە. ئەگەر دۆخەکەت زۆر خراپە یان بەخێرایی خراپتر دەبێت، زوو یارمەتی وەربگرە.",
     emergencyAction: "فریاکەوتن لە گەڕان بۆ مەوعید گرنگترە",
@@ -101,6 +104,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     riskYes: "بەلێ / دڵنیانیم",
     riskNo: "نەخێر",
     riskUnanswered: "بەری بەردەوامبوونێ بەرسڤەکێ هەلبژێرە.",
+    globalDanger: "ئەگەر ئێشا گرانا سینگێ، ئاریشەیا گرانا هەناسەدانێ، لاوازییا ژ نشکەکێ یان ئاریشەیا ئاخفتنێ هەیە، نوکە یارمەتییا فریاکەفتنێ وەرگرە.",
     emergencyTitle: "ب لەز یارمەتییا پزیشکی وەرگرە",
     emergencyHelp: "چاوەڕێی وادەیەکێ ل Atlas نەکە. بچۆ نێزیکترین بەشا فریاکەفتنێ یان پەیوەندی ب فریاکەفتنا ناڤچەیا خۆ بکە. ئەگەر دۆخ گەلەک گرانە یان لەزتر خراپ دبیت، یارمەتی وەرگرە.",
     emergencyAction: "فریاکەفتن ژ وادە گرتنێ گرنگترە",
@@ -129,6 +133,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     riskYes: "إي / مو متأكد",
     riskNo: "لا",
     riskUnanswered: "اختار جواب قبل ما تكمل.",
+    globalDanger: "عندك ألم صدر شديد جديد، صعوبة قوية بالتنفس، ضعف مفاجئ أو صعوبة بالكلام؟ اطلب الطوارئ هسه، لا تنتظر موعد عادي.",
     emergencyTitle: "اطلب مساعدة طبية عاجلة",
     emergencyHelp: "لا تنتظر موعد من Atlas. روح لأقرب طوارئ أو اتصل بخدمة الطوارئ المحلية. إذا حالتك شديدة أو تتدهور بسرعة، اطلب المساعدة حتى لو جاوبت لا.",
     emergencyAction: "الطوارئ أهم من البحث عن موعد",
