@@ -52,3 +52,28 @@ test("patient profile remains small, private, multilingual, and does not make ph
   assert.doesNotMatch(page, /name="phone"|type="tel"/);
   assert.match(page, /patient-account-profile-form button\{min-height:48px\}/);
 });
+
+test("profile link reaches the private editor while appointments stay first", () => {
+  const page = source("app/patient-account/page.tsx");
+  assert.match(page, /href="#patient-profile"/);
+  assert.match(page, /id="patient-profile" className="patient-account-profile" aria-labelledby="patient-profile-title"/);
+  assert.match(page, /id="patient-profile-title"/);
+  assert.ok(page.indexOf('className="patient-account-appointments"') < page.indexOf('id="patient-profile"'));
+  for (const label of ["Edit profile", "دەستکاری زانیارییەکان", "زانیارییان بگوهۆڕە", "تعديل المعلومات"]) {
+    assert.ok(page.includes(label));
+  }
+});
+
+test("profile edit controls are labeled, responsive, and keep verified phone non-editable", () => {
+  const page = source("app/patient-account/page.tsx");
+  assert.match(page, /className="patient-account-profile-fields"/);
+  assert.match(page, /label htmlFor="patient-profile-name"/);
+  assert.match(page, /id="patient-profile-name"[\s\S]*?dir="auto"/);
+  assert.match(page, /label htmlFor="patient-profile-language"/);
+  assert.match(page, /id="patient-profile-language"/);
+  assert.match(page, /patient-account-profile-fields\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(page, /patient-account-profile-fields\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(page, /font-size:16px;min-height:48px/);
+  assert.match(page, /profilePhoneHint: "Your verified mobile number is used to sign in and cannot be changed here\."/);
+  assert.doesNotMatch(page, /name="phone"|name="medical_history"|name="diagnosis"|name="medications"/);
+});
