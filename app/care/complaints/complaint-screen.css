@@ -59,3 +59,18 @@
 }
 @media(max-width:380px){.atlas-complaint-answers{grid-template-columns:1fr}.atlas-complaint-toplinks a{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.atlas-complaint-page *{scroll-behavior:auto;transition:none!important}}
+
+/* Page 05: visible rationale and comparison, without changing clinical routing. */
+.atlas-complaint-compare-intro{margin:16px 0 0;color:var(--muted);font-size:14px;line-height:1.7}
+.atlas-complaint-specialty.is-compared{border-color:var(--accent);background:var(--accent-soft)}
+.atlas-complaint-reason{display:grid;gap:6px;margin-bottom:10px}
+.atlas-complaint-reason strong{font-size:12px;font-weight:850;color:var(--ink)}
+.atlas-complaint-reason p{margin:0;font-size:14px;line-height:1.65;color:var(--muted)}
+.atlas-complaint-compare-button{display:inline-flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:48px;margin-top:4px;padding:10px 13px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--accent);font:inherit;font-size:13px;font-weight:850;cursor:pointer;text-align:start}
+.atlas-complaint-compare-button[aria-expanded="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.atlas-complaint-comparison{padding:18px 20px;margin-top:16px;border:1px solid var(--accent);border-radius:15px;background:var(--accent-soft);line-height:1.7;overflow-wrap:anywhere}
+.atlas-complaint-comparison[hidden]{display:none}
+.atlas-complaint-comparison strong{display:block;color:var(--ink)}
+.atlas-complaint-comparison p{margin:9px 0;color:var(--ink)}
+.atlas-complaint-comparison small{color:var(--muted)}
+@media(max-width:380px){.atlas-complaint-specialty{padding:16px}.atlas-complaint-comparison{padding:15px}}
