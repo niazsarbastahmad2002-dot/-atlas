@@ -41,5 +41,5 @@ test("welcome styles support small screens, keyboard focus, reduced motion and d
   assert.match(home, /@media\(max-width:400px\)/);
   assert.match(home, /@media\(prefers-reduced-motion:reduce\)/);
   assert.match(home, /focus-visible/);
-  assert.match(home, /data-theme=\\"dark\\"/);
+  assert.match(home, /data-theme=\\?"dark\\?"/);
 });
