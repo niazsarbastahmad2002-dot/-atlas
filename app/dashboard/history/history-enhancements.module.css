@@ -68,6 +68,7 @@
 @media (max-width: 1000px) {
   .toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .toolbar > input:first-child { grid-column: 1 / -1; }
+  .toolbar > input[type="date"] { grid-column: auto; }
 }
 @media (max-width: 720px) {
   .toolbar { grid-template-columns: 1fr 1fr; }
