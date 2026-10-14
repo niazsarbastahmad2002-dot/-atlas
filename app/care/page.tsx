@@ -386,11 +386,14 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           {hasActiveFilters ? <Link className="atlas-care-clear-filters" href={patientLocaleHref("/care", locale)}>{copy.allDoctors} <span aria-hidden="true">↗</span></Link> : null}
         </form>
           </div>
-          <aside className="atlas-care-journey atlas-care-guided" aria-labelledby="atlas-care-guided-title">
-            <div className="atlas-care-guided-top">
-              <span className="atlas-care-guided-mark" aria-hidden="true">02</span>
-              <img src="/atlas-icon.svg" width="54" height="54" alt="" aria-hidden="true" />
+          <aside className="atlas-care-journey" aria-labelledby="atlas-care-guided-title">
+            <div className="atlas-care-journey-art" aria-hidden="true">
+              <img src="/atlas-icon.svg" width="64" height="64" alt="" />
             </div>
+            <div className="atlas-care-guided">
+              <div className="atlas-care-guided-top">
+                <span className="atlas-care-guided-mark" aria-hidden="true">02</span>
+              </div>
             <div>
               <h2 id="atlas-care-guided-title">{paths.guidedTitle}</h2>
               <p className="atlas-care-guided-help">{paths.guidedHelp}</p>
@@ -407,6 +410,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
                 </Link>
               </div>
             )}
+            </div>
           </aside>
         </div>
         <nav className="atlas-care-more-pages" aria-label={copy.browsePagesLabel}>
@@ -767,7 +771,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         .atlas-care-direct-heading h2{margin:0;color:#144832;font-size:clamp(17px,2vw,23px);line-height:1.32;letter-spacing:-.02em}
         .atlas-care-direct-help{margin:7px 0 0;color:#536e5b;font-size:13px;line-height:1.55}
         .atlas-care-direct-help+.atlas-care-search{margin-top:15px}
-        .atlas-care-guided{align-items:stretch;justify-content:space-between;gap:24px;min-width:0;color:#fff}
+        .atlas-care-guided{display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;gap:24px;width:100%;min-width:0;color:#fff}
         .atlas-care-guided-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
         .atlas-care-guided-top img{width:54px;height:54px;object-fit:contain;border-radius:13px}
         .atlas-care-guided h2{margin:0;color:#fff!important;font-size:clamp(22px,2.6vw,34px);line-height:1.2;letter-spacing:-.03em;text-wrap:balance}
@@ -781,13 +785,13 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         :root[data-theme="dark"] .atlas-care-direct-heading h2,:root[data-theme="dark"] .atlas-care-direct-help{color:var(--ink)}
         @media(prefers-color-scheme:dark){:root[data-theme="system"] .atlas-care-direct-heading h2,:root[data-theme="system"] .atlas-care-direct-help{color:var(--ink)}}
         @media(max-width:1200px){
-          .atlas-care-guided{gap:13px;padding:19px}
+          .atlas-care-guided{gap:13px;padding:0}
           .atlas-care-guided-top img{width:40px;height:40px}
           .atlas-care-guided h2{font-size:clamp(21px,3vw,27px)}
         }
         @media(max-width:700px){
           .atlas-care-direct-heading{margin-top:23px}
-          .atlas-care-guided{padding:21px;gap:15px}
+          .atlas-care-guided{padding:0;gap:15px}
           .atlas-care-guided-help{margin-top:8px;font-size:13px}
           .atlas-care-guided-action,.atlas-care-guided-fallback>a{min-height:50px}
         }
