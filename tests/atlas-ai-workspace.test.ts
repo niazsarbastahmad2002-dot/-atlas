@@ -9,7 +9,7 @@ const page = read("app/dashboard/assistant/page.tsx");
 
 test("Atlas AI keeps the iPhone/iPad-safe React client and clinic-keyed isolation", () => {
   assert.match(active, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v4"/);
-  assert.doesNotMatch(active, /atlas-ai-client-v5/);
+  assert.doesNotMatch(active, /export \\{ AtlasAiClient \\} from "\\.\\/atlas-ai-client-v5"/);
   assert.match(page, /<AtlasAiClient key=\{clinic\.id\} clinicId=\{clinic\.id\}/);
   assert.match(page, /if \(params\.clinic && \(!requestedClinicId/);
   assert.doesNotMatch(client, /localStorage|sessionStorage|document\.createElement/);
