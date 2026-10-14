@@ -168,7 +168,7 @@ const specialtyAliases: Record<SpecialtyKey, readonly string[]> = {
 };
 
 function normalizeSpecialty(value: string) {
-  return value.trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
 
 export function matchingPublishedSpecialties(key: SpecialtyKey, published: readonly string[]) {
