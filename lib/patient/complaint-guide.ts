@@ -19,46 +19,36 @@ export type Complaint = {
   specialties: readonly SpecialtyKey[];
 };
 
-export const specialtyLabels: Record<SpecialtyKey, { name: FourLanguages; searchTerm: string }> = {
+export const specialtyLabels: Record<SpecialtyKey, { name: FourLanguages }> = {
   "general-medicine": {
     name: { en: "General medicine / family doctor", ku: "پزیشکی گشتی", bd: "دکتۆرێ گشتی", ar: "الطب العام / طبيب العائلة" },
-    searchTerm: "General Medicine",
   },
   neurology: {
     name: { en: "Neurology", ku: "نەخۆشییەکانی دەمار", bd: "نەخۆشیێن دەماران", ar: "طب الأعصاب" },
-    searchTerm: "Neurology",
   },
   orthopedics: {
     name: { en: "Orthopedics", ku: "ئێسک و جومگە", bd: "هەستی و مەفاصل", ar: "العظام والمفاصل" },
-    searchTerm: "Orthopedics",
   },
   dermatology: {
     name: { en: "Dermatology", ku: "نەخۆشییەکانی پێست", bd: "نەخۆشیێن پێستی", ar: "الجلدية" },
-    searchTerm: "Dermatology",
   },
   ent: {
     name: { en: "Ear, nose and throat", ku: "گوێ و لووت و قوڕگ", bd: "گوھ و دڤ و ئەڤری", ar: "الأذن والأنف والحنجرة" },
-    searchTerm: "ENT",
   },
   ophthalmology: {
     name: { en: "Eye doctor (ophthalmology)", ku: "پزیشکی چاو", bd: "دکتۆرێ چاڤان", ar: "طب العيون" },
-    searchTerm: "Ophthalmology",
   },
   gastroenterology: {
     name: { en: "Digestive system (gastroenterology)", ku: "نەخۆشییەکانی کۆئەندامی هەرس", bd: "نەخۆشیێن هەرسێ", ar: "الجهاز الهضمي" },
-    searchTerm: "Gastroenterology",
   },
   urology: {
     name: { en: "Urinary system (urology)", ku: "میز و گورچیلە", bd: "میز و گورچیلە", ar: "المسالك البولية" },
-    searchTerm: "Urology",
   },
   dentistry: {
     name: { en: "Dentistry", ku: "پزیشکی ددان", bd: "دکتۆرێ ددانان", ar: "طب الأسنان" },
-    searchTerm: "Dentistry",
   },
   pediatrics: {
     name: { en: "Pediatrics", ku: "پزیشکی منداڵان", bd: "دکتۆرێ زارۆکان", ar: "طب الأطفال" },
-    searchTerm: "Pediatrics",
   },
 };
 
