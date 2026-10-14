@@ -23,7 +23,7 @@ const copy: Record<UiLocale, {
   retry: string;
 }> = {
   en: {
-    eyebrow: "Atlas Doctor · Workspaces",
+    eyebrow: "Clinic workspaces",
     title: "Which clinic are you working in?",
     intro: "Choose a clinic to open its workspace.",
     help: "Only clinics you can access appear here. Your Atlas account does not automatically join another clinic.",
@@ -38,7 +38,7 @@ const copy: Record<UiLocale, {
     retry: "Try again",
   },
   ku: {
-    eyebrow: "Atlas Doctor · شوێنەکانی کار",
+    eyebrow: "شوێنەکانی کار",
     title: "ئەمڕۆ لە کام کلینیک کار دەکەیت؟",
     intro: "کلینیکەکەت هەڵبژێرە بۆ چوونە ناو شوێنی کارەکەی.",
     help: "تەنها ئەو کلینیکانە دەبینیت کە ڕێگەی چوونەناوت هەیە. هەژماری Atlas بە خۆی تۆ ناخاتە ناو کلینیکی کەسی تر.",
@@ -53,7 +53,7 @@ const copy: Record<UiLocale, {
     retry: "دووبارە هەوڵ بدە",
   },
   bd: {
-    eyebrow: "Atlas Doctor · شوێنێن کاری",
+    eyebrow: "شوێنێن کاری",
     title: "ئەڤرۆ ل کیژ کلینیکێ کار دکەی؟",
     intro: "کلینیکا خۆ هەلبژێرە بۆ چوونا ناڤ شوێنێ کاری وێ.",
     help: "تەنێ ئەو کلینیکانە دبینی کو دەستهەلاتا چوونێ بۆ وان هەیە. هەژمارا Atlas ب خۆ تۆ ناخەتە ناڤ کلینیکا کەسەکێ دی.",
@@ -68,7 +68,7 @@ const copy: Record<UiLocale, {
     retry: "جارەکا دی هەوڵ بدە",
   },
   ar: {
-    eyebrow: "Atlas Doctor · مساحات العمل",
+    eyebrow: "مساحات العمل",
     title: "بأي عيادة تشتغل اليوم؟",
     intro: "اختار العيادة حتى تدخل مساحة العمل الخاصة بيها.",
     help: "تظهر بس العيادات اللي عندك صلاحية الدخول إلها. حساب Atlas ما يضيفك تلقائياً لعيادة غيرك.",
@@ -111,7 +111,7 @@ async function ClinicChoices({ locale }: { locale: UiLocale }) {
       <section className="clinic-selection-state clinic-selection-error" role="alert">
         <h2>{t.errorTitle}</h2>
         <p className="clinic-selection-support">{t.errorHelp}</p>
-        <Link className="button" href="/dashboard/select-clinic" prefetch={false}>{t.retry}</Link>
+        <a className="button" href="/dashboard/select-clinic">{t.retry}</a>
       </section>
     );
   }
