@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
-import { findComplaint, searchComplaints, matchingPublishedSpecialties, specialtyLabels, type ComplaintId } from "@/lib/patient/complaint-guide";
+import { findComplaint, searchComplaints, type ComplaintId } from "@/lib/patient/complaint-guide";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { guideCopy } from "./complaint-copy";
 import { usePatientComplaintFlow } from "./flow-context";
+import { SuggestedSpecialtyCards } from "./specialties/suggested-specialty-cards";
 import "./complaint-screen.css";
 
 type Step = "choose" | "questions" | "specialties";
@@ -107,28 +108,12 @@ export function ComplaintScreen({ locale, step, publishedSpecialties = [] }: { l
           ) : selected ? (
             <>
               <p className="atlas-complaint-selected"><bdi>{selected.name[locale]}</bdi></p>
-              <div className="atlas-complaint-specialties">
-                {selected.specialties.map((key, index) => {
-                  const specialty = specialtyLabels[key];
-                  const matches = matchingPublishedSpecialties(key, publishedSpecialties);
-                  return (
-                    <article className="atlas-complaint-specialty" key={key}>
-                      <span>{index === 0 ? copy.firstStep : copy.specialtyTitle}</span>
-                      <h2><bdi>{specialty.name[locale]}</bdi></h2>
-                      {matches.length ? matches.map((name) => (
-                        <Link className="button atlas-complaint-provider-link" href={`/care?lang=${locale}&specialty=${encodeURIComponent(name)}`} key={name}>
-                          {copy.doctors}: <bdi>{name}</bdi> <span aria-hidden="true">↗</span>
-                        </Link>
-                      )) : (
-                        <>
-                          <p className="atlas-complaint-provider-note">{copy.noPublishedMatch}</p>
-                          <Link className="button button-ghost" href={href("/care", locale)}>{copy.directSearch}</Link>
-                        </>
-                      )}
-                    </article>
-                  );
-                })}
-              </div>
+              <p className="atlas-complaint-emergency-short" role="note">{copy.globalDanger}</p>
+              <SuggestedSpecialtyCards
+                locale={locale}
+                specialtyKeys={selected.specialties}
+                publishedSpecialties={publishedSpecialties}
+              />
               <button className="atlas-complaint-text-button" type="button" onClick={() => { flow.reset(); router.push(href("/care/complaints", locale)); }}>{copy.breadcrumb[0]}</button>
             </>
           ) : null}
