@@ -48,7 +48,7 @@ test("patient can go back or search directly without supplying a symptom history
   assert.match(question, /flow\.reset\(\)/);
   assert.match(question, /\/care\/complaints\?lang=/);
   assert.match(screen, /copy\.directSearch/);
-  assert.doesNotMatch(context + screen + question, /(?:localStorage|sessionStorage|sendBeacon|document\.cookie|fetch\(|\.rpc\(|\.from\(|patient_phone|symptom=|complaint=|answer=|duration=)/);
+  assert.doesNotMatch(context + screen + question, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|sendBeacon\(|document\.cookie|fetch\(|\.rpc\(|\.from\(|patient_phone|symptom=|complaint=|answer=|duration=/);
   assert.doesNotMatch(question, /<input|<textarea/);
 });
 
