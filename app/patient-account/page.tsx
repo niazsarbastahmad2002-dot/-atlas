@@ -428,7 +428,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
               )}
             </section>
 
-            <section id="patient-profile" className="patient-account-profile" aria-labelledby="patient-profile-title">
+            <section className="patient-account-profile" id="patient-profile" aria-labelledby="patient-profile-title">
               <div className="patient-account-profile-heading">
                 <h2 id="patient-profile-title">{t.profileTitle}</h2>
                 <span className="patient-account-profile-privacy">{t.profilePrivate}</span>

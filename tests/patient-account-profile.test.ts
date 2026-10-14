@@ -56,7 +56,7 @@ test("patient profile remains small, private, multilingual, and does not make ph
 test("profile link reaches the private editor while appointments stay first", () => {
   const page = source("app/patient-account/page.tsx");
   assert.match(page, /href="#patient-profile"/);
-  assert.match(page, /id="patient-profile" className="patient-account-profile" aria-labelledby="patient-profile-title"/);
+  assert.match(page, /className="patient-account-profile" id="patient-profile" aria-labelledby="patient-profile-title"/);
   assert.match(page, /id="patient-profile-title"/);
   assert.ok(page.indexOf('className="patient-account-appointments"') < page.indexOf('id="patient-profile"'));
   for (const label of ["Edit profile", "دەستکاری زانیارییەکان", "زانیارییان بگوهۆڕە", "تعديل المعلومات"]) {
