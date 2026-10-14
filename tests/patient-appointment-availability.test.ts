@@ -12,6 +12,8 @@ test("groups and sorts public slot times in Baghdad time, including UTC midnight
     { slot_at: "2026-10-14T06:00:00.000Z" }, // 14 Oct, 9:00 AM Baghdad
   ], "en", now);
   assert.deepEqual(groups.map((group) => group.dateKey), ["2026-10-14", "2026-10-15"]);
+  assert.match(groups[0].dateLabel, /^Wed · /);
+  assert.match(groups[1].dateLabel, /^Thu · /);
   assert.deepEqual(groups[0].slots.map((slot) => slot.label), ["09:00 AM", "02:15 PM"]);
   assert.equal(groups[1].slots[0].label, "12:30 AM");
 });
