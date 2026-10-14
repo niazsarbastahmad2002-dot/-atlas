@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
-import { complaints, findComplaint, searchComplaints, specialtyLabels, type ComplaintId } from "@/lib/patient/complaint-guide";
+import { findComplaint, searchComplaints, matchingPublishedSpecialties, specialtyLabels, type ComplaintId } from "@/lib/patient/complaint-guide";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { guideCopy } from "./complaint-copy";
 import { usePatientComplaintFlow } from "./flow-context";
@@ -17,7 +17,7 @@ function href(path: string, locale: UiLocale) {
   return `${path}?lang=${locale}`;
 }
 
-export function ComplaintScreen({ locale, step }: { locale: UiLocale; step: Step }) {
+export function ComplaintScreen({ locale, step, publishedSpecialties = [] }: { locale: UiLocale; step: Step; publishedSpecialties?: readonly string[] }) {
   const router = useRouter();
   const copy = guideCopy[locale];
   const meta = uiLocaleMeta[locale];
@@ -110,12 +110,21 @@ export function ComplaintScreen({ locale, step }: { locale: UiLocale; step: Step
               <div className="atlas-complaint-specialties">
                 {selected.specialties.map((key, index) => {
                   const specialty = specialtyLabels[key];
-                  const destination = `/care?lang=${locale}&specialty=${encodeURIComponent(specialty.searchTerm)}`;
+                  const matches = matchingPublishedSpecialties(key, publishedSpecialties);
                   return (
                     <article className="atlas-complaint-specialty" key={key}>
                       <span>{index === 0 ? copy.firstStep : copy.specialtyTitle}</span>
                       <h2><bdi>{specialty.name[locale]}</bdi></h2>
-                      <Link className="button" href={destination}>{copy.doctors} <span aria-hidden="true">↗</span></Link>
+                      {matches.length ? matches.map((name) => (
+                        <Link className="button atlas-complaint-provider-link" href={`/care?lang=${locale}&specialty=${encodeURIComponent(name)}`} key={name}>
+                          {copy.doctors}: <bdi>{name}</bdi> <span aria-hidden="true">↗</span>
+                        </Link>
+                      )) : (
+                        <>
+                          <p className="atlas-complaint-provider-note">{copy.noPublishedMatch}</p>
+                          <Link className="button button-ghost" href={href("/care", locale)}>{copy.directSearch}</Link>
+                        </>
+                      )}
                     </article>
                   );
                 })}
