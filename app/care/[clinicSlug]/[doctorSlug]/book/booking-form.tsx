@@ -355,9 +355,18 @@ export function PatientBookingForm(props: BookingFormProps) {
       });
       const booking = await bookingResponse.json().catch(() => null) as { status?: string; patientPath?: string } | null;
 
-      if (bookingResponse.ok && booking?.status === "ok" && booking.patientPath) {
-        window.location.replace(booking.patientPath);
-        return;
+      if (bookingResponse.ok && booking?.status === "ok" && typeof booking.patientPath === "string") {
+        // Only a successful authorized finalization may enter the confirmation view.
+        // Keep the destination on this origin and restricted to private patient links.
+        const destination = new URL(booking.patientPath, window.location.origin);
+        if (
+          destination.origin === window.location.origin
+          && /^\\/patient\\/[a-f0-9]{64}$/.test(destination.pathname)
+        ) {
+          destination.searchParams.set("view", "confirmation");
+          window.location.replace(`${destination.pathname}${destination.search}`);
+          return;
+        }
       }
 
       if (booking?.status === "rate_limited") setError(t.rateLimited);
