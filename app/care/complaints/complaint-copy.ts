@@ -23,6 +23,7 @@ type FlowCopy = {
   specialtyHelp: string;
   firstStep: string;
   doctors: string;
+  noPublishedMatch: string;
   noDiagnosis: string;
   notFound: string;
   directSearch: string;
@@ -54,6 +55,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     specialtyHelp: "These are possible starting points, not a diagnosis or a guarantee that a particular doctor is right for you.",
     firstStep: "Start with",
     doctors: "See published doctors",
+    noPublishedMatch: "No matching specialty label in the currently displayed public sample. Browse all doctors instead; this is not a complete directory.",
     noDiagnosis: "Atlas does not diagnose, assess severity or replace a healthcare professional.",
     notFound: "Start by choosing a concern.",
     directSearch: "Search doctors without questions",
@@ -83,6 +85,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     specialtyHelp: "ئەمە تەنها ڕێنمایی بۆ دەستپێکردنە، نە دەستنیشانکردنی نەخۆشی.",
     firstStep: "دەتوانیت لێرەوە دەست پێ بکەیت",
     doctors: "دکتۆرەکان ببینە",
+    noPublishedMatch: "لەم لیستە سنووردارەدا ئەم پسپۆڕییە نەدۆزرایەوە. هەموو دکتۆرەکان ببینە؛ ئەمە لیستی تەواو نییە.",
     noDiagnosis: "Atlas نەخۆشی دەستنیشان ناکات و جێی دکتۆر ناگرێتەوە.",
     notFound: "سەرەتا کێشەیەک هەڵبژێرە.",
     directSearch: "ڕاستەوخۆ بەدوای دکتۆردا بگەڕێ",
@@ -112,6 +115,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     specialtyHelp: "ئەڤە تەنێ ڕێنماییەکا دەستپێکرنێیە، نە دەستنیشانکرنا نەخۆشییە.",
     firstStep: "دشێی ژ ڤێرێ دەست پێ بکەی",
     doctors: "دکتۆران ببینە",
+    noPublishedMatch: "د ڤێ لیستا سنووردار دا ئەڤ تایبەتمەندییە نەهاتە دیتن. هەمی دکتۆران ببینە؛ ئەڤ لیستە تەمام نینە.",
     noDiagnosis: "Atlas نەخۆشییان دەستنیشان ناکەت و جهێ دکتۆری ناگریت.",
     notFound: "پێشتر ئاریشەیەکێ هەلبژێرە.",
     directSearch: "ڕاستەوخۆ دکتۆران ببینە",
@@ -141,6 +145,7 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     specialtyHelp: "هاي مجرد خيارات للبداية، مو تشخيص ولا ضمان إن طبيب معيّن هو الأنسب.",
     firstStep: "تگدر تبدأ من",
     doctors: "شوف الأطباء المنشورين",
+    noPublishedMatch: "ما ظهرت نفس تسمية الاختصاص بعينة الأطباء المنشورين حاليًا. تصفّح كل الأطباء؛ هاي مو قائمة كاملة.",
     noDiagnosis: "Atlas ما يشخّص الأمراض ولا يحدد شدة الحالة ولا يغني عن الطبيب.",
     notFound: "اختار المشكلة أولًا.",
     directSearch: "دوّر على دكتور بدون أسئلة",
