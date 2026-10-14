@@ -23,7 +23,7 @@ test("language choice stays accessible and retains all four existing locales", (
     assert.match(patientLanguage, new RegExp("\\b" + locale + ': "'));
   }
   assert.match(patientLanguage, /aria-label=\{label\[locale\]\}/);
-  assert.match(home, /html\[dir="rtl"\]/);
+  assert.match(home, /html\[dir=\\?"rtl\\?"\]/);
 });
 
 test("secondary links live below the main decision and privacy boundaries remain intact", () => {
