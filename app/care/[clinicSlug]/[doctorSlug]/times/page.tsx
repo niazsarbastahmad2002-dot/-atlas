@@ -257,8 +257,12 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
           {phone ? <a className="atlas-times-phone" href={`tel:${profile.public_phone}`}><bdi>{phone}</bdi></a> : null}
         </section>
 
-        <p className="atlas-times-intro">{bookingReady ? t.intro : t.readOnlyIntro}</p>
-        <p className="atlas-times-unreserved" role="note">{t.unreserved}</p>
+        {groups.length ? (
+          <>
+            <p className="atlas-times-intro">{bookingReady ? t.intro : t.readOnlyIntro}</p>
+            <p className="atlas-times-unreserved" role="note">{t.unreserved}</p>
+          </>
+        ) : null}
 
         {!bookingReady && phone ? (
           <a className="button atlas-times-call-primary" href={`tel:${profile.public_phone}`}>{t.call}</a>
