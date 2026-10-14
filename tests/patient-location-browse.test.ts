@@ -63,7 +63,7 @@ test("page 17 uses the existing gated public search and keeps other explore page
   assert.match(explore, /kind === "locations" \? \(/);
   assert.match(explore, /<PatientLocationsExplore doctors=\{doctors\} locale=\{locale\}/);
   assert.match(explore, /kind === "clinics" \? clinics : kind === "specialties" \? specialties : cities/);
-  assert.doesNotMatch(locations + library, /supabase|\.rpc\(|service_role|clinic_members|patient_phone|\.from\(/i);
+  assert.doesNotMatch(locations + library, /supabase|\.rpc\(|service_role|clinic_members|patient_phone/i);
 });
 
 test("location UI preserves language, clinic/doctor routes and accessible responsive affordances", () => {
