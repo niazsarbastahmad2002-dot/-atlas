@@ -1,14 +1,16 @@
 import Link from "next/link";
+import { uiLocaleMeta } from "@/lib/i18n/ui";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
-import { formatBaghdadDateTime, type UiLocale } from "@/lib/i18n/ui";
+import { formatBaghdadDateTime, formatBaghdadDay, type UiLocale } from "@/lib/i18n/ui";
 import { localizeDigits } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ clinic?: string }> };
+type Props = { searchParams: Promise<{ clinic?: string; type?: string }> };
+type ActivityFilter = "all" | "appointments" | "smart_fill" | "staff";
 const ACTIVITY_VIEW_LIMIT = 250;
 type SafeState = Record<string, unknown> | null;
 
@@ -24,6 +26,13 @@ type Copy = {
   patient: string;
   contact: string;
   formerStaff: string;
+  unknownStaff: string;
+  filter: string;
+  allEvents: string;
+  appointmentEvents: string;
+  smartFillEvents: string;
+  staffEvents: string;
+  noMatches: string;
   you: string;
   empty: string;
   privacy: string;
@@ -53,6 +62,13 @@ const copy: Record<UiLocale, Copy> = {
     open: "Open",
     loadFailed: "Activity history could not load.",
     limited: "Showing the latest {count} activity events. Older events are not included in this view.",
+    unknownStaff: "Staff (identity unavailable)",
+    filter: "Show activity",
+    allEvents: "All activity",
+    appointmentEvents: "Appointments",
+    smartFillEvents: "Smart Fill",
+    staffEvents: "Staff & access",
+    noMatches: "No activity matches this filter.",
   },
   ku: {
     eyebrow: "بەڕێوەبردنی کلینیک",
@@ -73,6 +89,13 @@ const copy: Record<UiLocale, Copy> = {
     open: "کردنەوە",
     loadFailed: "مێژووی چالاکی بار نەبوو.",
     limited: "نوێترین {count} ڕووداوی چالاکی پیشان دەدرێن. ڕووداوە کۆنترەکان لەم دیمەنەدا نین.",
+    unknownStaff: "ستاف (ناسنامە دیار نییە)",
+    filter: "جۆری چالاکی",
+    allEvents: "هەموو چالاکییەکان",
+    appointmentEvents: "وادەکان",
+    smartFillEvents: "پڕکردنەوەی شوێن",
+    staffEvents: "ستاف و دەسەڵات",
+    noMatches: "هیچ چالاکییەک بۆ ئەم پاڵاوتنە نییە.",
   },
   bd: {
     eyebrow: "بەڕێڤەبرنا کلینیکێ",
@@ -93,6 +116,13 @@ const copy: Record<UiLocale, Copy> = {
     open: "ڤەکە",
     loadFailed: "مێژوویا چالاکیێ نەهاتە بارکرن.",
     limited: "نووترین {count} ڕوودانێن چالاکیێ دهێنە نیشاندان. ڕوودانێن کەڤنتر ل ڤێ دیمەنێ نینن.",
+    unknownStaff: "ستاف (ناسنامە دیار نینە)",
+    filter: "جۆرێ چالاکیێ",
+    allEvents: "هەمی چالاکی",
+    appointmentEvents: "وادە",
+    smartFillEvents: "پڕکرنا جهی",
+    staffEvents: "ستاف و دەستهەلات",
+    noMatches: "چ چالاکی بۆ ڤێ هەلبژارتنێ نینە.",
   },
   ar: {
     eyebrow: "إدارة العيادة",
@@ -113,6 +143,13 @@ const copy: Record<UiLocale, Copy> = {
     open: "فتح",
     loadFailed: "تعذر تحميل سجل النشاط.",
     limited: "نعرض أحدث {count} حدث نشاط. الأحداث الأقدم غير مشمولة في هذا العرض.",
+    unknownStaff: "موظف (الهوية غير متاحة)",
+    filter: "نوع النشاط",
+    allEvents: "كل النشاط",
+    appointmentEvents: "المواعيد",
+    smartFillEvents: "ملء الفتحات",
+    staffEvents: "الموظفون والصلاحيات",
+    noMatches: "لا يوجد نشاط يطابق هذا الفلتر.",
   },
 };
 
@@ -224,6 +261,9 @@ export default async function ActivityPage({ searchParams }: Props) {
   const params = await searchParams;
   const locale = await getUiLocale();
   const t = copy[locale];
+  const filter: ActivityFilter = params.type === "appointments" || params.type === "smart_fill" || params.type === "staff" ? params.type : "all";
+  const direction = uiLocaleMeta[locale].direction;
+  const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baghdad", year: "numeric", month: "2-digit", day: "2-digit" });
   const transitionArrow = locale === "en" ? "→" : "←";
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -254,13 +294,18 @@ export default async function ActivityPage({ searchParams }: Props) {
   const canView = clinic.owner_id === userData.user.id || membership?.role === "owner" || membership?.role === "manager";
   if (!canView) redirect(`/dashboard/settings?clinic=${clinic.id}`);
 
+  const activityQuery = supabase
+    .from("appointment_audit_events")
+    .select("id, actor_id, actor_type, action, entity_type, entity_id, from_status, to_status, before_state, after_state, occurred_at", { count: "exact" })
+    .eq("clinic_id", clinic.id)
+    .order("occurred_at", { ascending: false });
+  const filteredQuery = filter === "appointments" ? activityQuery.eq("entity_type", "appointment")
+    : filter === "smart_fill" ? activityQuery.eq("entity_type", "smart_fill_slot")
+      : filter === "staff" ? activityQuery.in("entity_type", ["staff_invite", "staff_membership"])
+        : activityQuery;
+
   const [{ data: events, error: eventsError, count: eventCount }, { data: members, error: membersError }] = await Promise.all([
-    supabase
-      .from("appointment_audit_events")
-      .select("id, actor_id, actor_type, action, entity_type, entity_id, from_status, to_status, before_state, after_state, occurred_at", { count: "exact" })
-      .eq("clinic_id", clinic.id)
-      .order("occurred_at", { ascending: false })
-      .limit(ACTIVITY_VIEW_LIMIT),
+    filteredQuery.limit(ACTIVITY_VIEW_LIMIT),
     supabase
       .from("clinic_members")
       .select("user_id, role")
@@ -273,6 +318,7 @@ export default async function ActivityPage({ searchParams }: Props) {
 
   const activityTruncated = (eventCount ?? events?.length ?? 0) > ACTIVITY_VIEW_LIMIT;
   const roleByUser = new Map((members ?? []).map((member) => [member.user_id, member.role]));
+  const activityRows = events ?? [];
 
   return (
     <main className="history-page shell">
@@ -284,18 +330,38 @@ export default async function ActivityPage({ searchParams }: Props) {
       {clinics.length > 1 ? (
         <form key={clinic.id} className="clinic-switcher history-clinic-switcher" method="get">
           <label htmlFor="clinic-activity">{t.clinic}</label>
+          {filter !== "all" ? <input type="hidden" name="type" value={filter} /> : null}
           <select id="clinic-activity" name="clinic" defaultValue={clinic.id}>{clinics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
           <button className="button button-ghost button-small" type="submit">{t.open}</button>
         </form>
       ) : null}
 
+      <form className="activity-filters" method="get">
+        <input type="hidden" name="clinic" value={clinic.id} />
+        <label htmlFor="activity-type">{t.filter}</label>
+        <select id="activity-type" name="type" defaultValue={filter}>
+          <option value="all">{t.allEvents}</option>
+          <option value="appointments">{t.appointmentEvents}</option>
+          <option value="smart_fill">{t.smartFillEvents}</option>
+          <option value="staff">{t.staffEvents}</option>
+        </select>
+        <button className="button button-ghost button-small" type="submit">{t.open}</button>
+      </form>
       {activityTruncated ? <p className="notice history-limit-notice" role="status">{t.limited.replace("{count}", localizeDigits(ACTIVITY_VIEW_LIMIT, locale))}</p> : null}
-      <section className="history-card activity-card">
-        {(events ?? []).length === 0 ? <div className="history-empty">{t.empty}</div> : (events ?? []).map((event) => {
+      <section className="history-card activity-card" dir={direction}>
+        {activityRows.length === 0 ? <div className="history-empty">{filter === "all" ? t.empty : t.noMatches}</div> : activityRows.map((event, index) => {
+          const occurredDate = new Date(event.occurred_at);
+          const dayKey = dayKeyFormatter.format(occurredDate);
+          const previousDay = index > 0 ? dayKeyFormatter.format(new Date(activityRows[index - 1].occurred_at)) : null;
           const before = asState(event.before_state);
           const after = asState(event.after_state);
-          const beforeText = stateText(before, locale);
-          const afterText = stateText(after, locale);
+          const statusAction = event.action === "status_changed" || event.action === "voided";
+          const beforeText = statusAction && event.from_status
+            ? activityStatusLabel[locale][event.from_status] ?? event.from_status.replaceAll("_", " ")
+            : stateText(before, locale);
+          const afterText = statusAction && event.to_status
+            ? activityStatusLabel[locale][event.to_status] ?? event.to_status.replaceAll("_", " ")
+            : stateText(after, locale);
           const actorRole = event.actor_id ? roleByUser.get(event.actor_id) : null;
           const actorLabel = event.actor_id === userData.user.id
             ? t.you
@@ -307,7 +373,7 @@ export default async function ActivityPage({ searchParams }: Props) {
                   ? t.contact
                   : actorRole
                     ? roleLabel[locale][actorRole] ?? actorRole
-                    : t.formerStaff;
+                    : t.unknownStaff;
           const actorReference = event.actor_id
             && event.actor_id !== userData.user.id
             && event.actor_type !== "system"
@@ -322,7 +388,9 @@ export default async function ActivityPage({ searchParams }: Props) {
           const detail = detailChanged ? null : afterText ?? beforeText;
 
           return (
-            <article className="activity-row" key={event.id}>
+            <div className="activity-entry" key={event.id}>
+              {dayKey !== previousDay ? <h2 className="activity-day">{formatBaghdadDay(occurredDate, locale)}</h2> : null}
+              <article className={event.action === "voided" || (event.action === "status_changed" && event.to_status === "cancelled") ? "activity-row activity-row-cancelled" : "activity-row"}>
               <div className="activity-main">
                 <strong>{eventLabel(event.action, event.to_status, locale)}</strong>
                 <span className="activity-actor-line" dir={locale === "en" ? "ltr" : "rtl"}>
@@ -345,13 +413,14 @@ export default async function ActivityPage({ searchParams }: Props) {
                   </span>
                 ) : detail ? <span>{detail}</span> : null}
               </div>
-            </article>
+              </article>
+            </div>
           );
         })}
       </section>
       <p className="history-privacy">{t.privacy}</p>
 
-      <style>{`.activity-card{display:grid}.activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:16px 18px;border-top:1px solid var(--line)}.activity-row:first-child{border-top:0}.activity-main,.activity-meta{display:grid;gap:5px}.activity-main span,.activity-meta span{color:var(--muted);font-size:12px}.activity-actor-line,.activity-entity-line,.activity-change-detail{display:inline-flex;align-items:center;gap:5px;unicode-bidi:isolate}.activity-meta{text-align:end;justify-items:end}@media(max-width:720px){.activity-row{grid-template-columns:1fr}.activity-meta{text-align:start;justify-items:start}}`}</style>
+      <style>{`.activity-filters{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0}.activity-filters label{font-size:13px;font-weight:600}.activity-filters select{max-width:100%;min-height:40px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface,#fff);color:inherit}.activity-card{display:grid;overflow:hidden}.activity-day{font-size:13px;font-weight:700;color:var(--muted);margin:0;padding:13px 18px;background:var(--surface-2,#f8fafc);border-top:1px solid var(--line)}.activity-entry:first-child .activity-day{border-top:0}.activity-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 24px;padding:17px 18px;border-top:1px solid var(--line);border-inline-start:3px solid transparent}.activity-row-cancelled{border-inline-start-color:var(--muted)}.activity-main,.activity-meta{display:grid;align-content:start;gap:7px;min-width:0}.activity-main strong{font-size:14px;line-height:1.5}.activity-main span,.activity-meta span{color:var(--muted);font-size:12px;line-height:1.6}.activity-actor-line,.activity-entity-line,.activity-change-detail{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;unicode-bidi:isolate}.activity-actor-line{overflow-wrap:anywhere}.activity-entity-line{font-weight:600}.activity-meta{text-align:end;justify-items:end;min-width:0}.activity-change-detail{font-weight:600}.activity-change-detail bdi{overflow-wrap:anywhere}.activity-change-detail span{font-weight:700;color:var(--muted)}@media(max-width:720px){.activity-row{grid-template-columns:minmax(0,1fr);gap:10px;padding:15px}.activity-day{padding:12px 15px}.activity-meta{text-align:start;justify-items:start}.activity-filters select{flex:1;min-width:150px}}@media(min-width:721px) and (max-width:1050px){.activity-row{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}`}</style>
     </main>
   );
 }
