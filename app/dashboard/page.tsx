@@ -502,6 +502,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
       /* Scope schedule scan improvements to Atlas Doctor; preserve all existing appointment actions. */
       .appointments-panel .schedule-hour-nav{display:grid;gap:9px;margin:14px 0 16px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface-soft)}
+      .appointments-panel .schedule-hour-nav[hidden]{display:none}
       .appointments-panel .schedule-hour-title{color:var(--ink-soft);font-size:12px;font-weight:800}
       .appointments-panel .schedule-hour-links{display:flex;align-items:center;gap:8px;min-width:0;overflow-x:auto;overscroll-behavior-inline:contain;padding:2px 1px 5px;scrollbar-width:thin}
       .appointments-panel .schedule-hour-links a{display:inline-flex;flex:none;align-items:center;gap:9px;min-height:44px;border:1px solid var(--line-strong);border-radius:11px;padding:8px 12px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:850;text-decoration:none;white-space:nowrap}
