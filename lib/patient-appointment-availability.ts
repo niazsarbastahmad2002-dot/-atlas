@@ -1,4 +1,4 @@
-import { formatLocalDateValue, formatTimeValue } from "./i18n/format.ts";
+import { formatLocalDateValue, formatTimeValue, formatWeekday } from "./i18n/format.ts";
 import type { UiLocale } from "./i18n/ui.ts";
 
 export type PublicAppointmentDay = {
@@ -45,7 +45,8 @@ export function groupPublicAppointmentTimes(
 
     let day = days.get(dateKey);
     if (!day) {
-      day = { dateKey, dateLabel: formatLocalDateValue(dateKey, locale), slots: [] };
+      const localNoon = new Date(`${dateKey}T12:00:00+03:00`);
+      day = { dateKey, dateLabel: `${formatWeekday(localNoon, locale)} · ${formatLocalDateValue(dateKey, locale)}`, slots: [] };
       days.set(dateKey, day);
     }
     day.slots.push({ label: formatTimeValue(time, locale), slotAt: row.slot_at });
