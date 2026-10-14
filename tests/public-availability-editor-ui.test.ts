@@ -9,7 +9,7 @@ test("weekly public-hour editor labels enabled and inactive days without changin
   assert.match(page, /<PublicBookingWeekForm action={saveDoctorPublicBookingHours}/);
   assert.match(page, /public-booking-day-status/);
   assert.match(page, /:has\(input\[type=checkbox\]:not\(:checked\)\)/);
-  assert.match(page, /Days switched off are not offered online/);
+  assert.match(page, /After saving, days switched off are not offered online/);
   assert.match(page, /Their saved hours are kept for later/);
   assert.match(page, /Reception can still schedule outside these hours/);
   assert.doesNotMatch(form, /disabled=|type="hidden"/);
