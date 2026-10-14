@@ -16,6 +16,7 @@ const copy: Record<UiLocale, {
   sms: string;
   whatsapp: string;
   send: string;
+  register: string;
   sending: string;
   codeTitle: string;
   codeHelp: string;
@@ -23,6 +24,7 @@ const copy: Record<UiLocale, {
   paste: string;
   pasteFailed: string;
   verify: string;
+  verifyRegister: string;
   verifying: string;
   resend: string;
   change: string;
@@ -41,6 +43,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "Sign in with mobile",
+    register: "Continue with mobile",
     sending: "Sending code…",
     codeTitle: "Enter the verification code",
     codeHelp: "Atlas sent a one-time code to",
@@ -48,6 +51,7 @@ const copy: Record<UiLocale, {
     paste: "Paste code",
     pasteFailed: "Atlas could not paste a valid code. Enter it manually.",
     verify: "Open my appointments",
+    verifyRegister: "Verify and open my account",
     verifying: "Verifying…",
     resend: "Send another code",
     change: "Change number",
@@ -66,6 +70,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "بە مۆبایل بچۆ ژوورەوە",
+    register: "بە ژمارەی مۆبایل بەردەوام بە",
     sending: "کۆد دەنێردرێت…",
     codeTitle: "کۆدی پشتڕاستکردنەوە بنووسە",
     codeHelp: "Atlas کۆدێکی یەکجارەی نارد بۆ",
@@ -73,6 +78,7 @@ const copy: Record<UiLocale, {
     paste: "کۆد دابنێ",
     pasteFailed: "Atlas نەیتوانی کۆدێکی دروست دابنێت. بە دەست بنووسە.",
     verify: "مەوعیدەکانم بکەرەوە",
+    verifyRegister: "پشتڕاست بکەرەوە و هەژمارەکەم بکەرەوە",
     verifying: "پشتڕاست دەکرێتەوە…",
     resend: "کۆدێکی تر بنێرە",
     change: "ژمارە بگۆڕە",
@@ -91,6 +97,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "ب موبایلێ بچۆ ژوور",
+    register: "ب ژمارا موبایلێ بەردەوام بە",
     sending: "کۆد دهێتە هنارتن…",
     codeTitle: "کۆدێ پشتڕاستکرنێ بنڤیسە",
     codeHelp: "Atlas کۆدەکێ ئێکجارە هنارت بۆ",
@@ -98,6 +105,7 @@ const copy: Record<UiLocale, {
     paste: "کۆد دابنێ",
     pasteFailed: "Atlas نەشیا کۆدەکێ دروست دابنێت. ب دەستی بنڤیسە.",
     verify: "وادەیێن من بکەڤە",
+    verifyRegister: "پشتڕاست بکە و هەژمارا من ڤەکە",
     verifying: "دهێتە پشتڕاستکرن…",
     resend: "کۆدەکێ دی بهنێرە",
     change: "ژمارێ بگوهۆڕە",
@@ -116,6 +124,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "دخول برقم الموبايل",
+    register: "متابعة برقم الموبايل",
     sending: "جارٍ إرسال الرمز…",
     codeTitle: "أدخل رمز التحقق",
     codeHelp: "أرسل Atlas رمزاً لمرة واحدة إلى",
@@ -123,6 +132,7 @@ const copy: Record<UiLocale, {
     paste: "لصق الرمز",
     pasteFailed: "تعذر لصق رمز صالح. اكتبه يدوياً.",
     verify: "افتح مواعيدي",
+    verifyRegister: "وثّق الرقم وافتح حسابي",
     verifying: "جارٍ التحقق…",
     resend: "إرسال رمز آخر",
     change: "تغيير الرقم",
@@ -146,11 +156,13 @@ export function PatientAccountLoginForm({
   ready,
   allowSignup,
   whatsappOtpEnabled,
+  registration = false,
 }: {
   locale: UiLocale;
   ready: boolean;
   allowSignup: boolean;
   whatsappOtpEnabled: boolean;
+  registration?: boolean;
 }) {
   const t = copy[locale];
   const [phoneInput, setPhoneInput] = useState("");
@@ -278,7 +290,7 @@ export function PatientAccountLoginForm({
             />
           ) : null}
           <button className="button" type="submit" disabled={busy}>
-            {busy ? t.sending : t.send}
+            {busy ? t.sending : registration ? t.register : t.send}
           </button>
         </form>
       ) : (
@@ -297,7 +309,7 @@ export function PatientAccountLoginForm({
             autoFocus
           />
           <button className="button" type="submit" disabled={busy}>
-            {busy ? t.verifying : t.verify}
+            {busy ? t.verifying : registration ? t.verifyRegister : t.verify}
           </button>
           <div className="patient-account-login-actions">
             <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => void sendCode()}>
