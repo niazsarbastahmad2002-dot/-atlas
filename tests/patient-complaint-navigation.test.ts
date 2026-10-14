@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { complaints, findComplaint, searchComplaints, specialtyLabels, matchingPublishedSpecialties } from "../lib/patient/complaint-guide.ts";
+import { complaints, complaintCategories, findComplaint, searchComplaints, specialtyLabels, matchingPublishedSpecialties } from "../lib/patient/complaint-guide.ts";
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const locales = ["en", "ku", "bd", "ar"] as const;
@@ -35,6 +35,27 @@ test("minimum ten understandable complaints have localized questions and bounded
   }
 });
 
+test("complaint selection groups are clear, complete, localized and UI-only", () => {
+  assert.deepEqual(complaintCategories.map((category) => category.id), [
+    "head-face", "back-joints-skin", "belly-urinary", "children",
+  ]);
+  assert.equal(new Set(complaintCategories.map((category) => category.id)).size, complaintCategories.length);
+  for (const category of complaintCategories) {
+    const assigned = complaints.filter((entry) => entry.category === category.id);
+    assert.ok(assigned.length > 0, `Missing complaints in ${category.id}`);
+    for (const locale of locales) assert.ok(category.name[locale].trim().length > 2);
+  }
+  assert.equal(complaints.filter((entry) =>
+    complaintCategories.some((category) => category.id === entry.category)).length, complaints.length);
+  assert.match(screen, /complaintCategories\.map/);
+  assert.match(screen, /entry\.category === category\.id/);
+  assert.match(screen, /aria-labelledby=/);
+  assert.match(screen, /onClick=\{\(\) => select\(entry\.id\)\}/);
+  assert.match(screen, /copy\.directSearch/);
+  assert.match(style, /atlas-complaint-groups/);
+  assert.match(style, /\[dir="rtl"\]/);
+});
+
 test("chief complaint search is genuinely searchable in English, Sorani, Badini, Arabic", () => {
   assert.equal(searchComplaints("", "en").length, complaints.length);
   assert.ok(searchComplaints("knee", "en").some((x) => x.id === "knee-pain"));
@@ -42,6 +63,10 @@ test("chief complaint search is genuinely searchable in English, Sorani, Badini,
   assert.ok(searchComplaints("چاڤ", "bd").some((x) => x.id === "eyes"));
   assert.ok(searchComplaints("الركبة", "ar").some((x) => x.id === "knee-pain"));
   assert.equal(searchComplaints("no matching symptom xzy", "en").length, 0);
+  assert.ok(searchComplaints("الرُّكْبَة", "ar").some((x) => x.id === "knee-pain"));
+  assert.ok(searchComplaints("كێشەی ميزكردن", "ku").some((x) => x.id === "urinary"));
+  assert.ok(searchComplaints("knee", "ar").some((x) => x.id === "knee-pain"));
+  assert.ok(searchComplaints("  ", "bd").length === complaints.length);
 });
 
 test("three independently named Patient pages exist with noindex until clinical review", () => {
