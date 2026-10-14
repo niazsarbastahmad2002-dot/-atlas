@@ -21,6 +21,7 @@ export function ShortSymptomQuestions({ locale, name, concern }: { locale: UiLoc
   return (
     <>
       <p className="atlas-complaint-selected"><bdi>{name}</bdi></p>
+      <p className="atlas-complaint-emergency-short" role="note">{copy.globalDanger}</p>
       <div className="atlas-complaint-question">
         <h2>{copy.riskTitle}</h2>
         <p id="atlas-patient-risk-question">{concern}</p>
