@@ -211,7 +211,9 @@ export function HistoryClient({
   const removableVisible = visibleRows.filter((row) => row.removed).map((row) => row.id);
   const selectableVisible = removableVisible.slice(0, DELETE_BATCH_LIMIT);
   const selectedVisible = removableVisible.filter((id) => selected.has(id));
-  const allVisibleSelected = selectableVisible.length > 0 && selectableVisible.every((id) => selected.has(id));
+  const allVisibleSelected = removableVisible.length > DELETE_BATCH_LIMIT
+    ? selectableVisible.length > 0 && selectableVisible.every((id) => selected.has(id))
+    : removableVisible.length > 0 && selectedVisible.length === removableVisible.length;
   const hasFilters = Boolean(query || day || filter !== "all" || sort !== "newest");
 
   function resetFilters() {
@@ -296,7 +298,7 @@ export function HistoryClient({
         {visibleRows.length === 0 ? <div className="history-empty">{t.empty}</div> : visibleRows.map((row) => (
           <article className={`history-row ${styles.row} ${row.removed ? `is-removed ${styles.rowRemoved}` : ""}`} key={row.id}>
             <div className="history-check">
-              {canDelete && row.removed ? <input aria-label={`${t.patient}: ${row.patientName}`} type="checkbox" disabled={pending || (!selected.has(row.id) && selected.size >= DELETE_BATCH_LIMIT)} checked={selected.has(row.id)} onChange={() => toggle(row.id)} /> : <span className="history-check-spacer" />}
+              {canDelete && row.removed ? <input aria-label={`${t.patient}: ${row.patientName}`} type="checkbox" disabled={pending} checked={selected.has(row.id)} onChange={() => toggle(row.id)} /> : <span className="history-check-spacer" />}
             </div>
             <div className="history-patient"><strong className={styles.patientName} dir="auto" data-atlas-user-content="true">{row.patientName}</strong><span dir="ltr">{row.patientPhone}</span></div>
             <div><span className="history-label">{t.doctor}</span><strong className={styles.detail} dir="auto" data-atlas-user-content="true">{row.doctorName}</strong></div>
