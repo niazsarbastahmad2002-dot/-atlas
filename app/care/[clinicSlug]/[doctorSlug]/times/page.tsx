@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
 import Link from "next/link";
 import { formatIraqiMobile } from "@/lib/appointments";
 import { localizeDigits } from "@/lib/i18n/format";
@@ -161,11 +162,15 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
   }
 
   const supabase = await createClient();
+  // Preserve the existing launch/readiness gate. The public flag remains disabled.
+  const launchEnabled = process.env.ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED === "true";
+  const readinessPromise = launchEnabled ? getAtlasAuthReadiness() : Promise.resolve(null);
   const slotPageSize = 200;
   const maxSlotPages = 24;
   const [
     { data: profileData, error: profileError },
     firstSlotPage,
+    readiness,
   ] = await Promise.all([
     supabase.rpc("get_public_doctor_profile", {
       p_clinic_slug: clinicSlug,
@@ -179,6 +184,7 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
       p_after: null,
       p_limit: slotPageSize,
     }),
+    readinessPromise,
   ]);
 
   const profile = Array.isArray(profileData) ? profileData[0] : undefined;
@@ -224,6 +230,12 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
 
   if (slotLoadFailed) return <Unavailable copy={t} locale={locale} href={doctorHref} title={t.loadErrorTitle} help={t.loadErrorHelp} />;
 
+  const bookingReady = Boolean(
+    launchEnabled
+    && readiness?.reachable
+    && readiness.supabasePhoneEnabled
+    && !readiness.signupDisabled
+  );
   const groups = groupPublicAppointmentTimes(slotData, locale);
 
   const location = [profile.address_text, profile.area, profile.city].filter(Boolean).join(" · ");
@@ -235,7 +247,7 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
     <main className="marketing-page atlas-times-page atlas-patient-detail" lang={meta.language} dir={meta.direction}>
       <AtlasPatientNav locale={locale} myAppointments={t.myAppointments} />
       <article className="shell atlas-times-shell">
-        <PatientProfileHero kind="times" eyebrow={t.eyebrow} title={t.readOnlyTitle} subtitle={profile.doctor_name} />
+        <PatientProfileHero kind="times" eyebrow={t.eyebrow} title={bookingReady ? t.title : t.readOnlyTitle} subtitle={profile.doctor_name} />
 
         <section className="atlas-times-doctor" aria-label={t.clinicDetails}>
           <strong><bdi>{profile.doctor_name}</bdi></strong>
@@ -245,14 +257,14 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
           {phone ? <a className="atlas-times-phone" href={`tel:${profile.public_phone}`}><bdi>{phone}</bdi></a> : null}
         </section>
 
-        <p className="atlas-times-intro">{t.readOnlyIntro}</p>
+        <p className="atlas-times-intro">{bookingReady ? t.intro : t.readOnlyIntro}</p>
         <p className="atlas-times-unreserved" role="note">{t.unreserved}</p>
 
-        {phone ? (
+        {!bookingReady && phone ? (
           <a className="button atlas-times-call-primary" href={`tel:${profile.public_phone}`}>{t.call}</a>
-        ) : (
+        ) : !phone ? (
           <p className="atlas-times-no-phone">{t.noPhone}</p>
-        )}
+        ) : null}
 
         {groups.length ? (
           <section className="atlas-times-availability" aria-labelledby="atlas-times-choose-day">
@@ -268,9 +280,18 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
                   </summary>
                   <div className="atlas-times-day-content">
                     <div className="atlas-times-grid">
-                      {group.slots.map((slot) => (
-                        <span className="atlas-time-option is-readonly" key={slot.slotAt}>
-                          <bdi>{slot.label}</bdi>
+                      {group.slots.map((slot) => bookingReady ? (
+                        <Link
+                          className="button button-ghost atlas-time-option"
+                          href={patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}/book`, locale, { slot: slot.slotAt })}
+                          key={slot.slotAt}
+                        >
+                          <span dir="auto">{slot.label}</span>
+                          <small>{t.book}</small>
+                        </Link>
+                      ) : (
+                        <span className="atlas-time-option is-readonly" key={slot.slotAt} dir="auto">
+                          {slot.label}
                         </span>
                       ))}
                     </div>
@@ -318,6 +339,8 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
         .atlas-times-day>summary>span{color:var(--muted);font-size:12px;line-height:1.4}
         .atlas-times-day-content{padding:0 17px 17px}
         .atlas-times-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+        .atlas-time-option{min-width:0;min-height:50px;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;text-decoration:none}
+        .atlas-time-option small{font-size:10px;color:var(--accent);font-weight:850}
         .atlas-time-option.is-readonly{min-width:0;min-height:50px;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft);font-size:14px;font-weight:800}
         .atlas-times-empty{padding:20px;border:1px dashed var(--line);border-radius:16px}
         .atlas-times-empty h2{margin:0 0 8px;font-size:17px}
