@@ -137,7 +137,7 @@ async function ClinicChoices({ locale }: { locale: UiLocale }) {
                 {Array.from(clinic.name.trim())[0] || "A"}
               </span>
               <span className="clinic-choice-detail">
-                <span className="clinic-choice-name" data-atlas-user-content="true" dir="auto">{clinic.name}</span>
+                <span className="clinic-choice-name" dir="auto"><span data-atlas-user-content="true">{clinic.name}</span></span>
                 <strong>{t.open} <span aria-hidden="true">{openArrow}</span></strong>
               </span>
             </Link>
