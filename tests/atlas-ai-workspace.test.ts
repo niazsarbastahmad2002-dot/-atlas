@@ -36,7 +36,9 @@ test("AI model answers are distinct from Atlas in-app answers and never declared
 });
 
 test("failed requests restore the exact draft and do not duplicate a user turn", () => {
-  assert.match(client, /messagesRef\.current\.filter\(item=>item\.id!==userMessage\.id\)/);
+  assert.match(client, /const previousMessages=messagesRef\.current/);
+  assert.match(client, /const requestHistory=\[\.\.\.previousMessages,userMessage\]\.slice\(-14\)/);
+  assert.match(client, /messagesRef\.current=previousMessages; setMessages\(previousMessages\)/);
   assert.match(client, /setQuestion\(nextQuestion\)/);
   assert.match(client, /atlas-ai-request-recovery/);
   assert.match(client, /onClick=\{\(\)=>void askAtlas\(question\)\}/);
