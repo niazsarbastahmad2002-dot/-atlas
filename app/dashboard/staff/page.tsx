@@ -488,6 +488,19 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
       {errorMessage ? <p className="notice notice-error settings-notice" role="alert">{errorMessage}</p> : null}
       {noticeMessage ? <p className="notice notice-success settings-notice" role="status">{noticeMessage}</p> : null}
 
+      <section className={`settings-card ${styles.overview}`} aria-label={text.rolesTitle}>
+        <div className={styles.summaryNumbers}>
+          <div><strong>{localizeDigits(memberRows.length, locale)}</strong><span>{text.teamMembers}</span></div>
+          <div><strong>{localizeDigits(pendingRows.length + activeManualInvites.length, locale)}</strong><span>{text.pendingInvites}</span></div>
+        </div>
+        <h2 className={styles.rolesTitle}>{text.rolesTitle}</h2>
+        <dl className={styles.roleGuide}>
+          <div><dt>{text.owner}</dt><dd>{text.ownerExplanation}</dd></div>
+          <div><dt>{text.manager}</dt><dd>{text.managerExplanation}</dd></div>
+          <div><dt>{text.receptionist}</dt><dd>{text.receptionistExplanation}</dd></div>
+        </dl>
+      </section>
+
       <div className="settings-grid staff-settings-grid">
         <InviteLinkForm
           key={clinic.id}
@@ -501,20 +514,21 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             <span className="settings-card-icon" aria-hidden="true">🔐</span>
             <div>
               <div className="eyebrow">{text.pending}</div>
-              <h2>{text.activeInvites}</h2>
+              <h2>{text.pendingInvites} · {localizeDigits(pendingRows.length + activeManualInvites.length, locale)}</h2>
               <p>{text.activeInvitesHelp}</p>
             </div>
           </div>
           <div className="doctor-settings-list">
-            {activeManualInvites.length ? activeManualInvites.map((invitation) => (
-              <article className="doctor-settings-row" key={invitation.invitation_id}>
+            {activeManualInvites.map((invitation) => (
+              <article className={`doctor-settings-row ${styles.teamRow}`} key={invitation.invitation_id}>
                 <div className="patient-cell">
-                  <strong data-atlas-user-content="true">{invitation.doctor_name}</strong>
+                  <span className={styles.pendingBadge}>{text.joinLinkLabel}</span>
+                  <strong data-atlas-user-content="true" dir="auto">{invitation.doctor_name}</strong>
                   <span className="field-help">{text.expires}: {formatStaffInviteExpiry(invitation.expires_at, locale)}</span>
                 </div>
                 <form action={revokeManualStaffInvitation.bind(null, clinic.id, invitation.invitation_id)}>
                   <ConfirmSubmitButton
-                    className="danger-link"
+                    className={styles.dangerButton}
                     pendingLabel={text.working}
                     confirmMessage={text.revokeInviteConfirm.replace("{doctor}", invitation.doctor_name)}
                   >
@@ -522,28 +536,20 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                   </ConfirmSubmitButton>
                 </form>
               </article>
-            )) : <p className="field-help">{text.noActiveInvites}</p>}
-          </div>
-        </section>
-
-        <section className="settings-card">
-          <div className="settings-card-heading">
-            <span className="settings-card-icon" aria-hidden="true">👥</span>
-            <div><div className="eyebrow">{text.access}</div><h2>{text.access}</h2><p><span data-atlas-user-content="true">{clinic.name}</span> · {localizeDigits(memberRows.length + pendingRows.length, locale)}</p></div>
-          </div>
-          <div className="doctor-settings-list">
-            {pendingRows.map((pending) => {
+            ))}
+                      {pendingRows.map((pending) => {
               const assignedDoctor = activeDoctors.find((doctor) => doctor.id === pending.assigned_doctor_id);
               return (
-                <article className="doctor-settings-row" key={`pending-${pending.user_id}`}>
+                <article className={`doctor-settings-row ${styles.teamRow}`} key={`pending-${pending.user_id}`}>
                   <div className="patient-cell">
-                    <strong>{text.pending}</strong>
-                    {assignedDoctor ? <span data-atlas-user-content="true">{assignedDoctor.name}</span> : <span>{text.doctor}</span>}
+                    <span className={styles.pendingBadge}>{text.legacyLabel}</span>
+                    <strong dir="ltr">{pending.identity}</strong>
+                    {assignedDoctor ? <bdi data-atlas-user-content="true">{assignedDoctor.name}</bdi> : <span>{text.doctor}</span>}
                     <span className="field-help">{text.legacyPending}</span>
                   </div>
                   <form action={cancelPendingInvitation.bind(null, clinic.id, pending.user_id)}>
                     <ConfirmSubmitButton
-                      className="danger-link"
+                      className={styles.dangerButton}
                       pendingLabel={text.working}
                       confirmMessage={text.removePendingConfirm}
                     >
@@ -554,20 +560,30 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
               );
             })}
 
+            {!pendingRows.length && !activeManualInvites.length ? <p className="field-help">{text.noPending}</p> : null}
+          </div>
+        </section>
+
+        <section className={`settings-card ${styles.fullWidth}`}>
+          <div className="settings-card-heading">
+            <span className="settings-card-icon" aria-hidden="true">👥</span>
+            <div><div className="eyebrow">{text.access}</div><h2>{text.teamMembers} · {localizeDigits(memberRows.length, locale)}</h2><p><bdi data-atlas-user-content="true">{clinic.name}</bdi></p></div>
+          </div>
+          <div className="doctor-settings-list">
             {memberRows.map((member) => {
               const protectedOwner = member.user_id === clinic.owner_id || member.role === "owner";
               const roleLabel = protectedOwner ? text.owner : member.role === "manager" ? text.manager : text.receptionist;
               const assignedDoctor = activeDoctors.find((doctor) => doctor.id === member.assigned_doctor_id);
               return (
-                <article className="doctor-settings-row" key={member.user_id}>
+                <article className={`doctor-settings-row ${styles.teamRow}`} key={member.user_id}>
                   <div className="patient-cell">
                     <strong dir="ltr">{member.identity}</strong>
-                    <span>{roleLabel}{assignedDoctor ? <> · <span data-atlas-user-content="true">{assignedDoctor.name}</span></> : null}</span>
+                    <span>{roleLabel}{assignedDoctor ? <> · <bdi data-atlas-user-content="true">{assignedDoctor.name}</bdi></> : null}</span>
                   </div>
                   {protectedOwner ? (
                     <p className="field-help staff-protected-note">{text.protected}</p>
                   ) : (
-                    <div className="staff-role-actions">
+                    <div className={styles.memberControls}>
                       <form key={`${clinic.id}:${member.user_id}`} action={updateStaffRole.bind(null, clinic.id, member.user_id)}>
                         <PendingFormFields>
                           <label className="sr-only" htmlFor={`role-${member.user_id}`}>{text.role}</label>
@@ -580,12 +596,13 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
                             <option value="">{text.chooseDoctor}</option>
                             {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
                           </select>
-                          <SubmitButton className="" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
+                          <SubmitButton className="button button-small" pendingLabel={text.working}>{text.saveRole}</SubmitButton>
                         </PendingFormFields>
                       </form>
+                      <p className="field-help">{text.doctorHelp}</p>
                       <form action={removeStaffMember.bind(null, clinic.id, member.user_id)}>
                         <ConfirmSubmitButton
-                          className="danger-link"
+                          className={styles.dangerButton}
                           pendingLabel={text.working}
                           confirmMessage={text.removeConfirm.replace("{person}", member.identity)}
                         >
@@ -599,7 +616,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
             })}
           </div>
 
-          <div className="administrator-transfer">
+          <div className={`administrator-transfer ${styles.transferBox}`}>
             <div className="eyebrow">{text.ownerOnly}</div>
             <h3>{text.transfer}</h3>
             <p>{text.transferHelp}</p>
