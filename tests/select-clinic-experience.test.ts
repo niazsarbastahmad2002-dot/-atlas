@@ -28,7 +28,7 @@ test("selection has safe, localized loading and retryable error states", () => {
 
 test("choices are accessible, script-safe and responsive with no unwanted clinic prefetch", () => {
   assert.match(source, /dir=\{locale === "en" \? "ltr" : "rtl"\}/);
-  assert.match(source, /className="clinic-choice-name" data-atlas-user-content="true" dir="auto"/);
+  assert.match(source, /className="clinic-choice-name" dir="auto"><span data-atlas-user-content="true">\{clinic\.name\}<\/span>/);
   assert.match(source, /<ul className="clinic-choice-list" aria-label=\{t\.list\}>/);
   assert.match(source, /href=\{"\/dashboard\?clinic=" \+ encodeURIComponent\(clinic\.id\)\} prefetch=\{false\}/);
   assert.match(source, /:focus-visible/);
