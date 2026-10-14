@@ -361,7 +361,7 @@ export function PatientBookingForm(props: BookingFormProps) {
         const destination = new URL(booking.patientPath, window.location.origin);
         if (
           destination.origin === window.location.origin
-          && /^\\/patient\\/[a-f0-9]{64}$/.test(destination.pathname)
+          && new RegExp("^/patient/[a-f0-9]{64}$").test(destination.pathname)
         ) {
           destination.searchParams.set("view", "confirmation");
           window.location.replace(`${destination.pathname}${destination.search}`);
