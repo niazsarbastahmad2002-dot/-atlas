@@ -47,6 +47,8 @@ These are **not exclusive** and not ordered by clinical quality. Never use them 
 - [MedlinePlus — when to use the emergency room](https://medlineplus.gov/ency/patientinstructions/000593.htm): emergency warning signs and escalation.
 - [MedlinePlus — chest pain](https://medlineplus.gov/ency/article/003079.htm): emergency warning signs for possible cardiac or vascular causes.
 - [NHS — shortness of breath](https://www.nhs.uk/symptoms/shortness-of-breath/): emergency/urgent symptom examples.
+- [NHS — back pain](https://www.nhs.uk/conditions/back-pain/): red flags for new bladder/bowel changes and saddle numbness.
+- [NICE NG143 — fever under 5](https://www.nice.org.uk/guidance/NG143/chapter/recommendations): fever at/above 38°C in infants under 3 months is high risk, and fever alone cannot clear serious illness.
 
 **Important:** these references support the general safety pattern. They **do not individually validate all ten Atlas complaint-to-specialty mappings or translations.** Those remain draft clinical judgments awaiting prospective review.
 
