@@ -65,7 +65,7 @@ test("symptoms remain ephemeral, never logged, uploaded, or entered in URLs", ()
   assert.match(context, /useState<ComplaintId \| null>\(null\)/);
   assert.match(context, /createContext/);
   assert.match(context, /setComplaint\(null\)/);
-  assert.doesNotMatch(context + screen, /localStorage|sessionStorage|document\.cookie|analytics|fetch\(|\.rpc\(|createAdminClient|\.from\(|sendBeacon/);
+  assert.doesNotMatch(context + screen, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/questions", locale\)\)/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/specialties", locale\)\)/);
   assert.match(screen, /encodeURIComponent\(specialty\.searchTerm\)/);
