@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { formatIraqiMobile } from "@/lib/appointments";
-import { formatLocalDateValue, formatTimeValue, localizeDigits } from "@/lib/i18n/format";
+import { localizeDigits } from "@/lib/i18n/format";
+import { groupPublicAppointmentTimes } from "@/lib/patient-appointment-availability";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
 import { createClient } from "@/lib/supabase/server";
 import { PatientProfileHero } from "@/app/care/patient-profile-hero";
@@ -146,32 +147,6 @@ function safeSlug(value: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length <= 80;
 }
 
-function slotParts(value: string, locale: UiLocale) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  const dateParts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baghdad",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date).map((part) => [part.type, part.value]));
-  const timeParts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Baghdad",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date).map((part) => [part.type, part.value]));
-
-  const dateKey = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
-  const timeValue = `${timeParts.hour}:${timeParts.minute}`;
-  return {
-    dateKey,
-    dateLabel: formatLocalDateValue(dateKey, locale),
-    timeLabel: formatTimeValue(timeValue, locale),
-  };
-}
-
 export default async function PublicDoctorTimesPage({ params, searchParams }: TimesPageProps) {
   const [{ clinicSlug, doctorSlug }, query] = await Promise.all([params, searchParams]);
   const locale = await resolvePatientLocale(query.lang);
@@ -249,27 +224,7 @@ export default async function PublicDoctorTimesPage({ params, searchParams }: Ti
 
   if (slotLoadFailed) return <Unavailable copy={t} locale={locale} href={doctorHref} title={t.loadErrorTitle} help={t.loadErrorHelp} />;
 
-  const groups: Array<{ dateKey: string; dateLabel: string; slots: Array<{ label: string; slotAt: string }> }> = [];
-  const seenSlots = new Set<string>();
-  const now = Date.now();
-  for (const slot of slotData ?? []) {
-    const slotTime = new Date(slot.slot_at).getTime();
-    if (!Number.isFinite(slotTime) || slotTime <= now || seenSlots.has(slot.slot_at)) continue;
-    const parts = slotParts(slot.slot_at, locale);
-    if (!parts) continue;
-    seenSlots.add(slot.slot_at);
-    let group = groups.find((item) => item.dateKey === parts.dateKey);
-    if (!group) {
-      group = { dateKey: parts.dateKey, dateLabel: parts.dateLabel, slots: [] };
-      groups.push(group);
-    }
-    group.slots.push({ label: parts.timeLabel, slotAt: slot.slot_at });
-  }
-
-  groups.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-  for (const group of groups) {
-    group.slots.sort((a, b) => new Date(a.slotAt).getTime() - new Date(b.slotAt).getTime());
-  }
+  const groups = groupPublicAppointmentTimes(slotData, locale);
 
   const location = [profile.address_text, profile.area, profile.city].filter(Boolean).join(" · ");
   const phone = profile.public_phone
