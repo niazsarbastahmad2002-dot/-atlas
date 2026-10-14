@@ -230,7 +230,7 @@ export function PatientAccountLoginForm({
     event?.preventDefault();
     if (requestInFlight.current || busy || cooldownUntil > Date.now()) return;
     const phone = step === "code" ? verifiedPhone : normalizeAuthPhone(phoneInput);
-    if (!phone || !/^\\+9647\\d{9}$/.test(phone)) {
+    if (!phone || !/^\+9647\d{9}$/.test(phone)) {
       setError(t.invalidPhone);
       return;
     }
