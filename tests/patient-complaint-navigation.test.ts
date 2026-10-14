@@ -7,6 +7,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 const locales = ["en", "ku", "bd", "ar"] as const;
 const context = read("app/care/complaints/flow-context.tsx");
 const screen = read("app/care/complaints/complaint-screen.tsx");
+const questions = read("app/care/complaints/short-symptom-questions.tsx");
 const copy = read("app/care/complaints/complaint-copy.ts");
 const style = read("app/care/complaints/complaint-screen.css");
 const welcome = read("app/page.tsx");
@@ -67,9 +68,9 @@ test("symptoms remain ephemeral, never logged, uploaded, or entered in URLs", ()
   assert.match(context, /useState<ComplaintId \| null>\(null\)/);
   assert.match(context, /createContext/);
   assert.match(context, /setComplaint\(null\)/);
-  assert.doesNotMatch(context + screen, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
+  assert.doesNotMatch(context + screen + questions, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/questions", locale\)\)/);
-  assert.match(screen, /router\.push\(href\("\/care\/complaints\/specialties", locale\)\)/);
+  assert.match(questions, /\/care\/complaints\/specialties\?lang=/);
   assert.match(screen, /encodeURIComponent\(name\)/);
   assert.match(screen, /matchingPublishedSpecialties\(key, publishedSpecialties\)/);
   assert.doesNotMatch(screen, /complaint=|symptom=|redFlag=|duration=|patient_phone/);
@@ -87,7 +88,7 @@ test("Only actual published specialty names can form filtered doctor links", () 
 test("warning-positive or unanswered questions block routine specialist recommendations", () => {
   assert.match(screen, /flow\.emergencyAnswer === "yes"/);
   assert.match(screen, /flow\.emergencyAnswer !== "no"/);
-  assert.match(screen, /disabled=\{flow\.emergencyAnswer !== "no"\}/);
+  assert.match(questions, /disabled=\{flow\.emergencyAnswer !== "no"\}/);
   assert.match(screen, /role="alert"/);
   assert.match(screen, /\{copy\.globalDanger\}/);
   assert.match(screen, /\{copy\.noDiagnosis\}/);
@@ -113,12 +114,12 @@ test("existing publication gates, booking and Doctor workspace remain unchanged"
 
 test("iPhone iPad desktop layouts retain RTL and accessible targets", () => {
   assert.match(screen, /lang=\{meta\.language\} dir=\{meta\.direction\}/);
-  assert.match(screen, /aria-pressed/);
+  assert.match(questions, /aria-pressed/);
   assert.match(screen, /aria-current/);
   assert.match(screen, /type="search" dir="auto"/);
   assert.match(style, /@media\(max-width:710px\)/);
   assert.match(style, /@media\(max-width:380px\)/);
-  assert.match(style, /min-height:56px/);
+  assert.match(style, /min-height:60px/);
   assert.match(style, /focus-visible/);
   assert.match(style, /prefers-reduced-motion/);
 });
