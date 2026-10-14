@@ -14,6 +14,8 @@ type FlowCopy = {
   riskTitle: string;
   riskYes: string;
   riskNo: string;
+  riskUnsure: string;
+  riskNoWarning: string;
   riskUnanswered: string;
   globalDanger: string;
   emergencyTitle: string;
@@ -42,10 +44,12 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     noMatch: "No matching concern yet. Search for a doctor directly instead.",
     next: "Continue",
     questionsTitle: "One quick safety question",
-    questionHelp: "Answer this to see whether routine doctor search is the right next step.",
+    questionHelp: "Answer one safety question. Your answer cannot rule out a serious problem.",
     riskTitle: "Do any of these apply right now?",
-    riskYes: "Yes / I am not sure",
+    riskYes: "Yes",
     riskNo: "No",
+    riskUnsure: "Not sure",
+    riskNoWarning: "No does not rule out a serious problem. If symptoms are severe or getting worse, seek urgent medical help.",
     riskUnanswered: "Choose an answer before continuing.",
     globalDanger: "New severe chest pain, serious breathing difficulty, sudden weakness or trouble speaking? Seek emergency help now—do not use routine search.",
     emergencyTitle: "Please seek urgent medical help",
@@ -72,10 +76,12 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     noMatch: "ئەم کێشەیە نەدۆزرایەوە. دەتوانیت ڕاستەوخۆ بەدوای دکتۆردا بگەڕێیت.",
     next: "بەردەوام بە",
     questionsTitle: "یەک پرسیاری گرنگ",
-    questionHelp: "تکایە وەڵام بدەرەوە بۆ ئەوەی بزانیت ئایا پێویستە زوو یارمەتی پزیشکی وەربگریت.",
+    questionHelp: "یەک پرسیارە دەربارەی نیشانەی مەترسی. وەڵامەکەت ناتوانێت کێشەیەکی جدی ڕەت بکاتەوە.",
     riskTitle: "ئێستا هیچ یەکێک لەمانەت هەیە؟",
-    riskYes: "بەڵێ / دڵنیانیم",
+    riskYes: "بەڵێ",
     riskNo: "نەخێر",
+    riskUnsure: "دڵنیانیم",
+    riskNoWarning: "وەڵامی «نەخێر» واتای ئەوە نییە کە کێشەیەکی جدی نییە. ئەگەر نیشانەکان توندن یان خراپتر دەبن، زوو یارمەتی پزیشکی وەربگرە.",
     riskUnanswered: "پێش بەردەوامبوون وەڵامێک هەڵبژێرە.",
     globalDanger: "ئەگەر ئازاری توندی سنگ، کێشەی زۆری هەناسەدان، لاوازیی لەناکاو یان کێشەی قسەکردنت هەیە، ئێستا داوای فریاکەوتن بکە.",
     emergencyTitle: "تکایە زوو یارمەتی پزیشکی وەربگرە",
@@ -102,10 +108,12 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     noMatch: "ئاریشە نەهاتە دیتن. دشێی ڕاستەوخۆ دکتۆران ببینی.",
     next: "بەردەوام بە",
     questionsTitle: "پرسەکا گرنگ",
-    questionHelp: "بەرسڤ بدە دا بزانی کا پێدڤیە ب لەز یارمەتییا پزیشکی وەرگری.",
+    questionHelp: "پرسەکە دەربارەی نیشانێن مەترسیێیە. بەرسڤا تە ناتوانیت کێشەیەکا گران ڕەت بکەت.",
     riskTitle: "نوکە ژ ڤان نیشانان هەیە؟",
-    riskYes: "بەلێ / دڵنیانیم",
+    riskYes: "بەلێ",
     riskNo: "نەخێر",
+    riskUnsure: "دڵنیانیم",
+    riskNoWarning: "بەرسڤا «نەخێر» واتا وێ نەکەت کو کێشەیەکا گران نینە. ئەگەر نیشانە گران بن یان خراپتر دبن، ب لەز یارمەتییا پزیشکی وەرگرە.",
     riskUnanswered: "بەری بەردەوامبوونێ بەرسڤەکێ هەلبژێرە.",
     globalDanger: "ئەگەر ئێشا گرانا سینگێ، ئاریشەیا گرانا هەناسەدانێ، لاوازییا ژ نشکەکێ یان ئاریشەیا ئاخفتنێ هەیە، نوکە یارمەتییا فریاکەفتنێ وەرگرە.",
     emergencyTitle: "ب لەز یارمەتییا پزیشکی وەرگرە",
@@ -132,10 +140,12 @@ export const guideCopy: Record<UiLocale, FlowCopy> = {
     noMatch: "ما لگينا هالمشكلة. تگدر تدور على دكتور مباشرة.",
     next: "كمّل",
     questionsTitle: "سؤال مهم وسريع",
-    questionHelp: "جاوب حتى تعرف إذا تحتاج مساعدة طبية بسرعة بدل موعد عادي.",
+    questionHelp: "سؤال واحد عن علامات الخطر. جوابك ما يستبعد مشكلة خطيرة.",
     riskTitle: "عندك أي علامة من هاي هسه؟",
-    riskYes: "إي / مو متأكد",
+    riskYes: "إي",
     riskNo: "لا",
+    riskUnsure: "مو متأكد",
+    riskNoWarning: "جواب «لا» مو معناه إن الحالة آمنة. إذا الأعراض قوية أو دا تسوء، اطلب مساعدة طبية عاجلة.",
     riskUnanswered: "اختار جواب قبل ما تكمل.",
     globalDanger: "عندك ألم صدر شديد جديد، صعوبة قوية بالتنفس، ضعف مفاجئ أو صعوبة بالكلام؟ اطلب الطوارئ هسه، لا تنتظر موعد عادي.",
     emergencyTitle: "اطلب مساعدة طبية عاجلة",
