@@ -35,3 +35,11 @@ test("time rail is readable on desktop, tablet and phone while preserving RTL an
   }
   assert.match(page, /const timelineCopy: Record<UiLocale, string>/);
 });
+
+
+test("search hides stale hour targets and restores navigation after clearing", () => {
+  const finder = readFileSync(new URL("../app/dashboard/mobile-appointment-experience.tsx", import.meta.url), "utf8");
+  assert.match(finder, /panel\.querySelector<HTMLElement>\("\.schedule-hour-nav"\)\?\.toggleAttribute\("hidden", activeFilter\)/);
+  assert.match(finder, /row\.classList\.toggle\("is-atlas-phone-search-hidden", activeFilter && !isMatch\)/);
+  assert.match(page, /\.appointments-panel \.schedule-hour-nav\[hidden\]\{display:none\}/);
+});
