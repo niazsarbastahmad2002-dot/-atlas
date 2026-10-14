@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./staff-page.module.css";
 import { SubmitButton } from "@/app/components/submit-button";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
 import { redirect } from "next/navigation";
@@ -54,6 +55,16 @@ type StaffCopy = {
   removePendingConfirm: string;
   noActiveInvites: string;
   working: string;
+  teamMembers: string;
+  pendingInvites: string;
+  rolesTitle: string;
+  ownerExplanation: string;
+  managerExplanation: string;
+  receptionistExplanation: string;
+  doctorHelp: string;
+  noPending: string;
+  legacyLabel: string;
+  joinLinkLabel: string;
 };
 
 const copy: Record<UiLocale, StaffCopy> = {
@@ -91,6 +102,16 @@ const copy: Record<UiLocale, StaffCopy> = {
     revokeInviteConfirm: "Revoke this invitation for {doctor}? The join link will stop working immediately.",
     removePendingConfirm: "Remove this pending invitation? It will no longer grant clinic access.",
     noActiveInvites: "No active manual invitations.",
+    teamMembers: "Current team members",
+    pendingInvites: "Pending invitations",
+    rolesTitle: "What each role can do",
+    ownerExplanation: "Sees every doctor, manages staff access and clinic administration.",
+    managerExplanation: "Works across clinic schedules. Only the clinic administrator can change staff access.",
+    receptionistExplanation: "Works with one assigned doctor's schedule.",
+    doctorHelp: "Assign a doctor only to receptionists; managers do not need one.",
+    noPending: "No pending invitations for this clinic.",
+    legacyLabel: "Older invitation",
+    joinLinkLabel: "One-use join link",
     working: "Working…",
   },
   ku: {
@@ -127,6 +148,16 @@ const copy: Record<UiLocale, StaffCopy> = {
     revokeInviteConfirm: "ئەم بانگهێشتە بۆ {doctor} هەڵبوەشێنرێتەوە؟ بەستەری چوونەژوورەوە دەستبەجێ چیتر کار ناکات.",
     removePendingConfirm: "ئەم بانگهێشتە چاوەڕوانە لاببرێت؟ چیتر ناتوانێت دەسەڵاتی کلینیک بدات.",
     noActiveInvites: "هیچ بانگهێشتی دەستی چالاک نییە.",
+    teamMembers: "ئەندامە چالاکەکانی ستاف",
+    pendingInvites: "بانگهێشتە چاوەڕوانەکان",
+    rolesTitle: "دەسەڵاتی هەر پۆلێک",
+    ownerExplanation: "هەموو دکتۆرەکان دەبینێت و دەسەڵاتی ستاف و بەڕێوەبردنی کلینیک بەدەستەوەیە.",
+    managerExplanation: "لەسەر خشتەی دکتۆرەکانی کلینیک کار دەکات. تەنها بەڕێوەبەری کلینیک دەسەڵاتی ستاف دەگۆڕێت.",
+    receptionistExplanation: "تەنها لەسەر خشتەی دکتۆری دیاریکراوی خۆی کار دەکات.",
+    doctorHelp: "دکتۆر تەنها بۆ ستافی ڕیسێپشن دیاری دەکرێت؛ بەڕێوەبەر پێویستی پێی نییە.",
+    noPending: "هیچ بانگهێشتێکی چاوەڕوان بۆ ئەم کلینیکە نییە.",
+    legacyLabel: "بانگهێشتی کۆن",
+    joinLinkLabel: "بەستەری یەکجارە",
     working: "چاوەڕێ بکە…",
   },
   bd: {
@@ -163,6 +194,16 @@ const copy: Record<UiLocale, StaffCopy> = {
     revokeInviteConfirm: "ئەڤ بانگهێشتە بۆ {doctor} بهێتە هەلوەشاندن؟ لینکا چوونەژوورێ دێ دەستبەجێ ئیدی کار نەکەت.",
     removePendingConfirm: "ئەڤ بانگهێشتا چاڤەڕێ بهێتە لابرن؟ ئیدی ناتوانیت دەستهەلاتا کلینیکێ بدەت.",
     noActiveInvites: "چ بانگهێشتا دەستی یا چالاک نینە.",
+    teamMembers: "ئەندامێن چالاک یێن ستافی",
+    pendingInvites: "بانگهێشتێن چاڤەڕێ",
+    rolesTitle: "دەستهەلاتا هەر پۆلەکێ",
+    ownerExplanation: "هەمی دکتۆران دبینیت و دەستهەلاتا ستافی و بەڕێڤەبرنا کلینیکێ بەدەست ڤەیە.",
+    managerExplanation: "ل سەر خشتەیێن دکتۆرێن کلینیکێ کار دکەت. تەنێ بەڕێڤەبەرێ کلینیکێ دەستهەلاتا ستافی دگوهەریت.",
+    receptionistExplanation: "تەنێ ل سەر خشتەیا دکتۆرێ هەلبژارتی کار دکەت.",
+    doctorHelp: "دکتۆر تەنێ بۆ ستافێ ڕیسێپشنێ دهێتە دیاریکرن؛ بەڕێڤەبەر پێدڤی پێ نینە.",
+    noPending: "چ بانگهێشتەکا چاڤەڕێ بۆ ڤێ کلینیکێ نینە.",
+    legacyLabel: "بانگهێشتا کەڤن",
+    joinLinkLabel: "لینکا ئێکجارە",
     working: "چاڤەڕێ بە…",
   },
   ar: {
@@ -199,6 +240,16 @@ const copy: Record<UiLocale, StaffCopy> = {
     revokeInviteConfirm: "إلغاء هذه الدعوة الخاصة بـ {doctor}؟ رابط الانضمام راح يتوقف فوراً.",
     removePendingConfirm: "إزالة هذه الدعوة المعلقة؟ بعدها ما راح تمنح صلاحية دخول للعيادة.",
     noActiveInvites: "ماكو دعوات يدوية فعالة.",
+    teamMembers: "أعضاء الفريق الحاليون",
+    pendingInvites: "الدعوات المنتظرة",
+    rolesTitle: "صلاحيات كل دور",
+    ownerExplanation: "يشوف كل الأطباء، ويدير صلاحيات الفريق وإدارة العيادة.",
+    managerExplanation: "يشتغل على جداول العيادة. مسؤول العيادة وحده يغيّر صلاحيات الفريق.",
+    receptionistExplanation: "يشتغل على جدول الطبيب المخصص له فقط.",
+    doctorHelp: "تعيين الطبيب خاص بموظف الاستقبال فقط؛ المدير ما يحتاج طبيب مخصص.",
+    noPending: "ماكو دعوات معلقة لهذه العيادة.",
+    legacyLabel: "دعوة قديمة",
+    joinLinkLabel: "رابط انضمام لمرة واحدة",
     working: "جارٍ التنفيذ…",
   },
 };
@@ -356,7 +407,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   const activeDoctors = (doctors ?? []).filter((doctor) => doctor.active);
 
   let memberRows: Array<{ user_id: string; role: string; assigned_doctor_id: string | null; identity: string }> = [];
-  let pendingRows: Array<{ user_id: string; assigned_doctor_id: string }> = [];
+  let pendingRows: Array<{ user_id: string; assigned_doctor_id: string; identity: string }> = [];
   let activeManualInvites: Array<{ invitation_id: string; doctor_name: string; created_at: string; expires_at: string }> = [];
   try {
     const admin = createAdminClient();
@@ -402,6 +453,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         .map((invitation) => ({
           user_id: user.id,
           assigned_doctor_id: invitation.assigned_doctor_id,
+          identity: identityById.get(user.id) ?? text.phonePending,
         }));
     });
   } catch {
