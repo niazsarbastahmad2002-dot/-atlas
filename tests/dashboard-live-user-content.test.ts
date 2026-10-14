@@ -11,7 +11,7 @@ test("live clinic and Atlas AI preserve dynamic identity and conversation text",
   assert.ok(flow.includes('data-atlas-user-content="true">{flow.doctorName}'));
   assert.ok(flow.includes('data-atlas-user-content="true">{signal.patientName}'));
   assert.ok(ai.includes('className="atlas-ai-clinic" data-atlas-user-content="true">{clinicName}'));
-  assert.ok(ai.includes('<p data-atlas-user-content="true">{message.content}</p>'));
-  assert.ok(ai.includes('<div data-atlas-user-content="true"><RichMessage text={message.content}/></div>'));
+  assert.ok(ai.includes('<p data-atlas-user-content="true" dir="auto">{message.content}</p>'));
+  assert.ok(ai.includes('<div data-atlas-user-content="true" dir="auto"><RichMessage text={message.content}/></div>'));
   assert.ok(ai.includes('className="atlas-ai-live-transcript" data-atlas-user-content="true"'));
 });

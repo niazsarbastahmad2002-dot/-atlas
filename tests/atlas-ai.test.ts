@@ -154,12 +154,13 @@ test("Atlas Voice transcription stays server-side, authenticated, bounded, and s
   assert.doesNotMatch(route, /patient_name|patient_phone/);
 });
 
-test("Atlas Voice V4 stays intact behind the V5 table-capable client", () => {
+test("Atlas Voice V4 is the active React-owned client while V5 table wrapper remains dormant", () => {
   const active = read("app/dashboard/assistant/atlas-ai-client.tsx");
   const tableClient = read("app/dashboard/assistant/atlas-ai-client-v5.tsx");
   const client = voiceClient();
   const recorder = read("app/dashboard/assistant/atlas-pcm-recorder.ts");
-  assert.match(active, /atlas-ai-client-v5/);
+  assert.match(active, /atlas-ai-client-v4/);
+  assert.doesNotMatch(active, /export \{ AtlasAiClient \} from "\.\/atlas-ai-client-v5"/);
   assert.match(tableClient, /AtlasAiClientV4/);
   assert.match(tableClient, /atlas-ai-table/);
   assert.match(tableClient, /MutationObserver/);
