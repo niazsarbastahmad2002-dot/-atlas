@@ -48,6 +48,7 @@ test("clinic access count follows the selected Atlas digit style", () => {
   const page = read("app/dashboard/staff/page.tsx");
 
   assert.match(page, /formatLocalDateValue, formatTimeValue, localizeDigits/);
-  assert.match(page, /localizeDigits\(memberRows\.length \+ pendingRows\.length, locale\)/);
+  assert.match(page, /localizeDigits\(memberRows\.length, locale\)/);
+  assert.match(page, /localizeDigits\(pendingRows\.length \+ activeManualInvites\.length, locale\)/);
 });
 

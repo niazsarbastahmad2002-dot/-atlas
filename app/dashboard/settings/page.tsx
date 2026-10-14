@@ -117,6 +117,8 @@ const settingsCopy: Record<UiLocale, {
   doctors: string;
   doctorsHelp: string;
   removedDoctors: string;
+  manageDoctors: string;
+  moreAdminTools: string;
   administration: string;
   administrationHelp: string;
   teamAccess: string;
@@ -150,6 +152,8 @@ const settingsCopy: Record<UiLocale, {
     doctors: "Doctors",
     doctorsHelp: "Add, rename, reorder, or remove doctors from new appointments.",
     removedDoctors: "Removed doctors",
+    manageDoctors: "Manage existing doctors",
+    moreAdminTools: "Reports, backup & clinic deletion",
     administration: "Clinic administration",
     administrationHelp: "Less-used owner tools stay here instead of competing with the daily schedule.",
     teamAccess: "Team access",
@@ -183,6 +187,8 @@ const settingsCopy: Record<UiLocale, {
     doctors: "پزیشکەکان",
     doctorsHelp: "پزیشک زیاد بکە، ناوی بگۆڕە، ڕیزی بگۆڕە، یان لە وادە نوێکان لایببە.",
     removedDoctors: "پزیشکە لابراوەکان",
+    manageDoctors: "بەڕێوەبردنی پزیشکەکانی ئێستا",
+    moreAdminTools: "ڕاپۆرت، پاڵپشتی و سڕینەوەی کلینیک",
     administration: "بەڕێوەبردنی کلینیک",
     administrationHelp: "ئامرازە کەم‌بەکارهاتووەکانی خاوەن کلینیک لێرە دەمێنن تا خشتەی ڕۆژانە سادە بێت.",
     teamAccess: "دەسەڵاتی ستاف",
@@ -216,6 +222,8 @@ const settingsCopy: Record<UiLocale, {
     doctors: "دکتۆر",
     doctorsHelp: "دکتۆر زێدە بکە، ناڤێ وان بگۆڕە، ڕێزێ بگۆڕە، یان ژ وادەیێن نوو لاببە.",
     removedDoctors: "دکتۆرێن لابری",
+    manageDoctors: "بەڕێڤەبرنا دکتۆرێن هەیی",
+    moreAdminTools: "ڕاپۆرت، پشتگیری و ژێبرنا کلینیکێ",
     administration: "بەڕێڤەبرنا کلینیکێ",
     administrationHelp: "ئامرازێن کێم‌بکارهاتی یێن خودانێ کلینیکێ ل ڤێرێ دمینن دا خشتەیا ڕۆژانە سادە بیت.",
     teamAccess: "دەستهەلاتا ستافی",
@@ -249,6 +257,8 @@ const settingsCopy: Record<UiLocale, {
     doctors: "الأطباء",
     doctorsHelp: "أضف الأطباء أو غيّر أسماءهم أو ترتيبهم أو أوقف ظهورهم في المواعيد الجديدة.",
     removedDoctors: "الأطباء المُزالون",
+    manageDoctors: "إدارة الأطباء الحاليين",
+    moreAdminTools: "التقارير والنسخ الاحتياطي وحذف العيادة",
     administration: "إدارة العيادة",
     administrationHelp: "أدوات المالك الأقل استخداماً تبقى هنا حتى يظل الجدول اليومي بسيطاً.",
     teamAccess: "صلاحيات الفريق",
@@ -424,35 +434,40 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <SubmitButton pendingLabel={t.saving}>{t.addDoctor}</SubmitButton>
             </form>
 
-            <div className="doctor-settings-list">
-              {activeDoctors.map((doctor, index) => (
-                <article className="doctor-settings-row" key={doctor.id}>
-                  <form action={updateDoctor} className="doctor-name-form">
-                    <input type="hidden" name="clinic_id" value={clinic.id} />
-                    <input type="hidden" name="doctor_id" value={doctor.id} />
-                    <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
-                    <PendingTextInput id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
-                    <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
-                  </form>
-                  <div className="doctor-row-meta">
-                    <span>{t.doctorAvailable}</span>
-                    <div className="compact-actions">
-                      {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveUp}</SubmitButton></form> : null}
-                      {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveDown}</SubmitButton></form> : null}
-                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}>
-                        <ConfirmSubmitButton
-                          className="danger-link"
-                          pendingLabel={t.saving}
-                          confirmMessage={copy.archiveDoctorConfirm.replace("{doctor}", doctor.name)}
-                        >
-                          {t.archive}
-                        </ConfirmSubmitButton>
+            {activeDoctors.length > 0 ? (
+              <details key={clinic.id} className="settings-disclosure settings-doctor-management" open={activeDoctors.length <= 2}>
+                <summary>{copy.manageDoctors} ({localizeDigits(activeDoctors.length, locale)})</summary>
+                <div className="doctor-settings-list">
+                  {activeDoctors.map((doctor, index) => (
+                    <article className="doctor-settings-row" key={doctor.id}>
+                      <form action={updateDoctor} className="doctor-name-form">
+                        <input type="hidden" name="clinic_id" value={clinic.id} />
+                        <input type="hidden" name="doctor_id" value={doctor.id} />
+                        <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
+                        <PendingTextInput id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
+                        <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
                       </form>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                      <div className="doctor-row-meta">
+                        <span>{t.doctorAvailable}</span>
+                        <div className="compact-actions">
+                          {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveUp}</SubmitButton></form> : null}
+                          {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveDown}</SubmitButton></form> : null}
+                          <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}>
+                            <ConfirmSubmitButton
+                              className="danger-link"
+                              pendingLabel={t.saving}
+                              confirmMessage={copy.archiveDoctorConfirm.replace("{doctor}", doctor.name)}
+                            >
+                              {t.archive}
+                            </ConfirmSubmitButton>
+                          </form>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            ) : null}
 
             {archivedDoctors.length ? (
               <details className="settings-disclosure">
@@ -483,33 +498,38 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             <div className="settings-link-list">
               <Link className="settings-link" href={`/dashboard/staff?clinic=${clinic.id}`} prefetch><span>{copy.teamAccess}</span><span aria-hidden="true">{actionArrow}</span></Link>
               <Link className="settings-link" href={`/dashboard/history?clinic=${clinic.id}`} prefetch><span>{copy.history}</span><span aria-hidden="true">{actionArrow}</span></Link>
-              <div className="settings-export-group">
-                <form className="settings-export-form" action="/api/clinic-export" method="post" target="_blank">
-                  <input type="hidden" name="clinic_id" value={clinic.id} />
-                  <input type="hidden" name="format" value="html" />
-                  <button className="settings-link settings-export-button" type="submit">
-                    <span className="settings-export-copy"><strong>{copy.exportReadable}</strong><small>{copy.exportReadableHelp}</small></span>
-                    <span aria-hidden="true">↗</span>
-                  </button>
-                </form>
-                <form className="settings-export-form" action="/api/clinic-export" method="post">
-                  <input type="hidden" name="clinic_id" value={clinic.id} />
-                  <input type="hidden" name="format" value="csv" />
-                  <button className="settings-link settings-export-button" type="submit">
-                    <span className="settings-export-copy"><strong>{copy.exportCsv}</strong><small>{copy.exportCsvHelp}</small></span>
-                    <span aria-hidden="true">↓</span>
-                  </button>
-                </form>
-                <form className="settings-export-form" action="/api/clinic-export" method="post">
-                  <input type="hidden" name="clinic_id" value={clinic.id} />
-                  <input type="hidden" name="format" value="json" />
-                  <button className="settings-link settings-export-button" type="submit">
-                    <span className="settings-export-copy"><strong>{copy.exportJson}</strong><small>{copy.exportJsonHelp}</small></span>
-                    <span aria-hidden="true">↓</span>
-                  </button>
-                </form>
+              <details className="settings-disclosure settings-admin-tools">
+                <summary>{copy.moreAdminTools}</summary>
+                <div className="settings-link-list">
+                  <div className="settings-export-group">
+                    <form className="settings-export-form" action="/api/clinic-export" method="post" target="_blank">
+                      <input type="hidden" name="clinic_id" value={clinic.id} />
+                      <input type="hidden" name="format" value="html" />
+                      <button className="settings-link settings-export-button" type="submit">
+                        <span className="settings-export-copy"><strong>{copy.exportReadable}</strong><small>{copy.exportReadableHelp}</small></span>
+                        <span aria-hidden="true">↗</span>
+                      </button>
+                    </form>
+                    <form className="settings-export-form" action="/api/clinic-export" method="post">
+                      <input type="hidden" name="clinic_id" value={clinic.id} />
+                      <input type="hidden" name="format" value="csv" />
+                      <button className="settings-link settings-export-button" type="submit">
+                        <span className="settings-export-copy"><strong>{copy.exportCsv}</strong><small>{copy.exportCsvHelp}</small></span>
+                        <span aria-hidden="true">↓</span>
+                      </button>
+                    </form>
+                    <form className="settings-export-form" action="/api/clinic-export" method="post">
+                      <input type="hidden" name="clinic_id" value={clinic.id} />
+                      <input type="hidden" name="format" value="json" />
+                      <button className="settings-link settings-export-button" type="submit">
+                        <span className="settings-export-copy"><strong>{copy.exportJson}</strong><small>{copy.exportJsonHelp}</small></span>
+                        <span aria-hidden="true">↓</span>
+                      </button>
+                    </form>
               </div>
-              <Link className="settings-link danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}><span>{copy.deleteClinic}</span><span aria-hidden="true">{actionArrow}</span></Link>
+                  <Link className="settings-link danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}><span>{copy.deleteClinic}</span><span aria-hidden="true">{actionArrow}</span></Link>
+                </div>
+              </details>
             </div>
           </section>
         ) : null}
@@ -543,7 +563,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       </footer>
 
       <style>{`
-        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-public-profile-link{margin-top:10px}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}.settings-link-list{display:grid;gap:8px}.settings-export-group{display:grid;gap:6px}.settings-export-form{margin:0}.settings-export-button{width:100%;font:inherit;text-align:inherit;cursor:pointer}.settings-export-copy{display:grid;gap:2px}.settings-export-copy strong{font:inherit}.settings-export-copy small{max-width:520px;color:var(--muted);font-size:10px;font-weight:650;line-height:1.35}.settings-disclosure{border-top:1px solid var(--line);padding-top:10px}.settings-disclosure>summary{min-height:42px;display:flex;align-items:center;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}.settings-utility-footer{display:flex;justify-content:center;gap:9px;padding:24px 0 110px;color:var(--muted);font-size:11px}.settings-utility-footer a{color:inherit}.doctor-settings-row.is-archived{display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .settings-readonly-clinic{display:grid;gap:5px;border-radius:12px;padding:12px 14px;background:var(--surface-soft)}.settings-public-profile-link{margin-top:10px}.settings-readonly-clinic span,.settings-readonly-clinic small{color:var(--muted);font-size:10px;font-weight:720}.settings-readonly-clinic strong{font-size:17px}.settings-page.is-reception .settings-grid{grid-auto-flow:row dense}.settings-page.is-reception .settings-card{min-height:0}.settings-link-list{display:grid;gap:8px}.settings-export-group{display:grid;gap:6px}.settings-export-form{margin:0}.settings-export-button{width:100%;font:inherit;text-align:inherit;cursor:pointer}.settings-export-copy{display:grid;gap:2px}.settings-export-copy strong{font:inherit}.settings-export-copy small{max-width:520px;color:var(--muted);font-size:10px;font-weight:650;line-height:1.35}.settings-disclosure{border-top:1px solid var(--line);padding-top:10px}.settings-disclosure>summary{min-height:42px;display:flex;align-items:center;color:var(--ink-soft);font-size:12px;font-weight:800;cursor:pointer}.settings-doctor-management>summary,.settings-admin-tools>summary{min-height:44px}.settings-doctor-management>.doctor-settings-list,.settings-admin-tools>.settings-link-list{margin-top:10px}.settings-utility-footer{display:flex;justify-content:center;gap:9px;padding:24px 0 110px;color:var(--muted);font-size:11px}.settings-utility-footer a{color:inherit}.doctor-settings-row.is-archived{display:flex;align-items:center;justify-content:space-between;gap:12px}
       `}</style>
     </main>
   );

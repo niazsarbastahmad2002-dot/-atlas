@@ -20,7 +20,7 @@ test("secondary dashboard views preserve user-supplied clinic doctor and patient
   assert.ok(account.includes('data-atlas-user-content="true">{clinic.name}'));
   assert.ok(deletion.includes('data-atlas-user-content="true">{clinic.name}'));
   assert.ok(workflow.includes('data-atlas-user-content="true">{workflow.doctorName}'));
-  assert.ok(staff.includes('data-atlas-user-content="true">{invitation.doctor_name}'));
+  assert.ok(staff.includes('data-atlas-user-content="true" dir="auto">{invitation.doctor_name}'));
   assert.ok(staff.includes('data-atlas-user-content="true">{assignedDoctor.name}'));
   assert.ok(appointmentEditor.includes('className="appointment-locked-doctor" data-atlas-user-content="true"'));
   assert.ok(appointmentEditor.includes('data-atlas-user-content="true">{lockedDoctor.name}'));
