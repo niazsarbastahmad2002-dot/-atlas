@@ -52,6 +52,10 @@ const copy: Record<UiLocale, {
   view: string;
   signOut: string;
   profileTitle: string;
+  profileShortcut: string;
+  profilePrivate: string;
+  profileLanguageHint: string;
+  profilePhoneHint: string;
   profileHelp: string;
   nameLabel: string;
   nameHint: string;
@@ -84,6 +88,10 @@ const copy: Record<UiLocale, {
     view: "View appointment",
     signOut: "Sign out",
     profileTitle: "Your profile",
+    profileShortcut: "Edit profile",
+    profilePrivate: "Only you can edit this profile",
+    profileLanguageHint: "This language is saved to your patient account.",
+    profilePhoneHint: "Your verified mobile number is used to sign in and cannot be changed here.",
     profileHelp: "Atlas can reuse your name and language when you book. These details stay private.",
     nameLabel: "Name",
     nameHint: "Use the name clinics should see with your appointment.",
@@ -116,6 +124,10 @@ const copy: Record<UiLocale, {
     view: "بینینی مەوعید",
     signOut: "دەرچوون",
     profileTitle: "زانیارییەکانت",
+    profileShortcut: "دەستکاری زانیارییەکان",
+    profilePrivate: "تەنها خۆت دەتوانیت ئەم زانیارییانە بگۆڕیت",
+    profileLanguageHint: "ئەم زمانە لە هەژماری نەخۆشییەکەتدا پاشەکەوت دەکرێت.",
+    profilePhoneHint: "ژمارەی مۆبایلی پشتڕاستکراوت بۆ چوونەژوورەوە بەکاردێت و لێرە ناگۆڕدرێت.",
     profileHelp: "Atlas ناو و زمانەکەت کاتێک مەوعید دادەنێیت دووبارە بەکاردەهێنێت. ئەم زانیارییانە تایبەتن.",
     nameLabel: "ناو",
     nameHint: "ئەو ناوە بنووسە کە دەتەوێت کلینیک لەگەڵ مەوعیدەکەت ببینێت.",
@@ -148,6 +160,10 @@ const copy: Record<UiLocale, {
     view: "وادەیێ ببینە",
     signOut: "دەرکەڤە",
     profileTitle: "زانیارییێن تە",
+    profileShortcut: "زانیارییان بگوهۆڕە",
+    profilePrivate: "تەنێ تو دشێی ئەڤ زانیارییان بگوهۆڕی",
+    profileLanguageHint: "ئەڤ زمانە ل هەژمارا نەخۆشی یا تە دهێتە پاراستن.",
+    profilePhoneHint: "ژمارا موبایلا تە یا پشتڕاستکری بۆ چوونا ژوور دهێتە بکارئینان و ل ڤێرێ ناهێتە گوهۆڕین.",
     profileHelp: "Atlas ناڤ و زمانێ تە دەمێ وادەیەکێ ددانی جارەکا دی ب کار دئینیت. ئەڤ زانیارییە تایبەتن.",
     nameLabel: "ناڤ",
     nameHint: "ئەو ناڤە بنڤیسە کو دخوازیت کلینیک دگەل وادەیا تە ببینیت.",
@@ -180,6 +196,10 @@ const copy: Record<UiLocale, {
     view: "عرض الموعد",
     signOut: "تسجيل الخروج",
     profileTitle: "معلوماتك",
+    profileShortcut: "تعديل المعلومات",
+    profilePrivate: "إنت بس تگدر تعدّل هالمعلومات",
+    profileLanguageHint: "هاي اللغة تنحفظ بحسابك كمريض.",
+    profilePhoneHint: "رقم موبايلك الموثّق يُستخدم لتسجيل الدخول وما تگدر تغيّره من هنا.",
     profileHelp: "Atlas يگدر يستخدم اسمك ولغتك بالمواعيد الجاية. هالمعلومات تبقى خاصة.",
     nameLabel: "الاسم",
     nameHint: "اكتب الاسم الذي تريد أن تراه العيادة مع موعدك.",
@@ -329,6 +349,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
             {session.display_name ? <p className="patient-account-hello">{t.hello}, <strong><bdi>{session.display_name}</bdi></strong></p> : null}
 
             <div className="patient-account-toolbar">
+              <a className="button button-ghost patient-account-profile-link" href="#patient-profile">{t.profileShortcut}</a>
               <a className="button button-ghost" href={findCareHref}>{t.findCare}</a>
               <form action={`/patient-account/api/sign-out?lang=${locale}`} method="post">
                 <button className="button button-ghost" type="submit">{t.signOut}</button>
@@ -407,8 +428,11 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
               )}
             </section>
 
-            <section className="patient-account-profile" aria-label={t.profileTitle}>
-              <h2>{t.profileTitle}</h2>
+            <section className="patient-account-profile" id="patient-profile" aria-labelledby="patient-profile-title">
+              <div className="patient-account-profile-heading">
+                <h2 id="patient-profile-title">{t.profileTitle}</h2>
+                <span className="patient-account-profile-privacy">{t.profilePrivate}</span>
+              </div>
               <p className="quiet">{t.profileHelp}</p>
               <form
                 className="patient-account-profile-form"
@@ -416,30 +440,37 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                 method="post"
               >
                 <input type="hidden" name="return_lang" value={locale} />
-                <label>
-                  <span>{t.nameLabel}</span>
-                  <input
-                    name="display_name"
-                    type="text"
-                    defaultValue={session.display_name ?? ""}
-                    minLength={2}
-                    maxLength={120}
-                    autoComplete="name"
-                    required
-                  />
-                  <small>{t.nameHint}</small>
-                </label>
-                <label>
-                  <span>{t.preferredLanguage}</span>
-                  <select
-                    name="preferred_language"
-                    defaultValue={isUiLocale(session.preferred_language) ? session.preferred_language : locale}
-                  >
-                    {languageOptions.map((option) => (
-                      <option key={option.locale} value={option.locale}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
+                <div className="patient-account-profile-fields">
+                  <label htmlFor="patient-profile-name">
+                    <span>{t.nameLabel}</span>
+                    <input
+                      id="patient-profile-name"
+                      name="display_name"
+                      type="text"
+                      dir="auto"
+                      defaultValue={session.display_name ?? ""}
+                      minLength={2}
+                      maxLength={120}
+                      autoComplete="name"
+                      required
+                    />
+                    <small>{t.nameHint}</small>
+                  </label>
+                  <label htmlFor="patient-profile-language">
+                    <span>{t.preferredLanguage}</span>
+                    <select
+                      id="patient-profile-language"
+                      name="preferred_language"
+                      defaultValue={isUiLocale(session.preferred_language) ? session.preferred_language : locale}
+                    >
+                      {languageOptions.map((option) => (
+                        <option key={option.locale} value={option.locale}>{option.label}</option>
+                      ))}
+                    </select>
+                    <small>{t.profileLanguageHint}</small>
+                  </label>
+                </div>
+                <p className="quiet patient-account-profile-phone-note">{t.profilePhoneHint}</p>
                 <button className="button" type="submit">{t.saveProfile}</button>
               </form>
             </section>
@@ -511,6 +542,15 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-empty,.patient-account-not-ready{border-radius:19px;padding:25px;background:var(--surface-soft);border-color:var(--line-strong)}
           .patient-account-profile{margin-top:33px;padding:23px;border-radius:20px;background:var(--surface-soft)}
           .patient-account-profile h2{font-size:22px}
+          .patient-account-profile{scroll-margin-top:24px;min-width:0}
+          .patient-account-profile-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px}
+          .patient-account-profile-privacy{font-size:12px;font-weight:750;line-height:1.5;color:var(--muted)}
+          .patient-account-profile-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+          .patient-account-profile-form input,.patient-account-profile-form select{font-size:16px;min-height:48px;min-width:0}
+          .patient-account-profile-form label>span{font-size:14px}
+          .patient-account-profile-form small{font-size:12px}
+          .patient-account-profile-phone-note{margin:0;font-size:12px;line-height:1.6}
+          .patient-account-profile-link{min-height:44px}
           .patient-account-page :is(a,button,input,select):focus-visible{outline:3px solid var(--accent);outline-offset:3px}
           :root[data-theme="dark"] .patient-account-page{background:var(--canvas)}
           @media(prefers-color-scheme:dark){:root[data-theme="system"] .patient-account-page{background:var(--canvas)}}
@@ -523,6 +563,8 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
             .patient-account-appointment{grid-template-columns:1fr;padding:18px;min-height:0;gap:15px}
             .patient-account-manage{width:100%}
             .patient-account-profile{padding:17px}
+            .patient-account-profile-fields{grid-template-columns:minmax(0,1fr)}
+            .patient-account-profile-form button{width:100%}
           }
 
         `}</style>
