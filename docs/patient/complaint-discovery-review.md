@@ -58,3 +58,12 @@ These are **not exclusive** and not ordered by clinical quality. Never use them 
 - Existing public directory RPC `search_public_doctors_with_availability` and published doctor/clinic detail and real slot RPCs remain unchanged.
 - Clinic/Doctor patient identity, tenancy, schedule state machine and sensitive notes remain inaccessible to this flow.
 - Production release is expressly blocked by founder approval plus clinical/translation signoff, even if tests pass.
+
+
+## Additional safety changes after initial code review (authoritative)
+
+**Server-side launch gate:** Every new guide page returns 404 unless `ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED === "true"`; the entry link is also hidden unless true. The flag is NOT configured in production; no environment changes are authorized. A `noindex` tag alone would not protect unreviewed medical content.
+
+**Published specialty accuracy:** Instead of linking using hard-coded English specialty names, the specialties page independently retrieves only the first 30 genuinely published public doctor records via the existing search RPC. The selected complaint and warning answer are never sent. Only an exact specialty label actually present in that bounded public result can form a specialty-filter link; a curated alias table helps recognize published spelling variants. If nothing matches the sample, show a clearly bounded/no-claims explanation and an unfiltered browse link. This is not a complete specialty taxonomy or nationwide provider directory. No private doctor notes/records are read and no extra database schema is introduced.
+
+These conditions supersede the earlier draft description of direct links using English specialty strings. **A clinician-approved normalized, multilingual specialty taxonomy with complete provider coverage is still future work and is not implemented in this slice.**
