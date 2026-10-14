@@ -57,6 +57,13 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
     patientPhone: formatIraqiMobile(appointment.patient_phone),
     doctorName: appointment.doctor_name,
     appointmentAt: appointment.appointment_at,
+    // Date filters operate on the clinic-local day, not the visitor's device timezone.
+    appointmentDay: new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Baghdad",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(appointment.appointment_at)),
     displayTime: formatBaghdadDateTime(new Date(appointment.appointment_at), locale),
     status: appointment.status,
     removed: Boolean(appointment.voided_at),

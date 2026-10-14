@@ -6,6 +6,7 @@ import { localizeDigits } from "@/lib/i18n/format";
 import { normalizeName, normalizePhone } from "@/lib/mobile-appointment-search";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { deleteArchivedAppointments } from "./actions";
+import styles from "./history-enhancements.module.css";
 
 type HistoryRow = {
   id: string;
@@ -13,6 +14,7 @@ type HistoryRow = {
   patientPhone: string;
   doctorName: string;
   appointmentAt: string;
+  appointmentDay: string;
   displayTime: string;
   status: string;
   removed: boolean;
@@ -22,7 +24,16 @@ const copy = {
   en: {
     search: "Search patient, phone, or doctor",
     all: "All history",
-    removed: "Removed only",
+    removed: "Removed",
+    active: "Pending / confirmed",
+    completedOnly: "Completed",
+    cancelledOnly: "Cancelled",
+    missedOnly: "Missed",
+    date: "Appointment date",
+    clearFilters: "Reset search and filters",
+    count: "{shown} of {total} loaded appointments",
+    selectBatch: "Select removed (up to 250)",
+    selectionLimit: "You can delete up to 250 removed appointments at a time.",
     newest: "Newest first",
     oldest: "Oldest first",
     patient: "Patient",
@@ -46,7 +57,16 @@ const copy = {
   ku: {
     search: "بە ناوی نەخۆش، ژمارە یان پزیشک بگەڕێ",
     all: "هەموو مێژوو",
-    removed: "تەنها لابراوەکان",
+    removed: "لابراو",
+    active: "چاوەڕوان / پشتڕاستکراوە",
+    completedOnly: "تەواوبوو",
+    cancelledOnly: "هەڵوەشێنراوە",
+    missedOnly: "نەهات",
+    date: "ڕۆژی وادە",
+    clearFilters: "پاککردنەوەی گەڕان و پاڵاوتن",
+    count: "{shown} لە {total} وادەی بارکراو",
+    selectBatch: "وادە لابراوەکان دیاری بکە (تا ٢٥٠)",
+    selectionLimit: "هەر جار دەتوانیت تا ٢٥٠ وادەی لابراو بسڕیتەوە.",
     newest: "نوێترین لە سەرەوە",
     oldest: "کۆنترین لە سەرەوە",
     patient: "نەخۆش",
@@ -70,7 +90,16 @@ const copy = {
   bd: {
     search: "ب ناڤێ نەخۆشی، ژمارە یان دکتۆر بگەڕێ",
     all: "هەمی مێژوو",
-    removed: "تەنێ یێن لابری",
+    removed: "لابری",
+    active: "چاڤەڕێ / پشتڕاستکری",
+    completedOnly: "تەمام",
+    cancelledOnly: "هەلوەشاندی",
+    missedOnly: "نەهات",
+    date: "ڕۆژا وادەیێ",
+    clearFilters: "پاککرنا گەڕیان و پاڵاوتنێ",
+    count: "{shown} ژ {total} وادەیێن بارکری",
+    selectBatch: "وادەیێن لابری هەلبژێرە (هەتا ٢٥٠)",
+    selectionLimit: "هەر جار دەتوانی هەتا ٢٥٠ وادەیێن لابری ژێببەی.",
     newest: "نووترین ل سەرێ",
     oldest: "کەڤنترین ل سەرێ",
     patient: "نەخۆش",
@@ -94,7 +123,16 @@ const copy = {
   ar: {
     search: "ابحث باسم المريض أو الرقم أو الطبيب",
     all: "كل السجل",
-    removed: "المحذوفة فقط",
+    removed: "تمت الإزالة",
+    active: "قيد الانتظار / مؤكد",
+    completedOnly: "مكتمل",
+    cancelledOnly: "ملغي",
+    missedOnly: "لم يحضر",
+    date: "تاريخ الموعد",
+    clearFilters: "مسح البحث والفلاتر",
+    count: "{shown} من {total} موعداً محملاً",
+    selectBatch: "تحديد المواعيد المحذوفة (حتى ٢٥٠)",
+    selectionLimit: "يمكن حذف ما يصل إلى ٢٥٠ موعداً تمت إزالته في المرة الواحدة.",
     newest: "الأحدث أولاً",
     oldest: "الأقدم أولاً",
     patient: "المريض",
@@ -117,6 +155,9 @@ const copy = {
   },
 } as const;
 
+const DELETE_BATCH_LIMIT = 250;
+type StatusFilter = "all" | "active" | "completed" | "cancelled" | "no_show" | "removed";
+
 const statusLabels: Record<UiLocale, Record<string, string>> = {
   en: { pending: "Pending", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "No-show", voided: "Removed" },
   ku: { pending: "چاوەڕوان", confirmed: "پشتڕاستکراوە", cancelled: "هەڵوەشێنراوەتەوە", completed: "تەواوبوو", no_show: "نەهات", voided: "لابراوە" },
@@ -138,7 +179,8 @@ export function HistoryClient({
   const router = useRouter();
   const t = copy[locale];
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "removed">("all");
+  const [filter, setFilter] = useState<StatusFilter>("all");
+  const [day, setDay] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [feedback, setFeedback] = useState("");
@@ -150,7 +192,10 @@ export function HistoryClient({
     const phoneDigits = normalizePhone(rawQuery);
     const nameQuery = /\p{L}/u.test(rawQuery);
     return rows
-      .filter((row) => filter === "all" || row.removed)
+      .filter((row) => filter === "all" || (filter === "removed"
+        ? row.removed
+        : !row.removed && (filter === "active" ? row.status === "pending" || row.status === "confirmed" : row.status === filter)))
+      .filter((row) => !day || row.appointmentDay === day)
       .filter((row) => {
         if (!rawQuery) return true;
         if (nameQuery) {
@@ -161,18 +206,35 @@ export function HistoryClient({
       .sort((a, b) => sort === "newest"
         ? new Date(b.appointmentAt).getTime() - new Date(a.appointmentAt).getTime()
         : new Date(a.appointmentAt).getTime() - new Date(b.appointmentAt).getTime());
-  }, [filter, query, rows, sort]);
+  }, [day, filter, query, rows, sort]);
 
   const removableVisible = visibleRows.filter((row) => row.removed).map((row) => row.id);
+  const selectableVisible = removableVisible.slice(0, DELETE_BATCH_LIMIT);
   const selectedVisible = removableVisible.filter((id) => selected.has(id));
-  const allVisibleSelected = removableVisible.length > 0 && selectedVisible.length === removableVisible.length;
+  const allVisibleSelected = removableVisible.length > DELETE_BATCH_LIMIT
+    ? selectableVisible.length > 0 && selectableVisible.every((id) => selected.has(id))
+    : removableVisible.length > 0 && selectedVisible.length === removableVisible.length;
+  const hasFilters = Boolean(query || day || filter !== "all" || sort !== "newest");
+
+  function resetFilters() {
+    setQuery("");
+    setDay("");
+    setFilter("all");
+    setSort("newest");
+    setSelected(new Set());
+    setFeedback("");
+  }
 
   function toggle(id: string) {
+    if (!selected.has(id) && selected.size >= DELETE_BATCH_LIMIT) {
+      setFeedback(t.selectionLimit);
+      return;
+    }
     setFeedback("");
     setSelected((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else if (next.size < DELETE_BATCH_LIMIT) next.add(id);
       return next;
     });
   }
@@ -181,8 +243,8 @@ export function HistoryClient({
     setFeedback("");
     setSelected((current) => {
       const next = new Set(current);
-      if (allVisibleSelected) removableVisible.forEach((id) => next.delete(id));
-      else removableVisible.forEach((id) => next.add(id));
+      if (allVisibleSelected) selectableVisible.forEach((id) => next.delete(id));
+      else selectableVisible.forEach((id) => { if (next.size < DELETE_BATCH_LIMIT) next.add(id); });
       return next;
     });
   }
@@ -205,30 +267,43 @@ export function HistoryClient({
 
   return (
     <section className="history-card" aria-busy={pending}>
-      <div className="history-toolbar">
-        <input aria-label={t.search} placeholder={t.search} value={query} disabled={pending} onChange={(event) => setQuery(event.target.value)} />
-        <select aria-label={t.filter} value={filter} disabled={pending} onChange={(event) => setFilter(event.target.value as "all" | "removed")}>
-          <option value="all">{t.all}</option><option value="removed">{t.removed}</option>
+      <div className={`history-toolbar ${styles.toolbar}`}>
+        <input type="search" aria-label={t.search} placeholder={t.search} value={query} disabled={pending} onChange={(event) => { setQuery(event.target.value); setSelected(new Set()); setFeedback(""); }} />
+        <select aria-label={t.filter} value={filter} disabled={pending} onChange={(event) => { setFilter(event.target.value as StatusFilter); setSelected(new Set()); setFeedback(""); }}>
+          <option value="all">{t.all}</option>
+          <option value="active">{t.active}</option>
+          <option value="completed">{t.completedOnly}</option>
+          <option value="cancelled">{t.cancelledOnly}</option>
+          <option value="no_show">{t.missedOnly}</option>
+          <option value="removed">{t.removed}</option>
         </select>
+        <input type="date" aria-label={t.date} value={day} disabled={pending} onChange={(event) => { setDay(event.target.value); setSelected(new Set()); setFeedback(""); }} />
         <select aria-label={t.sort} value={sort} disabled={pending} onChange={(event) => setSort(event.target.value as "newest" | "oldest")}>
           <option value="newest">{t.newest}</option><option value="oldest">{t.oldest}</option>
         </select>
       </div>
+      <div className={styles.summary}>
+        <span role="status" aria-live="polite">{t.count.replace("{shown}", localizeDigits(visibleRows.length, locale)).replace("{total}", localizeDigits(rows.length, locale))}</span>
+        {hasFilters ? <button type="button" className={styles.clearFilters} disabled={pending} onClick={resetFilters}>{t.clearFilters}</button> : null}
+      </div>
 
       {canDelete && removableVisible.length > 0 ? (
-        <label className="history-select-all"><input type="checkbox" disabled={pending} checked={allVisibleSelected} onChange={toggleAllVisible} /><span>{t.selectAll}</span></label>
+        <>
+          <label className="history-select-all"><input type="checkbox" disabled={pending} checked={allVisibleSelected} onChange={toggleAllVisible} /><span>{removableVisible.length > DELETE_BATCH_LIMIT ? t.selectBatch : t.selectAll}</span></label>
+          {removableVisible.length > DELETE_BATCH_LIMIT ? <p className={styles.selectionHelp}>{t.selectionLimit}</p> : null}
+        </>
       ) : null}
 
       <div className="history-list">
         {visibleRows.length === 0 ? <div className="history-empty">{t.empty}</div> : visibleRows.map((row) => (
-          <article className={`history-row ${row.removed ? "is-removed" : ""}`} key={row.id}>
+          <article className={`history-row ${styles.row} ${row.removed ? `is-removed ${styles.rowRemoved}` : ""}`} key={row.id}>
             <div className="history-check">
               {canDelete && row.removed ? <input aria-label={`${t.patient}: ${row.patientName}`} type="checkbox" disabled={pending} checked={selected.has(row.id)} onChange={() => toggle(row.id)} /> : <span className="history-check-spacer" />}
             </div>
-            <div className="history-patient"><strong data-atlas-user-content="true">{row.patientName}</strong><span dir="ltr">{row.patientPhone}</span></div>
-            <div><span className="history-label">{t.doctor}</span><strong data-atlas-user-content="true">{row.doctorName}</strong></div>
-            <div><span className="history-label">{t.time}</span><strong>{row.displayTime}</strong></div>
-            <div className="history-status"><span className={`status status-${row.removed ? "cancelled" : row.status}`}>{row.removed ? t.removedLabel : statusLabels[locale][row.status] ?? row.status}</span></div>
+            <div className="history-patient"><strong className={styles.patientName} dir="auto" data-atlas-user-content="true">{row.patientName}</strong><span dir="ltr">{row.patientPhone}</span></div>
+            <div><span className="history-label">{t.doctor}</span><strong className={styles.detail} dir="auto" data-atlas-user-content="true">{row.doctorName}</strong></div>
+            <div><span className="history-label">{t.time}</span><strong className={styles.detail} dir="auto">{row.displayTime}</strong></div>
+            <div className="history-status"><span className={`status ${styles.badge} ${row.removed ? styles.removed : row.status === "completed" ? styles.completed : row.status === "cancelled" ? styles.cancelled : row.status === "no_show" ? styles.missed : row.status === "pending" || row.status === "confirmed" ? styles.active : styles.other}`}>{row.removed ? t.removedLabel : statusLabels[locale][row.status] ?? row.status}</span></div>
           </article>
         ))}
       </div>
