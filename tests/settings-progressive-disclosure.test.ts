@@ -18,7 +18,7 @@ test("doctor management is compact for larger clinics without hiding Add doctor"
 
 test("rarely used owner operations remain inside owner-only administration", () => {
   const adminStart = settings.indexOf('{isOwner ? (');
-  const adminEnd = settings.indexOf('        ) : null}\\n\\n        <section className="settings-card">', adminStart);
+  const adminEnd = settings.indexOf('        <section className="settings-card">', adminStart);
   assert.ok(adminStart >= 0 && adminEnd > adminStart);
   const section = settings.slice(adminStart, adminEnd);
   assert.match(section, /href=\{\`\/dashboard\/staff\?clinic=\$\{clinic\.id\}\`\}/);
