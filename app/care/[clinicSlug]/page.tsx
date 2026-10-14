@@ -272,7 +272,7 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
             {phone ? (
               <div>
                 <dt>{copy.contact}</dt>
-                <dd><a href={`tel:${clinic.public_phone}`} dir="ltr"><bdi>{phone}</bdi></a></dd>
+                <dd><a href={`tel:${clinic.public_phone}`} dir="ltr">{phone}</a></dd>
               </div>
             ) : null}
           </dl>
