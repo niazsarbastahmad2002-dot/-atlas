@@ -482,6 +482,16 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-empty p,.patient-account-not-ready p{margin:0;line-height:1.55}
           .patient-account-login-card,.patient-account-login-form{display:grid;gap:14px}.patient-account-login-form label{display:grid;gap:6px}.patient-account-login-form label>span{font-size:12px;font-weight:800}.patient-account-login-form label small{color:var(--muted);font-size:10.5px;line-height:1.5}
           .patient-account-code-heading{display:grid;gap:6px}.patient-account-code-heading p{margin:0;color:var(--muted);font-size:12px}.patient-account-login-actions{display:flex;gap:8px;flex-wrap:wrap}
+          .patient-account-verification-why{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft);color:var(--ink);font-size:13px;line-height:1.65}
+          .patient-account-login-form{min-width:0}.patient-account-login-form input[type="tel"]{min-height:52px;font-size:16px}
+          .patient-account-primary-action{width:100%;min-height:52px}
+          .patient-account-code-heading>strong{font-size:clamp(19px,2.7vw,24px);line-height:1.4}
+          .patient-account-code-heading bdi{display:inline-block;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+          .patient-account-code-tip,.patient-account-code-cooldown,.patient-account-progress,.patient-account-privacy{margin:0;font-size:12px;line-height:1.6}
+          .patient-account-code-tip,.patient-account-code-cooldown{color:var(--muted)}.patient-account-progress{color:var(--accent);font-weight:800}
+          .patient-account-login-actions button{min-height:48px}
+          @media(max-width:520px){.patient-account-login-actions{display:grid;grid-template-columns:1fr}.patient-account-login-actions button{width:100%}}
+
           @media(max-width:620px){.patient-account-appointment{grid-template-columns:1fr}.patient-account-manage{width:100%}}
 
           /* Patient visit hub — readable statuses and one obvious next appointment. */
