@@ -2,7 +2,7 @@ import Link from "next/link";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
 import { redirect } from "next/navigation";
 import { isUuid } from "@/lib/appointments";
-import { formatBaghdadDateTime, type UiLocale } from "@/lib/i18n/ui";
+import { formatBaghdadDateTime, formatBaghdadDay, type UiLocale } from "@/lib/i18n/ui";
 import { localizeDigits } from "@/lib/i18n/format";
 import { getUiLocale } from "@/lib/i18n/ui-server";
 import { createClient } from "@/lib/supabase/server";
@@ -264,7 +264,6 @@ export default async function ActivityPage({ searchParams }: Props) {
   const filter: ActivityFilter = params.type === "appointments" || params.type === "smart_fill" || params.type === "staff" ? params.type : "all";
   const direction = uiLocaleMeta[locale].direction;
   const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baghdad", year: "numeric", month: "2-digit", day: "2-digit" });
-  const dayLabelFormatter = new Intl.DateTimeFormat(uiLocaleMeta[locale].dateLocale, { timeZone: "Asia/Baghdad", weekday: "long", month: "short", day: "numeric", year: "numeric" });
   const transitionArrow = locale === "en" ? "→" : "←";
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -390,7 +389,7 @@ export default async function ActivityPage({ searchParams }: Props) {
 
           return (
             <div className="activity-entry" key={event.id}>
-              {dayKey !== previousDay ? <h2 className="activity-day">{dayLabelFormatter.format(occurredDate)}</h2> : null}
+              {dayKey !== previousDay ? <h2 className="activity-day">{formatBaghdadDay(occurredDate, locale)}</h2> : null}
               <article className={event.action === "voided" || (event.action === "status_changed" && event.to_status === "cancelled") ? "activity-row activity-row-cancelled" : "activity-row"}>
               <div className="activity-main">
                 <strong>{eventLabel(event.action, event.to_status, locale)}</strong>
