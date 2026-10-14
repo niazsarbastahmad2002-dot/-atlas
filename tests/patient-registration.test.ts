@@ -29,6 +29,9 @@ test("standalone registration uses existing verified patient-account flow only",
   assert.match(page, /signupAvailable \? \(/);
   assert.match(page, /<PatientAccountLoginForm/);
   assert.match(page, /allowSignup=\{true\}/);
+  assert.match(page, /registration=\{true\}/);
+  assert.match(form, /registration \? t\.register : t\.send/);
+  assert.match(form, /registration \? t\.verifyRegister : t\.verify/);
   assert.match(form, /shouldCreateUser: allowSignup/);
   assert.match(form, /signInWithOtp\(/);
   assert.match(form, /verifyOtp\(/);
