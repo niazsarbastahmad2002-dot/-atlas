@@ -42,6 +42,8 @@ const careCopy: Record<UiLocale, {
   browseClinics: string;
   browseLocations: string;
   browsePagesLabel: string;
+  complaintAction: string;
+  complaintHelp: string;
   viewClinic: string;
   availableSoon: string;
   allDoctors: string;
@@ -81,6 +83,8 @@ const careCopy: Record<UiLocale, {
     browseClinics: "Explore clinics",
     browseLocations: "Browse cities",
     browsePagesLabel: "Explore more",
+    complaintAction: "Not sure which doctor you need?",
+    complaintHelp: "Start with a symptom. Atlas can show possible specialties without diagnosing.",
     viewClinic: "View clinic",
     availableSoon: "Available soon",
     allDoctors: "All doctors",
@@ -120,6 +124,8 @@ const careCopy: Record<UiLocale, {
     browseClinics: "کلینیکەکان",
     browseLocations: "شارەکان",
     browsePagesLabel: "گەڕان بە پێی",
+    complaintAction: "نازانیت کام دکتۆرت پێویستە؟",
+    complaintHelp: "بە کێشەکەت دەست پێ بکە و پسپۆڕییە گونجاوەکان ببینە، بەبێ دەستنیشانکردنی نەخۆشی.",
     viewClinic: "بینینی کلینیک",
     availableSoon: "نزیکترین کاتی بەردەست",
     allDoctors: "هەموو دکتۆرەکان",
@@ -159,6 +165,8 @@ const careCopy: Record<UiLocale, {
     browseClinics: "کلینیکان ببینە",
     browseLocations: "باژێران ببینە",
     browsePagesLabel: "گەڕانا پتر",
+    complaintAction: "نەزانی کام دکتۆر پێدڤییە؟",
+    complaintHelp: "ب ئاریشەیا خۆ دەست پێ بکە و تایبەتمەندیێن گونجای ببینە، نە بۆ دەستنیشانکرنا نەخۆشییێ.",
     viewClinic: "دیتنا کلینیکێ",
     availableSoon: "دەمەکێ نێزیک بەردەستە",
     allDoctors: "هەمی دکتۆر",
@@ -198,6 +206,8 @@ const careCopy: Record<UiLocale, {
     browseClinics: "العيادات",
     browseLocations: "المدن",
     browsePagesLabel: "تصفّح أكثر",
+    complaintAction: "ما تعرف أي دكتور تحتاج؟",
+    complaintHelp: "ابدأ بالمشكلة اللي عندك وشوف اختصاصات ممكن تناسبك، بدون تشخيص.",
     viewClinic: "عرض العيادة",
     availableSoon: "متاح قريباً",
     allDoctors: "كل الأطباء",
@@ -344,6 +354,15 @@ export default async function CarePage({ searchParams }: CarePageProps) {
             </div>
           </aside>
         </div>
+        <section className="atlas-care-complaint-entry" aria-label={copy.complaintAction}>
+          <div>
+            <h2>{copy.complaintAction}</h2>
+            <p>{copy.complaintHelp}</p>
+          </div>
+          <Link className="button atlas-care-complaint-link" href={patientLocaleHref("/care/complaints", locale)}>
+            {copy.complaintAction} <span aria-hidden="true">›</span>
+          </Link>
+        </section>
         <nav className="atlas-care-more-pages" aria-label={copy.browsePagesLabel}>
           <span>{copy.browsePagesLabel}</span>
           <Link href={patientLocaleHref("/explore/clinics", locale)}>{copy.browseClinics}<span aria-hidden="true">›</span></Link>
@@ -695,6 +714,11 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           :root[data-theme="system"] .atlas-care-journey-steps>div,:root[data-theme="system"] .atlas-care-journey-steps strong{color:#fff!important}
         }
 
+        .atlas-care-complaint-entry{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:19px;padding:clamp(16px,2.4vw,23px);background:var(--surface);border:1px solid var(--line);border-radius:19px;box-shadow:var(--shadow-sm)}
+        .atlas-care-complaint-entry h2{margin:0 0 6px;color:var(--ink);font-size:clamp(17px,2.1vw,22px)}
+        .atlas-care-complaint-entry p{max-width:660px;margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+        .atlas-care-complaint-link{display:inline-flex;align-items:center;justify-content:center;gap:10px;flex:none;max-width:280px;min-height:52px;padding-inline:16px;text-align:center;text-decoration:none}
+        @media(max-width:650px){.atlas-care-complaint-entry{flex-direction:column;align-items:stretch}.atlas-care-complaint-link{max-width:none;width:100%}}
         .atlas-care-more-pages{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:20px 0 6px}
         .atlas-care-more-pages>span{font-size:12px;color:var(--muted);font-weight:800;margin-inline-end:3px}
         .atlas-care-more-pages>a{display:inline-flex;align-items:center;justify-content:space-between;gap:14px;min-height:48px;padding:10px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px;font-weight:800}
