@@ -202,15 +202,14 @@ export function AtlasAiClient({ clinicId, clinicName, locale }: AtlasAiClientPro
 
   async function askAtlas(value:string,fromLiveVoice=false){
     const nextQuestion=value.trim(); if(nextQuestion.length<2||loadingRef.current) return null; setLoadingValue(true); setError(null); if(fromLiveVoice) setVoiceStage("thinking");
-    const userMessage:ChatMessage={id:makeId(),role:"user",content:nextQuestion}; const requestHistory=[...messagesRef.current,userMessage].slice(-14); messagesRef.current=requestHistory; setMessages(requestHistory); setQuestion("");
+    const userMessage:ChatMessage={id:makeId(),role:"user",content:nextQuestion}; const previousMessages=messagesRef.current; const requestHistory=[...previousMessages,userMessage].slice(-14); messagesRef.current=requestHistory; setMessages(requestHistory); setQuestion("");
     try{
       const response=await fetch("/api/atlas-ai",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({clinicId,locale,interaction:fromLiveVoice?"voice":"text",messages:requestHistory.map(({role,content})=>({role,content}))})});
       const payload=await response.json() as {answer?:string;error?:string;mode?:"model"|"atlas_core"}; if(!response.ok||!payload.answer){ if(payload.error==="rate_limited"||payload.error==="ai_busy") throw new Error("busy"); throw new Error("failed"); }
       const assistantMessage:ChatMessage={id:makeId(),role:"assistant",content:payload.answer,mode:payload.mode}; const nextMessages=[...messagesRef.current,assistantMessage].slice(-14); messagesRef.current=nextMessages; setMessages(nextMessages); setLoadingValue(false); if(fromLiveVoice&&liveVoiceRef.current) await speakAnswer(payload.answer,true); else setVoiceStage("idle"); return payload.answer;
      }catch(caught){ const code=caught instanceof Error?caught.message:"failed"; const message=code==="busy"?t.busy:t.error;
-      // Leave the failed question editable, without a duplicate turn on retry.
-      const restored=messagesRef.current.filter(item=>item.id!==userMessage.id);
-      messagesRef.current=restored; setMessages(restored); setQuestion(nextQuestion);
+      // Restore the full pre-request history (including the oldest turn if the 14-message window clipped it).
+      messagesRef.current=previousMessages; setMessages(previousMessages); setQuestion(nextQuestion);
       setError(message); if(fromLiveVoice) setVoiceError(message); setVoiceStage("idle"); return null; }
     finally{ setLoadingValue(false); }
   }
