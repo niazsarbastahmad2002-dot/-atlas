@@ -232,6 +232,14 @@ export default async function PatientRegistrationPage({ searchParams }: Registra
         .patient-register-unavailable p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
         .patient-register-links{display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
         .patient-register-links a{color:var(--accent);font-size:12px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+        .patient-register-panel .patient-account-login-card,.patient-register-panel .patient-account-login-form{display:grid;gap:14px}
+        .patient-register-panel .patient-account-login-form label{display:grid;gap:6px}
+        .patient-register-panel .patient-account-login-form label>span{font-size:12px;font-weight:800}
+        .patient-register-panel .patient-account-login-form label small{color:var(--muted);font-size:11px;line-height:1.6}
+        .patient-register-panel .patient-account-code-heading{display:grid;gap:6px}
+        .patient-register-panel .patient-account-code-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+        .patient-register-panel .patient-account-login-actions{display:flex;flex-wrap:wrap;gap:8px}
+        .patient-register-panel .patient-account-login-card>.quiet{font-size:11px;line-height:1.6}
         .patient-register-panel .patient-account-login-form input{width:100%;min-height:48px}
         .patient-register-panel .patient-account-login-form>.button{min-height:48px;width:100%}
         [dir="rtl"] .patient-register-header h1{letter-spacing:0}
