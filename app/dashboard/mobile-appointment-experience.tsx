@@ -173,6 +173,9 @@ export function MobileAppointmentExperience({ locale }: { locale: UiLocale }) {
       const phoneDigits = normalizePhone(query);
       const phoneTooShort = mode === "phone" && phoneDigits.length < MIN_PHONE_SEARCH_DIGITS;
       const activeFilter = mode === "name" ? Boolean(nameQuery) : mode === "phone" && !phoneTooShort;
+      // A patient search hides unmatched cards, so hour shortcuts would have stale targets.
+      // Restore navigation as soon as the complete schedule is visible again.
+      panel.querySelector<HTMLElement>(".schedule-hour-nav")?.toggleAttribute("hidden", activeFilter);
       const rows = Array.from(list.querySelectorAll<HTMLElement>(".appointment-row"));
 
       const scored = rows.map((row) => {
