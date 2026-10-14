@@ -91,11 +91,11 @@ const copy: Record<UiLocale, {
     doctorUnavailable: "That doctor is unavailable for public booking settings.",
     saveFailed: "The availability settings could not be saved.",
     timezone: "Times use Erbil / Baghdad local time.",
-    inactiveHelp: "Days switched off are not offered online. Their saved hours are kept for later.",
+    inactiveHelp: "After saving, days switched off are not offered online. Their saved hours are kept for later.",
     dayOn: "On",
     dayOff: "Off",
     invalidRange: "{day}: end time must be later than start time.",
-    configuredDays: "Days on: {count} of 7",
+    configuredDays: "Saved days on: {count} of 7",
     noDoctors: "No active doctors are available to configure yet.",
     noClosedDates: "No upcoming closed dates.",
     weekdays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
@@ -130,11 +130,11 @@ const copy: Record<UiLocale, {
     doctorUnavailable: "ئەم پزیشکە بۆ ڕێکخستنی مەوعیدی گشتی بەردەست نییە.",
     saveFailed: "ڕێکخستنەکان پاشەکەوت نەکران.",
     timezone: "کاتەکان بە کاتی هەولێر / بەغدا دیاری دەکرێن.",
-    inactiveHelp: "ڕۆژە ناچالاکەکان بۆ مەوعیدی ئۆنلاین پیشان نادرێن. کاتە هەڵگیراوەکانیان بۆ دواتر دەمێننەوە.",
+    inactiveHelp: "دوای پاشەکەوتکردن، ڕۆژە ناچالاکەکان بۆ مەوعیدی ئۆنلاین پیشان نادرێن. کاتە هەڵگیراوەکانیان بۆ دواتر دەمێننەوە.",
     dayOn: "چالاک",
     dayOff: "ناچالاک",
     invalidRange: "لە {day}، کاتی کۆتایی دەبێت دوای کاتی دەستپێک بێت.",
-    configuredDays: "ڕۆژە چالاکەکان: {count} لە ٧",
+    configuredDays: "ڕۆژە پاشەکەوتکراوە چالاکەکان: {count} لە ٧",
     noDoctors: "هێشتا هیچ پزیشکێکی چالاک نییە بۆ ڕێکخستنی کاتەکان.",
     noClosedDates: "هیچ ڕۆژێکی داخراوی داهاتوو نییە.",
     weekdays: ["یەکشەممە", "دووشەممە", "سێشەممە", "چوارشەممە", "پێنجشەممە", "هەینی", "شەممە"],
@@ -169,11 +169,11 @@ const copy: Record<UiLocale, {
     doctorUnavailable: "ئەڤ دکتۆرە بۆ ڕێکخستنا وادەیا گشتی بەردەست نینە.",
     saveFailed: "ڕێکخستن نەهاتنە پاراستن.",
     timezone: "دەم ب دەمژمێرا هەولێر / بەغدا دێتە دیارکرن.",
-    inactiveHelp: "ڕۆژێن ناچالاک بۆ وادەیێ ئۆنلاین ناهێنە نیشاندان. دەمێن وان بۆ پاشەڕۆژێ دمینن.",
+    inactiveHelp: "پشتی پاراستنێ، ڕۆژێن ناچالاک بۆ وادەیێ ئۆنلاین ناهێنە نیشاندان. دەمێن وان بۆ پاشەڕۆژێ دمینن.",
     dayOn: "چالاک",
     dayOff: "ناچالاک",
     invalidRange: "ل {day}، دەمێ دوماهیکێ پێدڤیە پشتی دەمێ دەستپێکێ بیت.",
-    configuredDays: "ڕۆژێن چالاک: {count} ژ ٧",
+    configuredDays: "ڕۆژێن پاراستی یێن چالاک: {count} ژ ٧",
     noDoctors: "هێشتا چ دکتۆرێن چالاک نینن بۆ ڕێکخستنا دەمان.",
     noClosedDates: "چ ڕۆژێن گرتی یێن داهاتی نینن.",
     weekdays: ["ئێکشەمبی", "دووشەمبی", "سێشەمبی", "چوارشەمبی", "پێنجشەمبی", "ئەینی", "شەمبی"],
@@ -208,11 +208,11 @@ const copy: Record<UiLocale, {
     doctorUnavailable: "هذا الطبيب غير متاح لإعدادات الحجز العام.",
     saveFailed: "تعذر حفظ إعدادات التوفر.",
     timezone: "تُعرض الأوقات بالتوقيت المحلي لأربيل / بغداد.",
-    inactiveHelp: "الأيام المتوقفة لا تظهر للحجز العام، وتُحفظ ساعاتها لاستخدامها لاحقاً.",
+    inactiveHelp: "بعد الحفظ، الأيام المتوقفة لا تظهر للحجز العام، وتُحفظ ساعاتها لاستخدامها لاحقاً.",
     dayOn: "مفعّل",
     dayOff: "متوقف",
     invalidRange: "في {day} يجب أن يكون وقت الانتهاء بعد وقت البدء.",
-    configuredDays: "الأيام المفعّلة: {count} من ٧",
+    configuredDays: "الأيام المفعّلة المحفوظة: {count} من ٧",
     noDoctors: "لا يوجد أطباء نشطون لضبط ساعاتهم حالياً.",
     noClosedDates: "لا توجد تواريخ مغلقة قادمة.",
     weekdays: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
@@ -386,8 +386,8 @@ export default async function AvailabilitySettings({ searchParams }: Availabilit
         .public-booking-toggle span{display:grid;gap:4px}
         .public-booking-toggle strong{color:var(--ink)}
         .public-booking-doctors{display:grid;gap:10px}
-        .public-booking-doctor>summary{font-weight:850;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-        .public-booking-doctor>summary small{color:var(--muted);font-size:11px;font-weight:650}
+        .public-booking-doctor>summary{font-weight:850;display:list-item}
+        .public-booking-doctor>summary small{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-weight:650}
         .public-booking-hours-heading,.public-booking-closed>div:first-child{display:grid;gap:4px;margin:12px 0}
         .public-booking-hours-heading span,.public-booking-closed>div:first-child span{color:var(--muted);font-size:12px;line-height:1.55}
         .public-booking-week{display:grid;gap:8px}
