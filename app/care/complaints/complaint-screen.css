@@ -44,6 +44,8 @@
 .atlas-complaint-specialty>span{font-size:12px;font-weight:760;color:var(--muted)}
 .atlas-complaint-specialty h2{font-size:clamp(18px,2vw,25px);line-height:1.45;overflow-wrap:anywhere;margin:0;color:var(--ink)}
 .atlas-complaint-specialty>a{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;margin-top:auto;text-decoration:none}
+.atlas-complaint-provider-note{margin:0;color:var(--muted);font-size:12px;line-height:1.7}
+.atlas-complaint-provider-link{gap:8px;white-space:normal;overflow-wrap:anywhere}
 .atlas-complaint-text-button{display:block;min-height:46px;margin-top:20px;border:0;background:transparent;color:var(--accent);text-decoration:underline;text-underline-offset:4px;font-size:13px;font-weight:850;cursor:pointer}
 .atlas-complaint-safety{display:grid;gap:6px;max-width:900px;padding:20px;margin:20px 0;border:1px solid var(--line);border-radius:16px;background:var(--surface-soft);font-size:12px;line-height:1.75;color:var(--muted)}
 .atlas-complaint-safety strong{font-size:13px;color:var(--ink)}
