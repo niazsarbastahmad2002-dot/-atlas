@@ -51,5 +51,8 @@ test("availability page retains read-only public RPC with explicit error and emp
   assert.match(page, /t\.noTimesHelp/);
   assert.match(page, /t\.unreserved/);
   assert.match(page, /tel:/);
-  assert.doesNotMatch(page, /ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED|\/book\b|PatientBookingForm|getAtlasAuthReadiness/);
+  assert.match(page, /ATLAS_PUBLIC_PATIENT_BOOKING_ENABLED === "true"/);
+  assert.match(page, /readiness\.supabasePhoneEnabled/);
+  assert.match(page, /group\.slots\.map\(\(slot\) => bookingReady \? \(/);
+  assert.doesNotMatch(page, /PatientBookingForm/);
 });
