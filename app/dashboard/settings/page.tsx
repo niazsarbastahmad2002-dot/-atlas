@@ -439,31 +439,31 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 <summary>{copy.manageDoctors} ({localizeDigits(activeDoctors.length, locale)})</summary>
                 <div className="doctor-settings-list">
                   {activeDoctors.map((doctor, index) => (
-                <article className="doctor-settings-row" key={doctor.id}>
-                  <form action={updateDoctor} className="doctor-name-form">
-                    <input type="hidden" name="clinic_id" value={clinic.id} />
-                    <input type="hidden" name="doctor_id" value={doctor.id} />
-                    <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
-                    <PendingTextInput id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
-                    <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
-                  </form>
-                  <div className="doctor-row-meta">
-                    <span>{t.doctorAvailable}</span>
-                    <div className="compact-actions">
-                      {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveUp}</SubmitButton></form> : null}
-                      {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveDown}</SubmitButton></form> : null}
-                      <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}>
-                        <ConfirmSubmitButton
-                          className="danger-link"
-                          pendingLabel={t.saving}
-                          confirmMessage={copy.archiveDoctorConfirm.replace("{doctor}", doctor.name)}
-                        >
-                          {t.archive}
-                        </ConfirmSubmitButton>
+                    <article className="doctor-settings-row" key={doctor.id}>
+                      <form action={updateDoctor} className="doctor-name-form">
+                        <input type="hidden" name="clinic_id" value={clinic.id} />
+                        <input type="hidden" name="doctor_id" value={doctor.id} />
+                        <label className="sr-only" htmlFor={`doctor-${doctor.id}`}>{t.doctorName}</label>
+                        <PendingTextInput id={`doctor-${doctor.id}`} name="doctor_name" defaultValue={doctor.name} minLength={2} maxLength={120} required />
+                        <SubmitButton pendingLabel={t.saving}>{t.saveName}</SubmitButton>
                       </form>
-                    </div>
-                  </div>
-                </article>
+                      <div className="doctor-row-meta">
+                        <span>{t.doctorAvailable}</span>
+                        <div className="compact-actions">
+                          {index > 0 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "up")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveUp}</SubmitButton></form> : null}
+                          {index < activeDoctors.length - 1 ? <form action={moveDoctor.bind(null, clinic.id, doctor.id, "down")}><SubmitButton className="" pendingLabel={t.saving}>{t.moveDown}</SubmitButton></form> : null}
+                          <form action={setDoctorActive.bind(null, clinic.id, doctor.id, false)}>
+                            <ConfirmSubmitButton
+                              className="danger-link"
+                              pendingLabel={t.saving}
+                              confirmMessage={copy.archiveDoctorConfirm.replace("{doctor}", doctor.name)}
+                            >
+                              {t.archive}
+                            </ConfirmSubmitButton>
+                          </form>
+                        </div>
+                      </div>
+                    </article>
                   ))}
                 </div>
               </details>
@@ -502,30 +502,30 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 <summary>{copy.moreAdminTools}</summary>
                 <div className="settings-link-list">
                   <div className="settings-export-group">
-                <form className="settings-export-form" action="/api/clinic-export" method="post" target="_blank">
-                  <input type="hidden" name="clinic_id" value={clinic.id} />
-                  <input type="hidden" name="format" value="html" />
-                  <button className="settings-link settings-export-button" type="submit">
-                    <span className="settings-export-copy"><strong>{copy.exportReadable}</strong><small>{copy.exportReadableHelp}</small></span>
-                    <span aria-hidden="true">↗</span>
-                  </button>
-                </form>
-                <form className="settings-export-form" action="/api/clinic-export" method="post">
-                  <input type="hidden" name="clinic_id" value={clinic.id} />
-                  <input type="hidden" name="format" value="csv" />
-                  <button className="settings-link settings-export-button" type="submit">
-                    <span className="settings-export-copy"><strong>{copy.exportCsv}</strong><small>{copy.exportCsvHelp}</small></span>
-                    <span aria-hidden="true">↓</span>
-                  </button>
-                </form>
-                <form className="settings-export-form" action="/api/clinic-export" method="post">
-                  <input type="hidden" name="clinic_id" value={clinic.id} />
-                  <input type="hidden" name="format" value="json" />
-                  <button className="settings-link settings-export-button" type="submit">
-                    <span className="settings-export-copy"><strong>{copy.exportJson}</strong><small>{copy.exportJsonHelp}</small></span>
-                    <span aria-hidden="true">↓</span>
-                  </button>
-                </form>
+                    <form className="settings-export-form" action="/api/clinic-export" method="post" target="_blank">
+                      <input type="hidden" name="clinic_id" value={clinic.id} />
+                      <input type="hidden" name="format" value="html" />
+                      <button className="settings-link settings-export-button" type="submit">
+                        <span className="settings-export-copy"><strong>{copy.exportReadable}</strong><small>{copy.exportReadableHelp}</small></span>
+                        <span aria-hidden="true">↗</span>
+                      </button>
+                    </form>
+                    <form className="settings-export-form" action="/api/clinic-export" method="post">
+                      <input type="hidden" name="clinic_id" value={clinic.id} />
+                      <input type="hidden" name="format" value="csv" />
+                      <button className="settings-link settings-export-button" type="submit">
+                        <span className="settings-export-copy"><strong>{copy.exportCsv}</strong><small>{copy.exportCsvHelp}</small></span>
+                        <span aria-hidden="true">↓</span>
+                      </button>
+                    </form>
+                    <form className="settings-export-form" action="/api/clinic-export" method="post">
+                      <input type="hidden" name="clinic_id" value={clinic.id} />
+                      <input type="hidden" name="format" value="json" />
+                      <button className="settings-link settings-export-button" type="submit">
+                        <span className="settings-export-copy"><strong>{copy.exportJson}</strong><small>{copy.exportJsonHelp}</small></span>
+                        <span aria-hidden="true">↓</span>
+                      </button>
+                    </form>
               </div>
                   <Link className="settings-link danger-link" href={`/dashboard/settings/delete?clinic=${clinic.id}`}><span>{copy.deleteClinic}</span><span aria-hidden="true">{actionArrow}</span></Link>
                 </div>
