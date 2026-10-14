@@ -44,4 +44,6 @@ test("history visual enhancements remain scoped and protect mixed-script content
   assert.match(client, /dir="ltr">\{row\.patientPhone\}/);
   assert.match(styles, /@media \(max-width: 720px\)/);
   assert.match(styles, /\.removed\s*\{/);
+  assert.match(styles, /:global\(:root\[data-theme="dark"\]\) \.badge\.missed/);
+  assert.match(styles, /:global\(:root\[data-theme="dark"\]\) \.badge\.removed/);
 });
