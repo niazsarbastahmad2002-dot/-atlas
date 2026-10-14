@@ -65,6 +65,13 @@
 .active { color: #1a586f; background: #e7f3f8; }
 .other { color: var(--muted); background: var(--surface-2, #f1f3f2); }
 .selectionHelp { margin: 0 2px 12px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+/* Atlas's global dark .status rule uses !important. Override within history only. */
+:global(:root[data-theme="dark"]) .badge.completed { color: #98e7bd !important; background: #12372a !important; }
+:global(:root[data-theme="dark"]) .badge.cancelled { color: #ffb4b0 !important; background: #3b2022 !important; }
+:global(:root[data-theme="dark"]) .badge.missed { color: #ffcf94 !important; background: #49301c !important; }
+:global(:root[data-theme="dark"]) .badge.removed { color: #ffe0ae !important; background: #4c3825 !important; border-color: #b48b50; }
+:global(:root[data-theme="dark"]) .badge.active { color: #a8dafa !important; background: #193748 !important; }
+:global(:root[data-theme="dark"]) .badge.other { color: #c9d2cf !important; background: #303b37 !important; }
 @media (max-width: 1000px) {
   .toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .toolbar > input:first-child { grid-column: 1 / -1; }
