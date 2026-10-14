@@ -188,6 +188,7 @@ export default async function PatientRegistrationPage({ searchParams }: Registra
                   locale={locale}
                   ready={true}
                   allowSignup={true}
+                  registration={true}
                   whatsappOtpEnabled={readiness.whatsappOtpEnabled}
                 />
               </>
