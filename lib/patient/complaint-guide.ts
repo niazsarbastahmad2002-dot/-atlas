@@ -149,3 +149,29 @@ export function searchComplaints(text: string, locale: UiLocale) {
   return complaints.filter((entry) => [entry.name[locale], entry.keywords[locale], entry.name.en, entry.keywords.en]
     .some((value) => value.toLocaleLowerCase().includes(q)));
 }
+
+
+// Only labels actually returned by the existing publication-gated public
+// directory may ever become specialty-filter links. These aliases do NOT
+// create provider records, and the current directory preview is bounded.
+const specialtyAliases: Record<SpecialtyKey, readonly string[]> = {
+  "general-medicine": ["General Medicine", "General Practice", "Family Medicine", "Family Physician", "الطب العام", "طب الأسرة", "پزیشکی گشتی"],
+  neurology: ["Neurology", "Neurologist", "طب الأعصاب", "نەخۆشییەکانی دەمار"],
+  orthopedics: ["Orthopedics", "Orthopaedics", "Orthopedic Surgery", "Orthopaedic Surgery", "العظام", "جراحة العظام", "ئێسک و جومگە"],
+  dermatology: ["Dermatology", "Dermatologist", "الجلدية", "الأمراض الجلدية", "نەخۆشییەکانی پێست"],
+  ent: ["ENT", "Otolaryngology", "Ear Nose Throat", "الأنف والأذن والحنجرة", "گوێ و لووت و قوڕگ"],
+  ophthalmology: ["Ophthalmology", "Ophthalmologist", "Eye", "طب العيون", "پزیشکی چاو"],
+  gastroenterology: ["Gastroenterology", "Gastroenterologist", "الجهاز الهضمي", "أمراض الجهاز الهضمي"],
+  urology: ["Urology", "Urologist", "المسالك البولية", "میز و گورچیلە"],
+  dentistry: ["Dentistry", "Dentist", "Dental", "طب الأسنان", "پزیشکی ددان"],
+  pediatrics: ["Pediatrics", "Paediatrics", "Pediatrician", "Paediatrician", "طب الأطفال", "پزیشکی منداڵان"],
+};
+
+function normalizeSpecialty(value: string) {
+  return value.trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+}
+
+export function matchingPublishedSpecialties(key: SpecialtyKey, published: readonly string[]) {
+  const allowed = new Set(specialtyAliases[key].map(normalizeSpecialty));
+  return Array.from(new Set(published.filter((value) => allowed.has(normalizeSpecialty(value))))).slice(0, 4);
+}
