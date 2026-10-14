@@ -354,7 +354,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
             </div>
           </aside>
         </div>
-        <section className="atlas-care-complaint-entry" aria-label={copy.complaintAction}>
+        {process.env.ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED === "true" ? <section className="atlas-care-complaint-entry" aria-label={copy.complaintAction}>
           <div>
             <h2>{copy.complaintAction}</h2>
             <p>{copy.complaintHelp}</p>
@@ -362,7 +362,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           <Link className="button atlas-care-complaint-link" href={patientLocaleHref("/care/complaints", locale)}>
             {copy.complaintAction} <span aria-hidden="true">›</span>
           </Link>
-        </section>
+        </section> : null}
         <nav className="atlas-care-more-pages" aria-label={copy.browsePagesLabel}>
           <span>{copy.browsePagesLabel}</span>
           <Link href={patientLocaleHref("/explore/clinics", locale)}>{copy.browseClinics}<span aria-hidden="true">›</span></Link>
