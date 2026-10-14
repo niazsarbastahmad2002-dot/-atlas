@@ -1,0 +1,26 @@
+name: Atlas Patient Page 05 Review CI
+
+on:
+  push:
+    branches:
+      - patient/page05-suggested-specialties-oct14
+
+permissions:
+  contents: read
+
+jobs:
+  page05-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout review branch
+        uses: actions/checkout@v4
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck, tests and production-build validation only
+        run: npm run check
