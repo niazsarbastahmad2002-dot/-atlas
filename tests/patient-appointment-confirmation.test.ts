@@ -68,7 +68,7 @@ test("confirmation returns to existing appointment management and My appointment
   assert.match(confirmation, /\/patient-account\?lang=\$\{locale\}/);
   assert.match(confirmation, /<AtlasPatientNav/);
   assert.match(confirmation, /params\.set\("view", "confirmation"\)/);
-  assert.match(confirmation, /if \(accountMarker\) params\.set\("account", accountMarker"\)/);
+  assert.match(confirmation, /if \(accountMarker\) params\.set\("account", accountMarker\)/);
   assert.doesNotMatch(confirmation, /cancel|reschedule|signInWithOtp|sendOtp|POST\(/i);
 });
 
