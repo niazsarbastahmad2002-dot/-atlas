@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { complaints, findComplaint, searchComplaints, specialtyLabels } from "../lib/patient/complaint-guide.ts";
+import { complaints, findComplaint, searchComplaints, specialtyLabels, matchingPublishedSpecialties } from "../lib/patient/complaint-guide.ts";
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const locales = ["en", "ku", "bd", "ar"] as const;
@@ -31,7 +31,7 @@ test("minimum ten understandable complaints have localized questions and bounded
   }
   for (const specialty of Object.values(specialtyLabels)) {
     for (const locale of locales) assert.ok(specialty.name[locale].trim());
-    assert.ok(specialty.searchTerm.trim());
+
   }
 });
 
@@ -53,10 +53,12 @@ test("three independently named Patient pages exist with noindex until clinical 
     const page = read(file);
     assert.match(page, /robots: \{ index: false, follow: false \}/);
     assert.match(page, /resolvePatientLocale\(query\.lang\)/);
+    assert.match(page, /ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED !== "true"\) notFound\(\)/);
     assert.match(page, /<ComplaintScreen locale=\{locale\} step=/);
   }
   assert.match(read("app/care/complaints/layout.tsx"), /PatientComplaintFlowProvider/);
   assert.match(discovery, /patientLocaleHref\("\/care\/complaints", locale\)/);
+  assert.match(discovery, /ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED === "true"/);
   assert.match(welcome, /href="\/care"/);
   assert.match(welcome, /href="\/dashboard"/);
 });
@@ -68,8 +70,18 @@ test("symptoms remain ephemeral, never logged, uploaded, or entered in URLs", ()
   assert.doesNotMatch(context + screen, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/questions", locale\)\)/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/specialties", locale\)\)/);
-  assert.match(screen, /encodeURIComponent\(specialty\.searchTerm\)/);
+  assert.match(screen, /encodeURIComponent\(name\)/);
+  assert.match(screen, /matchingPublishedSpecialties\(key, publishedSpecialties\)/);
   assert.doesNotMatch(screen, /complaint=|symptom=|redFlag=|duration=|patient_phone/);
+});
+
+test("Only actual published specialty names can form filtered doctor links", () => {
+  assert.deepEqual(matchingPublishedSpecialties("orthopedics", ["Orthopaedic Surgery", "Cardiology"]), ["Orthopaedic Surgery"]);
+  assert.deepEqual(matchingPublishedSpecialties("general-medicine", ["Family Medicine", "Neurology"]), ["Family Medicine"]);
+  assert.deepEqual(matchingPublishedSpecialties("urology", ["Random surgery", "Skin"]), []);
+  assert.match(screen, /matches\.length \? matches\.map/);
+  assert.match(screen, /copy\.noPublishedMatch/);
+  assert.doesNotMatch(screen, /specialty\.searchTerm/);
 });
 
 test("warning-positive or unanswered questions block routine specialist recommendations", () => {
@@ -88,6 +100,11 @@ test("warning-positive or unanswered questions block routine specialist recommen
 test("existing publication gates, booking and Doctor workspace remain unchanged", () => {
   assert.match(discovery, /search_public_doctors_with_availability/);
   assert.match(screen, /\x60\/care\?lang=\$\{locale\}&specialty=/);
+  const providerPage = read("app/care/complaints/specialties/page.tsx");
+  assert.match(providerPage, /search_public_doctors_with_availability/);
+  assert.match(providerPage, /p_limit: 30/);
+  assert.match(providerPage, /p_specialty: null/);
+  assert.doesNotMatch(providerPage, /complaint:|emergencyAnswer|patient_phone|createAdminClient/);
   assert.doesNotMatch(screen, /\/book|appointment\.insert|patient_notes|clinic_members/);
   assert.match(review, /NOT CLINICALLY APPROVED/);
   assert.match(review, /DO NOT MERGE OR DEPLOY/);
