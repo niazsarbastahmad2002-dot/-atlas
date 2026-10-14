@@ -7,6 +7,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 const locales = ["en", "ku", "bd", "ar"] as const;
 const context = read("app/care/complaints/flow-context.tsx");
 const screen = read("app/care/complaints/complaint-screen.tsx");
+const cards = read("app/care/complaints/specialties/suggested-specialty-cards.tsx");
 const copy = read("app/care/complaints/complaint-copy.ts");
 const style = read("app/care/complaints/complaint-screen.css");
 const welcome = read("app/page.tsx");
@@ -67,11 +68,11 @@ test("symptoms remain ephemeral, never logged, uploaded, or entered in URLs", ()
   assert.match(context, /useState<ComplaintId \| null>\(null\)/);
   assert.match(context, /createContext/);
   assert.match(context, /setComplaint\(null\)/);
-  assert.doesNotMatch(context + screen, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
+  assert.doesNotMatch(context + screen + cards, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/questions", locale\)\)/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/specialties", locale\)\)/);
-  assert.match(screen, /encodeURIComponent\(name\)/);
-  assert.match(screen, /matchingPublishedSpecialties\(key, publishedSpecialties\)/);
+  assert.match(cards, /encodeURIComponent\(name\)/);
+  assert.match(cards, /matchingPublishedSpecialties\(key, publishedSpecialties\)/);
   assert.doesNotMatch(screen, /complaint=|symptom=|redFlag=|duration=|patient_phone/);
 });
 
@@ -79,8 +80,8 @@ test("Only actual published specialty names can form filtered doctor links", () 
   assert.deepEqual(matchingPublishedSpecialties("orthopedics", ["Orthopaedic Surgery", "Cardiology"]), ["Orthopaedic Surgery"]);
   assert.deepEqual(matchingPublishedSpecialties("general-medicine", ["Family Medicine", "Neurology"]), ["Family Medicine"]);
   assert.deepEqual(matchingPublishedSpecialties("urology", ["Random surgery", "Skin"]), []);
-  assert.match(screen, /matches\.length \? matches\.map/);
-  assert.match(screen, /copy\.noPublishedMatch/);
+  assert.match(cards, /matches\.length \? matches\.map/);
+  assert.match(cards, /copy\.noPublishedMatch/);
   assert.doesNotMatch(screen, /specialty\.searchTerm/);
 });
 
@@ -99,13 +100,13 @@ test("warning-positive or unanswered questions block routine specialist recommen
 
 test("existing publication gates, booking and Doctor workspace remain unchanged", () => {
   assert.match(discovery, /search_public_doctors_with_availability/);
-  assert.match(screen, /\x60\/care\?lang=\$\{locale\}&specialty=/);
+  assert.match(cards, /\x60\/care\?lang=\$\{locale\}&specialty=/);
   const providerPage = read("app/care/complaints/specialties/page.tsx");
   assert.match(providerPage, /search_public_doctors_with_availability/);
   assert.match(providerPage, /p_limit: 30/);
   assert.match(providerPage, /p_specialty: null/);
   assert.doesNotMatch(providerPage, /complaint:|emergencyAnswer|patient_phone|createAdminClient/);
-  assert.doesNotMatch(screen, /\/book|appointment\.insert|patient_notes|clinic_members/);
+  assert.doesNotMatch(screen + cards, /\/book|appointment\.insert|patient_notes|clinic_members/);
   assert.match(review, /NOT CLINICALLY APPROVED/);
   assert.match(review, /DO NOT MERGE OR DEPLOY/);
   assert.match(review, /MedlinePlus/);
