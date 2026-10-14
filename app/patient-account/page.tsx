@@ -43,6 +43,7 @@ const copy: Record<UiLocale, {
   hello: string;
   upcoming: string;
   history: string;
+  cancelled: string;
   noUpcoming: string;
   noUpcomingHelp: string;
   noAppointments: string;
@@ -74,7 +75,8 @@ const copy: Record<UiLocale, {
     signInTitle: "Sign in to see your appointments",
     hello: "Hello",
     upcoming: "Upcoming",
-    history: "Past & cancelled",
+    history: "Past",
+    cancelled: "Cancelled",
     noUpcoming: "No upcoming appointments.",
     noUpcomingHelp: "Upcoming appointments linked to your patient account will appear here.",
     noAppointments: "No appointments yet.",
@@ -106,7 +108,8 @@ const copy: Record<UiLocale, {
     signInTitle: "بچۆ ژوورەوە بۆ بینینی مەوعیدەکانت",
     hello: "سڵاو",
     upcoming: "مەوعیدە داهاتووەکان",
-    history: "پێشوو و هەڵوەشاوەکان",
+    history: "مەوعیدە پێشووەکان",
+    cancelled: "مەوعیدە هەڵوەشاوەکان",
     noUpcoming: "هیچ مەوعیدێکی داهاتووت نییە.",
     noUpcomingHelp: "مەوعیدە داهاتووەکانی پەیوەست بە هەژمارەکەت لێرە دەردەکەون.",
     noAppointments: "هێشتا هیچ مەوعیدێکت نییە.",
@@ -138,7 +141,8 @@ const copy: Record<UiLocale, {
     signInTitle: "بچۆ ژوور بۆ دیتنا وادەیێن خۆ",
     hello: "سلاڤ",
     upcoming: "وادەیێن داهاتی",
-    history: "یێن بوری و هەلوەشاندی",
+    history: "وادەیێن بوری",
+    cancelled: "وادەیێن هەلوەشاندی",
     noUpcoming: "چ وادەیەکا داهاتی یا تە نینە.",
     noUpcomingHelp: "وادەیێن داهاتی یێن گرێدای هەژمارا تە ل ڤێرێ دیار دبن.",
     noAppointments: "هێشتا چ وادەیەکا تە نینە.",
@@ -170,7 +174,8 @@ const copy: Record<UiLocale, {
     signInTitle: "سجّل الدخول حتى تشوف مواعيدك",
     hello: "أهلاً",
     upcoming: "المواعيد القادمة",
-    history: "السابقة والملغاة",
+    history: "المواعيد السابقة",
+    cancelled: "المواعيد الملغاة",
     noUpcoming: "ما عندك مواعيد جاية.",
     noUpcomingHelp: "إذا صار عندك موعد جاي مرتبط بحسابك، راح يطلع هنا.",
     noAppointments: "ماكو مواعيد لحد الآن.",
@@ -216,6 +221,11 @@ function isUpcomingAppointment(appointment: AccountAppointment, nowMs: number) {
   return Number.isFinite(appointmentMs)
     && appointmentMs >= nowMs
     && (appointment.appointment_status === "pending" || appointment.appointment_status === "confirmed");
+}
+
+function appointmentSortTime(appointment: AccountAppointment) {
+  const value = new Date(appointment.appointment_at).getTime();
+  return Number.isFinite(value) ? value : 0;
 }
 
 function appointmentDate(value: string, locale: UiLocale) {
@@ -265,8 +275,13 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
   }
 
   const nowMs = Date.now();
-  const upcomingAppointments = appointments.filter((appointment) => isUpcomingAppointment(appointment, nowMs));
-  const historyAppointments = appointments.filter((appointment) => !isUpcomingAppointment(appointment, nowMs));
+  const upcomingAppointments = appointments.filter((appointment) => isUpcomingAppointment(appointment, nowMs))
+    .sort((a, b) => appointmentSortTime(a) - appointmentSortTime(b));
+  const historyAppointments = appointments.filter((appointment) =>
+    appointment.appointment_status !== "cancelled" && !isUpcomingAppointment(appointment, nowMs))
+    .sort((a, b) => appointmentSortTime(b) - appointmentSortTime(a));
+  const cancelledAppointments = appointments.filter((appointment) => appointment.appointment_status === "cancelled")
+    .sort((a, b) => appointmentSortTime(b) - appointmentSortTime(a));
 
   const readiness = session ? null : await getAtlasAuthReadiness();
   const signInReady = Boolean(
@@ -336,7 +351,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
             </div>
 
             <section className="patient-account-appointments" aria-label={t.upcoming}>
-              <h2>{t.upcoming}</h2>
+              <h2>{t.upcoming} <span className="patient-account-count">{upcomingAppointments.length}</span></h2>
               {appointmentsFailed ? (
                 <p className="notice notice-error" role="alert">{t.loadFailed}</p>
               ) : appointments.length ? (
@@ -373,9 +388,36 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
 
                   {historyAppointments.length ? (
                     <section className="patient-account-history" aria-label={t.history}>
-                      <h3>{t.history}</h3>
+                      <h3>{t.history} <span className="patient-account-count">{historyAppointments.length}</span></h3>
                       <div className="patient-account-list">
                         {historyAppointments.map((appointment) => (
+                          <article className="patient-account-appointment is-history" key={appointment.appointment_id}>
+                            <div className="patient-account-appointment-main">
+                              <span className="patient-account-status" data-status={appointment.appointment_status}>
+                                {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
+                              </span>
+                              <strong><bdi>{appointment.doctor_name}</bdi></strong>
+                              {appointment.doctor_specialty ? <span><bdi>{appointment.doctor_specialty}</bdi></span> : null}
+                              <span><bdi>{appointment.clinic_name}</bdi></span>
+                              <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
+                            </div>
+                            <form
+                              action={`/patient-account/api/appointments/${appointment.appointment_id}/manage?lang=${locale}`}
+                              method="post"
+                            >
+                              <button className="button button-ghost patient-account-manage" type="submit">{t.view}</button>
+                            </form>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {cancelledAppointments.length ? (
+                    <section className="patient-account-history patient-account-cancelled" aria-label={t.cancelled}>
+                      <h3>{t.cancelled} <span className="patient-account-count">{cancelledAppointments.length}</span></h3>
+                      <div className="patient-account-list">
+                        {cancelledAppointments.map((appointment) => (
                           <article className="patient-account-appointment is-history" key={appointment.appointment_id}>
                             <div className="patient-account-appointment-main">
                               <span className="patient-account-status" data-status={appointment.appointment_status}>
@@ -470,6 +512,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}.patient-account-toolbar form{margin:0}
           .patient-account-appointments h2,.patient-account-signin-title{margin:18px 0 12px;font-size:20px}
           .patient-account-history{margin-top:28px}.patient-account-history h3{margin:0 0 12px;color:var(--muted);font-size:14px}
+          .patient-account-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;min-height:26px;margin-inline-start:6px;padding-inline:7px;border:1px solid var(--line);border-radius:99px;background:var(--surface-soft);color:var(--muted);font-size:12px;font-weight:760;vertical-align:middle}
           .patient-account-list{display:grid;gap:12px}
           .patient-account-appointment{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}.patient-account-appointment.is-history{background:var(--surface)}
           .patient-account-appointment-main{display:grid;gap:5px;min-width:0}
