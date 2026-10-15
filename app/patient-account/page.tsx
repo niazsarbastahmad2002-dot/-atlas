@@ -549,6 +549,16 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-registration-link{margin:0 0 18px;font-size:13px;font-weight:800}
           .patient-account-registration-link a{color:var(--accent);text-underline-offset:3px}
           .patient-account-registration-link a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+          .patient-account-code-heading{display:grid;gap:6px}.patient-account-code-heading p{margin:0;color:var(--muted);font-size:12px}.patient-account-login-actions{display:flex;gap:8px;flex-wrap:wrap}
+          .patient-account-verification-why{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft);color:var(--ink);font-size:13px;line-height:1.65}
+          .patient-account-login-form{min-width:0}.patient-account-login-form input[type="tel"]{min-height:52px;font-size:16px}
+          .patient-account-primary-action{width:100%;min-height:52px}
+          .patient-account-code-heading>strong{font-size:clamp(19px,2.7vw,24px);line-height:1.4}
+          .patient-account-code-heading bdi{display:inline-block;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+          .patient-account-code-tip,.patient-account-code-cooldown,.patient-account-progress,.patient-account-privacy{margin:0;font-size:12px;line-height:1.6}
+          .patient-account-code-tip,.patient-account-code-cooldown{color:var(--muted)}.patient-account-progress{color:var(--accent);font-weight:800}
+          .patient-account-login-actions button{min-height:48px}
+          @media(max-width:520px){.patient-account-login-actions{display:grid;grid-template-columns:1fr}.patient-account-login-actions button{width:100%}}
           .patient-account-hello{font-size:16px}
           .patient-account-profile{display:grid;gap:10px;margin:18px 0 22px;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}
           .patient-account-profile h2{margin:0;font-size:20px}.patient-account-profile>p{margin:0;line-height:1.55}
