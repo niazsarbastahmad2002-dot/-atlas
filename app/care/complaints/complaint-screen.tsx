@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { uiLocaleMeta } from "@/lib/i18n/ui";
-import { findComplaint, searchComplaints, type ComplaintId } from "@/lib/patient/complaint-guide";
+import { complaintCategories, findComplaint, searchComplaints, type ComplaintId } from "@/lib/patient/complaint-guide";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
 import { guideCopy } from "./complaint-copy";
+import { ShortSymptomQuestions } from "./short-symptom-questions";
 import { usePatientComplaintFlow } from "./flow-context";
 import { SuggestedSpecialtyCards } from "./specialties/suggested-specialty-cards";
 import "./complaint-screen.css";
@@ -29,7 +30,7 @@ export function ComplaintScreen({ locale, step, publishedSpecialties = [] }: { l
   const currentIndex = step === "choose" ? 0 : step === "questions" ? 1 : 2;
 
   const showRecovery = step !== "choose" && !selected;
-  const riskPositive = flow.emergencyAnswer === "yes";
+  const riskPositive = flow.emergencyAnswer === "yes" || flow.emergencyAnswer === "unsure";
   const notCleared = step === "specialties" && flow.emergencyAnswer !== "no";
   const title = step === "choose" ? copy.chooseTitle : step === "questions" ? copy.questionsTitle : copy.specialtyTitle;
   const help = step === "choose" ? copy.chooseHelp : step === "questions" ? copy.questionHelp : copy.specialtyHelp;
@@ -69,37 +70,31 @@ export function ComplaintScreen({ locale, step, publishedSpecialties = [] }: { l
               </label>
               <p className="atlas-complaint-emergency-short" role="note">{copy.globalDanger}</p>
               {match.length ? (
-                <div className="atlas-complaint-grid">
-                  {match.map((entry) => (
-                    <button className="atlas-complaint-choice" key={entry.id} type="button" onClick={() => select(entry.id)}>
-                      <strong><bdi>{entry.name[locale]}</bdi></strong>
-                      <span aria-hidden="true">›</span>
-                    </button>
-                  ))}
+                <div className="atlas-complaint-groups">
+                  {complaintCategories.map((category) => {
+                    const choices = match.filter((entry) => entry.category === category.id);
+                    if (!choices.length) return null;
+                    return (
+                      <section className="atlas-complaint-group" key={category.id} aria-labelledby={`atlas-complaint-category-${category.id}`}>
+                        <h2 id={`atlas-complaint-category-${category.id}`}>{category.name[locale]}</h2>
+                        <div className="atlas-complaint-grid">
+                          {choices.map((entry) => (
+                            <button className="atlas-complaint-choice" key={entry.id} type="button" onClick={() => select(entry.id)}>
+                              <strong><bdi>{entry.name[locale]}</bdi></strong>
+                              <span aria-hidden="true">›</span>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
                 </div>
-              ) : <p className="atlas-complaint-empty">{copy.noMatch}</p>}
+              ) : <p className="atlas-complaint-empty" role="status">{copy.noMatch}</p>}
             </>
           ) : showRecovery ? (
             <Link className="button atlas-complaint-main-action" href={href("/care/complaints", locale)}>{copy.breadcrumb[0]}</Link>
           ) : step === "questions" && selected ? (
-            <>
-              <p className="atlas-complaint-selected"><bdi>{selected.name[locale]}</bdi></p>
-              <div className="atlas-complaint-question">
-                <h2>{copy.riskTitle}</h2>
-                <p>{selected.concern[locale]}</p>
-                <div className="atlas-complaint-answers" role="group" aria-label={copy.riskTitle}>
-                  <button type="button" className={flow.emergencyAnswer === "yes" ? "is-selected" : ""} aria-pressed={flow.emergencyAnswer === "yes"} onClick={() => flow.answerEmergency("yes")}>{copy.riskYes}</button>
-                  <button type="button" className={flow.emergencyAnswer === "no" ? "is-selected" : ""} aria-pressed={flow.emergencyAnswer === "no"} onClick={() => flow.answerEmergency("no")}>{copy.riskNo}</button>
-                </div>
-              </div>
-              {riskPositive ? <div className="atlas-complaint-alert" role="alert"><h2>{copy.emergencyTitle}</h2><p>{copy.emergencyHelp}</p><strong>{copy.emergencyAction}</strong></div> : (
-                <div className="atlas-complaint-next">
-                  {flow.emergencyAnswer === null ? <p>{copy.riskUnanswered}</p> : null}
-                  <button className="button atlas-complaint-main-action" type="button" disabled={flow.emergencyAnswer !== "no"} onClick={() => router.push(href("/care/complaints/specialties", locale))}>{copy.next} <span aria-hidden="true">›</span></button>
-                </div>
-              )}
-              <button className="atlas-complaint-text-button" type="button" onClick={() => { flow.reset(); router.push(href("/care/complaints", locale)); }}>{copy.breadcrumb[0]}</button>
-            </>
+            <ShortSymptomQuestions locale={locale} name={selected.name[locale]} concern={selected.concern[locale]} />
           ) : notCleared ? (
             <>
               {riskPositive ? <div className="atlas-complaint-alert" role="alert"><h2>{copy.emergencyTitle}</h2><p>{copy.emergencyHelp}</p></div> : null}

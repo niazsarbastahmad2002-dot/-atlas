@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { complaints, findComplaint, searchComplaints, specialtyLabels, matchingPublishedSpecialties } from "../lib/patient/complaint-guide.ts";
+import { complaints, complaintCategories, findComplaint, searchComplaints, specialtyLabels, matchingPublishedSpecialties } from "../lib/patient/complaint-guide.ts";
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const locales = ["en", "ku", "bd", "ar"] as const;
 const context = read("app/care/complaints/flow-context.tsx");
 const screen = read("app/care/complaints/complaint-screen.tsx");
 const cards = read("app/care/complaints/specialties/suggested-specialty-cards.tsx");
+const questions = read("app/care/complaints/short-symptom-questions.tsx");
 const copy = read("app/care/complaints/complaint-copy.ts");
 const style = read("app/care/complaints/complaint-screen.css");
 const welcome = read("app/page.tsx");
@@ -36,6 +37,27 @@ test("minimum ten understandable complaints have localized questions and bounded
   }
 });
 
+test("complaint selection groups are clear, complete, localized and UI-only", () => {
+  assert.deepEqual(complaintCategories.map((category) => category.id), [
+    "head-face", "back-joints-skin", "belly-urinary", "children",
+  ]);
+  assert.equal(new Set(complaintCategories.map((category) => category.id)).size, complaintCategories.length);
+  for (const category of complaintCategories) {
+    const assigned = complaints.filter((entry) => entry.category === category.id);
+    assert.ok(assigned.length > 0, `Missing complaints in ${category.id}`);
+    for (const locale of locales) assert.ok(category.name[locale].trim().length > 2);
+  }
+  assert.equal(complaints.filter((entry) =>
+    complaintCategories.some((category) => category.id === entry.category)).length, complaints.length);
+  assert.match(screen, /complaintCategories\.map/);
+  assert.match(screen, /entry\.category === category\.id/);
+  assert.match(screen, /aria-labelledby=/);
+  assert.match(screen, /onClick=\{\(\) => select\(entry\.id\)\}/);
+  assert.match(screen, /copy\.directSearch/);
+  assert.match(style, /atlas-complaint-groups/);
+  assert.match(style, /\[dir="rtl"\]/);
+});
+
 test("chief complaint search is genuinely searchable in English, Sorani, Badini, Arabic", () => {
   assert.equal(searchComplaints("", "en").length, complaints.length);
   assert.ok(searchComplaints("knee", "en").some((x) => x.id === "knee-pain"));
@@ -43,6 +65,10 @@ test("chief complaint search is genuinely searchable in English, Sorani, Badini,
   assert.ok(searchComplaints("چاڤ", "bd").some((x) => x.id === "eyes"));
   assert.ok(searchComplaints("الركبة", "ar").some((x) => x.id === "knee-pain"));
   assert.equal(searchComplaints("no matching symptom xzy", "en").length, 0);
+  assert.ok(searchComplaints("الرُّكْبَة", "ar").some((x) => x.id === "knee-pain"));
+  assert.ok(searchComplaints("كێشەی ميزكردن", "ku").some((x) => x.id === "urinary"));
+  assert.ok(searchComplaints("knee", "ar").some((x) => x.id === "knee-pain"));
+  assert.ok(searchComplaints("  ", "bd").length === complaints.length);
 });
 
 test("three independently named Patient pages exist with noindex until clinical review", () => {
@@ -68,9 +94,9 @@ test("symptoms remain ephemeral, never logged, uploaded, or entered in URLs", ()
   assert.match(context, /useState<ComplaintId \| null>\(null\)/);
   assert.match(context, /createContext/);
   assert.match(context, /setComplaint\(null\)/);
-  assert.doesNotMatch(context + screen + cards, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
+  assert.doesNotMatch(context + screen + cards + questions, /(?:window|globalThis)\.(?:localStorage|sessionStorage)|document\.cookie\s*\[|fetch\(|\.rpc\(|createAdminClient\(|\.from\(|sendBeacon\(/);
   assert.match(screen, /router\.push\(href\("\/care\/complaints\/questions", locale\)\)/);
-  assert.match(screen, /router\.push\(href\("\/care\/complaints\/specialties", locale\)\)/);
+  assert.match(questions, /\/care\/complaints\/specialties\?lang=/);
   assert.match(cards, /encodeURIComponent\(name\)/);
   assert.match(cards, /matchingPublishedSpecialties\(key, publishedSpecialties\)/);
   assert.doesNotMatch(screen, /complaint=|symptom=|redFlag=|duration=|patient_phone/);
@@ -88,7 +114,7 @@ test("Only actual published specialty names can form filtered doctor links", () 
 test("warning-positive or unanswered questions block routine specialist recommendations", () => {
   assert.match(screen, /flow\.emergencyAnswer === "yes"/);
   assert.match(screen, /flow\.emergencyAnswer !== "no"/);
-  assert.match(screen, /disabled=\{flow\.emergencyAnswer !== "no"\}/);
+  assert.match(questions, /disabled=\{flow\.emergencyAnswer !== "no"\}/);
   assert.match(screen, /role="alert"/);
   assert.match(screen, /\{copy\.globalDanger\}/);
   assert.match(screen, /\{copy\.noDiagnosis\}/);
@@ -114,12 +140,12 @@ test("existing publication gates, booking and Doctor workspace remain unchanged"
 
 test("iPhone iPad desktop layouts retain RTL and accessible targets", () => {
   assert.match(screen, /lang=\{meta\.language\} dir=\{meta\.direction\}/);
-  assert.match(screen, /aria-pressed/);
+  assert.match(questions, /aria-pressed/);
   assert.match(screen, /aria-current/);
   assert.match(screen, /type="search" dir="auto"/);
   assert.match(style, /@media\(max-width:710px\)/);
   assert.match(style, /@media\(max-width:380px\)/);
-  assert.match(style, /min-height:56px/);
+  assert.match(style, /min-height:60px/);
   assert.match(style, /focus-visible/);
   assert.match(style, /prefers-reduced-motion/);
 });
