@@ -2,7 +2,7 @@ name: Atlas CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, integration/ap-ad-pages-20261015-review]
   pull_request:
     branches: [main]
 
