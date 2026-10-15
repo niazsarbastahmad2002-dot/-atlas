@@ -22,6 +22,8 @@ export default defineConfig({
     env: {
       ...process.env,
       ATLAS_E2E_NO_AUTH: "true",
+      // Ephemeral local CI only; production server launch gate remains OFF.
+      ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED: "true",
       NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_atlas_e2e_placeholder",
       SITE_URL: baseURL,

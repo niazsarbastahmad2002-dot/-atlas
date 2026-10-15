@@ -8,7 +8,7 @@ test("Page 05 supports four languages, comparison, recovery and small-screen lay
     await expect(page.locator(".atlas-complaint-page")).toHaveAttribute("dir", locale === "en" ? "ltr" : "rtl");
     await page.locator(".atlas-complaint-choice").first().click(); // synthetic catalog's headache
     await expect(page).toHaveURL(/\/care\/complaints\/questions/);
-    await page.locator(".atlas-complaint-answers button").last().click(); // "No" to the draft safety question
+    await page.locator(".atlas-complaint-answers button").nth(1).click(); // "No" to the draft safety question
     await page.locator(".atlas-complaint-next button").click();
     await expect(page).toHaveURL(/\/care\/complaints\/specialties/);
     await expect(page.locator(".atlas-complaint-specialty")).toHaveCount(2);
