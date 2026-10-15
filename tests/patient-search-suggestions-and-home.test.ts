@@ -22,7 +22,7 @@ test("common Atlas landing has two prominent separate experiences and original A
   assert.match(home, /src="\/atlas-icon\.svg"/);
   assert.match(home, /atlas-mode-icon/);
   assert.match(home, /atlas-local-link/);
-  assert.match(home, /Run a clinic or center/);
+  assert.match(home, /Run a Clinic or Center/);
 });
 
 test("patient discovery remains published-only and cannot book or claim appointments", () => {

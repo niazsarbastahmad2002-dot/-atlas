@@ -6,7 +6,8 @@ const page = readFileSync(new URL("../app/patient-account/page.tsx", import.meta
 
 test("My Appointments exposes appointment status to semantic Patient styling", () => {
   const markers = page.match(/className="patient-account-status" data-status=\{appointment\.appointment_status\}/g) ?? [];
-  assert.equal(markers.length, 2);
+  // Upcoming, past and cancelled each expose the real status to the same semantic styles.
+  assert.equal(markers.length, 3);
 });
 
 test("Patient status badges reuse Atlas warning, success, and danger semantics", () => {

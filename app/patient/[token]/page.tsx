@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { reschedulePatientAppointment, updateEarlierSlotPreference, updatePatientAppointment } from "./actions";
 import { PatientSubmitButton } from "./patient-submit-button";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
+import { PatientBookingConfirmation } from "./booking-confirmation";
 
 export const dynamic = "force-dynamic";
 
@@ -397,6 +398,25 @@ export default async function PatientAppointmentPage({ params, searchParams }: P
   const patientNavHref = accountOwned
     ? `/patient-account?lang=${locale}`
     : `/api/ui-language?locale=${locale}`;
+  // Confirmation is only a presentation of the private, rate-limited appointment
+  // record retrieved above. A URL flag alone can never confirm a booking.
+  if (query.view === "confirmation" && isActive) {
+    return (
+      <PatientBookingConfirmation
+        locale={locale}
+        token={token}
+        accountMarker={accountMarker}
+        status={isConfirmed ? "confirmed" : "pending"}
+        clinicName={appointment.clinic_name}
+        doctorName={appointment.doctor_name}
+        dateLabel={dateText}
+        timeLabel={`${time.clock} ${time.period}`}
+        navLabel={patientNavLabel}
+        navHref={patientNavHref}
+      />
+    );
+  }
+
   const actionFailed = query.error === "update_failed";
   const rescheduled = query.notice === "rescheduled";
   const rescheduleError = query.error === "slot_taken"
