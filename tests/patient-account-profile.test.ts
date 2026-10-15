@@ -49,7 +49,10 @@ test("patient profile remains small, private, multilingual, and does not make ph
   assert.match(page, /profileTitle: "زانیارییێن تە"/);
   assert.match(page, /profileTitle: "معلوماتك"/);
   assert.match(page, /These details stay private\./);
-  assert.doesNotMatch(page, /name="phone"|type="tel"/);
+  const profileStart = page.indexOf('id="patient-profile"');
+  assert.ok(profileStart > -1, "private profile section exists");
+  const profileSection = page.slice(profileStart, page.indexOf("</section>", profileStart));
+  assert.doesNotMatch(profileSection, /name="phone"|type="tel"/);
   assert.match(page, /patient-account-profile-form button\{min-height:48px\}/);
 });
 

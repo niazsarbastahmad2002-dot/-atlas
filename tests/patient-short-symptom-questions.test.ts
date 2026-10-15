@@ -58,7 +58,7 @@ test("question remains separate, responsive, inaccessible before release and pen
   assert.match(screen, /<ShortSymptomQuestions locale=\{locale\}/);
   assert.match(css, /min-height:60px/);
   assert.match(css, /grid-template-columns:repeat\(3/);
-  assert.match(css, /atlas-complaint-answers\\{grid-template-columns:1fr/);
+  assert.match(css, /\.atlas-complaint-answers\{grid-template-columns:1fr/);
   assert.match(review, /NOT CLINICALLY APPROVED/);
   assert.match(review, /DO NOT MERGE OR DEPLOY/);
   assert.match(review, /English, Sorani, Badini, and Iraqi Arabic/);
