@@ -28,7 +28,7 @@ test("published focus areas stay under their matching published parent", () => {
 test("explore uses existing published-only search and no private joins or booking", () => {
   assert.match(explore, /search_public_doctors_with_availability/);
   assert.match(explore, /p_limit: 30/);
-  assert.match(explore, /p_query: null/);
+  assert.match(explore, /p_query: clinicQuery \\|\\| null/);
   assert.match(explore, /p_specialty: null/);
   assert.match(explore, /patientSpecialtyDetails\(item\.label, locale\)/);
   assert.match(explore, /publishedSubspecialties\(doctors, item\.label\)/);
