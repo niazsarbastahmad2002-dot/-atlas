@@ -47,7 +47,7 @@ test("codes are ephemeral, cleared before provider call, double submits and page
 });
 
 test("all four translations and accessible separate code form", () => {
-  for (const locale of ["en", "ku", "bd", "ar"]) assert.match(child, new RegExp("  "+locale+": \\\\{"));
+  for (const locale of ["en", "ku", "bd", "ar"]) assert.ok(child.includes("  " + locale + ": {"));
   assert.match(child, /aria-labelledby="atlas-email-code-heading"/);
   assert.match(child, /inputMode="numeric"/);
   assert.match(child, /autoComplete="one-time-code"/);
