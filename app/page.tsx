@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 import { PatientLanguageSwitcher } from "@/app/care/patient-language-switcher";
-import { getUiLocale } from "@/lib/i18n/ui-server";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { atlasPublicCompanyProfile } from "@/lib/public-company-profile";
 import { createClient } from "@/lib/supabase/server";
@@ -173,19 +173,19 @@ html[dir="rtl"] .atlas-welcome-page .atlas-card-arrow{transform:rotate(180deg)}
 @media(prefers-reduced-motion:reduce){.atlas-welcome-page .atlas-mode-button{transition:none}.atlas-welcome-page .atlas-mode-button:hover{transform:none}}
 `;
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ lang?: string | string[] }> }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (data.user) redirect("/dashboard");
 
-  const locale = await getUiLocale();
+  const locale = await resolvePatientLocale((await searchParams).lang);
   const copy = homeCopy[locale];
   const company = atlasPublicCompanyProfile();
 
   return (
     <main className="marketing-page atlas-simple-home atlas-welcome-page">
       <header className="shell atlas-welcome-nav">
-        <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
+        <Link className="app-brand atlas-marketing-brand" href={patientLocaleHref("/", locale)} aria-label="Atlas home">
           <span className="app-brand-mark" aria-hidden="true">
             <img src="/atlas-icon.svg" width="47" height="47" alt="" />
           </span>
@@ -204,7 +204,7 @@ export default async function HomePage() {
         </div>
 
         <div className="atlas-home-actions" aria-label={copy.choicesLabel}>
-          <Link className="button atlas-mode-button atlas-patient-entry" href="/care">
+          <Link className="button atlas-mode-button atlas-patient-entry" href={patientLocaleHref("/care", locale)}>
             <span className="atlas-mode-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                 <circle cx="11" cy="11" r="7" />
@@ -241,7 +241,7 @@ export default async function HomePage() {
       <aside className="shell atlas-welcome-aux" aria-label={copy.secondaryTitle}>
         <p className="atlas-welcome-aux-title">{copy.secondaryTitle}</p>
         <nav className="atlas-home-secondary-actions" aria-label={copy.secondaryTitle}>
-          <Link className="button button-ghost atlas-demo-link" href="/patient-account">{copy.patientAccount}</Link>
+          <Link className="button button-ghost atlas-demo-link" href={patientLocaleHref("/patient-account", locale)}>{copy.patientAccount}</Link>
           <Link className="button button-ghost atlas-demo-link" href="/demo">{copy.demo}</Link>
           <a className="button button-ghost atlas-local-link" href="/atlas-local.html">{copy.localTitle}</a>
         </nav>
