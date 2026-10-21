@@ -40,6 +40,7 @@ const copy: Record<UiLocale, {
   title: string;
   intro: string;
   signInTitle: string;
+  createAccount: string;
   hello: string;
   upcoming: string;
   history: string;
@@ -72,6 +73,7 @@ const copy: Record<UiLocale, {
     title: "My appointments",
     intro: "See your appointments and keep your booking details together in one private place.",
     signInTitle: "Sign in to see your appointments",
+    createAccount: "New here? Create a patient account",
     hello: "Hello",
     upcoming: "Upcoming",
     history: "Past & cancelled",
@@ -104,6 +106,7 @@ const copy: Record<UiLocale, {
     title: "مەوعیدەکانم",
     intro: "مەوعیدەکانت ببینە و زانیارییە پێویستەکانت لە یەک شوێنی تایبەتدا بپارێزە.",
     signInTitle: "بچۆ ژوورەوە بۆ بینینی مەوعیدەکانت",
+    createAccount: "هێشتا هەژمارت نییە؟ هەژماری نەخۆشی دروست بکە",
     hello: "سڵاو",
     upcoming: "مەوعیدە داهاتووەکان",
     history: "پێشوو و هەڵوەشاوەکان",
@@ -136,6 +139,7 @@ const copy: Record<UiLocale, {
     title: "وادەیێن من",
     intro: "وادەیێن خۆ ببینە و زانیارییێن پێدڤی یێن خۆ ل جهەکێ تایبەت بپارێزە.",
     signInTitle: "بچۆ ژوور بۆ دیتنا وادەیێن خۆ",
+    createAccount: "هێشتا هەژمارا تە نینە؟ هەژمارەکا نەخۆشی دروست بکە",
     hello: "سلاڤ",
     upcoming: "وادەیێن داهاتی",
     history: "یێن بوری و هەلوەشاندی",
@@ -168,6 +172,7 @@ const copy: Record<UiLocale, {
     title: "مواعيدي",
     intro: "شوف مواعيدك وخلي تفاصيلها كلها بمكان واحد خاص بيك.",
     signInTitle: "سجّل الدخول حتى تشوف مواعيدك",
+    createAccount: "ما عندك حساب؟ أنشئ حساب مريض",
     hello: "أهلاً",
     upcoming: "المواعيد القادمة",
     history: "السابقة والملغاة",
@@ -447,6 +452,11 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
         ) : (
           <>
             <h2 className="patient-account-signin-title">{t.signInTitle}</h2>
+            {signInReady && allowSignup ? (
+              <p className="patient-account-registration-link">
+                <Link href={`/patient-register?lang=${locale}`}>{t.createAccount}</Link>
+              </p>
+            ) : null}
             <PatientAccountLoginForm
               locale={locale}
               ready={signInReady}
@@ -463,6 +473,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-languages a{border:1px solid var(--line);border-radius:999px;padding:8px 6px;color:var(--muted);font-size:11px;font-weight:780;text-align:center;text-decoration:none}
           .patient-account-languages a[aria-current="page"]{border-color:#b9dfd1;background:#effaf6;color:var(--accent)}
           .patient-account-intro{margin-bottom:20px;line-height:1.6}
+          .patient-account-registration-link{margin:0 0 18px;font-size:13px;font-weight:800}
+          .patient-account-registration-link a{color:var(--accent);text-underline-offset:3px}
+          .patient-account-registration-link a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
           .patient-account-hello{font-size:16px}
           .patient-account-profile{display:grid;gap:10px;margin:18px 0 22px;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}
           .patient-account-profile h2{margin:0;font-size:20px}.patient-account-profile>p{margin:0;line-height:1.55}
