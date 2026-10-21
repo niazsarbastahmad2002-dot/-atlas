@@ -52,12 +52,12 @@ all `public` tables to `anon` or `authenticated`.
 `tests/data-api-new-public-tables.test.ts` checks SQL migration files added
 after the last reviewed migration (20261004160000), requiring explicit RLS,
 revocation of client defaults, and either a role-specific Data API GRANT or a
-clearly marked private table. It rejects anonymous write grants by default.
+clearly marked private table. It also requires a policy alongside client grants, detects grant/revoke role-order mistakes, rejects anonymous writes and broad authenticated GRANT ALL, and flags renewed broad public-schema defaults.
 
 This is a **static regression check**, not a SQL parser or proof of isolation.
 It does not exercise the production database, retroactively edit historical
 migrations, confirm SQL role privileges, validate RLS policy correctness,
-or cover dynamically constructed SQL/unqualified table names. Review real
+or cover dynamically constructed SQL, identifiers requiring quoting, unqualified table names, or every possible DDL form. Review real
 database privileges and run isolated multi-clinic integration tests before
 deploying migrations. No production default-privilege changes are part of
 this PR.
@@ -67,3 +67,40 @@ this PR.
 Current Atlas production remains unchanged. Any production GRANT/REVOKE,
 DEFAULT PRIVILEGES, migration, RLS, function or Supabase setting adjustment
 needs separate explicit founder approval and a reviewed rollback/test plan.
+
+## Read-only production access review — 2026-10-21
+
+- All 20 currently existing `public` tables have RLS enabled.
+- `public.doctor_workflow_settings` retains table-level
+  `SELECT/INSERT/UPDATE/DELETE` grants for `anon`, even though its two
+  RLS policies target `authenticated` only.
+- Catalog checks confirmed `anon` does **not** inherit `authenticated`
+  and no `anon`/`PUBLIC` RLS policy exists for this table.
+- A **read-only** transaction using `SET LOCAL ROLE anon` returned
+  `readable_rows = 0`. The transaction was rolled back. No patient records
+  or rows were returned. This confirms no anonymous row visibility in that
+  particular check, **not** a comprehensive offensive security audit.
+- A future targeted revoke of `anon` table privileges is appropriate
+  defense in depth, but **has not been executed or authorized**. Review any
+  direct/indirect callers and isolate negative tests first. Do not revoke
+  legitimate `authenticated` access or modify RLS solely to silence lint.
+- Live Supabase advisor also lists 7 callable public-directory/availability
+  `SECURITY DEFINER` functions and 4 authenticated clinic-export variants
+  (11 total warnings in the signed-in category). Published-row guards and
+  export ownership checks were inspected, but negative-role tests for the
+  functions remain outstanding.
+
+### Migration replay caution
+
+The GitHub directory has 60 SQL migration files and the production history
+lists 94 migration entries. Only 31 timestamps match exactly. Other entries
+may represent the same operation under different versions; this **does not
+prove production schema drift**. Do not replay GitHub migration files against
+production or rewrite migration history based on filename comparison. Reconcile
+SQL effects separately in an isolated environment before future schema changes.
+
+### Approval gate
+
+PR #685 is **test/documentation-only**. The separate production grant cleanup,
+any default-privilege changes, or function edits require founder approval after
+reviewed negative-case tests and a rollback plan.
