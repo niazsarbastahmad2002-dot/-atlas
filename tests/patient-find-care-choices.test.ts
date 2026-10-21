@@ -16,11 +16,10 @@ test("Find Care offers both choices in all four patient locales", () => {
   assert.match(page, /aria-labelledby="atlas-care-guided-title"/);
 });
 
-test("Complaint navigation cannot run before its clinical review feature gate", () => {
-  assert.match(page, /process\.env\.ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED === "true"\s*\?\s*\(/);
-  assert.match(page, /patientLocaleHref\("\/care\/complaints", locale\)/);
-  assert.match(page, /patientLocaleHref\("\/explore\/specialties", locale\)/);
-  assert.match(page, /\{paths\.reviewPending\}/);
+test("clinical complaint navigation is absent from the public-only candidate", () => {
+  assert.doesNotMatch(page, /ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED|\\/care\\/complaints/);
+  assert.match(page, /patientLocaleHref\\("\\/explore\/specialties", locale\\)/);
+  assert.match(page, /\\{paths\\.reviewPending\\}/);
 });
 
 test("Find Care retains genuine published provider search and advanced filters", () => {

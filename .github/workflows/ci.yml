@@ -2,7 +2,7 @@ name: Atlas CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, release/patient-public-discovery-20261021]
   pull_request:
     branches: [main]
 

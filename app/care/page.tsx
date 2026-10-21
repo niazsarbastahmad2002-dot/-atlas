@@ -398,18 +398,13 @@ export default async function CarePage({ searchParams }: CarePageProps) {
               <h2 id="atlas-care-guided-title">{paths.guidedTitle}</h2>
               <p className="atlas-care-guided-help">{paths.guidedHelp}</p>
             </div>
-            {process.env.ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED === "true" ? (
-              <Link className="atlas-care-guided-action" href={patientLocaleHref("/care/complaints", locale)}>
-                {paths.guidedAction}<span aria-hidden="true">›</span>
+            {/* Clinical complaint flow is excluded from this public-only release. */}
+            <div className="atlas-care-guided-fallback">
+              <p>{paths.reviewPending}</p>
+              <Link href={patientLocaleHref("/explore/specialties", locale)}>
+                {paths.browseInstead}<span aria-hidden="true">›</span>
               </Link>
-            ) : (
-              <div className="atlas-care-guided-fallback">
-                <p>{paths.reviewPending}</p>
-                <Link href={patientLocaleHref("/explore/specialties", locale)}>
-                  {paths.browseInstead}<span aria-hidden="true">›</span>
-                </Link>
-              </div>
-            )}
+            </div>
             </div>
           </aside>
         </div>
