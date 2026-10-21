@@ -16,24 +16,16 @@ test("public clinic visiting directions require the published exact address, not
   assert.match(page, /copy\.noAddress/);
 });
 
-test("published coordinates produce a map pin only with a specific address and a valid complete pair", () => {
-  assert.match(page, /const hasMapPin = Boolean\(clinic\.address_text\)/);
-  assert.match(page, /typeof clinic\.latitude === "number"/);
-  assert.match(page, /typeof clinic\.longitude === "number"/);
-  assert.match(page, /Number\.isFinite\(clinic\.latitude\)/);
-  assert.match(page, /Number\.isFinite\(clinic\.longitude\)/);
-  assert.match(page, /clinic\.latitude >= -90 && clinic\.latitude <= 90/);
-  assert.match(page, /clinic\.longitude >= -180 && clinic\.longitude <= 180/);
-  assert.match(page, /!\(clinic\.latitude === 0 && clinic\.longitude === 0\)/);
-  assert.match(page, /const mapUrl = hasMapPin/);
-  assert.match(page, /mapUrl \?/);
+test("public clinic directions never expose a potentially stale coordinate pin", () => {
+  assert.doesNotMatch(page, /const hasMapPin/);
+  assert.doesNotMatch(page, /const mapUrl/);
+  assert.doesNotMatch(page, /https:\/\/www\.google\.com\/maps\/search\//);
+  assert.doesNotMatch(page, /atlas-clinic-map-link/);
 });
 
-test("map and directions links are free, encoded, and safely opened in a new tab", () => {
+test("address-based directions links remain encoded and safely opened in a new tab", () => {
   assert.match(page, /https:\/\/www\.google\.com\/maps\/dir\//);
   assert.match(page, /new URLSearchParams\(\{ api: "1", destination: directionsDestination \}\)/);
-  assert.match(page, /https:\/\/www\.google\.com\/maps\/search\//);
-  assert.match(page, /new URLSearchParams\(\{ api: "1", query:/);
   assert.doesNotMatch(page, /GOOGLE_MAPS_API_KEY|NEXT_PUBLIC_GOOGLE_MAPS|maps\/api\/js/);
   assert.match(page, /target="_blank" rel="noreferrer"/);
   assert.match(page, /atlas-clinic-directions-link\{display:inline-flex;width:fit-content;min-height:48px/);
