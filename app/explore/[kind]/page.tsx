@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AtlasPatientNav } from "@/app/care/patient-nav";
+import { PatientLocationsExplore } from "@/app/explore/patient-locations";
 import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 import { createClient } from "@/lib/supabase/server";
 import { uiLocaleMeta, type UiLocale } from "@/lib/i18n/ui";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 type ExploreKind = "clinics" | "specialties" | "locations";
 type PageProps = {
   params: Promise<{ kind: string }>;
-  searchParams: Promise<{ lang?: string | string[] }>;
+  searchParams: Promise<{ lang?: string | string[]; q?: string | string[] }>;
 };
 
 function isExploreKind(value: string): value is ExploreKind {
@@ -169,7 +170,9 @@ export default async function PatientExplorePage({ params, searchParams }: PageP
             <Link key={tab} href={patientLocaleHref(`/explore/${tab}`, locale)} aria-current={kind === tab ? "page" : undefined}>{t.titles[tab]}</Link>
           ))}
         </nav>
-        {error ? <p className="notice notice-error" role="alert">{t.unavailable}</p> : items.length ? (
+        {error ? <p className="notice notice-error" role="alert">{t.unavailable}</p> : kind === "locations" ? (
+          <PatientLocationsExplore doctors={doctors} locale={locale} query={typeof search.q === "string" ? search.q.trim().slice(0, 100) : ""} />
+        ) : items.length ? (
           <section className="atlas-explore-grid" aria-label={t.titles[kind]}>
             {items.map((item) => (
               <Link className="atlas-explore-card" href={item.href} key={item.key}>
