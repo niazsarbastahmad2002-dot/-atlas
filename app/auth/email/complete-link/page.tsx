@@ -63,7 +63,7 @@ export default function CompleteAtlasEmailLinkPage() {
         <p className="quiet">
           Use this only if opening your Atlas sign-in email does not complete in this browser.
           Copy the link from the latest Atlas email and paste it below instead of opening it.
-          The link is verified here on Atlas; it is never sent to another website.
+          Atlas sends its token directly to the existing Supabase authentication service, not through the browser URL launcher.
         </p>
 
         <form className="stack-form" onSubmit={completeLink}>
