@@ -27,7 +27,7 @@ function tablePermissionIssues(sql: string): string[] {
     if (/^alter\s+default\s+privileges\b/i.test(statement)
       && /\bin\s+schema\s+public\b/i.test(statement)
       && /\bgrant\b/i.test(statement)
-      && /\bto\s+(?:anon|authenticated|public)\b/i.test(statement)) {
+      && /\bto\b[\s\S]*\b(?:anon|authenticated|public)\b/i.test(statement)) {
       gaps.push("migration: broad default Data API privileges require security review");
     }
   }
@@ -202,7 +202,7 @@ test("regression: broad grants and public default privileges are flagged", () =>
     "revoke all on table public.future_records from anon, authenticated;",
     "grant all on table public.future_records to authenticated;",
     "create policy future_select on public.future_records for select to authenticated using (false);",
-    "alter default privileges for role postgres in schema public grant select on tables to anon;",
+    "alter default privileges for role postgres in schema public grant select on tables to service_role, anon;",
   ].join("\n");
   const issues = tablePermissionIssues(sql).join("\n");
   assert.match(issues, /GRANT ALL to authenticated/);
