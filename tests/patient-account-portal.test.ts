@@ -70,9 +70,9 @@ test("verified self-booking may create patient portal continuity without making 
 
 test("home exposes My Appointments without replacing care discovery or clinic workspace", () => {
   const home = source("app/page.tsx");
-  assert.match(home, /href="\/patient-account"/);
+  assert.match(home, /href=\{patientLocaleHref\("\/patient-account", locale\)\}/);
   assert.match(home, /patientAccount: "My appointments"/);
-  assert.match(home, /href="\/care"/);
+  assert.match(home, /href=\{patientLocaleHref\("\/care", locale\)\}/);
   assert.match(home, /href="\/dashboard"/);
 });
 
