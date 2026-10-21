@@ -7,10 +7,10 @@ const patientLanguage = readFileSync(new URL("../app/care/patient-language-switc
 
 test("welcome has exactly two prominent, correctly routed choices", () => {
   const main = home.slice(home.indexOf('<section className="atlas-welcome-main"'), home.indexOf("</section>") + 10);
-  assert.match(main, /href="\/care"/);
+  assert.match(main, /href=\{patientLocaleHref\("\/care", locale\)\}/);
   assert.match(main, /href="\/dashboard"/);
   assert.equal((main.match(/className="button(?: button-ghost)? atlas-mode-button/g) ?? []).length, 2);
-  assert.doesNotMatch(main, /href="\/demo"|href="\/patient-account"|href="\/atlas-local.html"/);
+  assert.doesNotMatch(main, /href="\/demo"|href=\{patientLocaleHref\("\/patient-account", locale\)\}|href="\/atlas-local.html"/);
   assert.match(home, /patientTitle: "Find Care"/);
   assert.match(home, /professionalTitle: "Run a Clinic or Center"/);
 });
