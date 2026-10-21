@@ -38,7 +38,6 @@ function tablePermissionIssues(sql: string): string[] {
 
   for (const table of new Set(createdTables)) {
     const name = "public\\." + table;
-    const tableExpr = new RegExp(name + "\\b", "i");
     const rls = new RegExp(
       "^alter\\s+table\\s+(?:if\\s+exists\\s+)?" + name
       + "\\s+enable\\s+row\\s+level\\s+security\\b", "i",
@@ -104,9 +103,6 @@ function tablePermissionIssues(sql: string): string[] {
       gaps.push(table + ": GRANT ALL to authenticated is not least privilege");
     }
 
-    // Keep this referenced to make explicit that regex checks only a
-    // conventionally formatted public.<name> DDL migration.
-    assert.ok(tableExpr.test("public." + table));
   }
 
   return gaps;
