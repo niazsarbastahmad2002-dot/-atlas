@@ -29,7 +29,7 @@ export function extractAtlasMagicLinkToken(
     if (target.searchParams.getAll("token").length !== 1) return null;
 
     const tokenHash = target.searchParams.get("token") ?? "";
-    if (!/^[a-f0-9]{64}$/i.test(tokenHash)) return null;
+    if (!/^(?:[a-f0-9]{56}|[a-f0-9]{64})$/i.test(tokenHash)) return null;
 
     return tokenHash;
   } catch {
