@@ -23,6 +23,8 @@ const profileCopy: Record<UiLocale, {
   subspecialty: string;
   clinic: string;
   location: string;
+  directions: string;
+  about: string;
   contact: string;
   availability: string;
   availabilityHelp: string;
@@ -49,6 +51,8 @@ const profileCopy: Record<UiLocale, {
     subspecialty: "Focus",
     clinic: "Clinic",
     location: "Location",
+    directions: "Open directions",
+    about: "About this doctor",
     contact: "Clinic contact",
     availability: "Open times",
     availabilityHelp: "These are live times from the clinic. Contact the clinic to reserve one.",
@@ -75,6 +79,8 @@ const profileCopy: Record<UiLocale, {
     subspecialty: "بواری تایبەت",
     clinic: "کلینیک",
     location: "شوێن",
+    directions: "ڕێگاکە بکەرەوە",
+    about: "دەربارەی پزیشک",
     contact: "پەیوەندی کلینیک",
     availability: "کاتە بەردەستەکان",
     availabilityHelp: "ئەم کاتانە ڕاستەوخۆ لە خشتەی کلینیکەوە دێن. بۆ گرتنی کاتێک پەیوەندی بە کلینیک بکە.",
@@ -101,6 +107,8 @@ const profileCopy: Record<UiLocale, {
     subspecialty: "بواری تایبەت",
     clinic: "کلینیک",
     location: "جه",
+    directions: "ڕێکێ بکەڤە",
+    about: "دەربارەی دکتۆری",
     contact: "پەیوەندیا کلینیکێ",
     availability: "دەمێن بەردەست",
     availabilityHelp: "ئەڤ دەمە ڕاستەوخۆ ژ خشتەیا کلینیکێ دهێن. بۆ گرتنا دەمەکێ پەیوەندی ب کلینیکێ بکە.",
@@ -127,6 +135,8 @@ const profileCopy: Record<UiLocale, {
     subspecialty: "المجال",
     clinic: "العيادة",
     location: "الموقع",
+    directions: "فتح الاتجاهات",
+    about: "عن الطبيب",
     contact: "رقم العيادة",
     availability: "الأوقات المتاحة",
     availabilityHelp: "هاي الأوقات من جدول العيادة. تواصل ويا العيادة حتى تحجز.",
@@ -281,6 +291,13 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
   );
   const locationParts = [profile.address_text, profile.area, profile.city].filter((part): part is string => Boolean(part));
   const location = locationParts.join(" · ");
+  // Match the public clinic page: map only a saved street address, never guess a pin from a city.
+  const directionsDestination = profile.address_text
+    ? [profile.address_text, profile.area, profile.city, profile.country_code].filter(Boolean).join(", ")
+    : "";
+  const directionsUrl = directionsDestination
+    ? `https://www.google.com/maps/dir/?${new URLSearchParams({ api: "1", destination: directionsDestination }).toString()}`
+    : null;
   const phone = profile.public_phone
     ? (profile.country_code === "IQ" ? formatIraqiMobile(profile.public_phone) : profile.public_phone)
     : null;
@@ -365,81 +382,93 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
           <span>{copy.clinic}: <bdi>{profile.clinic_name}</bdi></span>
           <span aria-hidden="true">›</span>
         </Link>
-        <ShareProfileButton
-          title={`${profile.doctor_name} — ${profile.clinic_name}`}
-          text={copy.shareText}
-          shareLabel={copy.share}
-          copiedLabel={copy.copied}
-          whatsappLabel={copy.whatsapp}
-        />
+        {location ? (
+          <p className="atlas-care-profile-location-summary">
+            <span>{copy.location}:</span>{" "}
+            {locationParts.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}
+          </p>
+        ) : null}
 
         {(slotError || slotGroups.length > 0 || laterSlotAvailable) ? (
           <section className="atlas-care-availability" aria-label={copy.availability}>
-            <div className="atlas-care-availability-heading">
-              <h2>{copy.availability}</h2>
-              <p>
-                {slotError
-                  ? copy.availabilityUnavailableHelp
-                  : slotGroups.length
-                    ? (bookingReady ? copy.bookingHelp : copy.availabilityHelp)
-                    : copy.noPreviewTimesHelp}
-              </p>
+          <div className="atlas-care-availability-heading">
+            <h2>{copy.availability}</h2>
+            <p>
+              {slotError
+                ? copy.availabilityUnavailableHelp
+                : slotGroups.length
+                  ? (bookingReady ? copy.bookingHelp : copy.availabilityHelp)
+                  : copy.noPreviewTimesHelp}
+            </p>
+          </div>
+
+          {slotError ? (
+            <div className="atlas-care-availability-empty">
+              <strong>{copy.availabilityUnavailable}</strong>
             </div>
-
-            {slotError ? (
-              <div className="atlas-care-availability-empty">
-                <strong>{copy.availabilityUnavailable}</strong>
-              </div>
-            ) : slotGroups.length ? (
-              <div className="atlas-care-availability-days">
-                {slotGroups.map((group) => (
-                  <div className="atlas-care-availability-day" key={group.dateKey}>
-                    <strong>{group.dateLabel}</strong>
-                    <div>
-                      {group.times.map((time) => bookingReady ? (
-                        <Link
-                          className="atlas-care-slot-book"
-                          href={patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}/book`, locale, { slot: time.slotAt })}
-                          key={time.slotAt}
-                        >
-                          <span dir="auto">{time.label}</span>
-                          <small>{copy.bookTime}</small>
-                        </Link>
-                      ) : <span key={time.slotAt} dir="auto">{time.label}</span>)}
-                    </div>
+          ) : slotGroups.length ? (
+            <div className="atlas-care-availability-days">
+              {slotGroups.map((group) => (
+                <div className="atlas-care-availability-day" key={group.dateKey}>
+                  <strong>{group.dateLabel}</strong>
+                  <div>
+                    {group.times.map((time) => bookingReady ? (
+                      <Link
+                        className="atlas-care-slot-book"
+                        href={patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}/book`, locale, { slot: time.slotAt })}
+                        key={time.slotAt}
+                      >
+                        <span dir="auto">{time.label}</span>
+                        <small>{copy.bookTime}</small>
+                      </Link>
+                    ) : <span key={time.slotAt} dir="auto">{time.label}</span>)}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="atlas-care-availability-empty">
-                <strong>{copy.noPreviewTimes}</strong>
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="atlas-care-availability-empty">
+              <strong>{copy.noPreviewTimes}</strong>
+            </div>
+          )}
 
-            {(!slotError || phone) ? (
-              <div className="atlas-care-availability-actions">
-                {!slotError ? (
-                  <Link className="button button-ghost" href={patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}/times`, locale)}>
-                    {copy.allTimes}
-                  </Link>
-                ) : null}
-
-
-
-
-                {phone ? <a className="button atlas-care-call" href={`tel:${profile.public_phone}`}>{copy.callToReserve}</a> : null}
-              </div>
-            ) : null}
+          {(!slotError || phone) ? (
+            <div className="atlas-care-availability-actions">
+              {!slotError ? (
+                <Link className="button button-ghost" href={patientLocaleHref(`/care/${clinicSlug}/${doctorSlug}/times`, locale)}>
+                  {copy.allTimes}
+                </Link>
+              ) : null}
+              {phone ? <a className="button atlas-care-call" href={`tel:${profile.public_phone}`}>{copy.callToReserve}</a> : null}
+            </div>
+          ) : null}
           </section>
         ) : null}
 
-        {profile.bio ? <p className="hero-copy atlas-care-bio"><bdi>{profile.bio}</bdi></p> : null}
+        {profile.bio ? (
+          <section className="atlas-care-doctor-bio" aria-labelledby="atlas-doctor-about">
+            <h2 id="atlas-doctor-about">{copy.about}</h2>
+            <p className="hero-copy atlas-care-bio"><bdi>{profile.bio}</bdi></p>
+          </section>
+        ) : null}
 
         <dl className="atlas-care-profile-details">
           <div><dt>{copy.clinic}</dt><dd><Link href={patientLocaleHref(`/care/${profile.clinic_slug}`, locale)}><bdi>{profile.clinic_name}</bdi></Link></dd></div>
           <div><dt>{copy.specialty}</dt><dd><bdi>{profile.specialty}</bdi></dd></div>
           {profile.subspecialty ? <div><dt>{copy.subspecialty}</dt><dd><bdi>{profile.subspecialty}</bdi></dd></div> : null}
-          {location ? <div><dt>{copy.location}</dt><dd>{locationParts.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}</dd></div> : null}
+          {location ? (
+            <div>
+              <dt>{copy.location}</dt>
+              <dd className="atlas-care-profile-location">
+                <span>{locationParts.map((part, index) => <span key={index}>{index ? " · " : null}<bdi>{part}</bdi></span>)}</span>
+                {directionsUrl ? (
+                  <a className="atlas-care-profile-directions" href={directionsUrl} target="_blank" rel="noreferrer">
+                    {copy.directions}
+                  </a>
+                ) : null}
+              </dd>
+            </div>
+          ) : null}
           {phone ? (
             <div>
               <dt>{copy.contact}</dt>
@@ -448,11 +477,19 @@ export default async function DoctorProfilePage({ params, searchParams }: Doctor
           ) : null}
         </dl>
 
+        <ShareProfileButton
+          title={`${profile.doctor_name} — ${profile.clinic_name}`}
+          text={copy.shareText}
+          shareLabel={copy.share}
+          copiedLabel={copy.copied}
+          whatsappLabel={copy.whatsapp}
+        />
+
         <Link className="button button-ghost atlas-care-profile-back" href={patientLocaleHref("/care", locale)}>{copy.back}</Link>
       </article>
 
       <style>{`
-        .atlas-care-profile-clinic-link{display:inline-flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;max-width:100%;margin-top:10px;padding:9px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:800;text-decoration:none;overflow-wrap:anywhere}.atlas-care-profile-clinic-link>span:last-child{font-size:20px;color:var(--accent)}.atlas-care-profile-clinic-link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}.atlas-care-profile-page{min-height:100dvh}.atlas-care-profile{max-width:720px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-profile h1{margin:8px 0 10px}.atlas-care-profile-specialty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--accent)}.atlas-care-profile-specialty span{color:var(--muted);font-size:12px}.atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.atlas-profile-share-actions .button{min-height:48px}.atlas-care-bio{margin-top:22px}.atlas-care-profile-details{display:grid;gap:1px;margin:28px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-profile-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-profile-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-profile-details dd{margin:0;font-size:13px;font-weight:700}.atlas-care-profile-details a{color:var(--accent)}.atlas-care-availability{display:grid;gap:14px;margin:0 0 26px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-availability-heading{display:grid;gap:5px}.atlas-care-availability-heading h2{margin:0;font-size:17px}.atlas-care-availability-heading p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55}.atlas-care-availability-empty{padding:14px;border:1px dashed var(--line);border-radius:14px;background:var(--surface-soft)}.atlas-care-availability-empty strong{font-size:12px}.atlas-care-availability-days{display:grid;gap:8px}.atlas-care-availability-day{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:12px;align-items:start;padding-top:9px;border-top:1px solid var(--line)}.atlas-care-availability-day:first-child{padding-top:0;border-top:0}.atlas-care-availability-day>strong{font-size:12px}.atlas-care-availability-day>div{display:flex;gap:6px;flex-wrap:wrap}.atlas-care-availability-day span{display:inline-flex;min-height:32px;align-items:center;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-care-slot-book{display:inline-flex;align-items:center;gap:6px;text-decoration:none}.atlas-care-slot-book span{color:var(--ink)}.atlas-care-slot-book small{color:var(--accent);font-size:10px;font-weight:850}.atlas-care-availability-actions{display:flex;gap:8px;flex-wrap:wrap}.atlas-care-availability-actions .button{min-height:48px;text-decoration:none}.atlas-care-call{justify-self:start;text-decoration:none}.atlas-care-profile-back{text-decoration:none}@media(max-width:560px){.atlas-care-profile-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-availability-day{grid-template-columns:1fr}}
+        .atlas-care-profile-clinic-link{display:inline-flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;max-width:100%;margin-top:10px;padding:9px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:800;text-decoration:none;overflow-wrap:anywhere}.atlas-care-profile-clinic-link>span:last-child{font-size:20px;color:var(--accent)}.atlas-care-profile-clinic-link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}.atlas-care-profile-page{min-height:100dvh}.atlas-care-profile{max-width:720px;padding-top:clamp(38px,7vh,78px);padding-bottom:72px}.atlas-care-profile h1{margin:8px 0 10px}.atlas-care-profile-specialty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--accent)}.atlas-care-profile-specialty span{color:var(--muted);font-size:12px}.atlas-profile-share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.atlas-profile-share-actions .button{min-height:48px}.atlas-care-bio{margin-top:22px}.atlas-care-profile-details{display:grid;gap:1px;margin:28px 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--line)}.atlas-care-profile-details>div{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:14px;padding:15px 17px;background:var(--surface)}.atlas-care-profile-details dt{color:var(--muted);font-size:11px;font-weight:800}.atlas-care-profile-details dd{margin:0;font-size:13px;font-weight:700}.atlas-care-profile-details a{color:var(--accent)}.atlas-care-availability{display:grid;gap:14px;margin:0 0 26px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}.atlas-care-availability-heading{display:grid;gap:5px}.atlas-care-availability-heading h2{margin:0;font-size:17px}.atlas-care-availability-heading p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55}.atlas-care-availability-empty{padding:14px;border:1px dashed var(--line);border-radius:14px;background:var(--surface-soft)}.atlas-care-availability-empty strong{font-size:12px}.atlas-care-availability-days{display:grid;gap:8px}.atlas-care-availability-day{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:12px;align-items:start;padding-top:9px;border-top:1px solid var(--line)}.atlas-care-availability-day:first-child{padding-top:0;border-top:0}.atlas-care-availability-day>strong{font-size:12px}.atlas-care-availability-day>div{display:flex;gap:6px;flex-wrap:wrap}.atlas-care-availability-day span{display:inline-flex;min-height:32px;align-items:center;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface-soft);font-size:11px;font-weight:800}.atlas-care-slot-book{display:inline-flex;align-items:center;gap:6px;text-decoration:none}.atlas-care-slot-book span{color:var(--ink)}.atlas-care-slot-book small{color:var(--accent);font-size:10px;font-weight:850}.atlas-care-availability-actions{display:flex;gap:8px;flex-wrap:wrap}.atlas-care-availability-actions .button{min-height:48px;text-decoration:none}.atlas-care-call{justify-self:start;text-decoration:none}.atlas-care-profile-back{text-decoration:none}.atlas-care-profile-location-summary{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;margin:9px 0 20px;color:var(--muted);font-size:13px;line-height:1.55}.atlas-care-profile-location-summary>span:first-child{font-weight:800;color:var(--ink-soft)}.atlas-care-doctor-bio{padding:22px;border:1px solid var(--line);border-radius:19px;background:var(--surface);box-shadow:var(--shadow-sm)}.atlas-care-doctor-bio h2{margin:0;font-size:19px;line-height:1.3}.atlas-care-doctor-bio .atlas-care-bio{margin:11px 0 0;white-space:pre-line;overflow-wrap:anywhere}.atlas-care-profile-details .atlas-care-profile-location{display:grid;gap:6px}.atlas-care-profile-directions{display:inline-flex;align-items:center;width:fit-content;min-height:44px;text-decoration:underline;text-underline-offset:3px}.atlas-care-profile-page[dir="rtl"] .atlas-care-profile-clinic-link>span:last-child{transform:scaleX(-1)}@media(max-width:560px){.atlas-care-profile-details>div{grid-template-columns:1fr;gap:5px}.atlas-care-availability-day{grid-template-columns:1fr}}
       `}</style>
     </main>
   );

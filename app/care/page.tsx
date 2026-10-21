@@ -210,6 +210,53 @@ const careCopy: Record<UiLocale, {
   },
 };
 
+const findCarePathCopy: Record<UiLocale, {
+  directTitle: string;
+  directHelp: string;
+  guidedTitle: string;
+  guidedHelp: string;
+  guidedAction: string;
+  reviewPending: string;
+  browseInstead: string;
+}> = {
+  en: {
+    directTitle: "I know what I'm looking for",
+    directHelp: "Search for a doctor, specialty, clinic or location.",
+    guidedTitle: "I'm not sure which doctor I need",
+    guidedHelp: "Start with a complaint and explore possible specialties. This isn't a diagnosis.",
+    guidedAction: "Start with my complaint",
+    reviewPending: "Complaint guidance is awaiting clinical and language review.",
+    browseInstead: "Browse specialties for now",
+  },
+  ku: {
+    directTitle: "دەزانم بەدوای چی دەگەڕێم",
+    directHelp: "بە ناوی دکتۆر، پسپۆڕی، کلینیک یان شار بگەڕێ.",
+    guidedTitle: "نازانم کام دکتۆرم پێویستە",
+    guidedHelp: "لە کێشەکەتەوە دەست پێ بکە و پسپۆڕییە گونجاوەکان ببینە. ئەمە دەستنیشانکردنی نەخۆشی نییە.",
+    guidedAction: "بە کێشەکەم دەست پێ بکە",
+    reviewPending: "ڕێنمایی بەپێی کێشە هێشتا لە پێداچوونەوەی پزیشکی و زمانیدایە.",
+    browseInstead: "ئێستا پسپۆڕییەکان ببینە",
+  },
+  bd: {
+    directTitle: "دزانم ل چی دگەڕیم",
+    directHelp: "ب ناڤێ دکتۆری، تایبەتمەندی، کلینیک یان باژێری بگەڕێ.",
+    guidedTitle: "نەزانم کام دکتۆر پێدڤییە",
+    guidedHelp: "ب ئاریشەیا خۆ دەست پێ بکە و تایبەتمەندیێن گونجای ببینە. ئەڤە دەستنیشانکرنا نەخۆشییێ نینە.",
+    guidedAction: "ب ئاریشەیا خۆ دەست پێ بکە",
+    reviewPending: "ڕێنیشاندانا ئاریشەیان هێشتا د پێداچوونا پزیشکی و زمانیدایە.",
+    browseInstead: "نوکە تایبەتمەندیان ببینە",
+  },
+  ar: {
+    directTitle: "أعرف شنو أبحث عنه",
+    directHelp: "ابحث عن طبيب أو اختصاص أو عيادة أو مدينة.",
+    guidedTitle: "ما أعرف أي طبيب أحتاج",
+    guidedHelp: "ابدأ بشكواك حتى تستكشف الاختصاصات المحتملة. هذا مو تشخيص.",
+    guidedAction: "ابدأ بشكواي",
+    reviewPending: "دليل الشكاوى ما زال قيد المراجعة الطبية واللغوية.",
+    browseInstead: "تصفّح الاختصاصات حالياً",
+  },
+};
+
 function bounded(value: string | string[] | undefined, max: number) {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();
@@ -242,6 +289,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
   const params = await searchParams;
   const locale = await resolvePatientLocale(params.lang);
   const copy = careCopy[locale];
+  const paths = findCarePathCopy[locale];
   const meta = uiLocaleMeta[locale];
   const query = bounded(params.q, 80);
   const city = bounded(params.city, 100);
@@ -298,7 +346,12 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         <div className="eyebrow">{copy.eyebrow}</div>
         <h1>{copy.title}</h1>
         <p className="hero-copy">{copy.intro}</p>
-        <form className="atlas-care-search" method="get">
+        <div className="atlas-care-direct-heading">
+          <span aria-hidden="true">01</span>
+          <h2>{paths.directTitle}</h2>
+        </div>
+        <p className="atlas-care-direct-help">{paths.directHelp}</p>
+        <form id="atlas-care-direct-search" className="atlas-care-search" method="get" role="search" aria-label={paths.directTitle}>
           <input type="hidden" name="lang" value={locale} />
           <div className="atlas-care-search-primary">
             <label>
@@ -333,14 +386,30 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           {hasActiveFilters ? <Link className="atlas-care-clear-filters" href={patientLocaleHref("/care", locale)}>{copy.allDoctors} <span aria-hidden="true">↗</span></Link> : null}
         </form>
           </div>
-          <aside className="atlas-care-journey" aria-label={copy.patientHome}>
+          <aside className="atlas-care-journey" aria-labelledby="atlas-care-guided-title">
             <div className="atlas-care-journey-art" aria-hidden="true">
               <img src="/atlas-icon.svg" width="64" height="64" alt="" />
             </div>
-            <div className="atlas-care-journey-steps">
-              <div><span aria-hidden="true">01</span><strong>{copy.stepFind}</strong></div>
-              <div><span aria-hidden="true">02</span><strong>{copy.stepTimes}</strong></div>
-              <div><span aria-hidden="true">03</span><strong>{copy.stepContact}</strong></div>
+            <div className="atlas-care-guided">
+              <div className="atlas-care-guided-top">
+                <span className="atlas-care-guided-mark" aria-hidden="true">02</span>
+              </div>
+            <div>
+              <h2 id="atlas-care-guided-title">{paths.guidedTitle}</h2>
+              <p className="atlas-care-guided-help">{paths.guidedHelp}</p>
+            </div>
+            {process.env.ATLAS_PATIENT_COMPLAINT_GUIDE_ENABLED === "true" ? (
+              <Link className="atlas-care-guided-action" href={patientLocaleHref("/care/complaints", locale)}>
+                {paths.guidedAction}<span aria-hidden="true">›</span>
+              </Link>
+            ) : (
+              <div className="atlas-care-guided-fallback">
+                <p>{paths.reviewPending}</p>
+                <Link href={patientLocaleHref("/explore/specialties", locale)}>
+                  {paths.browseInstead}<span aria-hidden="true">›</span>
+                </Link>
+              </div>
+            )}
             </div>
           </aside>
         </div>
@@ -559,7 +628,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           .atlas-care-hero-main h1{max-width:none}
         }
         @media(max-width:700px){
-          .atlas-care-journey{min-height:0;padding:10px;background:#d8eee0}
+          .atlas-care-journey{flex-direction:column;align-items:stretch;min-height:0;padding:10px;background:#d8eee0}
           .atlas-care-journey-steps>div{flex-direction:column;align-items:flex-start;min-height:76px}
           .atlas-care-empty-published{grid-template-columns:80px minmax(0,1fr);gap:14px;padding:17px}
           .atlas-care-empty-art{min-height:80px;width:80px;border-radius:16px}
@@ -695,6 +764,37 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           :root[data-theme="system"] .atlas-care-journey-steps>div,:root[data-theme="system"] .atlas-care-journey-steps strong{color:#fff!important}
         }
 
+
+        /* Two clear paths on Find Care: existing public search and gated complaint guidance. */
+        .atlas-care-direct-heading{display:flex;align-items:center;gap:10px;margin-top:26px}
+        .atlas-care-direct-heading>span,.atlas-care-guided-mark{display:grid;place-items:center;flex:0 0 35px;width:35px;height:35px;border-radius:11px;background:#dcf1e5;color:#175e42;font-size:12px;font-weight:900}
+        .atlas-care-direct-heading h2{margin:0;color:#144832;font-size:clamp(17px,2vw,23px);line-height:1.32;letter-spacing:-.02em}
+        .atlas-care-direct-help{margin:7px 0 0;color:#536e5b;font-size:13px;line-height:1.55}
+        .atlas-care-direct-help+.atlas-care-search{margin-top:15px}
+        .atlas-care-guided{display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;gap:24px;width:100%;min-width:0;color:#fff}
+        .atlas-care-guided-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+        .atlas-care-guided-top img{width:54px;height:54px;object-fit:contain;border-radius:13px}
+        .atlas-care-guided h2{margin:0;color:#fff!important;font-size:clamp(22px,2.6vw,34px);line-height:1.2;letter-spacing:-.03em;text-wrap:balance}
+        .atlas-care-guided-help{margin:13px 0 0;color:#dcf2e6;font-size:14px;line-height:1.65}
+        .atlas-care-guided-action,.atlas-care-guided-fallback>a{display:flex;align-items:center;justify-content:space-between;gap:13px;min-height:52px;padding:13px 17px;border-radius:13px;background:#d4f9e2;color:#11432e;font-size:14px;font-weight:850;text-decoration:none}
+        .atlas-care-guided-action:hover,.atlas-care-guided-fallback>a:hover{background:#f0fff4;color:#11432e}
+        .atlas-care-guided-action>span,.atlas-care-guided-fallback>a>span{font-size:23px;line-height:1}
+        .atlas-care-guided-fallback{display:grid;gap:11px}
+        .atlas-care-guided-fallback p{margin:0;color:#e3f6e9;font-size:12px;line-height:1.5}
+        .atlas-care-guided :is(a):focus-visible{outline:3px solid #e6fff0;outline-offset:3px}
+        :root[data-theme="dark"] .atlas-care-direct-heading h2,:root[data-theme="dark"] .atlas-care-direct-help{color:var(--ink)}
+        @media(prefers-color-scheme:dark){:root[data-theme="system"] .atlas-care-direct-heading h2,:root[data-theme="system"] .atlas-care-direct-help{color:var(--ink)}}
+        @media(max-width:1200px){
+          .atlas-care-guided{gap:13px;padding:0}
+          .atlas-care-guided-top img{width:40px;height:40px}
+          .atlas-care-guided h2{font-size:clamp(21px,3vw,27px)}
+        }
+        @media(max-width:700px){
+          .atlas-care-direct-heading{margin-top:23px}
+          .atlas-care-guided{padding:0;gap:15px}
+          .atlas-care-guided-help{margin-top:8px;font-size:13px}
+          .atlas-care-guided-action,.atlas-care-guided-fallback>a{min-height:50px}
+        }
         .atlas-care-more-pages{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:20px 0 6px}
         .atlas-care-more-pages>span{font-size:12px;color:var(--muted);font-weight:800;margin-inline-end:3px}
         .atlas-care-more-pages>a{display:inline-flex;align-items:center;justify-content:space-between;gap:14px;min-height:48px;padding:10px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px;font-weight:800}
