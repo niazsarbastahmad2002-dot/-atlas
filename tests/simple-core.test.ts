@@ -10,7 +10,7 @@ test("Atlas home separates patient discovery, clinic workspace, and Local while 
   const home = source("app/page.tsx");
   const config = source("next.config.mjs");
   assert.match(home, /if \(data\.user\) redirect\("\/dashboard"\)/);
-  assert.match(home, /className="button atlas-mode-button atlas-patient-entry" href="\/care"/);
+  assert.match(home, /className="button atlas-mode-button atlas-patient-entry" href=\{patientLocaleHref\("\/care", locale\)\}/);
   assert.match(home, /className="button button-ghost atlas-mode-button atlas-professional-entry" href="\/dashboard"/);
   assert.match(home, /href="\/atlas-local\.html"/);
   assert.match(home, /Patient discovery is public\. Clinic work stays private\./);
