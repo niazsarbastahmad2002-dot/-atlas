@@ -628,7 +628,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           .atlas-care-hero-main h1{max-width:none}
         }
         @media(max-width:700px){
-          .atlas-care-journey{min-height:0;padding:10px;background:#d8eee0}
+          .atlas-care-journey{flex-direction:column;align-items:stretch;min-height:0;padding:10px;background:#d8eee0}
           .atlas-care-journey-steps>div{flex-direction:column;align-items:flex-start;min-height:76px}
           .atlas-care-empty-published{grid-template-columns:80px minmax(0,1fr);gap:14px;padding:17px}
           .atlas-care-empty-art{min-height:80px;width:80px;border-radius:16px}

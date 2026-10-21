@@ -35,3 +35,7 @@ test("Find Care retains genuine published provider search and advanced filters",
   assert.match(page, /doctor\.next_available_at \? nextAvailabilityLabel/);
   assert.match(page, /@media\(max-width:700px\)/);
 });
+
+test("Find Care guided panel stacks vertically on phone layouts", () => {
+  assert.match(page, /@media\(max-width:700px\)\{\s*\.atlas-care-journey\{flex-direction:column;align-items:stretch/);
+});
