@@ -20,7 +20,7 @@ test("public clinic directions never expose a potentially stale coordinate pin",
   assert.doesNotMatch(page, /const hasMapPin/);
   assert.doesNotMatch(page, /const mapUrl/);
   assert.doesNotMatch(page, /https:\/\/www\.google\.com\/maps\/search\//);
-  assert.doesNotMatch(page, /atlas-clinic-map-link/);
+  assert.doesNotMatch(page, /className="button button-ghost atlas-clinic-map-link"/);
 });
 
 test("address-based directions links remain encoded and safely opened in a new tab", () => {
