@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { extractAtlasMagicLinkToken } from "@/lib/auth/atlas-email-link";
 import { createClient } from "@/lib/supabase/client";
+import { AtlasEmailCodeForm } from "./email-code-form";
 
 type VerificationStatus = "ready" | "verifying" | "invalid" | "failed";
 
@@ -61,11 +62,14 @@ export default function CompleteAtlasEmailLinkPage() {
         <div className="app-brand"><span className="app-brand-mark">A</span><span>Atlas</span></div>
         <h1>Complete Atlas email sign-in</h1>
         <p className="quiet">
-          Use this only if opening your Atlas sign-in email does not complete in this browser.
-          Copy the link from the latest Atlas email and paste it below instead of opening it.
-          Atlas sends its token directly to the existing Supabase authentication service, not through the browser URL launcher.
+          For email sign-in, enter the code from your newest Atlas message without opening its verification link.
+          If that email does not include a code, you can still paste an unopened magic link using the alternative below.
+          Atlas never needs to open the Supabase verification URL in a browser.
         </p>
 
+        <AtlasEmailCodeForm />
+        <details>
+          <summary>Alternative: enter an unused magic link manually</summary>
         <form className="stack-form" onSubmit={completeLink}>
           <label htmlFor="atlas-email-verification-link">Your latest Atlas sign-in link</label>
           <textarea
@@ -95,6 +99,7 @@ export default function CompleteAtlasEmailLinkPage() {
             </p>
           ) : null}
         </form>
+        </details>
         <p className="quiet">
           Do not share sign-in links or screenshots containing them with anyone,
           including a support chat. <Link href="/login">Back to Atlas login</Link>
