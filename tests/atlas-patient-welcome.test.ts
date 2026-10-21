@@ -29,7 +29,7 @@ test("language choice stays accessible and retains all four existing locales", (
 test("secondary links live below the main decision and privacy boundaries remain intact", () => {
   assert.ok(home.indexOf('<aside className="shell atlas-welcome-aux"') > home.indexOf("</section>"));
   for (const href of ["/patient-account", "/demo", "/atlas-local.html", "/support", "/privacy", "/terms"]) {
-    assert.ok(home.includes('href="' + href + '"'), "Missing secondary route " + href);
+    assert.ok(home.includes(href === "/patient-account" ? 'href={patientLocaleHref("/patient-account", locale)}' : 'href="' + href + '"'), "Missing secondary route " + href);
   }
   assert.match(home, /if \(data\.user\) redirect\("\/dashboard"\)/);
   assert.match(home, /Patient discovery is public\. Clinic work stays private\./);
