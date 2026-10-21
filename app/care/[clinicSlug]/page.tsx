@@ -217,19 +217,6 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
   const directionsUrl = directionsDestination
     ? `https://www.google.com/maps/dir/?${new URLSearchParams({ api: "1", destination: directionsDestination }).toString()}`
     : null;
-  // Coordinates are optional published fields, not geocoded guesses. Their saved values
-  // are cleared by the clinic editor whenever the published address changes.
-  const hasMapPin = Boolean(clinic.address_text)
-    && typeof clinic.latitude === "number"
-    && typeof clinic.longitude === "number"
-    && Number.isFinite(clinic.latitude)
-    && Number.isFinite(clinic.longitude)
-    && clinic.latitude >= -90 && clinic.latitude <= 90
-    && clinic.longitude >= -180 && clinic.longitude <= 180
-    && !(clinic.latitude === 0 && clinic.longitude === 0);
-  const mapUrl = hasMapPin
-    ? `https://www.google.com/maps/search/?${new URLSearchParams({ api: "1", query: `${clinic.latitude},${clinic.longitude}` }).toString()}`
-    : null;
   const phone = clinic.public_phone
     ? (clinic.country_code === "IQ" ? formatIraqiMobile(clinic.public_phone) : clinic.public_phone)
     : null;
@@ -280,11 +267,6 @@ export default async function ClinicProfilePage({ params, searchParams }: Clinic
             {directionsUrl ? (
               <a className="button atlas-clinic-directions-link" href={directionsUrl} target="_blank" rel="noreferrer">
                 {copy.directions}
-              </a>
-            ) : null}
-            {mapUrl ? (
-              <a className="button button-ghost atlas-clinic-map-link" href={mapUrl} target="_blank" rel="noreferrer">
-                {copy.map}
               </a>
             ) : null}
             {phone ? <a className="button button-ghost atlas-clinic-call-link" href={`tel:${clinic.public_phone}`}>{copy.call}</a> : null}
