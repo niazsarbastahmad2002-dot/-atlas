@@ -4,7 +4,10 @@ import test from "node:test";
 import { extractAtlasMagicLinkToken } from "../lib/auth/atlas-email-link.ts";
 
 const authHost = "https://example-project.supabase.co";
-const token = "a".repeat(64);
+// Synthetic test-only values; never use or log real email sign-in tokens.
+const token56 = "a".repeat(56);
+const token64 = "b".repeat(64);
+const token = token56;
 
 function magicLink(params: Record<string, string> = {}) {
   const url = new URL("/auth/v1/verify", authHost);
@@ -18,9 +21,23 @@ function magicLink(params: Record<string, string> = {}) {
   return url.toString();
 }
 
-test("extracts only the one-time token hash from a valid Atlas magic link", () => {
-  assert.equal(extractAtlasMagicLinkToken(magicLink(), authHost), token);
-  assert.equal(extractAtlasMagicLinkToken("  " + magicLink() + "\n", authHost), token);
+test("accepts exactly 56- and 64-character hexadecimal Atlas magic-link tokens", () => {
+  for (const syntheticToken of [token56, token64, "A".repeat(56), "F".repeat(64)]) {
+    assert.equal(extractAtlasMagicLinkToken(magicLink({ token: syntheticToken }), authHost), syntheticToken);
+    assert.equal(extractAtlasMagicLinkToken("  " + magicLink({ token: syntheticToken }) + "\n", authHost), syntheticToken);
+  }
+});
+
+test("rejects missing, nonhexadecimal or any token length other than exactly 56 or 64", () => {
+  for (const length of [0, 1, 55, 57, 63, 65, 128]) {
+    assert.equal(extractAtlasMagicLinkToken(magicLink({ token: "a".repeat(length) }), authHost), null, String(length));
+  }
+  for (const invalid of ["g".repeat(56), "g".repeat(64), "a".repeat(55) + "-", "b".repeat(63) + " "]) {
+    assert.equal(extractAtlasMagicLinkToken(magicLink({ token: invalid }), authHost), null);
+  }
+  const missingToken = new URL(magicLink());
+  missingToken.searchParams.delete("token");
+  assert.equal(extractAtlasMagicLinkToken(missingToken.toString(), authHost), null);
 });
 
 test("rejects foreign auth providers, non-HTTPS and malformed links", () => {
@@ -37,8 +54,12 @@ test("rejects different auth actions, insecure shapes and duplicate tokens", () 
   assert.equal(extractAtlasMagicLinkToken(magicLink({ type: "signup" }), authHost), null);
   assert.equal(extractAtlasMagicLinkToken(magicLink({ token: "tiny" }), authHost), null);
   assert.equal(extractAtlasMagicLinkToken(magicLink().replace("/auth/v1/verify", "/auth/v1/admin"), authHost), null);
-  assert.equal(extractAtlasMagicLinkToken(magicLink() + "&token=" + token, authHost), null);
-  assert.equal(extractAtlasMagicLinkToken(magicLink() + "&type=magiclink", authHost), null);
+  for (const syntheticToken of [token56, token64]) {
+    const link = magicLink({ token: syntheticToken });
+    assert.equal(extractAtlasMagicLinkToken(link + "&token=" + syntheticToken, authHost), null);
+    assert.equal(extractAtlasMagicLinkToken(link + "&token=" + token56, authHost), null);
+    assert.equal(extractAtlasMagicLinkToken(link + "&type=magiclink", authHost), null);
+  }
   assert.equal(extractAtlasMagicLinkToken(magicLink() + "#fragment", authHost), null);
   assert.equal(extractAtlasMagicLinkToken(magicLink().replace("https://", "https://user:password@"), authHost), null);
 });
