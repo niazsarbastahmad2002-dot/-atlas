@@ -5,7 +5,7 @@ const locales = ["en", "ku", "bd", "ar"];
 test("public Welcome preserves care and existing Doctor entry and fits viewport", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("#atlas-welcome-title")).toBeVisible();
-  await expect(page.locator('a.atlas-patient-entry[href="/care"]')).toBeVisible();
+  await expect(page.locator('a.atlas-patient-entry[href="/care?lang=en"]')).toBeVisible();
   await expect(page.locator('a.atlas-professional-entry[href="/dashboard"]')).toBeVisible();
   const size = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
@@ -48,5 +48,19 @@ test("Explore clinics, specialties and locations render correctly in all four la
       }));
       expect(size.scroll).toBeLessThanOrEqual(size.client + 1);
     }
+  }
+});
+
+test("Welcome roundtrip preserves all four explicit languages", async ({ page }) => {
+  for (const locale of locales) {
+    await page.goto("/care?lang=" + locale);
+    await page.locator("a.atlas-care-back").click();
+    await expect(page).toHaveURL(new RegExp("/\\?lang=" + locale + "$"));
+    await expect(page.locator("#atlas-welcome-title")).toBeVisible();
+    await expect(page.locator('a.atlas-patient-entry')).toHaveAttribute("href", "/care?lang=" + locale);
+    await expect(page.locator('a[href^="/patient-account?lang="]')).toHaveAttribute("href", "/patient-account?lang=" + locale);
+    await page.locator("a.atlas-patient-entry").click();
+    await expect(page.locator("main.atlas-care-page")).toHaveAttribute("dir", locale === "en" ? "ltr" : "rtl");
+    await expect(page).toHaveURL(new RegExp("/care\\?lang=" + locale + "$"));
   }
 });
