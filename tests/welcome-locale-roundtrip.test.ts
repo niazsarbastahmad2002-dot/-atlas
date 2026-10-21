@@ -13,7 +13,7 @@ test("Welcome respects explicit patient language before cookie fallback", () => 
   for (const locale of ["en", "ku", "bd", "ar"]) {
     assert.match(welcome, new RegExp("\\b" + locale + ": \\{"));
   }
-  assert.match(care, /dir=\{locale === "en" \? "ltr" : "rtl"\}/);
+  assert.match(care, /dir=\{meta.direction\}/);
 });
 
 test("Patient Welcome and Find Care preserve locale without changing Doctor entry", () => {
