@@ -15,7 +15,11 @@ Official sources:
 For every newly created `public` table, make a deliberate decision:
 
 1. Enable row-level security immediately.
-2. Explicitly revoke inherited client privileges in the same migration.
+2. Explicitly revoke inherited client privileges in the same migration from
+   **three principals**: PostgreSQL pseudo-role `PUBLIC`, `anon`, and
+   `authenticated`. The uppercase SQL role `PUBLIC` means *every database
+   role* and is distinct from the lowercase `public` schema. Revoking only
+   `anon` and `authenticated` does **not** remove access inherited from `PUBLIC`.
 3. If a Data API client genuinely needs it, GRANT only required SQL operations
    to the appropriate role(s) and add clinic-scoped RLS policies.
 4. Otherwise do not grant Data API access. Include a review marker like
@@ -52,7 +56,21 @@ all `public` tables to `anon` or `authenticated`.
 `tests/data-api-new-public-tables.test.ts` checks SQL migration files added
 after the last reviewed migration (20261004160000), requiring explicit RLS,
 revocation of client defaults, and either a role-specific Data API GRANT or a
-clearly marked private table. It also requires a policy alongside client grants, detects grant/revoke role-order mistakes, rejects anonymous writes and broad authenticated GRANT ALL, and flags renewed broad public-schema defaults.
+clearly marked private table. It requires explicit `REVOKE ALL` from
+`PUBLIC`, `anon`, and `authenticated` (together or in separate statements),
+and flags **any** new table `GRANT` to `PUBLIC` (even `SELECT`) because all
+database roles inherit it. This is intentionally conservative, even if another
+statement would revoke the grant later. It also requires a policy alongside
+client grants, tests grant/revoke role-order variations, rejects anonymous
+writes and broad authenticated `GRANT ALL`, and flags renewed broad public-schema
+defaults.
+
+The synthetic negative tests include `GRANT SELECT ON public.future_records
+TO PUBLIC` with only `anon`/`authenticated` revocations and an
+`authenticated`-only RLS policy. Positive cases include all three explicit
+revocations with reordered or separate statements. PostgreSQL grants and RLS
+are distinct layers: an authenticated-only policy alone cannot remove an
+inherited `PUBLIC` table privilege.
 
 This is a **static regression check**, not a SQL parser or proof of isolation.
 It does not exercise the production database, retroactively edit historical
