@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
   allowedAppointmentTransitions,
+  canConfirmAppointmentAttendance,
+  toBaghdadInputValue,
   type AppointmentMutationFailure,
   type AppointmentStatus,
 } from "@/lib/appointments";
@@ -27,7 +29,7 @@ function paintOrderVisibility(card: HTMLElement | null, status: AppointmentStatu
 function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
   if (locale === "ku") {
     if (reason === "busy") return "مەوعیدەکە هێشتا نوێ دەکرێتەوە. دووبارە هەوڵ بدە.";
-    if (reason === "too_early") return "هێشتا کاتی مەوعیدەکە نەهاتووە. دوای کاتی مەوعید دۆخی کۆتایی تۆمار بکە.";
+    if (reason === "too_early") return "هاتن تەنها لە ڕۆژی وادە یان دوای ئەوە پشتڕاست دەکرێتەوە؛ ئەنجامی سەردانیش نزیک کاتی وادە تۆمار بکە.";
     if (reason === "past_cancelled") return "مەوعیدی هەڵوەشێنراوی ڕابردوو ناگەڕێندرێتەوە؛ مەوعیدێکی نوێ دروست بکە.";
     if (reason === "stale") return "ئەم مەوعیدە لە شوێنێکی تر گۆڕدراوە. نوێترین دۆخ بار دەکرێتەوە.";
     if (reason === "invalid") return "ئەم گۆڕانکارییە بۆ ئەم مەوعیدە ڕێگەپێدراو نییە.";
@@ -35,7 +37,7 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
   }
   if (locale === "bd") {
     if (reason === "busy") return "مەوعید هێشتا دهێتە نوێکرن. دووبارە هەول بدە.";
-    if (reason === "too_early") return "هێشتا دەمێ مەوعیدی نەهاتییە. پشتی دەمێ مەوعیدی ئەنجامێ تۆمار بکە.";
+    if (reason === "too_early") return "هاتن تەنێ ل ڕۆژا وادەیێ یان پشتی وێ دهێتە پشتڕاستکرن؛ ئەنجامێ سەردانێ ژی نێزیکی دەمێ وادەیێ تۆمار بکە.";
     if (reason === "past_cancelled") return "مەوعیدا هەلوەشاندی یا دەربازبووی ناهێتە ڤەگەراندن؛ مەوعیدا نوو دروست بکە.";
     if (reason === "stale") return "ئەڤ مەوعیدە ل جهەکێ دی هاتیە گۆڕین. نووترین بار دهێتە بارکرن.";
     if (reason === "invalid") return "ئەڤ گۆڕین بۆ ڤی مەوعیدی بەردەست نینە.";
@@ -43,14 +45,14 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
   }
   if (locale === "ar") {
     if (reason === "busy") return "الموعد قيد التحديث. حاول مرة أخرى.";
-    if (reason === "too_early") return "لم يحن وقت الموعد بعد. سجّل النتيجة بعد وقت الموعد.";
+    if (reason === "too_early") return "تأكيد الحضور يصير بيوم الموعد أو بعده؛ ونتيجة الزيارة تتسجل قرب وقت الموعد.";
     if (reason === "past_cancelled") return "لا يمكن استعادة موعد ملغي مضى وقته. أنشئ موعداً جديداً.";
     if (reason === "stale") return "تم تغيير هذا الموعد من مكان آخر. سيتم تحميل أحدث حالة.";
     if (reason === "invalid") return "هذا التغيير غير متاح لهذا الموعد.";
     return "لم يتم حفظ التغيير. حاول مرة أخرى.";
   }
   if (reason === "busy") return "This appointment is still updating. Try again.";
-  if (reason === "too_early") return "It is too early to record the appointment outcome. Try again after the appointment time.";
+  if (reason === "too_early") return "Confirm attendance on or after the appointment day. Record visit outcomes near the appointment time.";
   if (reason === "past_cancelled") return "A past cancelled appointment cannot be restored. Create a new appointment instead.";
   if (reason === "stale") return "This appointment changed elsewhere. Loading the latest status.";
   if (reason === "invalid") return "That change is not available for this appointment.";
@@ -145,7 +147,9 @@ export function AppointmentActions({
     const scheduledAt = new Date(appointmentAt).getTime();
     if (!Number.isFinite(scheduledAt)) return;
 
-    const boundaries = [scheduledAt - 5 * 60 * 1000, scheduledAt + 5 * 60 * 1000];
+    const localDay = toBaghdadInputValue(new Date(appointmentAt)).slice(0, 10);
+    const dayStart = Date.parse(`${localDay}T00:00:00+03:00`);
+    const boundaries = [dayStart, scheduledAt - 5 * 60 * 1000, scheduledAt + 5 * 60 * 1000].sort((a, b) => a - b);
     let timer: number | null = null;
     const stop = () => {
       if (timer === null) return;
@@ -178,9 +182,11 @@ export function AppointmentActions({
 
   const scheduledAt = new Date(appointmentAt).getTime();
   const tooEarlyForOutcome = Number.isFinite(scheduledAt) && scheduledAt > Date.now() + 5 * 60 * 1000;
+  const tooEarlyForAttendance = !canConfirmAppointmentAttendance(appointmentAt);
   const tooLateToRestore = Number.isFinite(scheduledAt) && scheduledAt < Date.now() - 5 * 60 * 1000;
 
   function unavailableReason(nextStatus: AppointmentStatus) {
+    if (nextStatus === "confirmed" && tooEarlyForAttendance) return "too_early" as const;
     if ((nextStatus === "completed" || nextStatus === "no_show") && tooEarlyForOutcome) return "too_early" as const;
     if (nextStatus === "pending" && optimisticStatus === "cancelled" && tooLateToRestore) return "past_cancelled" as const;
     return null;

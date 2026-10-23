@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   canTransitionAppointment,
+  canConfirmAppointmentAttendance,
   isAppointmentStatus,
   isUuid,
 } from "@/lib/appointments";
@@ -40,7 +41,7 @@ export async function updateAppointmentStatusReliable(
 
   const { data: current, error: readError } = await supabase
     .from("appointments")
-    .select("id, status")
+    .select("id, status, appointment_at")
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .is("voided_at", null)
@@ -56,6 +57,9 @@ export async function updateAppointmentStatusReliable(
   if (!canTransitionAppointment(current.status, status)) {
     redirect(dashboardUrl("error", "appointment_status_invalid", clinicId));
   }
+  if (status === "confirmed" && !canConfirmAppointmentAttendance(current.appointment_at)) {
+    redirect(dashboardUrl("error", "appointment_status_invalid", clinicId));
+  }
 
   const { data, error } = await supabase
     .from("appointments")
@@ -63,6 +67,7 @@ export async function updateAppointmentStatusReliable(
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .eq("status", current.status)
+    .eq("appointment_at", current.appointment_at)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();
