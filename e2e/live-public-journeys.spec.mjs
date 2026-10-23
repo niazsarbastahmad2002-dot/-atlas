@@ -111,3 +111,22 @@ test("production version endpoint reports the deployed exact SHA", async ({ requ
     expect(result.commit).toBe(process.env.ATLAS_EXPECTED_COMMIT);
   }
 });
+
+test("signed-out clinic workspaces are gated on the live website", async ({ page }) => {
+  test.setTimeout(90_000);
+  const assertSafe = await protectReadOnlyRun(page);
+  const protectedPaths = [
+    "/dashboard",
+    "/dashboard/history",
+    "/dashboard/assistant",
+    "/dashboard/settings",
+    "/dashboard/staff",
+  ];
+  for (const path of protectedPaths) {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+    await expect.poll(() => new URL(page.url()).pathname,
+      { message: "Signed-out access to " + path + " must redirect to /login" }).toBe("/login");
+    await expect(page.getByRole("heading").first()).toBeVisible();
+  }
+  assertSafe();
+});

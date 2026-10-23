@@ -50,6 +50,7 @@ const copy = {
     adminOnly: "Only clinic administration can permanently delete removed records.",
     empty: "No history matches this view.",
     failed: "Atlas could not delete those records. Refresh and try again.",
+    partial: "Only {count} selected records were deleted. The list was refreshed; review what remains.",
     notAllowed: "Only clinic administration can permanently delete removed records.",
     filter: "History filter",
     sort: "History sort",
@@ -83,6 +84,7 @@ const copy = {
     adminOnly: "تەنها بەڕێوەبردنی کلینیک دەتوانێت تۆماری لابراو بۆ هەمیشە بسڕێتەوە.",
     empty: "هیچ تۆمارێک لەم دیمەنەدا نییە.",
     failed: "Atlas نەیتوانی ئەم تۆمارانە بسڕێتەوە. پەڕەکە نوێ بکەرەوە و دووبارە هەوڵ بدە.",
+    partial: "تەنها {count} تۆماری دیاریکراو سڕایەوە. لیستەکە نوێ کرایەوە؛ تۆمارە ماوەکان بپشکنە.",
     notAllowed: "تەنها بەڕێوەبردنی کلینیک دەتوانێت تۆماری لابراو بۆ هەمیشە بسڕێتەوە.",
     filter: "پاڵاوتنی مێژوو",
     sort: "ڕیزکردنی مێژوو",
@@ -116,6 +118,7 @@ const copy = {
     adminOnly: "تەنێ بەڕێڤەبرنا کلینیکێ دشێت تۆمارێن لابری بۆ هەمیشە ژێببەت.",
     empty: "چ تۆمار ل ڤێ دیمەنێ نینن.",
     failed: "Atlas نەشیا ئەڤ تۆمارە ژێببەت. پەرەیێ نوێ بکە و دووبارە هەول بدە.",
+    partial: "تەنێ {count} تۆمارێن هەلبژارتی هاتنە ژێبرن. لیست هاتە نوێکرن؛ تۆمارێن ماین بپشکنە.",
     notAllowed: "تەنێ بەڕێڤەبرنا کلینیکێ دشێت تۆمارێن لابری بۆ هەمیشە ژێببەت.",
     filter: "پاڵاوتنا مێژوویێ",
     sort: "ڕێزکرنا مێژوویێ",
@@ -149,6 +152,7 @@ const copy = {
     adminOnly: "يمكن لإدارة العيادة فقط حذف السجلات نهائياً.",
     empty: "لا يوجد سجل يطابق هذا العرض.",
     failed: "تعذر على Atlas حذف هذه السجلات. حدّث الصفحة وحاول مرة أخرى.",
+    partial: "تم حذف {count} فقط من السجلات المحددة. تم تحديث القائمة؛ راجع السجلات المتبقية.",
     notAllowed: "يمكن لإدارة العيادة فقط حذف السجلات نهائياً.",
     filter: "تصفية السجل",
     sort: "ترتيب السجل",
@@ -257,6 +261,12 @@ export function HistoryClient({
     startTransition(async () => {
       const result = await deleteArchivedAppointments(clinicId, ids);
       if (!result.ok) {
+        if (result.error === "partial" && result.deleted) {
+          setSelected(new Set());
+          router.refresh();
+          setFeedback(t.partial.replace("{count}", localizeDigits(result.deleted, locale)));
+          return;
+        }
         setFeedback(result.error === "not_allowed" ? t.notAllowed : t.failed);
         return;
       }

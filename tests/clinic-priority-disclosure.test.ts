@@ -53,3 +53,13 @@ test("expanded reception queue preserves all status actions and workspace isolat
     assert.match(page, new RegExp(`\\b${locale}: \\{ title:.*showFullQueue:`));
   }
 });
+
+test("front-desk arrival queue avoids repeating past/future schedules without removing patient actions", () => {
+  // Only today's queue offers one-tap attendance actions. Other dates keep the
+  // complete appointment list and status filters, without an extra copy.
+  assert.match(page, /hasArrivalQueue && selectedDay === today \? <ClinicArrivalDisclosure/);
+  assert.match(page, /const focusOptions = \[/);
+  assert.match(page, /focusedRows\.map\(\(appointment\) =>/);
+  assert.match(page, /selectedDay === today \? <ClinicArrivalQuickAction/);
+  assert.match(page, /appointmentAt=\{appointment\.appointment_at\}/);
+});

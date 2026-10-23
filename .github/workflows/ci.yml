@@ -16,6 +16,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Public-repo hosted runner; pinned browsers avoid intermittent Ubuntu mirror downloads.
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
       options: --user 1001
@@ -49,4 +50,4 @@ jobs:
       - name: Live public Atlas browser journeys (read-only Chromium)
         env:
           ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
-        run: npx playwright test --config=playwright.production.config.mjs --project=desktop-chromium --grep 'live public|all four production|production version'
+        run: npx playwright test --config=playwright.production.config.mjs --project=desktop-chromium --grep 'live public|all four production|production version|signed-out clinic'
