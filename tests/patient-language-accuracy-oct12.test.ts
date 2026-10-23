@@ -18,10 +18,11 @@ test("Patient discovery has meaningful Sorani and Arabic no-results copy", () =>
 
 test("Patient profiles and time views use clear, honest read-only booking text", () => {
   assert.match(doctor, /noPreviewTimes: "ماكو أوقات متاحة خلال السبعة أيام الجاية\."/);
-  assert.match(times, /الحجز عن طريق Atlas مو مفعّل هسه/);
-  assert.match(times, /دانانی مەوعید لە Atlas هێشتا چالاک نییە/);
+  assert.match(times, /الحجز الإلكتروني مو مفعّل/);
+  assert.match(times, /دانانی مەوعیدی ئۆنلاین چالاک نییە/);
   assert.match(times, /readOnlyIntro/);
-  assert.match(times, /تواصل ويا العيادة حتى تحجز/);
+  assert.match(times, /اتصل بالعيادة للتأكد وطلب الموعد/);
+  assert.match(times, /ئەم کاتانە بۆ تۆ نەگیراون/);
 });
 
 test("Private appointments explain the no-show status without treating it as a completed visit", () => {
