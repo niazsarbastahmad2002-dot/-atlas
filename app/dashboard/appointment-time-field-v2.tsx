@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   formatAppointmentDateValue,
+  formatLocalDateValue,
+  formatTimeValue,
   formatMonthYear,
   formatWeekday,
   localizeDigits,
@@ -22,10 +24,10 @@ type Props = {
 type Period = "am" | "pm";
 
 const copy = {
-  en: { date: "Appointment date", time: "Appointment time", am: "AM", pm: "PM", hour: "Hour", minute: "Minute", minuteUnit: "min", custom: "Custom time", quick: "Available times", selected: "Selected", booked: "That exact time is already booked for this doctor.", doctor: "Choose a doctor first", invalid: "Choose a valid future time", previous: "Previous month", next: "Next month" },
-  ku: { date: "بەرواری وادە", time: "کاتی وادە", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", hour: "کاتژمێر", minute: "خولەک", minuteUnit: "خولەک", custom: "کاتی تایبەت", quick: "کاتە بەردەستەکان", selected: "هەڵبژێردراو", booked: "ئەم کاتەی تەواو بۆ ئەم پزیشکە گیراوە.", doctor: "سەرەتا پزیشک هەڵبژێرە", invalid: "کاتێکی دروستی داهاتوو هەڵبژێرە", previous: "مانگی پێشوو", next: "مانگی داهاتوو" },
-  bd: { date: "ڕێکەفتا وادەیێ", time: "دەمێ وادەیێ", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", hour: "دەمژمێر", minute: "خولەک", minuteUnit: "خولەک", custom: "دەمێ تایبەت", quick: "دەمێن بەردەست", selected: "هەلبژارتی", booked: "ئەڤ دەم بۆ ڤی دکتۆری هاتییە گرتن.", doctor: "سەرەتا دکتۆر هەلبژێرە", invalid: "دەمەکێ دروست یێ داهاتوو هەلبژێرە", previous: "مەها بەرێ", next: "مەها پاش" },
-  ar: { date: "تاريخ الموعد", time: "وقت الموعد", am: "صباحاً", pm: "مساءً", hour: "الساعة", minute: "الدقيقة", minuteUnit: "دقيقة", custom: "وقت مخصص", quick: "الأوقات المتاحة", selected: "المحدد", booked: "هذا الوقت محجوز بالفعل لهذا الطبيب.", doctor: "اختر الطبيب أولاً", invalid: "اختر وقتاً مستقبلياً صالحاً", previous: "الشهر السابق", next: "الشهر التالي" },
+  en: { date: "Appointment date", time: "Appointment time", am: "AM", pm: "PM", hour: "Hour", minute: "Minute", minuteUnit: "min", custom: "Custom time", quick: "Available times", selected: "Selected", booked: "That exact time is already booked for this doctor.", doctor: "Choose a doctor first", invalid: "Choose a valid future time", tooSoon: "Too soon. Earliest: {date}, {time} (Erbil time).", later: "Use a later available time", previous: "Previous month", next: "Next month" },
+  ku: { date: "بەرواری وادە", time: "کاتی وادە", am: "پێش نیوەڕۆ", pm: "دوای نیوەڕۆ", hour: "کاتژمێر", minute: "خولەک", minuteUnit: "خولەک", custom: "کاتی تایبەت", quick: "کاتە بەردەستەکان", selected: "هەڵبژێردراو", booked: "ئەم کاتەی تەواو بۆ ئەم پزیشکە گیراوە.", doctor: "سەرەتا پزیشک هەڵبژێرە", invalid: "کاتێکی دروستی داهاتوو هەڵبژێرە", tooSoon: "کاتەکە زۆر نزیکە. زووترین کات: {date}، {time} (کاتی هەولێر).", later: "کاتێکی دواتری بەردەست هەڵبژێرە", previous: "مانگی پێشوو", next: "مانگی داهاتوو" },
+  bd: { date: "ڕێکەفتا وادەیێ", time: "دەمێ وادەیێ", am: "بەری نیڤرۆ", pm: "پشتی نیڤرۆ", hour: "دەمژمێر", minute: "خولەک", minuteUnit: "خولەک", custom: "دەمێ تایبەت", quick: "دەمێن بەردەست", selected: "هەلبژارتی", booked: "ئەڤ دەم بۆ ڤی دکتۆری هاتییە گرتن.", doctor: "سەرەتا دکتۆر هەلبژێرە", invalid: "دەمەکێ دروست یێ داهاتوو هەلبژێرە", tooSoon: "دەمێ هەلبژارتی زۆر نێزیکە. زووترین دەم: {date}، {time} (دەمێ هەولێرێ).", later: "دەمەکێ پاشتر یێ بەردەست هەلبژێرە", previous: "مەها بەرێ", next: "مەها پاش" },
+  ar: { date: "تاريخ الموعد", time: "وقت الموعد", am: "صباحاً", pm: "مساءً", hour: "الساعة", minute: "الدقيقة", minuteUnit: "دقيقة", custom: "وقت مخصص", quick: "الأوقات المتاحة", selected: "المحدد", booked: "هذا الوقت محجوز بالفعل لهذا الطبيب.", doctor: "اختر الطبيب أولاً", invalid: "اختر وقتاً مستقبلياً صالحاً", tooSoon: "الوقت قريب جداً. أقرب وقت للحجز: {date}، {time} (بتوقيت أربيل).", later: "اختيار وقت لاحق متاح", previous: "الشهر السابق", next: "الشهر التالي" },
 } as const;
 
 function pad(value: number) { return String(value).padStart(2, "0"); }
@@ -258,10 +260,27 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     chooseParts(nextDefault);
   }, [custom, nextDefault, savedAdvance, touched]);
 
+  // Recover the nearest eligible unbooked interval even if the day's last
+  // booking is near midnight. Keep the normal default-time heuristic unchanged.
+  const recoveryCandidate = useMemo(() => {
+    if (!doctorId || date < minDate || date > maxDate) return "";
+    let candidate = date === minDate ? ceilToInterval(effectiveMin, interval) : `${date}T09:00`;
+    for (let attempt = 0; attempt < 288; attempt += 1) {
+      if (!candidate.startsWith(`${date}T`) || candidate > max) break;
+      if (candidate >= effectiveMin && !occupied.has(candidate)) return candidate;
+      candidate = addLocalMinutes(candidate, interval);
+    }
+    return "";
+  }, [date, doctorId, effectiveMin, interval, max, minDate, occupied]);
+
   const time = to24(hour, minute, period);
   const value = `${date}T${time}`;
   const exactBooked = occupied.has(value);
-  const outOfRange = value < effectiveMin || value > max;
+  const tooSoon = value < effectiveMin;
+  const outOfRange = tooSoon || value > max;
+  const earliestNotice = text.tooSoon
+    .replace("{date}", formatLocalDateValue(effectiveMin.slice(0, 10), locale))
+    .replace("{time}", formatTimeValue(effectiveMin.slice(11), locale));
   const usable = Boolean(doctorId) && !exactBooked && !outOfRange;
 
   useEffect(() => {
@@ -393,14 +412,15 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
         </>
       )}
       <input type="hidden" name="appointment_at" value={usable ? value : ""} />
-      <div className={`atlas-selected-time ${usable ? "" : "is-error"}`}><span>{usable ? text.selected : !doctorId ? text.doctor : exactBooked ? text.booked : text.invalid}</span><strong dir="ltr">{usable ? `${localizeDigits(hour, locale)}:${localizeDigits(pad(minute), locale)} ${period === "am" ? text.am : text.pm}` : "—"}</strong></div>
+      <div className={`atlas-selected-time ${usable ? "" : "is-error"}`} role={tooSoon && doctorId ? "status" : undefined}><span>{usable ? text.selected : !doctorId ? text.doctor : exactBooked ? text.booked : tooSoon ? earliestNotice : text.invalid}</span><strong dir="ltr">{usable ? `${localizeDigits(hour, locale)}:${localizeDigits(pad(minute), locale)} ${period === "am" ? text.am : text.pm}` : "—"}</strong></div>
+      {tooSoon && doctorId && recoveryCandidate ? <button className="atlas-time-recover" type="button" onClick={() => { chooseParts(recoveryCandidate); setCustom(false); setTouched(true); setSavedAdvance(false); }}>{text.later}</button> : null}
       <style>{`
         .atlas-time-v2{display:grid;gap:10px;position:relative}.atlas-time-v2>label{font-size:12px;font-weight:800}.atlas-time-v2>label small{font-weight:600;color:var(--muted)}
         .atlas-date-wrap{position:relative}.atlas-date-trigger{display:flex;width:100%;min-height:50px;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line-strong);border-radius:13px;padding:10px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:760;cursor:pointer}.atlas-date-value{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;letter-spacing:.02em}.atlas-date-chevron{color:var(--muted);font-size:16px}
         .atlas-calendar-popover{position:absolute;z-index:40;inset-inline:0;top:calc(100% + 7px);border:1px solid var(--line-strong);border-radius:18px;padding:15px;background:#fff;box-shadow:var(--shadow-md)}
         .atlas-calendar-heading{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center;gap:8px;margin-bottom:10px}.atlas-calendar-heading strong{text-align:center;font-size:15px}.atlas-calendar-heading button{width:40px;height:40px;border:0;border-radius:10px;background:var(--surface-soft);font-size:23px;cursor:pointer}
         .atlas-calendar-weekdays,.atlas-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.atlas-calendar-weekdays{margin-bottom:4px}.atlas-calendar-weekdays span{padding:4px 0;color:var(--muted);text-align:center;font-size:9px;font-weight:760;white-space:nowrap}.atlas-calendar-grid button,.atlas-calendar-grid>span{height:38px;min-width:0}.atlas-calendar-grid button{border:0;border-radius:10px;background:transparent;color:var(--ink);font-size:13px;cursor:pointer}.atlas-calendar-grid button.is-selected{background:var(--accent);color:#fff;font-weight:840;box-shadow:0 4px 12px rgba(8,119,90,.18)}.atlas-calendar-grid button:disabled{opacity:.25;cursor:not-allowed}
-        .atlas-time-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:3px}.atlas-time-heading strong{font-size:12px}.atlas-time-heading button{border:0;background:transparent;color:var(--accent);font-size:11px;font-weight:800;cursor:pointer}.atlas-period-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;border-radius:13px;padding:4px;background:var(--surface-soft)}.atlas-period-tabs button,.atlas-hour-grid button,.atlas-minute-grid button{min-height:42px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font-weight:800;cursor:pointer}.atlas-period-tabs button.is-selected,.atlas-hour-grid button.is-selected,.atlas-minute-grid button.is-selected{border-color:rgba(8,119,90,.35);background:#fff;color:var(--accent);box-shadow:0 2px 8px rgba(8,119,90,.08)}.atlas-time-grid-label{margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}.atlas-hour-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-minute-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-hour-grid button,.atlas-minute-grid button{border-color:var(--line);background:#fff}.atlas-hour-grid button:disabled,.atlas-minute-grid button:disabled{opacity:.28;cursor:not-allowed}.atlas-custom-time{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px}.atlas-custom-time label{display:grid;gap:5px;color:var(--muted);font-size:10px;font-weight:800}.atlas-custom-time input{min-height:54px;border:1px solid var(--line-strong);border-radius:13px;padding:8px 12px;text-align:center;font-size:22px;font-weight:850}.atlas-time-colon{padding-bottom:13px;font-size:24px;font-weight:900}.atlas-selected-time{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:11px 13px;background:var(--accent-soft);color:var(--accent)}.atlas-selected-time span{font-size:11px;font-weight:750}.atlas-selected-time strong{font-size:14px}.atlas-selected-time.is-error{background:#fff2ef;color:#a64a3a}@media(max-width:560px){.atlas-hour-grid,.atlas-minute-grid{grid-template-columns:repeat(4,1fr)}.atlas-calendar-popover{position:relative;top:auto;margin-top:7px}}
+        .atlas-time-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:3px}.atlas-time-heading strong{font-size:12px}.atlas-time-heading button{border:0;background:transparent;color:var(--accent);font-size:11px;font-weight:800;cursor:pointer}.atlas-period-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;border-radius:13px;padding:4px;background:var(--surface-soft)}.atlas-period-tabs button,.atlas-hour-grid button,.atlas-minute-grid button{min-height:42px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font-weight:800;cursor:pointer}.atlas-period-tabs button.is-selected,.atlas-hour-grid button.is-selected,.atlas-minute-grid button.is-selected{border-color:rgba(8,119,90,.35);background:#fff;color:var(--accent);box-shadow:0 2px 8px rgba(8,119,90,.08)}.atlas-time-grid-label{margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}.atlas-hour-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-minute-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.atlas-hour-grid button,.atlas-minute-grid button{border-color:var(--line);background:#fff}.atlas-hour-grid button:disabled,.atlas-minute-grid button:disabled{opacity:.28;cursor:not-allowed}.atlas-custom-time{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px}.atlas-custom-time label{display:grid;gap:5px;color:var(--muted);font-size:10px;font-weight:800}.atlas-custom-time input{min-height:54px;border:1px solid var(--line-strong);border-radius:13px;padding:8px 12px;text-align:center;font-size:22px;font-weight:850}.atlas-time-colon{padding-bottom:13px;font-size:24px;font-weight:900}.atlas-selected-time{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:11px 13px;background:var(--accent-soft);color:var(--accent)}.atlas-selected-time span{font-size:11px;font-weight:750}.atlas-selected-time strong{font-size:14px}.atlas-selected-time.is-error{background:#fff2ef;color:#a64a3a}.atlas-time-recover{min-height:44px;border:1px solid var(--line-strong);border-radius:12px;padding:9px 14px;background:var(--surface);color:var(--accent);font:inherit;font-size:13px;font-weight:800;cursor:pointer}.atlas-time-recover:hover{background:var(--accent-soft)}@media(max-width:560px){.atlas-hour-grid,.atlas-minute-grid{grid-template-columns:repeat(4,1fr)}.atlas-calendar-popover{position:relative;top:auto;margin-top:7px}}
       `}</style>
     </div>
   );
