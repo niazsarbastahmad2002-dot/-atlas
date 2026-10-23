@@ -64,7 +64,9 @@ async function assertReadablePage(page, direction) {
 }
 
 async function openPublicPage(page, path, direction) {
-  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+  // Wait for speculative RSC prefetch to drain before the next page unloads.
+  // WebKit reports canceled navigation-time fetches as access-control errors.
+  const response = await page.goto(path, { waitUntil: "networkidle" });
   expect(response, "Navigation must complete: " + path).not.toBeNull();
   expect(response.status(), "Public route must not be HTTP error: " + path).toBeLessThan(400);
   await assertReadablePage(page, direction);
@@ -76,14 +78,17 @@ test("live public patient journey works from Home to Find Care and Explore", asy
   await openPublicPage(page, "/?lang=en", "ltr");
   await page.locator(".atlas-patient-entry[href*='/care']").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/care");
+  await page.waitForLoadState("networkidle");
   await assertReadablePage(page, "ltr");
 
   for (const kind of discoveryPages) {
     await page.locator(".atlas-care-more-pages a[href*='/explore/" + kind + "']").click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/explore/" + kind);
+    await page.waitForLoadState("networkidle");
     await assertReadablePage(page, "ltr");
     await page.locator(".atlas-explore-back").click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/care");
+    await page.waitForLoadState("networkidle");
   }
   assertSafe();
 });
@@ -123,7 +128,7 @@ test("signed-out clinic workspaces are gated on the live website", async ({ page
     "/dashboard/staff",
   ];
   for (const path of protectedPaths) {
-    await page.goto(path, { waitUntil: "domcontentloaded" });
+    await page.goto(path, { waitUntil: "networkidle" });
     await expect.poll(() => new URL(page.url()).pathname,
       { message: "Signed-out access to " + path + " must redirect to /login" }).toBe("/login");
     await expect(page.getByRole("heading").first()).toBeVisible();
