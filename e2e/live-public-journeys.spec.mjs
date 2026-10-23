@@ -8,37 +8,11 @@ const locales = [
   { id: "ar", dir: "rtl" },
 ];
 const discoveryPages = ["clinics", "specialties", "locations"];
-// Next.js speculatively fetches RSC payloads and auth readiness after each load.
-// Wait for these finite requests, not all network traffic (which may stay open).
-const pendingPageReads = new WeakMap();
-
-async function waitForPageReads(page) {
-  const pending = pendingPageReads.get(page);
-  if (!pending) throw new Error("Read-only request observer was not installed");
-  await expect.poll(() => pending.size, { timeout: 12_000 }).toBe(0);
-  // Give speculative prefetch a bounded window to start; avoid unbounded networkidle.
-  await page.waitForTimeout(300);
-  await expect.poll(() => pending.size, { timeout: 12_000 }).toBe(0);
-}
-
 async function protectReadOnlyRun(page) {
   const attemptedWrites = [];
   const javascriptErrors = [];
   const serverErrors = [];
   const origin = new URL(test.info().project.use.baseURL).origin;
-  const pendingReads = new Set();
-  const watchedRead = (request) => {
-    const url = new URL(request.url());
-    return url.origin === origin &&
-      (url.searchParams.has("_rsc") || url.pathname === "/api/auth/readiness");
-  };
-  page.on("request", (request) => {
-    if (watchedRead(request)) pendingReads.add(request);
-  });
-  page.on("requestfinished", (request) => pendingReads.delete(request));
-  page.on("requestfailed", (request) => pendingReads.delete(request));
-  pendingPageReads.set(page, pendingReads);
-
   await page.route("**/*", async (route) => {
     const request = route.request();
     if (!["GET", "HEAD", "OPTIONS"].includes(request.method())) {
@@ -92,7 +66,6 @@ async function openPublicPage(page, path, direction) {
   expect(response, "Navigation must complete: " + path).not.toBeNull();
   expect(response.status(), "Public route must not be HTTP error: " + path).toBeLessThan(400);
   await assertReadablePage(page, direction);
-  await waitForPageReads(page);
 }
 
 test("live public patient journey works from Home to Find Care and Explore", async ({ page }) => {
@@ -101,32 +74,38 @@ test("live public patient journey works from Home to Find Care and Explore", asy
   await openPublicPage(page, "/?lang=en", "ltr");
   await page.locator(".atlas-patient-entry[href*='/care']").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/care");
-  await waitForPageReads(page);
   await assertReadablePage(page, "ltr");
 
   for (const kind of discoveryPages) {
     await page.locator(".atlas-care-more-pages a[href*='/explore/" + kind + "']").click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/explore/" + kind);
-    await waitForPageReads(page);
-    await assertReadablePage(page, "ltr");
+      await assertReadablePage(page, "ltr");
     await page.locator(".atlas-explore-back").click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/care");
-    await waitForPageReads(page);
-  }
+    }
   assertSafe();
 });
 
-test("all four production languages render public Patient journeys without overflow", async ({ page }) => {
+test("all four production languages render public Patient journeys without overflow", async ({ context }) => {
   test.setTimeout(180_000);
-  const assertSafe = await protectReadOnlyRun(page);
+  // Isolate independent public page visits so unloading a previous page cannot
+  // cancel Next.js speculative RSC requests and create false WebKit errors.
   for (const locale of locales) {
-    await openPublicPage(page, "/care?lang=" + locale.id, locale.dir);
-    for (const kind of discoveryPages) {
-      await openPublicPage(page, "/explore/" + kind + "?lang=" + locale.id, locale.dir);
+    const paths = ["/care", ...discoveryPages.map((kind) => "/explore/" + kind), "/patient-account"];
+    for (const path of paths) {
+      await test.step(locale.id + " " + path, async () => {
+        const page = await context.newPage();
+        try {
+          const assertSafe = await protectReadOnlyRun(page);
+          await openPublicPage(page, path + "?lang=" + locale.id, locale.dir);
+          await page.waitForTimeout(250);
+          assertSafe();
+        } finally {
+          await page.close();
+        }
+      });
     }
-    await openPublicPage(page, "/patient-account?lang=" + locale.id, locale.dir);
   }
-  assertSafe();
 });
 
 test("production version endpoint reports the deployed exact SHA", async ({ request }) => {
@@ -140,22 +119,29 @@ test("production version endpoint reports the deployed exact SHA", async ({ requ
   }
 });
 
-test("signed-out clinic workspaces are gated on the live website", async ({ page }) => {
+test("signed-out clinic workspaces are gated on the live website", async ({ context }) => {
   test.setTimeout(90_000);
-  const assertSafe = await protectReadOnlyRun(page);
-  const protectedPaths = [
+  const paths = [
     "/dashboard",
     "/dashboard/history",
     "/dashboard/assistant",
     "/dashboard/settings",
     "/dashboard/staff",
   ];
-  for (const path of protectedPaths) {
-    await page.goto(path, { waitUntil: "domcontentloaded" });
-    await expect.poll(() => new URL(page.url()).pathname,
-      { message: "Signed-out access to " + path + " must redirect to /login" }).toBe("/login");
-    await expect(page.getByRole("heading").first()).toBeVisible();
-    await waitForPageReads(page);
+  for (const path of paths) {
+    await test.step("signed-out " + path, async () => {
+      const page = await context.newPage();
+      try {
+        const assertSafe = await protectReadOnlyRun(page);
+        await page.goto(path, { waitUntil: "domcontentloaded" });
+        await expect.poll(() => new URL(page.url()).pathname,
+          { message: "Signed-out access to " + path + " must redirect to /login" }).toBe("/login");
+        await expect(page.getByRole("heading").first()).toBeVisible();
+        await page.waitForTimeout(250);
+        assertSafe();
+      } finally {
+        await page.close();
+      }
+    });
   }
-  assertSafe();
 });
