@@ -216,9 +216,9 @@ test("appointment history client state is isolated by clinic", async () => {
   assert.match(historyPage, /<HistoryClient key=\{clinic\.id\} clinicId=\{clinic\.id\}/);
 });
 
-test("history deletion validates all IDs before the destructive operation and reports partial races", () => {
-  const action = readFileSync(new URL("../app/dashboard/history/actions.ts", import.meta.url), "utf8");
-  const ui = readFileSync(new URL("../app/dashboard/history/history-client.tsx", import.meta.url), "utf8");
+test("history deletion validates all IDs before the destructive operation and reports partial races", async () => {
+  const action = await read("app/dashboard/history/actions.ts");
+  const ui = await read("app/dashboard/history/history-client.tsx");
   const preflight = action.indexOf('const { count: eligibleCount, error: eligibilityError }');
   const deletion = action.indexOf('.delete()');
   assert.ok(preflight > 0 && preflight < deletion);
