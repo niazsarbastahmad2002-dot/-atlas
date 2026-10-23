@@ -58,6 +58,14 @@ test("production safe demo supports the receptionist appointment flow without ba
   await appointment.getByRole("button", { name: "Reopen" }).click();
   await expect(appointment.locator(".status-pending")).toContainText("Pending");
 
+  // Actual live /demo controls; these remain synthetic and do not reach a real clinic.
+  await appointment.getByRole("button", { name: "No-show" }).click();
+  await expect(appointment.locator(".status-no_show")).toContainText("No-show");
+  await appointment.getByRole("button", { name: "Reopen" }).click();
+  await expect(appointment.locator(".status-confirmed")).toContainText("Confirmed");
+  await appointment.getByRole("button", { name: "Complete" }).click();
+  await expect(appointment.locator(".status-completed")).toContainText("Completed");
+
   const dimensions = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
     client: document.documentElement.clientWidth,
