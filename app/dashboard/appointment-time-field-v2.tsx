@@ -260,6 +260,19 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
     chooseParts(nextDefault);
   }, [custom, nextDefault, savedAdvance, touched]);
 
+  // Recover the nearest eligible unbooked interval even if the day's last
+  // booking is near midnight. Keep the normal default-time heuristic unchanged.
+  const recoveryCandidate = useMemo(() => {
+    if (!doctorId || date < minDate || date > maxDate) return "";
+    let candidate = date === minDate ? ceilToInterval(effectiveMin, interval) : `${date}T09:00`;
+    for (let attempt = 0; attempt < 288; attempt += 1) {
+      if (!candidate.startsWith(`${date}T`) || candidate > max) break;
+      if (candidate >= effectiveMin && !occupied.has(candidate)) return candidate;
+      candidate = addLocalMinutes(candidate, interval);
+    }
+    return "";
+  }, [date, doctorId, effectiveMin, interval, max, minDate, occupied]);
+
   const time = to24(hour, minute, period);
   const value = `${date}T${time}`;
   const exactBooked = occupied.has(value);
@@ -400,7 +413,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       )}
       <input type="hidden" name="appointment_at" value={usable ? value : ""} />
       <div className={`atlas-selected-time ${usable ? "" : "is-error"}`} role={tooSoon && doctorId ? "status" : undefined}><span>{usable ? text.selected : !doctorId ? text.doctor : exactBooked ? text.booked : tooSoon ? earliestNotice : text.invalid}</span><strong dir="ltr">{usable ? `${localizeDigits(hour, locale)}:${localizeDigits(pad(minute), locale)} ${period === "am" ? text.am : text.pm}` : "—"}</strong></div>
-      {tooSoon && doctorId && nextDefault ? <button className="atlas-time-recover" type="button" onClick={() => { chooseParts(nextDefault); setCustom(false); setTouched(true); setSavedAdvance(false); }}>{text.later}</button> : null}
+      {tooSoon && doctorId && recoveryCandidate ? <button className="atlas-time-recover" type="button" onClick={() => { chooseParts(recoveryCandidate); setCustom(false); setTouched(true); setSavedAdvance(false); }}>{text.later}</button> : null}
       <style>{`
         .atlas-time-v2{display:grid;gap:10px;position:relative}.atlas-time-v2>label{font-size:12px;font-weight:800}.atlas-time-v2>label small{font-weight:600;color:var(--muted)}
         .atlas-date-wrap{position:relative}.atlas-date-trigger{display:flex;width:100%;min-height:50px;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line-strong);border-radius:13px;padding:10px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:760;cursor:pointer}.atlas-date-value{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;letter-spacing:.02em}.atlas-date-chevron{color:var(--muted);font-size:16px}

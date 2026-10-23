@@ -29,12 +29,22 @@ test("reception time picker explains the actual earliest available Baghdad-local
 
 test("a time that expires during receptionist entry offers one click to the next valid slot", () => {
   const source = readFileSync(new URL("../app/dashboard/appointment-time-field-v2.tsx", import.meta.url), "utf8");
-  assert.match(source, /tooSoon && doctorId && nextDefault \? <button/);
-  assert.match(source, /type="button" onClick=\{\(\) => \{ chooseParts\(nextDefault\); setCustom\(false\); setTouched\(true\); setSavedAdvance\(false\); \}\}/);
+  assert.match(source, /tooSoon && doctorId && recoveryCandidate \? <button/);
+  assert.match(source, /type="button" onClick=\{\(\) => \{ chooseParts\(recoveryCandidate\); setCustom\(false\); setTouched\(true\); setSavedAdvance\(false\); \}\}/);
   assert.match(source, /role=\{tooSoon && doctorId \? "status" : undefined\}/);
   assert.match(source, /"Use a later available time"/);
   assert.match(source, /"کاتێکی دواتری بەردەست هەڵبژێرە"/);
   assert.match(source, /"دەمەکێ پاشتر یێ بەردەست هەلبژێرە"/);
   assert.match(source, /"اختيار وقت لاحق متاح"/);
   assert.match(source, /name="appointment_at" value=\{usable \? value : ""\}/);
+});
+
+test("expired-time recovery considers earlier free intervals even when a late-day booking exists", () => {
+  const source = readFileSync(new URL("../app/dashboard/appointment-time-field-v2.tsx", import.meta.url), "utf8");
+  // Recovery must not reuse the default heuristic that starts after the day's last booking.
+  assert.match(source, /const recoveryCandidate = useMemo/);
+  assert.match(source, /date === minDate \? ceilToInterval\(effectiveMin, interval\)/);
+  assert.match(source, /candidate >= effectiveMin && !occupied\.has\(candidate\)/);
+  assert.match(source, /if \(!candidate\.startsWith/);
+  assert.match(source, /tooSoon && doctorId && recoveryCandidate \? <button/);
 });
