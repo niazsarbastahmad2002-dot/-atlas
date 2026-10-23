@@ -29,7 +29,9 @@ test("clinic and doctor profiles preserve layout direction without changing publ
   assert.match(hero, /subtitleParts\.map/);
   assert.match(clinic, /<bdi>\{doctor\.display_name\}<\/bdi>/);
   assert.match(clinic, /subtitleParts=\{locationParts\}/);
-  assert.match(clinic, /<bdi>\{part\}<\/bdi>/);
+  assert.match(clinic, /<bdi>\{clinic\.address_text\}<\/bdi>/);
+  assert.match(clinic, /<bdi>\{clinic\.area\}<\/bdi>/);
+  assert.match(clinic, /<bdi>\{clinic\.city\}<\/bdi>/);
   assert.match(doctor, /<bdi>\{part\}<\/bdi>/);
   assert.match(times, /<bdi>\{profile\.subspecialty\}<\/bdi>/);
   assert.match(doctor, /<bdi>\{profile\.clinic_name\}<\/bdi>/);
