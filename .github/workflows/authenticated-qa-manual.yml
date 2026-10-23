@@ -1,0 +1,47 @@
+name: Atlas Authenticated QA (Manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-authenticated-qa
+  cancel-in-progress: false
+jobs:
+  clinic-readonly:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
+    timeout-minutes: 15
+    environment: atlas-qa
+    env:
+      ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
+      ATLAS_QA_CLINIC_ID: ${{ vars.ATLAS_QA_CLINIC_ID }}
+      ATLAS_QA_CLINIC_NAME: ${{ vars.ATLAS_QA_CLINIC_NAME }}
+      ATLAS_QA_USER_ID: ${{ vars.ATLAS_QA_USER_ID }}
+      ATLAS_QA_SUPABASE_URL: ${{ vars.ATLAS_QA_SUPABASE_URL }}
+      ATLAS_QA_PUBLISHABLE_KEY: ${{ vars.ATLAS_QA_PUBLISHABLE_KEY }}
+      ATLAS_QA_EMAIL: ${{ secrets.ATLAS_QA_EMAIL }}
+      ATLAS_QA_PASSWORD: ${{ secrets.ATLAS_QA_PASSWORD }}
+    steps:
+      - name: Require isolated QA identity
+        shell: bash
+        run: |
+          if [[ -z "$ATLAS_QA_EMAIL" || -z "$ATLAS_QA_PASSWORD" || -z "$ATLAS_QA_USER_ID" || -z "$ATLAS_QA_CLINIC_ID" || "$ATLAS_QA_CLINIC_NAME" != Atlas\ QA* ]]; then
+            echo "Isolated QA tenant and session missing; refusing production access."
+            exit 1
+          fi
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install pinned Playwright
+        run: npm install --no-save --package-lock=false @playwright/test@1.62.1
+      - name: Test authenticated synthetic clinic without writes
+        run: npx playwright test --config=playwright.clinic-qa.config.mjs
