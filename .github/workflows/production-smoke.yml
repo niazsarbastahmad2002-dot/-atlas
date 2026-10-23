@@ -15,6 +15,9 @@ concurrency:
 jobs:
   verify-production:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
     timeout-minutes: 15
 
     env:
@@ -39,9 +42,6 @@ jobs:
 
       - name: Install pinned Playwright runner
         run: npm install --no-save --package-lock=false @playwright/test@1.62.1
-
-      - name: Install production smoke browsers
-        run: npx playwright install --with-deps chromium webkit
 
       - name: Verify live Atlas on WebKit and Chromium
         run: npx playwright test --config=playwright.production.config.mjs
