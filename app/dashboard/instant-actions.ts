@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   appointmentCreatePayloadMatches,
   canTransitionAppointment,
+  canConfirmAppointmentAttendance,
   classifyAppointmentCreateError,
   classifyAppointmentMutationError,
   cleanDisplayName,
@@ -220,6 +221,22 @@ export async function updateAppointmentStatusInline(
   const context = await appointmentClinicContext(clinicId);
   if (!context) return { ok: false, reason: "invalid" };
   const { supabase } = context;
+  if (status === "confirmed" && expectedStatus !== "confirmed") {
+    // Re-read clinic-scoped schedule time on the server. A client-side hidden option
+    // must never be the only protection against pre-confirming future attendance.
+    const { data: row, error: readError } = await supabase
+      .from("appointments")
+      .select("appointment_at")
+      .eq("clinic_id", clinicId)
+      .eq("id", id)
+      .eq("status", expectedStatus)
+      .eq("appointment_revision", expectedRevision)
+      .is("voided_at", null)
+      .maybeSingle();
+    if (readError) return { ok: false, reason: "failed" };
+    if (!row) return { ok: false, reason: "stale" };
+    if (!canConfirmAppointmentAttendance(row.appointment_at)) return { ok: false, reason: "too_early" };
+  }
   const { data, error } = await supabase
     .from("appointments")
     .update({ status })

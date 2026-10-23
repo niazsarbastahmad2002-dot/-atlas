@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   appointmentCreatePayloadMatches,
   canTransitionAppointment,
+  canConfirmAppointmentAttendance,
   classifyAppointmentCreateError,
   cleanDisplayName,
   isAppointmentStatus,
@@ -383,7 +384,7 @@ export async function updateAppointmentStatus(clinicId: string, id: string, stat
   const { supabase } = await authorizeClinic(clinicId);
   const { data: current, error: readError } = await supabase
     .from("appointments")
-    .select("id, status")
+    .select("id, status, appointment_at")
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .is("voided_at", null)
@@ -395,6 +396,9 @@ export async function updateAppointmentStatus(clinicId: string, id: string, stat
     || !isAppointmentStatus(current.status)
     || !canTransitionAppointment(current.status, status)
   ) redirect(dashboardUrl("error", "appointment_status_invalid", clinicId));
+  if (status === "confirmed" && current.status !== status && !canConfirmAppointmentAttendance(current.appointment_at)) {
+    redirect(dashboardUrl("error", "appointment_status_invalid", clinicId));
+  }
 
   const { data, error } = await supabase
     .from("appointments")

@@ -4,6 +4,7 @@ import {
   allowedAppointmentTransitions,
   appointmentCreatePayloadMatches,
   canTransitionAppointment,
+  canConfirmAppointmentAttendance,
   classifyAppointmentCreateError,
   classifyAppointmentMutationError,
   cleanDisplayName,
@@ -145,4 +146,14 @@ test("rejects malformed, past, and excessively distant appointment times", () =>
   assert.equal(parseBaghdadDateTime("2026-08-14T23:30", now), null);
   assert.equal(parseBaghdadDateTime("2026-08-14T01:00", now), null);
   assert.equal(parseBaghdadDateTime("2030-08-15T12:30", now), null);
+});
+
+test("attendance cannot be confirmed before the Baghdad appointment day, including across UTC midnight", () => {
+  const today = new Date("2026-10-23T20:59:59.000Z"); // Baghdad 23:59:59
+  assert.equal(canConfirmAppointmentAttendance("2026-10-24T07:15:00.000Z", today), false);
+  const midnight = new Date("2026-10-23T21:00:00.000Z"); // Baghdad 00:00 Oct 24
+  assert.equal(canConfirmAppointmentAttendance("2026-10-24T07:15:00.000Z", midnight), true);
+  assert.equal(canConfirmAppointmentAttendance("2026-10-24T07:15:00.000Z", new Date("2026-10-25T12:00:00Z")), true);
+  assert.equal(canConfirmAppointmentAttendance("not a date", today), false);
+  assert.equal(canConfirmAppointmentAttendance("2026-10-24T07:15:00.000Z", new Date("invalid")), false);
 });
