@@ -26,3 +26,15 @@ test("reception time picker explains the actual earliest available Baghdad-local
   assert.match(source, /name="appointment_at" value=\{usable \? value : ""\}/);
   assert.match(source, /const fiveMinutesFromNow = addLocalMinutes/);
 });
+
+test("a time that expires during receptionist entry offers one click to the next valid slot", () => {
+  const source = readFileSync(new URL("../app/dashboard/appointment-time-field-v2.tsx", import.meta.url), "utf8");
+  assert.match(source, /tooSoon && doctorId && nextDefault \? <button/);
+  assert.match(source, /type="button" onClick=\{\(\) => \{ chooseParts\(nextDefault\); setCustom\(false\); setTouched\(true\); setSavedAdvance\(false\); \}\}/);
+  assert.match(source, /role=\{tooSoon && doctorId \? "status" : undefined\}/);
+  assert.match(source, /"Use a later available time"/);
+  assert.match(source, /"کاتێکی دواتری بەردەست هەڵبژێرە"/);
+  assert.match(source, /"دەمەکێ پاشتر یێ بەردەست هەلبژێرە"/);
+  assert.match(source, /"اختيار وقت لاحق متاح"/);
+  assert.match(source, /name="appointment_at" value=\{usable \? value : ""\}/);
+});
