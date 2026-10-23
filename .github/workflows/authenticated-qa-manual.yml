@@ -19,12 +19,16 @@ jobs:
       ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
       ATLAS_QA_CLINIC_ID: ${{ vars.ATLAS_QA_CLINIC_ID }}
       ATLAS_QA_CLINIC_NAME: ${{ vars.ATLAS_QA_CLINIC_NAME }}
-      ATLAS_QA_STORAGE_STATE_BASE64: ${{ secrets.ATLAS_QA_STORAGE_STATE_BASE64 }}
+      ATLAS_QA_USER_ID: ${{ vars.ATLAS_QA_USER_ID }}
+      ATLAS_QA_SUPABASE_URL: ${{ vars.ATLAS_QA_SUPABASE_URL }}
+      ATLAS_QA_PUBLISHABLE_KEY: ${{ vars.ATLAS_QA_PUBLISHABLE_KEY }}
+      ATLAS_QA_EMAIL: ${{ secrets.ATLAS_QA_EMAIL }}
+      ATLAS_QA_PASSWORD: ${{ secrets.ATLAS_QA_PASSWORD }}
     steps:
       - name: Require isolated QA identity
         shell: bash
         run: |
-          if [[ -z "$ATLAS_QA_STORAGE_STATE_BASE64" || -z "$ATLAS_QA_CLINIC_ID" || "$ATLAS_QA_CLINIC_NAME" != Atlas\ QA* ]]; then
+          if [[ -z "$ATLAS_QA_EMAIL" || -z "$ATLAS_QA_PASSWORD" || -z "$ATLAS_QA_USER_ID" || -z "$ATLAS_QA_CLINIC_ID" || "$ATLAS_QA_CLINIC_NAME" != Atlas\ QA* ]]; then
             echo "Isolated QA tenant and session missing; refusing production access."
             exit 1
           fi
