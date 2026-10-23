@@ -27,7 +27,8 @@ test("explore uses existing published-only search and no private joins or bookin
   assert.doesNotMatch(explore, /details\.about/);
   assert.match(explore, /publishedSubspecialties\(doctors, item\.label\)/);
   assert.match(explore, /specialty: item\.label, q: focus/);
-  assert.match(explore, /clinic-listed focus areas are not independently credential-verified/);
+  assert.match(explore, /Focus areas have not been independently credential-verified/);
+  assert.match(explore, /This directory does not recommend a doctor for your condition/);
   assert.match(explore, /patientLocaleHref\("\/care", locale, \{ specialty: name \}\)/);
   assert.doesNotMatch(explore, /service_role|\.from\("doctor_directory_profiles"\)|\.from\("appointments"\)|\/book\b|insert\(/);
 });

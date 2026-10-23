@@ -33,7 +33,9 @@ test("public discovery depends on published and bounded provider RPC", () => {
   }
   assert.ok(explore.includes("PatientLocationsExplore"));
   assert.ok(explore.includes("publishedSubspecialties(doctors, item.label)"));
-  assert.ok(explore.includes("patientSpecialtyDetails(item.label, locale)"));
+  assert.ok(!explore.includes("patientSpecialtyDetails(item.label, locale)"));
+  assert.ok(explore.includes("<bdi>{item.label}</bdi>"));
+  assert.ok(!explore.includes("details.about"));
 });
 
 test("published availability remains read-only unless existing separate launch gates are ready", () => {
