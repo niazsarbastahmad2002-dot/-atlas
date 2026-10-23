@@ -18,7 +18,14 @@ async function protectReadOnlyRun(page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     if (!["GET", "HEAD", "OPTIONS"].includes(request.method())) {
-      attemptedWrites.push(request.method() + " " + new URL(request.url()).pathname);
+      const path = new URL(request.url()).pathname;
+      // Live Atlas navigation emits POST telemetry. Block it without flagging a
+      // product mutation; any OTHER attempted write still fails the QA run.
+      if (request.method() === "POST" && path === "/api/analytics") {
+        await route.abort("blockedbyclient");
+        return;
+      }
+      attemptedWrites.push(request.method() + " " + path);
       await route.abort("blockedbyclient");
       return;
     }
