@@ -409,7 +409,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         status: row.status,
       }))}
     />
-    {hasArrivalQueue ? <ClinicArrivalDisclosure
+    {hasArrivalQueue && selectedDay === today ? <ClinicArrivalDisclosure
       key={`${clinic.id}:${selectedDoctor?.id ?? "none"}:${selectedDay}`}
       appointments={visibleRows.map(({ id, status, appointment_at }) => ({ id, status, appointment_at }))}
       selectedDay={selectedDay}
