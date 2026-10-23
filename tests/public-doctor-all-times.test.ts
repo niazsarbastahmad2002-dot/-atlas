@@ -5,6 +5,7 @@ import test from "node:test";
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 const page = source("app/care/[clinicSlug]/[doctorSlug]/times/page.tsx");
+const helper = source("lib/patient-appointment-availability.ts");
 
 test("full public availability uses the truthful bounded public slot window", () => {
   assert.match(page, /get_public_doctor_profile/);
@@ -15,10 +16,11 @@ test("full public availability uses the truthful bounded public slot window", ()
 });
 
 test("public times stay grouped in Baghdad and use Atlas locale formatters", () => {
-  assert.match(page, /timeZone: "Asia\/Baghdad"/);
-  assert.match(page, /formatLocalDateValue/);
-  assert.match(page, /formatTimeValue/);
-  assert.match(page, /groups\.find/);
+  assert.match(page, /groupPublicAppointmentTimes\(slotData, locale\)/);
+  assert.match(helper, /timeZone: "Asia\/Baghdad"/);
+  assert.match(helper, /formatLocalDateValue/);
+  assert.match(helper, /formatTimeValue/);
+  assert.match(helper, /const days = new Map/);
 });
 
 test("online booking links remain gated by launch plus real phone readiness", () => {
@@ -30,7 +32,7 @@ test("online booking links remain gated by launch plus real phone readiness", ()
 });
 
 test("full availability is mobile-first and preserves 48px slot targets", () => {
-  assert.match(page, /atlas-time-option\{min-height:48px/);
+  assert.match(page, /atlas-time-option\{min-width:0;min-height:50px/);
   assert.match(page, /@media\(max-width:620px\)/);
   assert.match(page, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 });
