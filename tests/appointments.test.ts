@@ -154,6 +154,10 @@ test("attendance cannot be confirmed before the Baghdad appointment day, includi
   const midnight = new Date("2026-10-23T21:00:00.000Z"); // Baghdad 00:00 Oct 24
   assert.equal(canConfirmAppointmentAttendance("2026-10-24T07:15:00.000Z", midnight), true);
   assert.equal(canConfirmAppointmentAttendance("2026-10-24T07:15:00.000Z", new Date("2026-10-25T12:00:00Z")), true);
+  // Date ordering remains correct when month or year changes.
+  assert.equal(canConfirmAppointmentAttendance("2026-11-01T07:15:00.000Z", new Date("2026-10-31T20:59:59Z")), false);
+  assert.equal(canConfirmAppointmentAttendance("2027-01-01T07:15:00.000Z", new Date("2026-12-31T20:59:59Z")), false);
+  assert.equal(canConfirmAppointmentAttendance("2027-01-01T07:15:00.000Z", new Date("2026-12-31T21:00:00Z")), true);
   assert.equal(canConfirmAppointmentAttendance("not a date", today), false);
   assert.equal(canConfirmAppointmentAttendance("2026-10-24T07:15:00.000Z", new Date("invalid")), false);
 });
