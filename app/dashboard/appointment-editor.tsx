@@ -7,7 +7,7 @@ import { uiText, type UiLocale } from "@/lib/i18n/ui";
 import { AppointmentEditDateTimeField } from "./appointment-edit-datetime-field";
 import { updateAppointmentDetailsInline } from "./instant-actions";
 
-type DoctorOption = { id: string; name: string };
+type DoctorOption = { id: string; name: string; active: boolean };
 type ContactRelationship = "patient" | "parent_guardian" | "relative_caregiver";
 
 type AppointmentEditorProps = {
@@ -29,6 +29,13 @@ type AppointmentEditorProps = {
 };
 
 const editorOpenEvent = "atlas:appointment-editor-open";
+
+const archivedDoctorCopy: Record<UiLocale, { chooseActive: string; archived: string; noneActive: string }> = {
+  en: { chooseActive: "Choose an active doctor", archived: "This appointment's doctor was removed from new scheduling. Choose an active doctor before saving changes.", noneActive: "No active doctors are available. Restore a doctor in Settings before editing this appointment." },
+  ku: { chooseActive: "پزیشکێکی چالاک هەڵبژێرە", archived: "پزیشکی ئەم وادەیە لە وادە نوێکان لابراوە. بۆ پاشەکەوتکردنی گۆڕانکارییەکان پزیشکێکی چالاک هەڵبژێرە.", noneActive: "هیچ پزیشکێکی چالاک نییە. پێش دەستکاریکردنی وادەکە پزیشکێک لە ڕێکخستنەکاندا چالاک بکەرەوە." },
+  bd: { chooseActive: "دکتۆرەکێ چالاک هەلبژێرە", archived: "دکتۆرێ ڤێ وادەیێ ژ وادەیێن نوو هاتیە لابرن. بۆ پاراستنا گۆڕینان دکتۆرەکێ چالاک هەلبژێرە.", noneActive: "چ دکتۆرێن چالاک نینن. بەری دەستکاریکرنا وادەیێ دکتۆرەکی ل ڕێکخستنان چالاک بکە." },
+  ar: { chooseActive: "اختر طبيباً نشطاً", archived: "طبيب هذا الموعد تمت إزالته من الجدولة الجديدة. اختر طبيباً نشطاً قبل حفظ التغييرات.", noneActive: "لا يوجد أطباء نشطون. أعد تفعيل طبيب من الإعدادات قبل تعديل هذا الموعد." },
+};
 
 const copy = {
   en: {
@@ -157,7 +164,10 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const statusEditable = status === "pending" || status === "confirmed" || status === "cancelled";
   const withinEditWindow = new Date(appointmentAt).getTime() >= now - 60_000;
   const editable = statusEditable && (open || withinEditWindow);
-  const lockedDoctor = doctors.length === 1 ? doctors[0] : null;
+  const activeDoctors = doctors.filter((doctor) => doctor.active);
+  const archivedAssignedDoctor = doctors.find((doctor) => doctor.id === doctorId && !doctor.active);
+  const lockedDoctor = activeDoctors.length === 1 && !archivedAssignedDoctor ? activeDoctors[0] : null;
+  const selectedActiveDoctorId = activeDoctors.some((doctor) => doctor.id === doctorId) ? (doctorId ?? "") : "";
 
   useEffect(() => {
     setEditConsent(reminderConsent);
@@ -322,6 +332,8 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
           </select>
 
           <label htmlFor={`edit-doctor-${appointmentId}`}>{ui.doctor}</label>
+          {archivedAssignedDoctor ? <p className="appointment-edit-doctor-guidance" role="status">{archivedDoctorCopy[locale].archived}</p> : null}
+          {activeDoctors.length === 0 ? <p className="appointment-edit-doctor-guidance" role="status">{archivedDoctorCopy[locale].noneActive}</p> : null}
           {lockedDoctor ? (
             <>
               <input id={`edit-doctor-${appointmentId}`} name="doctor_id" type="hidden" value={lockedDoctor.id} />
@@ -330,9 +342,9 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
               </div>
             </>
           ) : (
-            <select id={`edit-doctor-${appointmentId}`} name="doctor_id" disabled={pending} defaultValue={doctorId ?? ""} required>
-              <option value="">{ui.chooseDoctor}</option>
-              {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
+            <select id={`edit-doctor-${appointmentId}`} name="doctor_id" disabled={pending || activeDoctors.length === 0} defaultValue={selectedActiveDoctorId} required>
+              <option value="" disabled>{archivedDoctorCopy[locale].chooseActive}</option>
+              {activeDoctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}
             </select>
           )}
 
@@ -367,7 +379,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
             <span>{t.consent}</span>
           </label>
 
-          <button className="button button-small" type="submit" disabled={pending}>{pending ? t.saving : t.save}</button>
+          <button className="button button-small" type="submit" disabled={pending || activeDoctors.length === 0}>{pending ? t.saving : t.save}</button>
         </form>
       ) : null}
       {message ? <span className={`appointment-edit-message is-${message.tone}`} role={message.tone === "error" ? "alert" : "status"}>{message.text}</span> : null}
