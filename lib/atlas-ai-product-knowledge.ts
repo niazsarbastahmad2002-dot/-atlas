@@ -67,6 +67,41 @@ export type AtlasAiOperationalContext = {
   };
 };
 
+/**
+ * Answer only clinic-wide reminder enablement questions from the authorized clinic settings.
+ * Do not treat questions about a particular patient or appointment as clinic-wide status.
+ */
+export function atlasReminderStatusAnswer(
+  question: string,
+  locale: "en" | "ku" | "bd" | "ar",
+  enabled: boolean | null,
+): string | null {
+  const normalized = question.toLocaleLowerCase("en-US");
+  const aboutReminders = /\breminders?\b/.test(normalized) || /بیرخستنەوە|تذكير/.test(normalized);
+  const asksEnabled = /\b(enabled?|disabled?|active|on|off|turned on|turned off|switched on|switched off)\b/.test(normalized)
+    || /چالاک|کارا|فعّال|فعال|مفعّل|مفعل|شغّال|شغال/.test(normalized);
+  const aboutSpecificRecord = /\b(patient|appointment|doctor)\b/.test(normalized)
+    || /نەخۆش|مەوعید|وادە|پزیشک|دکتۆر|مريض|موعد|دكتور/.test(normalized);
+  if (!aboutReminders || !asksEnabled || aboutSpecificRecord) return null;
+
+  if (enabled === null) {
+    if (locale === "ku") return "ناتوانم لە زانیارییە بەردەستەکانی Atlas دڵنیابم کە بیرخستنەوەکانی کلینیک چالاکن یان نا.";
+    if (locale === "bd") return "ئەز ناتوانم ژ زانیاریێن نها یێن Atlas پشتڕاست بکەم کو بیرخستنەوەیێن کلینیکێ چالاکن یان نا.";
+    if (locale === "ar") return "ما أگدر أتأكد إذا تذكيرات العيادة مفعّلة من معلومات Atlas المتوفرة حالياً.";
+    return "I can't confirm whether clinic reminders are enabled from the available Atlas settings.";
+  }
+  if (!enabled) {
+    if (locale === "ku") return "بیرخستنەوەکانی کلینیک لە ڕێکخستنەکانی Atlas ناچالاکن.";
+    if (locale === "bd") return "بیرخستنەوەیێن کلینیکێ د ڕێکخستنێن Atlas دا نەچالاکن.";
+    if (locale === "ar") return "تذكيرات العيادة غير مفعّلة بإعدادات Atlas.";
+    return "Clinic reminders are disabled in Atlas settings.";
+  }
+  if (locale === "ku") return "بیرخستنەوەکانی کلینیک لە ڕێکخستنەکانی Atlas چالاکن. ئەمە بە مانای پشتڕاستبوونەوەی ناردنی پەیامی واتساپ نییە.";
+  if (locale === "bd") return "بیرخستنەوەیێن کلینیکێ د ڕێکخستنێن Atlas دا چالاکن. ئەڤە پشتڕاست ناکەت کو پەیامێن واتساپ دهێنە هنارتن.";
+  if (locale === "ar") return "تذكيرات العيادة مفعّلة بإعدادات Atlas. هذا مو تأكيد على أن إرسال رسائل واتساب يشتغل.";
+  return "Clinic reminders are enabled in Atlas settings. This does not confirm that WhatsApp delivery is working.";
+}
+
 export function buildAtlasAiOperationalContext(input: AtlasAiOperationalContext) {
   return {
     clinic: input.clinic,

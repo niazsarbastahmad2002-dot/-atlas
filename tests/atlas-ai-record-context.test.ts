@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { atlasReminderStatusAnswer } from "../lib/atlas-ai-product-knowledge.ts";
 import {
   resolveAtlasRecordRequest,
   type AtlasAiRecordAppointmentV2,
@@ -209,4 +210,32 @@ test("Atlas patient-detail resolution stays before external AI and inside the ro
   const primaryModel = route.indexOf("const paidResult = await callPaidVercelModel", localAnswer);
   assert.ok(localAnswer >= 0 && primaryModel > localAnswer);
   assert.doesNotMatch(route, /modelContext[^\n]*authorizedRows/);
+});
+
+
+test("Atlas AI answers clinic-wide reminder enablement from real scoped settings in all four languages", () => {
+  const question = "Are clinic reminders enabled?";
+  assert.match(atlasReminderStatusAnswer(question, "en", true) ?? "", /reminders are enabled/i);
+  assert.match(atlasReminderStatusAnswer(question, "en", true) ?? "", /does not confirm.*WhatsApp/i);
+  assert.match(atlasReminderStatusAnswer(question, "en", false) ?? "", /reminders are disabled/i);
+  assert.match(atlasReminderStatusAnswer(question, "en", null) ?? "", /can't confirm/i);
+  assert.match(atlasReminderStatusAnswer("بیرخستنەوەکانی کلینیک چالاکن؟", "ku", true) ?? "", /چالاکن/);
+  assert.match(atlasReminderStatusAnswer("بیرخستنەوەیێن کلینیکێ چالاکن؟", "bd", false) ?? "", /نەچالاکن/);
+  assert.match(atlasReminderStatusAnswer("هل تذكيرات العيادة مفعّلة؟", "ar", true) ?? "", /مفعّلة/);
+});
+
+test("clinic reminder status detection does not swallow individual appointment or delivery questions", () => {
+  assert.equal(atlasReminderStatusAnswer("Are reminders enabled for this patient?", "en", true), null);
+  assert.equal(atlasReminderStatusAnswer("Is the reminder enabled for this appointment?", "en", true), null);
+  assert.equal(atlasReminderStatusAnswer("How many reminders failed today?", "en", false), null);
+  assert.equal(atlasReminderStatusAnswer("Show the reminder status for Niaz Ahmad's appointment", "en", true), null);
+  assert.equal(atlasReminderStatusAnswer("Are there appointments today?", "en", true), null);
+});
+
+test("clinic-wide reminder status is resolved before appointment record matching even after a date follow-up", () => {
+  const route = routeSource();
+  const reminderStatus = route.indexOf("const reminderStatusAnswer = atlasReminderStatusAnswer");
+  const recordLookup = route.indexOf("const recordResolution = resolveAtlasRecordRequest");
+  assert.ok(reminderStatus >= 0 && reminderStatus < recordLookup);
+  assert.match(route, /reminderResult\.error \|\| !reminderResult\.data \? null/);
 });
