@@ -221,6 +221,7 @@ export async function updateAppointmentStatusInline(
   const context = await appointmentClinicContext(clinicId);
   if (!context) return { ok: false, reason: "invalid" };
   const { supabase } = context;
+  let verifiedAppointmentTime: string | null = null;
   if (status === "confirmed" && expectedStatus !== "confirmed") {
     // Re-read clinic-scoped schedule time on the server. A client-side hidden option
     // must never be the only protection against pre-confirming future attendance.
@@ -236,17 +237,18 @@ export async function updateAppointmentStatusInline(
     if (readError) return { ok: false, reason: "failed" };
     if (!row) return { ok: false, reason: "stale" };
     if (!canConfirmAppointmentAttendance(row.appointment_at)) return { ok: false, reason: "too_early" };
+    verifiedAppointmentTime = row.appointment_at;
   }
-  const { data, error } = await supabase
+  let mutation = supabase
     .from("appointments")
     .update({ status })
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .eq("status", expectedStatus)
     .eq("appointment_revision", expectedRevision)
-    .is("voided_at", null)
-    .select("id")
-    .maybeSingle();
+    .is("voided_at", null);
+  if (verifiedAppointmentTime !== null) mutation = mutation.eq("appointment_at", verifiedAppointmentTime);
+  const { data, error } = await mutation.select("id").maybeSingle();
 
   if (error) {
     const reason = classifyAppointmentMutationError(error.code, error.message);
