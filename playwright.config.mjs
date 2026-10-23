@@ -4,6 +4,8 @@ const baseURL = "http://127.0.0.1:3100";
 
 export default defineConfig({
   testDir: "./e2e",
+  // Production-only live tests must never run against the local mock E2E server.
+  testIgnore: "live-public-journeys.spec.mjs",
   timeout: 30_000,
   expect: { timeout: 8_000 },
   fullyParallel: false,
