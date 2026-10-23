@@ -39,6 +39,31 @@ async function qaSession() {
   if (error || data.user?.id !== userId) {
     throw new Error("QA login failed or authenticated an unexpected user.");
   }
+
+  // Independently prove this login has one clinic: its own synthetic QA tenant.
+  // Query through the signed-in user's RLS-scoped client; never fetch another
+  // clinic by ID or print private database rows to CI logs.
+  const [members, clinics] = await Promise.all([
+    client.from("clinic_members").select("clinic_id,role").eq("user_id", userId),
+    client.from("clinics").select("id,name,owner_id"),
+  ]);
+  if (members.error || clinics.error ||
+      members.data?.length !== 1 ||
+      members.data[0].clinic_id !== id ||
+      members.data[0].role !== "owner" ||
+      clinics.data?.length !== 1 ||
+      clinics.data[0].id !== id ||
+      clinics.data[0].name !== name ||
+      clinics.data[0].owner_id !== userId) {
+    throw new Error("QA tenant membership/isolation verification failed.");
+  }
+
+  // Never replay cookies that do not belong to the intended Supabase project.
+  const authCookie = "sb-moazrwbalqiyoafrydkj-auth-token";
+  if (!values.size || [...values].some(([cookieName, value]) =>
+      !new RegExp("^" + authCookie + "(?:\\.\\d+)?$").test(cookieName) || !value)) {
+    throw new Error("Unexpected QA session cookie shape; refusing browser login.");
+  }
   const cookies = [...values].map(([name, value]) => ({
     name, value, domain: new URL(base).hostname, path: "/", expires: -1,
     httpOnly: false, secure: true, sameSite: "Lax",
@@ -58,7 +83,14 @@ test("synthetic authenticated clinic dashboard is private and usable", async ({ 
   const writes = [], errors = [], serverErrors = [];
   await page.route("**/*", (route) => {
     if (["GET", "HEAD", "OPTIONS"].includes(route.request().method())) return route.continue();
-    writes.push(route.request().method() + " " + new URL(route.request().url()).pathname);
+    const requestURL = new URL(route.request().url());
+    // Block automatic analytics too, but don't mistake it for patient data writes.
+    if (route.request().method() === "POST" &&
+        requestURL.origin === new URL(base).origin &&
+        requestURL.pathname === "/api/analytics") {
+      return route.abort("blockedbyclient");
+    }
+    writes.push(route.request().method() + " " + requestURL.pathname);
     return route.abort("blockedbyclient");
   });
   page.on("pageerror", (error) => errors.push(error.message));
