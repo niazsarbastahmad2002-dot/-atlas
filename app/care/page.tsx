@@ -424,7 +424,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
           </section>
         )}
 
-        <Link className="atlas-care-back" href="/">{copy.back}</Link>
+        <Link className="atlas-care-back" href={patientLocaleHref("/", locale)}>{copy.back}</Link>
       </section>
 
       <style>{`

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LoginLanguagePicker } from "@/app/login/language-picker";
-import { getUiLocale } from "@/lib/i18n/ui-server";
+import { patientLocaleHref, resolvePatientLocale } from "@/app/care/patient-locale";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { atlasPublicCompanyProfile } from "@/lib/public-company-profile";
 import { createClient } from "@/lib/supabase/server";
@@ -128,19 +128,19 @@ const homeCopy: Record<UiLocale, HomeCopy> = {
   },
 };
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ lang?: string | string[] }> }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (data.user) redirect("/dashboard");
 
-  const locale = await getUiLocale();
+  const locale = await resolvePatientLocale((await searchParams).lang);
   const copy = homeCopy[locale];
   const company = atlasPublicCompanyProfile();
 
   return (
     <main className="marketing-page atlas-simple-home">
       <nav className="nav shell marketing-nav">
-        <Link className="app-brand atlas-marketing-brand" href="/" aria-label="Atlas home">
+        <Link className="app-brand atlas-marketing-brand" href={patientLocaleHref("/", locale)} aria-label="Atlas home">
           <span className="app-brand-mark" aria-hidden="true"><img src="/atlas-icon.svg" width="44" height="44" alt="" /></span>
           <span className="app-brand-word">Atlas</span>
         </Link>
@@ -156,7 +156,7 @@ export default async function HomePage() {
         <h1>{copy.title}</h1>
         <p className="hero-copy">{copy.hero}</p>
         <div className="hero-actions atlas-home-actions" aria-label="Choose how to use Atlas">
-          <Link className="button atlas-mode-button atlas-patient-entry" href="/care">
+          <Link className="button atlas-mode-button atlas-patient-entry" href={patientLocaleHref("/care", locale)}>
             <span className="atlas-mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5M11 7v8M7 11h8"/></svg></span>
             <strong>{copy.patientTitle}</strong>
             <span>{copy.patientDescription}</span>
@@ -173,7 +173,7 @@ export default async function HomePage() {
             <strong>{copy.localTitle}</strong>
             <span>{copy.localDescription}</span>
           </a>
-          <Link className="button button-ghost atlas-demo-link" href="/patient-account">{copy.patientAccount}</Link>
+          <Link className="button button-ghost atlas-demo-link" href={patientLocaleHref("/patient-account", locale)}>{copy.patientAccount}</Link>
           <Link className="button button-ghost atlas-demo-link" href="/demo">{copy.demo}</Link>
         </div>
         <p className="quiet atlas-scope-note">{copy.scope}</p>

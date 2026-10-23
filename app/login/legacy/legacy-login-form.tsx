@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { GoogleLoginButton } from "../google-login-button";
 
 const copyByLocale = {
   en: {
+    enterCode: "Enter the email code instead of opening a sign-in link",
     invalid: "Check the email address. It does not look valid or reachable.",
     failed: "Atlas could not send the sign-in link. Try again later.",
     rateLimited: "Atlas email is temporarily rate-limited. Wait a little, then try once.",
@@ -26,6 +28,7 @@ const copyByLocale = {
     send: "Continue with email",
   },
   ku: {
+    enterCode: "کۆدی ئیمەیڵ بنووسە، لەبری کردنەوەی لینک",
     invalid: "ئیمەیڵەکە بپشکنە. وا دیارە دروست نییە یان ناتوانێت ئیمەیڵ وەربگرێت.",
     failed: "Atlas نەیتوانی لینکی چوونەژوورەوە بنێرێت. دواتر دووبارە هەوڵ بدە.",
     rateLimited: "ناردنی ئیمەیڵی Atlas کاتێکی کورت سنووردار کراوە. کەمێک چاوەڕێ بکە و تەنها جارێکی تر هەوڵ بدە.",
@@ -46,6 +49,7 @@ const copyByLocale = {
     send: "بە ئیمەیڵ بەردەوام بە",
   },
   bd: {
+    enterCode: "کۆدێ ئیمەیلێ بنڤیسە ل شوینا ڤەکرنا لینکێ",
     invalid: "ئیمەیلێ بپشکنە. دیارە نە دروستە یان ناتوانیت ئیمەیلێ وەربگریت.",
     failed: "Atlas نەشیا لینکا چوونەژوورێ بهنێریت. پاشتر دیسان هەول بدە.",
     rateLimited: "هنارتنا ئیمەیلا Atlas بۆ دەمەکێ کورت سنووردار بوویە. هندەک راوەستە و تەنێ جارەکا دی هەول بدە.",
@@ -66,6 +70,7 @@ const copyByLocale = {
     send: "ب ئیمەیلێ بەردەوام بە",
   },
   ar: {
+    enterCode: "أدخل رمز البريد بدل فتح رابط الدخول",
     invalid: "تأكد من البريد الإلكتروني. يبدو غير صحيح أو غير قادر على استقبال الرسائل.",
     failed: "Atlas ما قدر يرسل رابط تسجيل الدخول. حاول مرة ثانية بعدين.",
     rateLimited: "إرسال إيميلات Atlas محدود مؤقتاً. انتظر شوي وحاول مرة وحدة بعدين.",
@@ -250,7 +255,8 @@ export function LegacyLoginForm({ locale }: { locale: UiLocale }) {
         <p className="notice notice-success" role="status">
           {copy.sentBefore} <strong dir="ltr">{email}</strong>. {copy.sentAfter}
         </p>
-        <button className="button" type="button" onClick={handleOpenEmail}>{copy.openEmail}</button>
+        <Link className="button" href="/auth/email/complete-link">{copy.enterCode}</Link>
+        <button className="button button-ghost" type="button" onClick={handleOpenEmail}>{copy.openEmail}</button>
         <button className="button button-ghost" type="button" onClick={() => { setSent(false); setConfirming(false); setError(""); }}>{copy.another}</button>
         {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
       </div>
