@@ -45,3 +45,8 @@ jobs:
 
       - name: Browser E2E smoke tests
         run: npx playwright test
+
+      - name: Live public Atlas browser journeys (read-only Chromium)
+        env:
+          ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
+        run: npx playwright test --config=playwright.production.config.mjs --project=desktop-chromium --grep 'live public|all four production|production version'

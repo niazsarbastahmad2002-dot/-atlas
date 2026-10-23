@@ -4,7 +4,7 @@ const baseURL = process.env.ATLAS_PRODUCTION_URL ?? "https://atlasclinic.dpdns.o
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "production-smoke.spec.mjs",
+  testMatch: ["production-smoke.spec.mjs", "live-public-journeys.spec.mjs"],
   timeout: 30_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
