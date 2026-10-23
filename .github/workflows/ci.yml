@@ -16,6 +16,9 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
     timeout-minutes: 25
 
     steps:
@@ -39,9 +42,6 @@ jobs:
 
       - name: Install pinned Playwright runner
         run: npm install --no-save --package-lock=false @playwright/test@1.62.1
-
-      - name: Install Chromium for browser tests
-        run: npx playwright install --with-deps chromium
 
       - name: Browser E2E smoke tests
         run: npx playwright test
