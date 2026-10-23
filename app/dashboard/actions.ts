@@ -406,6 +406,7 @@ export async function updateAppointmentStatus(clinicId: string, id: string, stat
     .eq("clinic_id", clinicId)
     .eq("id", id)
     .eq("status", current.status)
+    .eq("appointment_at", current.appointment_at)
     .is("voided_at", null)
     .select("id")
     .maybeSingle();
