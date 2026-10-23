@@ -8,12 +8,36 @@ const locales = [
   { id: "ar", dir: "rtl" },
 ];
 const discoveryPages = ["clinics", "specialties", "locations"];
+// Next.js speculatively fetches RSC payloads and auth readiness after each load.
+// Wait for these finite requests, not all network traffic (which may stay open).
+const pendingPageReads = new WeakMap();
+
+async function waitForPageReads(page) {
+  const pending = pendingPageReads.get(page);
+  if (!pending) throw new Error("Read-only request observer was not installed");
+  await expect.poll(() => pending.size, { timeout: 12_000 }).toBe(0);
+  // Give speculative prefetch a bounded window to start; avoid unbounded networkidle.
+  await page.waitForTimeout(300);
+  await expect.poll(() => pending.size, { timeout: 12_000 }).toBe(0);
+}
 
 async function protectReadOnlyRun(page) {
   const attemptedWrites = [];
   const javascriptErrors = [];
   const serverErrors = [];
   const origin = new URL(test.info().project.use.baseURL).origin;
+  const pendingReads = new Set();
+  const watchedRead = (request) => {
+    const url = new URL(request.url());
+    return url.origin === origin &&
+      (url.searchParams.has("_rsc") || url.pathname === "/api/auth/readiness");
+  };
+  page.on("request", (request) => {
+    if (watchedRead(request)) pendingReads.add(request);
+  });
+  page.on("requestfinished", (request) => pendingReads.delete(request));
+  page.on("requestfailed", (request) => pendingReads.delete(request));
+  pendingPageReads.set(page, pendingReads);
 
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -68,6 +92,7 @@ async function openPublicPage(page, path, direction) {
   expect(response, "Navigation must complete: " + path).not.toBeNull();
   expect(response.status(), "Public route must not be HTTP error: " + path).toBeLessThan(400);
   await assertReadablePage(page, direction);
+  await waitForPageReads(page);
 }
 
 test("live public patient journey works from Home to Find Care and Explore", async ({ page }) => {
@@ -76,14 +101,17 @@ test("live public patient journey works from Home to Find Care and Explore", asy
   await openPublicPage(page, "/?lang=en", "ltr");
   await page.locator(".atlas-patient-entry[href*='/care']").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/care");
+  await waitForPageReads(page);
   await assertReadablePage(page, "ltr");
 
   for (const kind of discoveryPages) {
     await page.locator(".atlas-care-more-pages a[href*='/explore/" + kind + "']").click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/explore/" + kind);
+    await waitForPageReads(page);
     await assertReadablePage(page, "ltr");
     await page.locator(".atlas-explore-back").click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/care");
+    await waitForPageReads(page);
   }
   assertSafe();
 });
@@ -127,6 +155,7 @@ test("signed-out clinic workspaces are gated on the live website", async ({ page
     await expect.poll(() => new URL(page.url()).pathname,
       { message: "Signed-out access to " + path + " must redirect to /login" }).toBe("/login");
     await expect(page.getByRole("heading").first()).toBeVisible();
+    await waitForPageReads(page);
   }
   assertSafe();
 });
