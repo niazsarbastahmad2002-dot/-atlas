@@ -78,8 +78,10 @@ function tablePermissionIssues(sql: string): string[] {
     if (!statements.some((statement) => rls.test(statement))) {
       gaps.push(table + ": missing ENABLE ROW LEVEL SECURITY");
     }
-    if (!revoked.has("anon") || !revoked.has("authenticated")) {
-      gaps.push(table + ": missing explicit REVOKE ALL FROM anon, authenticated");
+    // PostgreSQL's PUBLIC is a pseudo-role inherited by *every* role,
+    // including anon. Revoking only anon/authenticated is insufficient.
+    if (!["public", "anon", "authenticated"].every((role) => revoked.has(role))) {
+      gaps.push(table + ": missing explicit REVOKE ALL FROM PUBLIC, anon, authenticated");
     }
     if (clientGrants.length === 0 && !explicitlyPrivate) {
       gaps.push(table + ": choose explicit role-specific GRANT or -- atlas-data-api: private public." + table);
@@ -91,8 +93,16 @@ function tablePermissionIssues(sql: string): string[] {
       gaps.push(table + ": client-granted table requires a reviewed RLS policy");
     }
 
-    // PUBLIC is inherited by anon; list order of grant recipients must not
-    // change the outcome. Column-scoped INSERT/UPDATE also count as writes.
+    // Even a read-only GRANT TO PUBLIC makes the table accessible to anon
+    // and authenticated. Require narrowly scoped explicit grants instead.
+    // Be deliberately conservative: flag any PUBLIC grant in a migration,
+    // regardless of whether a subsequent REVOKE appears.
+    if (clientGrants.some((grant) => grant.recipients.includes("public"))) {
+      gaps.push(table + ": GRANT to PostgreSQL PUBLIC implicitly grants anon access");
+    }
+
+    // Recipient order must not affect the outcome. Column-scoped
+    // INSERT/UPDATE also count as writes.
     if (clientGrants.some((grant) =>
       grant.recipients.some((role) => role === "anon" || role === "public")
       && /\b(all|insert|update|delete|truncate)\b/i.test(grant.privileges))) {
@@ -123,7 +133,7 @@ test("future public schema migrations explicitly choose grants and RLS", checkFu
 test("regression: implicit grants and missing RLS fail closed", () => {
   assert.deepEqual(tablePermissionIssues("create table public.future_records (id uuid);"), [
     "future_records: missing ENABLE ROW LEVEL SECURITY",
-    "future_records: missing explicit REVOKE ALL FROM anon, authenticated",
+    "future_records: missing explicit REVOKE ALL FROM PUBLIC, anon, authenticated",
     "future_records: choose explicit role-specific GRANT or -- atlas-data-api: private public.future_records",
   ]);
 });
@@ -148,10 +158,61 @@ test("regression: separate revokes and reversed role order are accepted", () => 
     ...baseTable,
     "revoke all on table public.future_records from authenticated;",
     "revoke all on table public.future_records from anon;",
+    "revoke all on table public.future_records from PUBLIC;",
     "grant select on table public.future_records to authenticated;",
     "create policy future_select on public.future_records for select to authenticated using (false);",
   ].join("\n");
   assert.deepEqual(tablePermissionIssues(sql), []);
+});
+
+test("regression: explicit PUBLIC/anon/authenticated revocation works in different order", () => {
+  const sql = [
+    ...baseTable,
+    "revoke all on table public.future_records from AUTHENTICATED, PUBLIC, ANON;",
+    "grant select on table public.future_records to authenticated;",
+    "create policy future_select on public.future_records for select to authenticated using (false);",
+  ].join("\n");
+  assert.deepEqual(tablePermissionIssues(sql), []);
+});
+
+test("regression: revoking only named roles leaves inherited PUBLIC privilege gap", () => {
+  const sql = [
+    ...baseTable,
+    "revoke all on table public.future_records from anon, authenticated;",
+    "grant select on table public.future_records to authenticated;",
+    "create policy future_select on public.future_records for select to authenticated using (false);",
+  ].join("\n");
+  assert.match(
+    tablePermissionIssues(sql).join("\n"),
+    /missing explicit REVOKE ALL FROM PUBLIC, anon, authenticated/,
+  );
+});
+
+test("regression: SELECT granted to PostgreSQL PUBLIC fails despite role revokes and auth-only policy", () => {
+  const sql = [
+    ...baseTable,
+    "revoke all on table public.future_records from anon, authenticated;",
+    "grant select on table public.future_records to authenticated;",
+    "grant select on table public.future_records to PUBLIC;",
+    "create policy future_select on public.future_records for select to authenticated using (false);",
+  ].join("\n");
+  const issues = tablePermissionIssues(sql).join("\n");
+  assert.match(issues, /missing explicit REVOKE ALL FROM PUBLIC, anon, authenticated/);
+  assert.match(issues, /GRANT to PostgreSQL PUBLIC implicitly grants anon access/);
+});
+
+test("regression: GRANT SELECT TO PUBLIC remains unsafe after explicit full revocation", () => {
+  const sql = [
+    ...baseTable,
+    "revoke all on table public.future_records from PUBLIC, anon, authenticated;",
+    "grant select on table public.future_records to authenticated;",
+    "grant select on table public.future_records to PUBLIC;",
+    "create policy future_select on public.future_records for select to authenticated using (false);",
+  ].join("\n");
+  assert.match(
+    tablePermissionIssues(sql).join("\n"),
+    /GRANT to PostgreSQL PUBLIC implicitly grants anon access/,
+  );
 });
 
 test("regression: private table can grant service_role, never client roles", () => {
@@ -171,7 +232,7 @@ test("regression: private table can grant service_role, never client roles", () 
 test("regression: unrelated table grant does not satisfy missing grants", () => {
   const sql = [
     ...baseTable,
-    "revoke all on table public.future_records from anon, authenticated;",
+    "revoke all on table public.future_records from PUBLIC, anon, authenticated;",
     "grant select on table public.unrelated_table to authenticated;",
   ].join("\n");
   assert.match(tablePermissionIssues(sql).join("\n"), /choose explicit role-specific GRANT/);
@@ -180,7 +241,7 @@ test("regression: unrelated table grant does not satisfy missing grants", () => 
 test("regression: grant without RLS policy is rejected", () => {
   const sql = [
     ...baseTable,
-    "revoke all on table public.future_records from anon, authenticated;",
+    "revoke all on table public.future_records from PUBLIC, anon, authenticated;",
     "grant select on table public.future_records to authenticated;",
   ].join("\n");
   assert.match(tablePermissionIssues(sql).join("\n"), /requires a reviewed RLS policy/);
@@ -189,7 +250,7 @@ test("regression: grant without RLS policy is rejected", () => {
 test("regression: anonymous write grants are flagged regardless of role order", () => {
   const sql = [
     ...baseTable,
-    "revoke all on table public.future_records from anon, authenticated;",
+    "revoke all on table public.future_records from PUBLIC, anon, authenticated;",
     "grant select, update on table public.future_records to authenticated, anon;",
     "create policy future_select on public.future_records for select to authenticated using (false);",
   ].join("\n");
@@ -199,7 +260,7 @@ test("regression: anonymous write grants are flagged regardless of role order", 
 test("regression: broad grants and public default privileges are flagged", () => {
   const sql = [
     ...baseTable,
-    "revoke all on table public.future_records from anon, authenticated;",
+    "revoke all on table public.future_records from PUBLIC, anon, authenticated;",
     "grant all on table public.future_records to authenticated;",
     "create policy future_select on public.future_records for select to authenticated using (false);",
     "alter default privileges for role postgres in schema public grant select on tables to service_role, anon;",
