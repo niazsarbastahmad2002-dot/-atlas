@@ -40,13 +40,20 @@ const statusTransitions: Record<AppointmentStatus, readonly AppointmentStatus[]>
 
 // Attendance is a same-day (or later) clinical workflow event, not an advance booking confirmation.
 // Baghdad-local calendar date determines eligibility; never trust the browser clock alone.
-const attendanceDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baghdad", year: "numeric", month: "2-digit", day: "2-digit" });
+const attendanceDay = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Baghdad", year: "numeric", month: "2-digit", day: "2-digit",
+});
+
+function baghdadAttendanceDayKey(date: Date): string {
+  const parts = Object.fromEntries(attendanceDay.formatToParts(date).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
 
 export function canConfirmAppointmentAttendance(appointmentAt: string, now: Date = new Date()): boolean {
   const scheduled = new Date(appointmentAt);
   return Number.isFinite(scheduled.getTime())
     && Number.isFinite(now.getTime())
-    && attendanceDay.format(scheduled) <= attendanceDay.format(now);
+    && baghdadAttendanceDayKey(scheduled) <= baghdadAttendanceDayKey(now);
 }
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
