@@ -94,5 +94,7 @@ test("negative: removing publication or export owner guard is rejected", () => {
   const clinic = functionSource(migration("20261003190248_public_directory_foundation.sql"), "get_public_doctor_profile");
   assert.throws(() => publishedDoctorGuard(clinic.replace(/c\.is_published/i, "true")));
   const audit = functionSource(migration("20260826104500_secure_clinic_export_audit.sql"), "reserve_clinic_export");
-  assert.doesNotMatch(audit.replace(/c\.owner_id\s*=\s*v_user_id/i, "true"), /c\.owner_id\s*=\s*v_user_id/i);
+  const ownerGuard = (body: string) => assert.match(body, /c\.owner_id\s*=\s*v_user_id/i);
+  ownerGuard(audit);
+  assert.throws(() => ownerGuard(audit.replace(/c\.owner_id\s*=\s*v_user_id/i, "true")));
 });
