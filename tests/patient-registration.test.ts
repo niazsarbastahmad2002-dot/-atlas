@@ -60,5 +60,9 @@ test("registration stays multilingual, RTL-ready, accessible, and unindexed", ()
   assert.match(page, /robots: \{ index: false, follow: false \}/);
   assert.match(portal, /const registrationReady = readiness \? canRegisterPatient\(readiness\) : false/);
   assert.match(portal, /registrationReady \? \(/);
+  // The session RPC falls back to Sorani without a saved patient profile.
+  // A new patient must see the language used during registration, while a
+  // patient with a saved profile keeps that explicit existing preference.
+  assert.match(portal, /defaultValue=\{session\.display_name && isUiLocale\(session\.preferred_language\) \? session\.preferred_language : locale\}/);
   assert.match(portal, /\/patient-register\?lang=/);
 });
