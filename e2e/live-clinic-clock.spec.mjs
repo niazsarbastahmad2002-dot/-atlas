@@ -21,9 +21,9 @@ test.beforeAll(async ({}, worker) => {
 });
 test.afterAll(() => { if (fixture) rmSync(fixture, { recursive: true }); });
 
-for (const browserName of ["chromium", "webkit"]) {
-test.describe(browserName, () => {
-  test.use({ browserName });
+// The local CI runner installs Chromium; viewport coverage comes from the
+// configured iPhone/Galaxy/iPad/desktop projects. Browser engines cannot be
+// changed from inside test.describe (Playwright worker restriction).
 for (const locale of ["en", "ku", "bd", "ar"]) {
   test(`clinic clock hydrates after delayed scripts and starts ticking (${locale})`, async ({ page, baseURL }, worker) => {
     expect(new URL(baseURL).hostname).toBe("127.0.0.1");
@@ -46,6 +46,4 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
     await expect(seconds).not.toHaveText(firstTick);
     expect(errors, "Delayed hydration must not produce browser errors").toEqual([]);
   });
-}
-});
 }
