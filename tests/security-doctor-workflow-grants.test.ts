@@ -56,9 +56,9 @@ test("proposed SQL preserves only authenticated SELECT and UPDATE", () => {
 });
 
 test("negative: missing anonymous revoke or a broad grant must fail", () => {
-  assert.notDeepEqual(
-    [...resultingPrivileges(proposal.replace(", anon;", ";")).get("anon")!],
-    [],
+  assert.throws(
+    () => resultingPrivileges(proposal.replace(", anon;", ";")),
+    /missing expected scoped revocations\/regrant/,
   );
   assert.throws(() => resultingPrivileges(
     proposal.replace(
