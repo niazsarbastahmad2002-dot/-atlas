@@ -16,6 +16,7 @@ const copy: Record<UiLocale, {
   sms: string;
   whatsapp: string;
   send: string;
+  register: string;
   sending: string;
   codeTitle: string;
   codeHelp: string;
@@ -23,6 +24,7 @@ const copy: Record<UiLocale, {
   paste: string;
   pasteFailed: string;
   verify: string;
+  verifyRegister: string;
   verifying: string;
   resend: string;
   change: string;
@@ -31,6 +33,7 @@ const copy: Record<UiLocale, {
   incorrectCode: string;
   rateLimited: string;
   failed: string;
+  registerFailed: string;
   notReady: string;
   privacy: string;
 }> = {
@@ -41,6 +44,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "Sign in with mobile",
+    register: "Continue with mobile",
     sending: "Sending code…",
     codeTitle: "Enter the verification code",
     codeHelp: "Atlas sent a one-time code to",
@@ -48,6 +52,7 @@ const copy: Record<UiLocale, {
     paste: "Paste code",
     pasteFailed: "Atlas could not paste a valid code. Enter it manually.",
     verify: "Open my appointments",
+    verifyRegister: "Verify and open my account",
     verifying: "Verifying…",
     resend: "Send another code",
     change: "Change number",
@@ -56,6 +61,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "That code is incorrect or expired. Use the newest code.",
     rateLimited: "Too many attempts. Wait a little and try again.",
     failed: "Atlas could not sign you in. Try again.",
+    registerFailed: "We could not finish creating your patient account. Try again, or sign in if you already have an account.",
     notReady: "Patient sign-in is not active yet. Care discovery still works; phone verification will be enabled only after the messaging provider is ready.",
     privacy: "This patient session is separate from any clinic/staff login on this device.",
   },
@@ -66,6 +72,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "بە مۆبایل بچۆ ژوورەوە",
+    register: "بە ژمارەی مۆبایل بەردەوام بە",
     sending: "کۆد دەنێردرێت…",
     codeTitle: "کۆدی پشتڕاستکردنەوە بنووسە",
     codeHelp: "Atlas کۆدێکی یەکجارەی نارد بۆ",
@@ -73,6 +80,7 @@ const copy: Record<UiLocale, {
     paste: "کۆد دابنێ",
     pasteFailed: "Atlas نەیتوانی کۆدێکی دروست دابنێت. بە دەست بنووسە.",
     verify: "مەوعیدەکانم بکەرەوە",
+    verifyRegister: "پشتڕاست بکەرەوە و هەژمارەکەم بکەرەوە",
     verifying: "پشتڕاست دەکرێتەوە…",
     resend: "کۆدێکی تر بنێرە",
     change: "ژمارە بگۆڕە",
@@ -81,6 +89,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "کۆدەکە هەڵەیە یان بەسەرچووە. نوێترین کۆد بەکاربهێنە.",
     rateLimited: "هەوڵەکان زۆر بوون. کەمێک چاوەڕێ بکە و دووبارە هەوڵبدەوە.",
     failed: "Atlas نەیتوانی بچێتە ژوورەوە. دووبارە هەوڵبدەوە.",
+    registerFailed: "نەتوانرا هەژماری نەخۆشی دروست بکرێت. دووبارە هەوڵبدەوە یان ئەگەر هەژمارت هەیە بچۆ ژوورەوە.",
     notReady: "چوونەژوورەوەی نەخۆش هێشتا چالاک نییە. گەڕان بەدوای چارەسەردا کار دەکات؛ پشتڕاستکردنەوەی مۆبایل تەنها دوای ئامادەبوونی پێشکەشکاری نامە چالاک دەکرێت.",
     privacy: "ئەم دانیشتنەی نەخۆش جیاوازە لە هەر چوونەژوورەوەی کلینیک یان ستاف لەسەر ئەم ئامێرە.",
   },
@@ -91,6 +100,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "ب موبایلێ بچۆ ژوور",
+    register: "ب ژمارا موبایلێ بەردەوام بە",
     sending: "کۆد دهێتە هنارتن…",
     codeTitle: "کۆدێ پشتڕاستکرنێ بنڤیسە",
     codeHelp: "Atlas کۆدەکێ ئێکجارە هنارت بۆ",
@@ -98,6 +108,7 @@ const copy: Record<UiLocale, {
     paste: "کۆد دابنێ",
     pasteFailed: "Atlas نەشیا کۆدەکێ دروست دابنێت. ب دەستی بنڤیسە.",
     verify: "وادەیێن من بکەڤە",
+    verifyRegister: "پشتڕاست بکە و هەژمارا من ڤەکە",
     verifying: "دهێتە پشتڕاستکرن…",
     resend: "کۆدەکێ دی بهنێرە",
     change: "ژمارێ بگوهۆڕە",
@@ -106,6 +117,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "کۆد خەلەتە یان دەمێ وی بەسەرچووە. نووترین کۆد بکاربینە.",
     rateLimited: "هەول زۆر بوون. کەمەک چاوەرێ بکە و جارەکا دی هەول بدە.",
     failed: "Atlas نەشیا تە بخەتە ژوور. جارەکا دی هەول بدە.",
+    registerFailed: "دروستکرنا هەژمارا نەخۆشی سەرنەکەفت. جارەکا دی هەول بدە یان ئەگەر هەژمارا تە هەیە بچۆ ژوور.",
     notReady: "چوونا ژوور یا نەخۆشی هێشتا چالاک نینە. گەڕانا چاڤدێریێ کار دکەت؛ پشتڕاستکرنا موبایلێ تەنێ پشتی ئامادەبوونا پێشکەشکارێ نامەیان چالاک دبیت.",
     privacy: "ئەڤ دانیشتنا نەخۆشی ژ هەر چوونا ژوورا کلینیک یان ستافی ل سەر ڤی ئامێری جودایە.",
   },
@@ -116,6 +128,7 @@ const copy: Record<UiLocale, {
     sms: "SMS",
     whatsapp: "WhatsApp",
     send: "دخول برقم الموبايل",
+    register: "متابعة برقم الموبايل",
     sending: "جارٍ إرسال الرمز…",
     codeTitle: "أدخل رمز التحقق",
     codeHelp: "أرسل Atlas رمزاً لمرة واحدة إلى",
@@ -123,6 +136,7 @@ const copy: Record<UiLocale, {
     paste: "لصق الرمز",
     pasteFailed: "تعذر لصق رمز صالح. اكتبه يدوياً.",
     verify: "افتح مواعيدي",
+    verifyRegister: "وثّق الرقم وافتح حسابي",
     verifying: "جارٍ التحقق…",
     resend: "إرسال رمز آخر",
     change: "تغيير الرقم",
@@ -131,6 +145,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "الرمز غير صحيح أو منتهي. استخدم أحدث رمز.",
     rateLimited: "المحاولات كثيرة. انتظر قليلاً وحاول مرة ثانية.",
     failed: "تعذر على Atlas تسجيل دخولك. حاول مرة ثانية.",
+    registerFailed: "ما گدرنا نكمل إنشاء حساب المريض. حاول مرة ثانية، أو سجّل دخول إذا عندك حساب.",
     notReady: "دخول المرضى غير مفعّل بعد. البحث عن الرعاية يعمل الآن؛ وسيُفعّل توثيق الموبايل فقط بعد جاهزية مزود الرسائل.",
     privacy: "جلسة المريض هذه منفصلة عن أي دخول للعيادة أو الموظفين على هذا الجهاز.",
   },
@@ -146,11 +161,13 @@ export function PatientAccountLoginForm({
   ready,
   allowSignup,
   whatsappOtpEnabled,
+  registration = false,
 }: {
   locale: UiLocale;
   ready: boolean;
   allowSignup: boolean;
   whatsappOtpEnabled: boolean;
+  registration?: boolean;
 }) {
   const t = copy[locale];
   const [phoneInput, setPhoneInput] = useState("");
@@ -192,14 +209,14 @@ export function PatientAccountLoginForm({
         },
       });
       if (sendError) {
-        setError(isRateLimitError(sendError) ? t.rateLimited : t.failed);
+        setError(isRateLimitError(sendError) ? t.rateLimited : registration ? t.registerFailed : t.failed);
         return;
       }
       setVerifiedPhone(phone);
       setToken("");
       setStep("code");
     } catch {
-      setError(t.failed);
+      setError(registration ? t.registerFailed : t.failed);
     } finally {
       setBusy(false);
     }
@@ -235,13 +252,13 @@ export function PatientAccountLoginForm({
       });
       const result = await response.json().catch(() => null) as { status?: string } | null;
       if (!response.ok || result?.status !== "ok") {
-        setError(result?.status === "rate_limited" ? t.rateLimited : t.failed);
+        setError(result?.status === "rate_limited" ? t.rateLimited : registration ? t.registerFailed : t.failed);
         return;
       }
 
       window.location.replace(`/patient-account?lang=${locale}`);
     } catch {
-      setError(t.failed);
+      setError(registration ? t.registerFailed : t.failed);
     } finally {
       setBusy(false);
     }
@@ -278,7 +295,7 @@ export function PatientAccountLoginForm({
             />
           ) : null}
           <button className="button" type="submit" disabled={busy}>
-            {busy ? t.sending : t.send}
+            {busy ? t.sending : registration ? t.register : t.send}
           </button>
         </form>
       ) : (
@@ -297,7 +314,7 @@ export function PatientAccountLoginForm({
             autoFocus
           />
           <button className="button" type="submit" disabled={busy}>
-            {busy ? t.verifying : t.verify}
+            {busy ? t.verifying : registration ? t.verifyRegister : t.verify}
           </button>
           <div className="patient-account-login-actions">
             <button className="button button-ghost button-small" type="button" disabled={busy} onClick={() => void sendCode()}>
