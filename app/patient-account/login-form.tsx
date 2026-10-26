@@ -33,6 +33,7 @@ const copy: Record<UiLocale, {
   incorrectCode: string;
   rateLimited: string;
   failed: string;
+  registerFailed: string;
   notReady: string;
   privacy: string;
 }> = {
@@ -60,6 +61,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "That code is incorrect or expired. Use the newest code.",
     rateLimited: "Too many attempts. Wait a little and try again.",
     failed: "Atlas could not sign you in. Try again.",
+    registerFailed: "We could not finish creating your patient account. Try again, or sign in if you already have an account.",
     notReady: "Patient sign-in is not active yet. Care discovery still works; phone verification will be enabled only after the messaging provider is ready.",
     privacy: "This patient session is separate from any clinic/staff login on this device.",
   },
@@ -87,6 +89,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "کۆدەکە هەڵەیە یان بەسەرچووە. نوێترین کۆد بەکاربهێنە.",
     rateLimited: "هەوڵەکان زۆر بوون. کەمێک چاوەڕێ بکە و دووبارە هەوڵبدەوە.",
     failed: "Atlas نەیتوانی بچێتە ژوورەوە. دووبارە هەوڵبدەوە.",
+    registerFailed: "نەتوانرا هەژماری نەخۆشی دروست بکرێت. دووبارە هەوڵبدەوە یان ئەگەر هەژمارت هەیە بچۆ ژوورەوە.",
     notReady: "چوونەژوورەوەی نەخۆش هێشتا چالاک نییە. گەڕان بەدوای چارەسەردا کار دەکات؛ پشتڕاستکردنەوەی مۆبایل تەنها دوای ئامادەبوونی پێشکەشکاری نامە چالاک دەکرێت.",
     privacy: "ئەم دانیشتنەی نەخۆش جیاوازە لە هەر چوونەژوورەوەی کلینیک یان ستاف لەسەر ئەم ئامێرە.",
   },
@@ -114,6 +117,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "کۆد خەلەتە یان دەمێ وی بەسەرچووە. نووترین کۆد بکاربینە.",
     rateLimited: "هەول زۆر بوون. کەمەک چاوەرێ بکە و جارەکا دی هەول بدە.",
     failed: "Atlas نەشیا تە بخەتە ژوور. جارەکا دی هەول بدە.",
+    registerFailed: "دروستکرنا هەژمارا نەخۆشی سەرنەکەفت. جارەکا دی هەول بدە یان ئەگەر هەژمارا تە هەیە بچۆ ژوور.",
     notReady: "چوونا ژوور یا نەخۆشی هێشتا چالاک نینە. گەڕانا چاڤدێریێ کار دکەت؛ پشتڕاستکرنا موبایلێ تەنێ پشتی ئامادەبوونا پێشکەشکارێ نامەیان چالاک دبیت.",
     privacy: "ئەڤ دانیشتنا نەخۆشی ژ هەر چوونا ژوورا کلینیک یان ستافی ل سەر ڤی ئامێری جودایە.",
   },
@@ -141,6 +145,7 @@ const copy: Record<UiLocale, {
     incorrectCode: "الرمز غير صحيح أو منتهي. استخدم أحدث رمز.",
     rateLimited: "المحاولات كثيرة. انتظر قليلاً وحاول مرة ثانية.",
     failed: "تعذر على Atlas تسجيل دخولك. حاول مرة ثانية.",
+    registerFailed: "ما گدرنا نكمل إنشاء حساب المريض. حاول مرة ثانية، أو سجّل دخول إذا عندك حساب.",
     notReady: "دخول المرضى غير مفعّل بعد. البحث عن الرعاية يعمل الآن؛ وسيُفعّل توثيق الموبايل فقط بعد جاهزية مزود الرسائل.",
     privacy: "جلسة المريض هذه منفصلة عن أي دخول للعيادة أو الموظفين على هذا الجهاز.",
   },
@@ -204,7 +209,7 @@ export function PatientAccountLoginForm({
         },
       });
       if (sendError) {
-        setError(isRateLimitError(sendError) ? t.rateLimited : t.failed);
+        setError(isRateLimitError(sendError) ? t.rateLimited : registration ? t.registerFailed : t.failed);
         return;
       }
       setVerifiedPhone(phone);
@@ -247,7 +252,7 @@ export function PatientAccountLoginForm({
       });
       const result = await response.json().catch(() => null) as { status?: string } | null;
       if (!response.ok || result?.status !== "ok") {
-        setError(result?.status === "rate_limited" ? t.rateLimited : t.failed);
+        setError(result?.status === "rate_limited" ? t.rateLimited : registration ? t.registerFailed : t.failed);
         return;
       }
 
