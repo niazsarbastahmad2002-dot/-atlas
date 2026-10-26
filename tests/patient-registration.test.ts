@@ -13,11 +13,13 @@ test("patient registration requires every existing auth and rollout gate", () =>
     signupDisabled: false,
   };
 
-  assert.equal(canRegisterPatient(ready), true);
-  assert.equal(canRegisterPatient({ ...ready, reachable: false }), false);
-  assert.equal(canRegisterPatient({ ...ready, supabasePhoneEnabled: false }), false);
-  assert.equal(canRegisterPatient({ ...ready, openPhoneSignupEnabled: false }), false);
-  assert.equal(canRegisterPatient({ ...ready, signupDisabled: true }), false);
+  assert.equal(canRegisterPatient(ready, false), false);
+  assert.equal(canRegisterPatient(ready, true), true);
+  assert.equal(canRegisterPatient({ ...ready, reachable: false }, true), false);
+  assert.equal(canRegisterPatient({ ...ready, supabasePhoneEnabled: false }, true), false);
+  assert.equal(canRegisterPatient({ ...ready, openPhoneSignupEnabled: false }, true), false);
+  assert.equal(canRegisterPatient({ ...ready, signupDisabled: true }, true), false);
+  assert.equal(canRegisterPatient(ready), process.env.ATLAS_PATIENT_REGISTRATION_ENABLED === "true");
 });
 
 test("standalone registration uses existing verified patient-account flow only", () => {
@@ -56,6 +58,7 @@ test("registration stays multilingual, RTL-ready, accessible, and unindexed", ()
   assert.match(page, /@media\(max-width:800px\)/);
   assert.match(page, /@media\(max-width:520px\)/);
   assert.match(page, /robots: \{ index: false, follow: false \}/);
-  assert.match(portal, /signInReady && allowSignup/);
+  assert.match(portal, /const registrationReady = readiness \? canRegisterPatient\(readiness\) : false/);
+  assert.match(portal, /registrationReady \? \(/);
   assert.match(portal, /\/patient-register\?lang=/);
 });
