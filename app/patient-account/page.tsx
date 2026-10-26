@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { PatientAccountLoginForm } from "./login-form";
 import { getAtlasAuthReadiness } from "@/lib/auth-readiness";
+import { canRegisterPatient } from "@/lib/patient-registration";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { isUiLocale } from "@/lib/i18n/ui";
 import { getUiLocale } from "@/lib/i18n/ui-server";
@@ -282,6 +283,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
     readiness?.openPhoneSignupEnabled
     && !readiness.signupDisabled,
   );
+  const registrationReady = readiness ? canRegisterPatient(readiness) : false;
 
   const notice = query.notice === "session_expired"
     ? t.sessionExpired
@@ -452,7 +454,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
         ) : (
           <>
             <h2 className="patient-account-signin-title">{t.signInTitle}</h2>
-            {signInReady && allowSignup ? (
+            {registrationReady ? (
               <p className="patient-account-registration-link">
                 <Link href={`/patient-register?lang=${locale}`}>{t.createAccount}</Link>
               </p>
