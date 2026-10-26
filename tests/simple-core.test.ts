@@ -10,7 +10,7 @@ test("Atlas home separates patient discovery, clinic workspace, and Local while 
   const home = source("app/page.tsx");
   const config = source("next.config.mjs");
   assert.match(home, /if \(data\.user\) redirect\("\/dashboard"\)/);
-  assert.match(home, /className="button atlas-mode-button atlas-patient-entry" href="\/care"/);
+  assert.match(home, /className="button atlas-mode-button atlas-patient-entry" href=\{patientLocaleHref\("\/care", locale\)\}/);
   assert.match(home, /className="button button-ghost atlas-mode-button atlas-professional-entry" href="\/dashboard"/);
   assert.match(home, /href="\/atlas-local\.html"/);
   assert.match(home, /Patient discovery is public\. Clinic work stays private\./);
@@ -91,6 +91,6 @@ test("simple schedule removes repeated status and appointment metadata without r
 test("healthcare scope stays operational rather than clinical decision support", () => {
   const home = source("app/page.tsx");
   assert.match(home, /Scheduling and patient communication only/);
-  assert.match(home, /keep medical notes in the clinic&apos;s approved record system/);
+  assert.match(home, /keep medical notes in your clinic's approved record system/);
   assert.doesNotMatch(home, /diagnos|treat|prescri/i);
 });

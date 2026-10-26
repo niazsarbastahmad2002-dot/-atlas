@@ -6,10 +6,10 @@ const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.
 
 test("home presents patient discovery and professional workspace as separate Atlas entry paths", () => {
   const page = source("app/page.tsx");
-  assert.match(page, /atlas-patient-entry[^>]*href="\/care"|href="\/care"[^>]*atlas-patient-entry/);
+  assert.match(page, /atlas-patient-entry[^>]*href=\{patientLocaleHref\("\/care", locale\)\}|href=\{patientLocaleHref\("\/care", locale\)\}[^>]*atlas-patient-entry/);
   assert.match(page, /atlas-professional-entry[^>]*href="\/dashboard"|href="\/dashboard"[^>]*atlas-professional-entry/);
-  assert.match(page, /patientTitle: "Find care"/);
-  assert.match(page, /professionalTitle: "Run a clinic or center"/);
+  assert.match(page, /patientTitle: "Find Care"/);
+  assert.match(page, /professionalTitle: "Run a Clinic or Center"/);
   assert.match(page, /Patient discovery is public\. Clinic work stays private\./);
 });
 

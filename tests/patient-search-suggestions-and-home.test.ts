@@ -17,12 +17,12 @@ test("patient search supports typed city and specialty with published-only brows
 });
 
 test("common Atlas landing has two prominent separate experiences and original Atlas asset", () => {
-  assert.match(home, /href="\/care"/);
+  assert.match(home, /href=\{patientLocaleHref\("\/care", locale\)\}/);
   assert.match(home, /href="\/dashboard"/);
   assert.match(home, /src="\/atlas-icon\.svg"/);
   assert.match(home, /atlas-mode-icon/);
   assert.match(home, /atlas-local-link/);
-  assert.match(home, /Run a clinic or center/);
+  assert.match(home, /Run a Clinic or Center/);
 });
 
 test("patient discovery remains published-only and cannot book or claim appointments", () => {

@@ -24,6 +24,7 @@ import {
 } from "@/lib/atlas-ai-model-quality";
 import {
   atlasAiProductKnowledgePrompt,
+  atlasReminderStatusAnswer,
   buildAtlasAiOperationalContext,
 } from "@/lib/atlas-ai-product-knowledge";
 import {
@@ -319,6 +320,14 @@ export async function POST(request: Request) {
   const latestQuestion = conversation.at(-1)?.content ?? "";
   const inferredLocale = inferAtlasAiLocale(latestQuestion);
   const responseLocale = resolveAtlasAiResponseLocale(latestQuestion, inferredLocale, localeHint);
+
+  // Clinic-wide configuration queries must not be captured as patient appointment searches.
+  // An unavailable settings row is unknown, never implicitly treated as disabled.
+  const reminderEnabled = reminderResult.error || !reminderResult.data ? null : Boolean(reminderResult.data.enabled);
+  const reminderStatusAnswer = atlasReminderStatusAnswer(latestQuestion, responseLocale, reminderEnabled);
+  if (reminderStatusAnswer) {
+    return NextResponse.json({ answer: reminderStatusAnswer, mode: "atlas_core" }, { headers: { "Cache-Control": "no-store" } });
+  }
 
   const recordResolution = resolveAtlasRecordRequest(authorizedRows, conversation, responseLocale);
   if (recordResolution?.localOnly && recordResolution.answer) {

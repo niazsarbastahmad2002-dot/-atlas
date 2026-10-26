@@ -215,3 +215,20 @@ test("appointment history client state is isolated by clinic", async () => {
   const historyPage = await read("app/dashboard/history/page.tsx");
   assert.match(historyPage, /<HistoryClient key=\{clinic\.id\} clinicId=\{clinic\.id\}/);
 });
+
+test("history deletion validates all IDs before the destructive operation and reports partial races", async () => {
+  const action = await read("app/dashboard/history/actions.ts");
+  const ui = await read("app/dashboard/history/history-client.tsx");
+  const preflight = action.indexOf('const { count: eligibleCount, error: eligibilityError }');
+  const deletion = action.indexOf('.delete()');
+  assert.ok(preflight > 0 && preflight < deletion);
+  assert.match(action, /\.select\("id", \{ count: "exact", head: true \}\)/);
+  assert.match(action, /eligibleCount !== uniqueIds\.length/);
+  assert.match(action, /\.eq\("clinic_id", clinicId\)/);
+  assert.match(action, /\.not\("voided_at", "is", null\)/);
+  assert.match(action, /error: "partial", deleted: data\?\.length \?\? 0/);
+  assert.match(ui, /result\.error === "partial" && result\.deleted/);
+  assert.match(ui, /router\.refresh\(\)/);
+  assert.match(ui, /t\.partial\.replace\("\{count\}", localizeDigits\(result\.deleted, locale\)\)/);
+  for (const locale of ["en", "ku", "bd", "ar"]) assert.match(ui, new RegExp("partial: "));
+});

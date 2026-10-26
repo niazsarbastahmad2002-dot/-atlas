@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type HistoryDeleteResult =
   | { ok: true; deleted: number }
-  | { ok: false; error: "invalid" | "not_allowed" | "failed" };
+  | { ok: false; error: "invalid" | "not_allowed" | "failed" | "partial"; deleted?: number };
 
 export async function deleteArchivedAppointments(
   clinicId: string,
@@ -36,6 +36,17 @@ export async function deleteArchivedAppointments(
   const canDelete = isClinicOwner || membership?.role === "owner" || membership?.role === "manager";
   if (!canDelete) return { ok: false, error: "not_allowed" };
 
+  // Reject mixed/stale batches BEFORE any destructive write. An archived-only
+  // UI selection is not sufficient authorization for a direct server action.
+  const { count: eligibleCount, error: eligibilityError } = await supabase
+    .from("appointments")
+    .select("id", { count: "exact", head: true })
+    .eq("clinic_id", clinicId)
+    .in("id", uniqueIds)
+    .not("voided_at", "is", null);
+  if (eligibilityError) return { ok: false, error: "failed" };
+  if (eligibleCount !== uniqueIds.length) return { ok: false, error: "not_allowed" };
+
   const { data, error } = await supabase
     .from("appointments")
     .delete()
@@ -50,7 +61,13 @@ export async function deleteArchivedAppointments(
     return { ok: false, error: "failed" };
   }
 
-  if ((data?.length ?? 0) !== uniqueIds.length) return { ok: false, error: "not_allowed" };
+  if ((data?.length ?? 0) !== uniqueIds.length) {
+    // A concurrent change may still affect the delete after preflight. Never
+    // tell the receptionist nothing happened when some rows were deleted.
+    revalidatePath("/dashboard/history");
+    revalidatePath("/dashboard");
+    return { ok: false, error: "partial", deleted: data?.length ?? 0 };
+  }
 
   revalidatePath("/dashboard/history");
   revalidatePath("/dashboard");
