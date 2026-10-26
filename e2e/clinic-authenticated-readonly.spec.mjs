@@ -94,10 +94,15 @@ async function qaSession(role) {
 }
 
 for (const role of ["owner", "receptionist"]) {
-  test(`synthetic ${role} dashboard is isolated and usable in all four languages`, async ({ browser }) => {
+for (const locale of ["en", "ku", "bd", "ar"]) {
+  test(`synthetic ${role} dashboard is isolated and usable (${locale})`, async ({ browser }, testInfo) => {
     test.setTimeout(180_000);
     const { id, name, doctorId, state } = await qaSession(role);
-    const context = await browser.newContext({ baseURL: base, storageState: state, acceptDownloads: false, serviceWorkers: "block" });
+    const { viewport, isMobile, hasTouch } = testInfo.project.use;
+    const context = await browser.newContext({
+      viewport, isMobile, hasTouch,
+      baseURL: base, storageState: state, acceptDownloads: false, serviceWorkers: "block",
+    });
     const page = await context.newPage();
     const writes = [], errors = [], serverErrors = [];
     await context.route("**/*", (route) => {
@@ -119,7 +124,6 @@ for (const role of ["owner", "receptionist"]) {
       }
     });
     try {
-      for (const locale of ["en", "ku", "bd", "ar"]) {
         await context.addCookies([{ name: "atlas_ui_locale", value: locale, domain: new URL(base).hostname, path: "/", secure: true, sameSite: "Lax" }]);
         const response = await page.goto("/dashboard?clinic=" + encodeURIComponent(id), {
           waitUntil: "domcontentloaded",
@@ -139,12 +143,12 @@ for (const role of ["owner", "receptionist"]) {
         }
         const overflows = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
         expect(overflows, "Dashboard should fit this viewport").toBe(false);
-      }
+      await page.waitForLoadState("networkidle");
       if (role === "receptionist") {
-        await context.addCookies([{ name: "atlas_ui_locale", value: "en", domain: new URL(base).hostname, path: "/", secure: true, sameSite: "Lax" }]);
         await page.goto("/dashboard/staff?clinic=" + encodeURIComponent(id), { waitUntil: "domcontentloaded" });
-        await expect(page.getByRole("heading", { name: "Administration access required.", exact: true })).toBeVisible();
+        await expect(page.getByRole("heading", { name: { en: "Administration access required.", ku: "دەسەڵاتی بەڕێوەبردن پێویستە.", bd: "دەستهەلاتا بەڕێڤەبرنێ پێدڤییە.", ar: "صلاحية الإدارة مطلوبة." }[locale], exact: true })).toBeVisible();
         await expect(page.locator("form")).toHaveCount(0);
+        await page.waitForLoadState("networkidle");
       }
       expect(writes, "No production mutations").toEqual([]);
       expect(serverErrors, "No server errors").toEqual([]);
@@ -153,4 +157,5 @@ for (const role of ["owner", "receptionist"]) {
       await context.close();
     }
   });
+}
 }
