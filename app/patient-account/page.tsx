@@ -43,8 +43,14 @@ const copy: Record<UiLocale, {
   hello: string;
   upcoming: string;
   history: string;
+  cancelled: string;
   noUpcoming: string;
   noUpcomingHelp: string;
+  retry: string;
+  timeZoneLabel: string;
+  timeUnavailable: string;
+  pastScheduledTime: string;
+  statusUnavailable: string;
   noAppointments: string;
   noAppointmentsHelp: string;
   findCare: string;
@@ -74,9 +80,15 @@ const copy: Record<UiLocale, {
     signInTitle: "Sign in to see your appointments",
     hello: "Hello",
     upcoming: "Upcoming",
-    history: "Past & cancelled",
+    history: "Past",
+    cancelled: "Cancelled",
     noUpcoming: "No upcoming appointments.",
     noUpcomingHelp: "Upcoming appointments linked to your patient account will appear here.",
+    retry: "Try again",
+    timeZoneLabel: "Iraq time",
+    timeUnavailable: "Appointment date and time unavailable",
+    pastScheduledTime: "The scheduled time has passed. Contact the clinic if you need an update.",
+    statusUnavailable: "Status unavailable",
     noAppointments: "No appointments yet.",
     noAppointmentsHelp: "Appointments linked to your patient account will appear here.",
     findCare: "Find care",
@@ -106,9 +118,15 @@ const copy: Record<UiLocale, {
     signInTitle: "بچۆ ژوورەوە بۆ بینینی مەوعیدەکانت",
     hello: "سڵاو",
     upcoming: "مەوعیدە داهاتووەکان",
-    history: "پێشوو و هەڵوەشاوەکان",
+    history: "مەوعیدە پێشووەکان",
+    cancelled: "مەوعیدە هەڵوەشاوەکان",
     noUpcoming: "هیچ مەوعیدێکی داهاتووت نییە.",
     noUpcomingHelp: "مەوعیدە داهاتووەکانی پەیوەست بە هەژمارەکەت لێرە دەردەکەون.",
+    retry: "دووبارە هەوڵ بدە",
+    timeZoneLabel: "کاتی عێراق",
+    timeUnavailable: "ڕێکەوت و کاتی مەوعیدەکە بەردەست نییە",
+    pastScheduledTime: "کاتی مەوعیدەکە تێپەڕیوە. ئەگەر زانیاریی نوێت دەوێت، پەیوەندی بە کلینیکەوە بکە.",
+    statusUnavailable: "دۆخی مەوعیدەکە دیار نییە",
     noAppointments: "هێشتا هیچ مەوعیدێکت نییە.",
     noAppointmentsHelp: "مەوعیدەکانی پەیوەست بە هەژماری نەخۆشی تۆ لێرە دەردەکەون.",
     findCare: "پزیشک بدۆزەرەوە",
@@ -138,9 +156,15 @@ const copy: Record<UiLocale, {
     signInTitle: "بچۆ ژوور بۆ دیتنا وادەیێن خۆ",
     hello: "سلاڤ",
     upcoming: "وادەیێن داهاتی",
-    history: "یێن بوری و هەلوەشاندی",
+    history: "وادەیێن بوری",
+    cancelled: "وادەیێن هەلوەشاندی",
     noUpcoming: "چ وادەیەکا داهاتی یا تە نینە.",
     noUpcomingHelp: "وادەیێن داهاتی یێن گرێدای هەژمارا تە ل ڤێرێ دیار دبن.",
+    retry: "جارەکا دی هەول بدە",
+    timeZoneLabel: "دەمێ عێراقێ",
+    timeUnavailable: "ڕێکەفت و دەمێ وادەیێ نە بەردەستن",
+    pastScheduledTime: "دەمێ وادەیێ دەرباز بوویە. ئەگەر زانیارییێن نوێ پێدڤی نە، پەیوەندیێ ب کلینیکێ بکە.",
+    statusUnavailable: "بارودۆخێ وادەیێ نە دیارە",
     noAppointments: "هێشتا چ وادەیەکا تە نینە.",
     noAppointmentsHelp: "وادەیێن گرێدای هەژمارا نەخۆشی یا تە ل ڤێرێ دیار دبن.",
     findCare: "دکتۆر بدیتەوە",
@@ -170,9 +194,15 @@ const copy: Record<UiLocale, {
     signInTitle: "سجّل الدخول حتى تشوف مواعيدك",
     hello: "أهلاً",
     upcoming: "المواعيد القادمة",
-    history: "السابقة والملغاة",
+    history: "المواعيد السابقة",
+    cancelled: "المواعيد الملغاة",
     noUpcoming: "ما عندك مواعيد جاية.",
     noUpcomingHelp: "إذا صار عندك موعد جاي مرتبط بحسابك، راح يطلع هنا.",
+    retry: "حاول مرة ثانية",
+    timeZoneLabel: "بتوقيت العراق",
+    timeUnavailable: "تاريخ ووقت الموعد غير متوفرين",
+    pastScheduledTime: "وقت الموعد مرّ. إذا تحتاج تحديث، تواصل ويا العيادة.",
+    statusUnavailable: "حالة الموعد غير متوفرة",
     noAppointments: "ماكو مواعيد لحد الآن.",
     noAppointmentsHelp: "المواعيد المرتبطة بحسابك راح تبين هنا.",
     findCare: "ابحث عن رعاية",
@@ -218,7 +248,14 @@ function isUpcomingAppointment(appointment: AccountAppointment, nowMs: number) {
     && (appointment.appointment_status === "pending" || appointment.appointment_status === "confirmed");
 }
 
+function appointmentSortTime(appointment: AccountAppointment) {
+  const value = new Date(appointment.appointment_at).getTime();
+  return Number.isFinite(value) ? value : 0;
+}
+
 function appointmentDate(value: string, locale: UiLocale) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return copy[locale].timeUnavailable;
   const meta = localeMeta(locale);
   return new Intl.DateTimeFormat(meta.dateLocale, {
     timeZone: "Asia/Baghdad",
@@ -228,7 +265,7 @@ function appointmentDate(value: string, locale: UiLocale) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 export default async function PatientAccountPage({ searchParams }: PatientAccountPageProps) {
@@ -265,8 +302,13 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
   }
 
   const nowMs = Date.now();
-  const upcomingAppointments = appointments.filter((appointment) => isUpcomingAppointment(appointment, nowMs));
-  const historyAppointments = appointments.filter((appointment) => !isUpcomingAppointment(appointment, nowMs));
+  const upcomingAppointments = appointments.filter((appointment) => isUpcomingAppointment(appointment, nowMs))
+    .sort((a, b) => appointmentSortTime(a) - appointmentSortTime(b));
+  const historyAppointments = appointments.filter((appointment) =>
+    appointment.appointment_status !== "cancelled" && !isUpcomingAppointment(appointment, nowMs))
+    .sort((a, b) => appointmentSortTime(b) - appointmentSortTime(a));
+  const cancelledAppointments = appointments.filter((appointment) => appointment.appointment_status === "cancelled")
+    .sort((a, b) => appointmentSortTime(b) - appointmentSortTime(a));
 
   const readiness = session ? null : await getAtlasAuthReadiness();
   const signInReady = Boolean(
@@ -336,9 +378,12 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
             </div>
 
             <section className="patient-account-appointments" aria-label={t.upcoming}>
-              <h2>{t.upcoming}</h2>
+              <h2>{t.upcoming} <span className="patient-account-count">{upcomingAppointments.length}</span></h2>
               {appointmentsFailed ? (
-                <p className="notice notice-error" role="alert">{t.loadFailed}</p>
+                <div className="patient-account-empty" role="alert">
+                  <p className="notice notice-error">{t.loadFailed}</p>
+                  <Link className="button button-ghost" href={`/patient-account?lang=${locale}`}>{t.retry}</Link>
+                </div>
               ) : appointments.length ? (
                 <>
                   {upcomingAppointments.length ? (
@@ -347,12 +392,15 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                         <article className="patient-account-appointment" key={appointment.appointment_id}>
                           <div className="patient-account-appointment-main">
                             <span className="patient-account-status" data-status={appointment.appointment_status}>
-                              {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
+                              {t.statuses[appointment.appointment_status] ?? t.statusUnavailable}
                             </span>
                             <strong><bdi>{appointment.doctor_name}</bdi></strong>
                             {appointment.doctor_specialty ? <span><bdi>{appointment.doctor_specialty}</bdi></span> : null}
                             <span><bdi>{appointment.clinic_name}</bdi></span>
-                            <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
+                            <time dateTime={appointment.appointment_at}>
+                              {appointmentDate(appointment.appointment_at, locale)}
+                              {Number.isFinite(Date.parse(appointment.appointment_at)) ? <small>{t.timeZoneLabel}</small> : null}
+                            </time>
                           </div>
                           <form
                             action={`/patient-account/api/appointments/${appointment.appointment_id}/manage?lang=${locale}`}
@@ -373,18 +421,53 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
 
                   {historyAppointments.length ? (
                     <section className="patient-account-history" aria-label={t.history}>
-                      <h3>{t.history}</h3>
+                      <h3>{t.history} <span className="patient-account-count">{historyAppointments.length}</span></h3>
                       <div className="patient-account-list">
                         {historyAppointments.map((appointment) => (
                           <article className="patient-account-appointment is-history" key={appointment.appointment_id}>
                             <div className="patient-account-appointment-main">
                               <span className="patient-account-status" data-status={appointment.appointment_status}>
-                                {t.statuses[appointment.appointment_status] ?? appointment.appointment_status}
+                                {t.statuses[appointment.appointment_status] ?? t.statusUnavailable}
                               </span>
                               <strong><bdi>{appointment.doctor_name}</bdi></strong>
                               {appointment.doctor_specialty ? <span><bdi>{appointment.doctor_specialty}</bdi></span> : null}
                               <span><bdi>{appointment.clinic_name}</bdi></span>
-                              <time dateTime={appointment.appointment_at}>{appointmentDate(appointment.appointment_at, locale)}</time>
+                              <time dateTime={appointment.appointment_at}>
+                              {appointmentDate(appointment.appointment_at, locale)}
+                              {Number.isFinite(Date.parse(appointment.appointment_at)) ? <small>{t.timeZoneLabel}</small> : null}
+                            </time>
+                              {(appointment.appointment_status === "pending" || appointment.appointment_status === "confirmed")
+                                ? <p className="patient-account-past-note">{t.pastScheduledTime}</p> : null}
+                            </div>
+                            <form
+                              action={`/patient-account/api/appointments/${appointment.appointment_id}/manage?lang=${locale}`}
+                              method="post"
+                            >
+                              <button className="button button-ghost patient-account-manage" type="submit">{t.view}</button>
+                            </form>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {cancelledAppointments.length ? (
+                    <section className="patient-account-history patient-account-cancelled" aria-label={t.cancelled}>
+                      <h3>{t.cancelled} <span className="patient-account-count">{cancelledAppointments.length}</span></h3>
+                      <div className="patient-account-list">
+                        {cancelledAppointments.map((appointment) => (
+                          <article className="patient-account-appointment is-history" key={appointment.appointment_id}>
+                            <div className="patient-account-appointment-main">
+                              <span className="patient-account-status" data-status={appointment.appointment_status}>
+                                {t.statuses[appointment.appointment_status] ?? t.statusUnavailable}
+                              </span>
+                              <strong><bdi>{appointment.doctor_name}</bdi></strong>
+                              {appointment.doctor_specialty ? <span><bdi>{appointment.doctor_specialty}</bdi></span> : null}
+                              <span><bdi>{appointment.clinic_name}</bdi></span>
+                              <time dateTime={appointment.appointment_at}>
+                              {appointmentDate(appointment.appointment_at, locale)}
+                              {Number.isFinite(Date.parse(appointment.appointment_at)) ? <small>{t.timeZoneLabel}</small> : null}
+                            </time>
                             </div>
                             <form
                               action={`/patient-account/api/appointments/${appointment.appointment_id}/manage?lang=${locale}`}
@@ -470,10 +553,13 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
           .patient-account-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}.patient-account-toolbar form{margin:0}
           .patient-account-appointments h2,.patient-account-signin-title{margin:18px 0 12px;font-size:20px}
           .patient-account-history{margin-top:28px}.patient-account-history h3{margin:0 0 12px;color:var(--muted);font-size:14px}
+          .patient-account-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;min-height:26px;margin-inline-start:6px;padding-inline:7px;border:1px solid var(--line);border-radius:99px;background:var(--surface-soft);color:var(--muted);font-size:12px;font-weight:760;vertical-align:middle}
           .patient-account-list{display:grid;gap:12px}
           .patient-account-appointment{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--surface-soft)}.patient-account-appointment.is-history{background:var(--surface)}
           .patient-account-appointment-main{display:grid;gap:5px;min-width:0}
           .patient-account-appointment-main strong{font-size:19px}.patient-account-appointment-main span,.patient-account-appointment-main time{font-size:12px;color:var(--muted)}
+          .patient-account-appointment-main time small{display:inline-block;margin-inline-start:8px;color:var(--muted);font-size:11px;font-weight:500}
+          .patient-account-past-note{max-width:44ch;margin:2px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
           .patient-account-status{width:fit-content!important;border-radius:999px;padding:4px 8px!important;background:var(--warning-bg);color:var(--warning)!important;font-size:10px!important;font-weight:850}
           .patient-account-status[data-status="confirmed"],.patient-account-status[data-status="completed"]{background:var(--success-bg);color:var(--success)!important}
           .patient-account-status[data-status="cancelled"],.patient-account-status[data-status="no_show"]{background:var(--danger-bg);color:var(--danger)!important}
