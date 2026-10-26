@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { nextReceptionQuickAction } from "../lib/reception-quick-action";
+import { nextReceptionQuickAction } from "../lib/reception-quick-action.ts";
 
 test("quick action respects attendance and visit outcome timing", () => {
   assert.equal(nextReceptionQuickAction("pending", false, false), null);
