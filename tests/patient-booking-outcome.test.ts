@@ -11,6 +11,13 @@ test("only a positive server reply with a private destination is classified as s
   assert.equal(interpretBookingResponse(400, { status: "ok", patientPath }), "uncertain");
 });
 
+test("verified exact retry opens the patient portal instead of an unused private token", () => {
+  assert.equal(interpretBookingResponse(200, { status: "duplicate", accountPath: "/patient-account?lang=en" }), "existing");
+  assert.equal(interpretBookingResponse(200, { status: "duplicate" }), "uncertain");
+  assert.equal(interpretBookingResponse(503, { status: "duplicate", accountPath: "/patient-account?lang=en" }), "uncertain");
+  assert.equal(interpretBookingResponse(200, { status: "ok", accountPath: "/patient-account?lang=en" }), "uncertain");
+});
+
 test("changed availability and conflicting retries are never classified as success", () => {
   assert.equal(interpretBookingResponse(409, { status: "slot_taken" }), "slot_taken");
   assert.equal(interpretBookingResponse(400, { status: "unavailable" }), "unavailable");
