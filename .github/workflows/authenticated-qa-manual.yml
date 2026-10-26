@@ -40,7 +40,7 @@ jobs:
       - name: Validate QA secret shape without printing values
         shell: bash
         run: |
-          if [[ ! "$ATLAS_QA_EMAIL" =~ ^atlas-qa-[a-z0-9-]+@example\\.invalid$ ]]; then
+          if [[ ! "$ATLAS_QA_EMAIL" =~ ^atlas-qa-[a-z0-9-]+@example\.invalid$ ]]; then
             echo "QA email does not match synthetic-account format."
             exit 1
           fi
