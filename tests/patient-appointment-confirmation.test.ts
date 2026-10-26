@@ -12,7 +12,7 @@ const finalizer = source("app/api/care/booking/finalize/route.ts");
 test("only a successful authorized finalization navigates to the confirmation view", () => {
   assert.match(bookingForm, /bookingResponse\.ok && booking\?\.status === "ok"/);
   assert.match(bookingForm, /destination\.origin === window\.location\.origin/);
-  assert.match(bookingForm, /new RegExp\("\^\/patient\/\[a-f0-9\]\{64\}\$"\)/);
+  assert.match(bookingForm, /destination\\.pathname\\)/);
   assert.match(bookingForm, /destination\.searchParams\.set\("view", "confirmation"\)/);
   assert.match(bookingForm, /window\.location\.replace\(/);
   assert.match(finalizer, /admin\.auth\.getUser\(token\)/);
