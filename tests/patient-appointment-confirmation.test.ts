@@ -45,7 +45,7 @@ test("pending is never advertised as confirmed or booked", () => {
   assert.match(confirmation, /const confirmed = status === "confirmed"/);
   assert.match(confirmation, /confirmed \? t\.confirmedTitle : t\.pendingTitle/);
   assert.match(confirmation, /confirmed \? t\.confirmedStatus : t\.pendingStatus/);
-  assert.match(confirmation, /This appointment is not confirmed yet/);
+  assert.match(confirmation, /Your appointment record was saved, but attendance is not confirmed/);
   assert.doesNotMatch(confirmation, /pendingTitle: ".*(?:booked|confirmed)"/i);
   assert.match(confirmation, /<span data-status=\{status\}>/);
 });
