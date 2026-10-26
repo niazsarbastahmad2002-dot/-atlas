@@ -103,7 +103,7 @@ test("load failure offers a localized retry without showing an empty account as 
 
 test("all four languages disclose Iraq time and handle unavailable times or statuses", () => {
   for (const key of ["timeZoneLabel", "timeUnavailable", "statusUnavailable", "pastScheduledTime"]) {
-    assert.equal(page.split(\`\${key}: "\`).length - 1, 4);
+    assert.equal(page.split(key + ': "').length - 1, 4);
   }
   assert.equal(page.split("t.statuses[appointment.appointment_status] ?? t.statusUnavailable").length - 1, 3);
   assert.match(page, /dir=\{meta\.dir\}/);
