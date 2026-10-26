@@ -384,7 +384,7 @@ export function PatientBookingForm(props: BookingFormProps) {
         },
         body: payload,
       });
-      const booking = await bookingResponse.json().catch(() => null) as { status?: string; patientPath?: string } | null;
+      const booking = await bookingResponse.json().catch(() => null) as { status?: string; patientPath?: string; accountPath?: string } | null;
 
       const outcome = interpretBookingResponse(bookingResponse.status, booking);
       if (outcome === "saved" && typeof booking?.patientPath === "string") {
@@ -401,6 +401,16 @@ export function PatientBookingForm(props: BookingFormProps) {
         }
       }
 
+      if (outcome === "existing" && typeof booking?.accountPath === "string") {
+        // Exact retries can recover through the verified patient portal without
+        // revoking or pretending to own the first response's private token.
+        const destination = new URL(booking.accountPath, window.location.origin);
+        if (destination.origin === window.location.origin && destination.pathname === "/patient-account") {
+          window.location.replace(`/patient-account?lang=${encodeURIComponent(props.locale)}`);
+          return;
+        }
+      }
+
       if (outcome === "rate_limited") setError(t.rateLimited);
       else if (outcome === "slot_taken") setError(t.slotTaken);
       else if (outcome === "unavailable") setError(t.unavailable);
@@ -412,7 +422,7 @@ export function PatientBookingForm(props: BookingFormProps) {
         setToken("");
         setStep("details");
         setError(t.incorrectCode);
-      } else if (outcome === "uncertain" || outcome === "saved") {
+      } else if (outcome === "uncertain" || outcome === "saved" || outcome === "existing") {
         // Unknown/lost responses must not be described as a failed booking.
         setError(t.uncertain);
         setNeedsAppointmentReview(true);
