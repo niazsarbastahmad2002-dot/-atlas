@@ -24,6 +24,10 @@ jobs:
       ATLAS_QA_PUBLISHABLE_KEY: ${{ vars.ATLAS_QA_PUBLISHABLE_KEY }}
       ATLAS_QA_EMAIL: ${{ secrets.ATLAS_QA_EMAIL }}
       ATLAS_QA_PASSWORD: ${{ secrets.ATLAS_QA_PASSWORD }}
+      ATLAS_QA_RECEPTIONIST_EMAIL: ${{ secrets.ATLAS_QA_RECEPTIONIST_EMAIL }}
+      ATLAS_QA_RECEPTIONIST_PASSWORD: ${{ secrets.ATLAS_QA_RECEPTIONIST_PASSWORD }}
+      ATLAS_QA_RECEPTIONIST_USER_ID: 888a8688-fbc6-42fc-aff8-43a59aa2a306
+      ATLAS_QA_RECEPTIONIST_DOCTOR_ID: ece41ca6-f473-4eb9-9629-0f5441656d9e
     steps:
       - name: Require isolated QA identity
         shell: bash
@@ -41,6 +45,10 @@ jobs:
           fi
           if (( ${#ATLAS_QA_PASSWORD} < 20 )); then
             echo "QA password is shorter than the test's 20-character requirement."
+            exit 1
+          fi
+          if [[ ! "$ATLAS_QA_RECEPTIONIST_EMAIL" =~ ^atlas-qa-receptionist-[a-z0-9-]+@example\.invalid$ ]] || (( ${#ATLAS_QA_RECEPTIONIST_PASSWORD} < 20 )); then
+            echo "Separate synthetic receptionist credentials are required."
             exit 1
           fi
       - name: Checkout
