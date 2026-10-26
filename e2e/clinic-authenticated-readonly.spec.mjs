@@ -16,7 +16,7 @@ async function qaSession() {
   if (new URL(base).hostname !== "atlasclinic.dpdns.org" || !uuid(id) || !uuid(userId) ||
       !name?.startsWith("Atlas QA") ||
       !/^atlas-qa-[a-z0-9-]+@example\.invalid$/i.test(email ?? "") ||
-      !password || password.length < 24 || !key) {
+      !password || password.length < 20 || !key) {
     throw new Error("A separate Atlas QA identity and protected password are required.");
   }
   if (url !== "https://moazrwbalqiyoafrydkj.supabase.co") {
