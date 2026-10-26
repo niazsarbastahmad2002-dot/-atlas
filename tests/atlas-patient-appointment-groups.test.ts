@@ -71,3 +71,44 @@ test("all groups preserve doctor, clinic, time, status, secure view and verified
   assert.match(page, /resolvePatientAccountSession\(admin, rawSession\)/);
   assert.match(page, /robots: \{ index: false, follow: false \}/);
 });
+
+test("patient account formats valid timestamps in Iraq local time and handles bad dates safely", () => {
+  assert.match(page, /timeZone: "Asia\/Baghdad"/);
+  assert.match(page, /if \(!Number\.isFinite\(date\.getTime\(\)\)\) return copy\[locale\]\.timeUnavailable/);
+  assert.match(page, /\.format\(date\)/);
+  assert.equal(page.split("Number.isFinite(Date.parse(appointment.appointment_at))").length - 1, 3);
+  assert.equal(page.split("<small>{t.timeZoneLabel}</small>").length - 1, 3);
+  const date = new Date("2026-10-26T10:30:00Z");
+  assert.equal(new Intl.DateTimeFormat("en-IQ", {
+    timeZone: "Asia/Baghdad", hour: "2-digit", minute: "2-digit", hour12: false,
+  }).format(date), "13:30");
+});
+
+test("unresolved past bookings do not pretend a patient attended or a visit was completed", () => {
+  assert.match(page, /appointment\.appointment_status === "pending" \|\| appointment\.appointment_status === "confirmed"/);
+  assert.match(page, /\? <p className="patient-account-past-note">\{t\.pastScheduledTime\}<\/p> : null/);
+  assert.match(page, /pastScheduledTime: "The scheduled time has passed\. Contact the clinic if you need an update\."/);
+  assert.match(page, /statuses: \{ pending: "Needs confirmation", confirmed: "Confirmed", cancelled: "Cancelled", completed: "Completed", no_show: "Marked as missed" \}/);
+});
+
+test("load failure offers a localized retry without showing an empty account as fact", () => {
+  assert.match(page, /\{appointmentsFailed \? \(/);
+  assert.match(page, /<div className="patient-account-empty" role="alert">/);
+  assert.match(page, /href=\{\x60\/patient-account\?lang=\$\{locale\}\x60\}>\{t\.retry\}/);
+  assert.match(page, /retry: "Try again"/);
+  assert.match(page, /retry: "دووبارە هەوڵ بدە"/);
+  assert.match(page, /retry: "جارەکا دی هەول بدە"/);
+  assert.match(page, /retry: "حاول مرة ثانية"/);
+});
+
+test("all four languages disclose Iraq time and handle unavailable times or statuses", () => {
+  for (const key of ["timeZoneLabel", "timeUnavailable", "statusUnavailable", "pastScheduledTime"]) {
+    assert.equal(page.split(\`\${key}: "\`).length - 1, 4);
+  }
+  assert.equal(page.split("t.statuses[appointment.appointment_status] ?? t.statusUnavailable").length - 1, 3);
+  assert.match(page, /dir=\{meta\.dir\}/);
+  assert.match(page, /<bdi>\{appointment\.doctor_name\}<\/bdi>/);
+  assert.match(page, /<bdi>\{appointment\.clinic_name\}<\/bdi>/);
+  assert.match(page, /@media\(max-width:700px\)/);
+  assert.match(page, /grid-template-columns:1fr;padding:18px/);
+});
