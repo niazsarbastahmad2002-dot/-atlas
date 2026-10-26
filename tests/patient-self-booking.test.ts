@@ -101,5 +101,5 @@ test("verified patient flow recovers from profile lookup and token expiry withou
 
   assert.match(form, /setAccessToken\(verifiedAccessToken\)[\s\S]*\/api\/care\/patient-profile/);
   assert.match(form, /profileResponse\.status === 401[\s\S]*setAccessToken\(""\)[\s\S]*setStep\("details"\)/);
-  assert.match(form, /booking\?\.status === "verification_required"[\s\S]*setAccessToken\(""\)[\s\S]*setToken\(""\)[\s\S]*setStep\("details"\)/);
+  assert.match(form, /outcome === "verification_required"[\s\S]*setAccessToken\(""\)[\s\S]*setToken\(""\)[\s\S]*setStep\("details"\)/);
 });

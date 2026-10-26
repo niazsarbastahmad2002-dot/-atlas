@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { AuthDeliverySelector } from "@/app/components/auth-delivery-selector";
 import { OtpCodeField } from "@/app/components/otp-code-field";
 import { normalizeAuthPhone, normalizeOtpToken, maskPhone } from "@/lib/phone-auth";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createEphemeralVerificationClient } from "@/lib/supabase/verification-client";
+import { bookingRetryMatches, interpretBookingResponse } from "@/lib/patient-booking-outcome";
 
 type Delivery = "sms" | "whatsapp";
 
@@ -55,6 +56,9 @@ const copy: Record<UiLocale, {
   slotTaken: string;
   unavailable: string;
   failed: string;
+  uncertain: string;
+  changedAfterAttempt: string;
+  myAppointments: string;
   privacy: string;
 }> = {
   en: {
@@ -92,6 +96,9 @@ const copy: Record<UiLocale, {
     slotTaken: "That time was just taken. Go back and choose another open time.",
     unavailable: "This time is no longer available.",
     failed: "Atlas could not complete the booking. Try again.",
+    uncertain: "We could not verify whether the appointment was saved. Check My appointments before trying again.",
+    changedAfterAttempt: "These details changed after an earlier booking attempt. Check My appointments before making another booking.",
+    myAppointments: "My appointments",
     privacy: "Your verified mobile identifies your private Atlas patient profile. The clinic receives only the details needed for this appointment.",
   },
   ku: {
@@ -129,6 +136,9 @@ const copy: Record<UiLocale, {
     slotTaken: "ئەم کاتە تازە گیرا. بگەڕێوە و کاتێکی بەردەستی تر هەڵبژێرە.",
     unavailable: "ئەم کاتە چیتر بەردەست نییە.",
     failed: "Atlas نەیتوانی مەوعیدەکە تەواو بکات. دووبارە هەوڵبدەوە.",
+    uncertain: "ناتوانین دڵنیابین مەوعیدەکە تۆمار کراوە یان نا. پێش هەوڵدانەوە «مەوعیدەکانم» بپشکنە.",
+    changedAfterAttempt: "وردەکارییەکان دوای هەوڵێکی پێشووی مەوعیددانان گۆڕاون. پێش داواکارییەکی تر «مەوعیدەکانم» بپشکنە.",
+    myAppointments: "مەوعیدەکانم",
     privacy: "ژمارەی پشتڕاستکراوەکەت ناسنامەی پڕۆفایلی تایبەتی نەخۆشی Atlas ـە. کلینیک تەنها زانیاریی پێویست بۆ ئەم مەوعیدە وەردەگرێت.",
   },
   bd: {
@@ -166,6 +176,9 @@ const copy: Record<UiLocale, {
     slotTaken: "ئەڤ دەمە نوو هاتە گرتن. ڤەگەڕە و دەمەکێ دی یێ بەردەست هەلبژێرە.",
     unavailable: "ئەڤ دەمە ئێدی بەردەست نینە.",
     failed: "Atlas نەشیا وادەیێ تەمام بکەت. جارەکا دی هەول بدە.",
+    uncertain: "نەشین دڵنیا بین کا وادە هاتییە تۆمارکرن یان نە. بەری هەولدانەکا دی «وادەیێن من» بپشکنە.",
+    changedAfterAttempt: "وردەکاری پشتی هەولەکا پێشتر هاتینە گوهۆڕین. بەری هەولەکا دی «وادەیێن من» بپشکنە.",
+    myAppointments: "وادەیێن من",
     privacy: "ژمارا پشتڕاستکری یا تە ناسنامەیا پڕۆفایلا تایبەتا نەخۆشی ل Atlas ـە. کلینیک تەنێ زانیاریێن پێدڤی بۆ ڤێ وادەیێ وەردگریت.",
   },
   ar: {
@@ -203,6 +216,9 @@ const copy: Record<UiLocale, {
     slotTaken: "هذا الوقت انحجز للتو. ارجع واختر وقتاً متاحاً آخر.",
     unavailable: "هذا الوقت لم يعد متاحاً.",
     failed: "تعذر على Atlas إكمال الحجز. حاول مرة ثانية.",
+    uncertain: "ما نكدر نتأكد إذا انحفظ الموعد أو لا. راجع مواعيدي قبل ما تحاول مرة ثانية.",
+    changedAfterAttempt: "تفاصيل الحجز تغيرت بعد محاولة سابقة. راجع مواعيدي قبل محاولة حجز ثانية.",
+    myAppointments: "مواعيدي",
     privacy: "رقمك الموثق يعرّف ملف المريض الخاص بك في Atlas. العيادة تستلم فقط المعلومات اللازمة لهذا الموعد.",
   },
 };
@@ -225,6 +241,9 @@ export function PatientBookingForm(props: BookingFormProps) {
   const [step, setStep] = useState<"details" | "code" | "profile">("details");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [needsAppointmentReview, setNeedsAppointmentReview] = useState(false);
+  const bookingInFlight = useRef(false);
+  const firstBookingPayload = useRef<string | null>(null);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   async function sendCode(event?: FormEvent) {
@@ -321,7 +340,8 @@ export function PatientBookingForm(props: BookingFormProps) {
 
   async function bookAppointment(event: FormEvent) {
     event.preventDefault();
-    if (busy) return;
+    // A synchronous guard prevents repeated submits before React updates `busy`.
+    if (busy || bookingInFlight.current) return;
 
     const name = patientName.trim();
     if (name.length < 2 || name.length > 120) {
@@ -334,8 +354,27 @@ export function PatientBookingForm(props: BookingFormProps) {
       return;
     }
 
+    const payload = JSON.stringify({
+      clinicSlug: props.clinicSlug,
+      doctorSlug: props.doctorSlug,
+      slotAt: props.slotAt,
+      patientName: name,
+      idempotencyKey,
+      reminderLanguage: preferredLanguage,
+      reminderConsent,
+    });
+    // An idempotency key may only be retried with precisely the same payload.
+    // A previous response could have been lost even if the server saved a booking.
+    if (!bookingRetryMatches(firstBookingPayload.current, payload)) {
+      setError(t.changedAfterAttempt);
+      setNeedsAppointmentReview(true);
+      return;
+    }
+    firstBookingPayload.current = payload;
+    bookingInFlight.current = true;
     setBusy(true);
     setError("");
+    setNeedsAppointmentReview(false);
     try {
       const bookingResponse = await fetch("/api/care/booking/finalize", {
         method: "POST",
@@ -343,35 +382,56 @@ export function PatientBookingForm(props: BookingFormProps) {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          clinicSlug: props.clinicSlug,
-          doctorSlug: props.doctorSlug,
-          slotAt: props.slotAt,
-          patientName: name,
-          idempotencyKey,
-          reminderLanguage: preferredLanguage,
-          reminderConsent,
-        }),
+        body: payload,
       });
-      const booking = await bookingResponse.json().catch(() => null) as { status?: string; patientPath?: string } | null;
+      const booking = await bookingResponse.json().catch(() => null) as { status?: string; patientPath?: string; accountPath?: string } | null;
 
-      if (bookingResponse.ok && booking?.status === "ok" && booking.patientPath) {
-        window.location.replace(booking.patientPath);
-        return;
+      const outcome = interpretBookingResponse(bookingResponse.status, booking);
+      if (outcome === "saved" && typeof booking?.patientPath === "string") {
+        // Only a successful authorized finalization may enter the confirmation view.
+        // Keep the destination on this origin and restricted to private patient links.
+        const destination = new URL(booking.patientPath, window.location.origin);
+        if (
+          destination.origin === window.location.origin
+          && /^\/patient\/[a-f0-9]{64}$/.test(destination.pathname)
+        ) {
+          destination.searchParams.set("view", "confirmation");
+          window.location.replace(`${destination.pathname}${destination.search}`);
+          return;
+        }
       }
 
-      if (booking?.status === "rate_limited") setError(t.rateLimited);
-      else if (booking?.status === "slot_taken") setError(t.slotTaken);
-      else if (booking?.status === "unavailable") setError(t.unavailable);
-      else if (booking?.status === "verification_required") {
+      if (outcome === "existing" && typeof booking?.accountPath === "string") {
+        // Exact retries can recover through the verified patient portal without
+        // revoking or pretending to own the first response's private token.
+        const destination = new URL(booking.accountPath, window.location.origin);
+        if (destination.origin === window.location.origin && destination.pathname === "/patient-account") {
+          window.location.replace(`/patient-account?lang=${encodeURIComponent(props.locale)}`);
+          return;
+        }
+      }
+
+      if (outcome === "rate_limited") setError(t.rateLimited);
+      else if (outcome === "slot_taken") setError(t.slotTaken);
+      else if (outcome === "unavailable") setError(t.unavailable);
+      else if (outcome === "idempotency_mismatch") {
+        setError(t.changedAfterAttempt);
+        setNeedsAppointmentReview(true);
+      } else if (outcome === "verification_required") {
         setAccessToken("");
         setToken("");
         setStep("details");
         setError(t.incorrectCode);
+      } else if (outcome === "uncertain" || outcome === "saved" || outcome === "existing") {
+        // Unknown/lost responses must not be described as a failed booking.
+        setError(t.uncertain);
+        setNeedsAppointmentReview(true);
       } else setError(t.failed);
     } catch {
-      setError(t.failed);
+      setError(t.uncertain);
+      setNeedsAppointmentReview(true);
     } finally {
+      bookingInFlight.current = false;
       setBusy(false);
     }
   }
@@ -487,6 +547,7 @@ export function PatientBookingForm(props: BookingFormProps) {
       )}
 
       {error ? <p className="notice notice-error" role="alert">{error}</p> : null}
+      {needsAppointmentReview ? <a className="button button-ghost" href={`/patient-account?lang=${props.locale}`}>{t.myAppointments}</a> : null}
       <p className="quiet atlas-booking-privacy">{t.privacy}</p>
 
       <style>{`

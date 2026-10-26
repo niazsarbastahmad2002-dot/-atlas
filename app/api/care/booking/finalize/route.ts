@@ -135,7 +135,24 @@ export async function POST(request: Request) {
     return response({ status: "failed" }, 500);
   }
 
-  if ((result.result === "created" || result.result === "duplicate") && result.appointment_id) {
+  if (result.result === "duplicate" && result.appointment_id) {
+    // The database has verified an already-saved, owned appointment. Its
+    // original private link must remain valid; the newly generated token was
+    // deliberately NOT stored for this exact idempotent retry.
+    // Only a valid patient-account session may enter the private account page.
+    const patientSession = await issuePatientAccountSession(admin, user.id);
+    if (!patientSession) {
+      return response({ status: "uncertain" }, 503);
+    }
+    const bookingResponse = response({
+      status: "duplicate",
+      accountPath: `/patient-account?lang=${encodeURIComponent(reminderLanguage)}`,
+    }, 200);
+    setPatientAccountCookie(bookingResponse, patientSession.token, patientSession.expiresAt);
+    return bookingResponse;
+  }
+
+  if (result.result === "created" && result.appointment_id) {
     const lang = reminderLanguages.has(reminderLanguage) ? reminderLanguage : "ku";
     const bookingResponse = response({
       status: "ok",
