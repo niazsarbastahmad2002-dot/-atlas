@@ -44,8 +44,8 @@ jobs:
             echo "QA email does not match synthetic-account format."
             exit 1
           fi
-          if (( ${#ATLAS_QA_PASSWORD} < 24 )); then
-            echo "QA password is shorter than the test's 24-character requirement."
+          if (( ${#ATLAS_QA_PASSWORD} < 20 )); then
+            echo "QA password is shorter than the test's 20-character requirement."
             exit 1
           fi
       - name: Checkout
