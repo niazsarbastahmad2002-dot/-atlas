@@ -440,7 +440,7 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
                   <span>{t.preferredLanguage}</span>
                   <select
                     name="preferred_language"
-                    defaultValue={isUiLocale(session.preferred_language) ? session.preferred_language : locale}
+                    defaultValue={session.display_name && isUiLocale(session.preferred_language) ? session.preferred_language : locale}
                   >
                     {languageOptions.map((option) => (
                       <option key={option.locale} value={option.locale}>{option.label}</option>
