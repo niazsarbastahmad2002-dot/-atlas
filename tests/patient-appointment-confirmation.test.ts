@@ -10,11 +10,18 @@ const confirmation = source("app/patient/[token]/booking-confirmation.tsx");
 const finalizer = source("app/api/care/booking/finalize/route.ts");
 
 test("only a successful authorized finalization navigates to the confirmation view", () => {
-  assert.match(bookingForm, /bookingResponse\.ok && booking\?\.status === "ok"/);
+  assert.match(bookingForm, /interpretBookingResponse\(bookingResponse\.status, booking\)/);
+  assert.match(bookingForm, /outcome === "saved"/);
   assert.match(bookingForm, /destination\.origin === window\.location\.origin/);
   assert.ok(bookingForm.includes("destination.pathname"));
   assert.match(bookingForm, /destination\.searchParams\.set\("view", "confirmation"\)/);
   assert.match(bookingForm, /window\.location\.replace\(/);
+  assert.match(bookingForm, /bookingInFlight\.current/);
+  assert.match(bookingForm, /bookingRetryMatches\(firstBookingPayload\.current, payload\)/);
+  assert.match(bookingForm, /firstBookingPayload\.current = payload/);
+  assert.match(bookingForm, /idempotency_mismatch/);
+  assert.match(bookingForm, /setNeedsAppointmentReview\(true\)/);
+  assert.match(bookingForm, /href=\{`\/patient-account\?lang=\$\{props\.locale\}`\}/);
   assert.match(finalizer, /admin\.auth\.getUser\(token\)/);
   assert.match(finalizer, /finalize_verified_public_booking_service/);
   assert.match(finalizer, /result\.result === "created" \|\| result\.result === "duplicate"/);
