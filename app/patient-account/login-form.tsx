@@ -216,7 +216,7 @@ export function PatientAccountLoginForm({
       setToken("");
       setStep("code");
     } catch {
-      setError(t.failed);
+      setError(registration ? t.registerFailed : t.failed);
     } finally {
       setBusy(false);
     }
@@ -258,7 +258,7 @@ export function PatientAccountLoginForm({
 
       window.location.replace(`/patient-account?lang=${locale}`);
     } catch {
-      setError(t.failed);
+      setError(registration ? t.registerFailed : t.failed);
     } finally {
       setBusy(false);
     }
