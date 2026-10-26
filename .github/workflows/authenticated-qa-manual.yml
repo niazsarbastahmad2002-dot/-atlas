@@ -1,6 +1,11 @@
 name: Atlas Authenticated QA (Manual)
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - qa/authenticated-readonly-clinic-20261024
+    paths:
+      - .github/workflows/authenticated-qa-manual.yml
 permissions:
   contents: read
 concurrency:
