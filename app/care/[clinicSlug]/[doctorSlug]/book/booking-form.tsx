@@ -6,6 +6,7 @@ import { OtpCodeField } from "@/app/components/otp-code-field";
 import { normalizeAuthPhone, normalizeOtpToken, maskPhone } from "@/lib/phone-auth";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { createEphemeralVerificationClient } from "@/lib/supabase/verification-client";
+import { bookingRetryMatches, interpretBookingResponse } from "@/lib/patient-booking-outcome";
 
 type Delivery = "sms" | "whatsapp";
 
@@ -364,7 +365,7 @@ export function PatientBookingForm(props: BookingFormProps) {
     });
     // An idempotency key may only be retried with precisely the same payload.
     // A previous response could have been lost even if the server saved a booking.
-    if (firstBookingPayload.current !== null && firstBookingPayload.current !== payload) {
+    if (!bookingRetryMatches(firstBookingPayload.current, payload)) {
       setError(t.changedAfterAttempt);
       setNeedsAppointmentReview(true);
       return;
@@ -385,7 +386,8 @@ export function PatientBookingForm(props: BookingFormProps) {
       });
       const booking = await bookingResponse.json().catch(() => null) as { status?: string; patientPath?: string } | null;
 
-      if (bookingResponse.ok && booking?.status === "ok" && typeof booking.patientPath === "string") {
+      const outcome = interpretBookingResponse(bookingResponse.status, booking);
+      if (outcome === "saved" && typeof booking?.patientPath === "string") {
         // Only a successful authorized finalization may enter the confirmation view.
         // Keep the destination on this origin and restricted to private patient links.
         const destination = new URL(booking.patientPath, window.location.origin);
@@ -399,18 +401,18 @@ export function PatientBookingForm(props: BookingFormProps) {
         }
       }
 
-      if (booking?.status === "rate_limited") setError(t.rateLimited);
-      else if (booking?.status === "slot_taken") setError(t.slotTaken);
-      else if (booking?.status === "unavailable") setError(t.unavailable);
-      else if (booking?.status === "idempotency_mismatch") {
+      if (outcome === "rate_limited") setError(t.rateLimited);
+      else if (outcome === "slot_taken") setError(t.slotTaken);
+      else if (outcome === "unavailable") setError(t.unavailable);
+      else if (outcome === "idempotency_mismatch") {
         setError(t.changedAfterAttempt);
         setNeedsAppointmentReview(true);
-      } else if (booking?.status === "verification_required") {
+      } else if (outcome === "verification_required") {
         setAccessToken("");
         setToken("");
         setStep("details");
         setError(t.incorrectCode);
-      } else if (!booking || bookingResponse.status >= 500 || booking?.status === "ok") {
+      } else if (outcome === "uncertain" || outcome === "saved") {
         // Unknown/lost responses must not be described as a failed booking.
         setError(t.uncertain);
         setNeedsAppointmentReview(true);
