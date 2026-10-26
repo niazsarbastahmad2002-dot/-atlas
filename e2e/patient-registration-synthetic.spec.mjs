@@ -28,7 +28,11 @@ async function isolateTraffic(page) {
         !(request.method() === "POST" && url.port === "3101" &&
           url.pathname === "/patient-account/api/session")) {
       // Block telemetry and any unexpected browser-side write.
-      if (url.pathname !== "/api/analytics") violations.push("Unexpected write: " + url.pathname);
+      // Local Next.js development diagnostics are not Atlas data mutations.
+      // Both diagnostics and analytics are still blocked rather than sent.
+      if (url.pathname !== "/api/analytics" && url.pathname !== "/__nextjs_original-stack-frames") {
+        violations.push("Unexpected write: " + url.pathname);
+      }
       await route.abort("blockedbyclient");
       return;
     }
@@ -90,7 +94,7 @@ test("invalid phone, expired code and server failure recover without real sends"
   await page.goto("/patient-register?lang=en");
   await page.locator('.patient-account-login-form input[type="tel"]').fill("12345");
   await page.locator('.patient-account-login-form button[type="submit"]').click();
-  await expect(page.getByRole("alert")).toContainText("Enter a valid Iraqi mobile number");
+  await expect(page.locator(".notice-error[role=\"alert\"]")).toContainText("Enter a valid Iraqi mobile number");
   expect(otpRequests).toHaveLength(0);
   await submitPhone(page);
   expect(otpRequests).toHaveLength(1);
@@ -98,12 +102,12 @@ test("invalid phone, expired code and server failure recover without real sends"
   expect(otpRequests[0].create_user).toBe(true);
   await page.locator("#patient-account-otp").fill("000000");
   await page.locator('.patient-account-login-form button[type="submit"]').click();
-  await expect(page.getByRole("alert")).toContainText("incorrect or expired");
+  await expect(page.locator(".notice-error[role=\"alert\"]")).toContainText("incorrect or expired");
   expect(sessionCalls).toBe(0);
 
   await page.locator("#patient-account-otp").fill("123456");
   await page.locator('.patient-account-login-form button[type="submit"]').click();
-  await expect(page.getByRole("alert")).toContainText("could not finish creating your patient account");
+  await expect(page.locator(".notice-error[role=\"alert\"]")).toContainText("could not finish creating your patient account");
   expect(sessionCalls).toBe(1);
   await expect(page).toHaveURL(/\/patient-register\?lang=en$/);
 
