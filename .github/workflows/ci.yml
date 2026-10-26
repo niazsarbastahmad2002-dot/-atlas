@@ -78,7 +78,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Isolated two-clinic PostgreSQL authorization tests
-        run: >
-          docker exec -i ${{ job.services.postgres.id }}
-          psql -U postgres -d atlas_acl_synthetic -v ON_ERROR_STOP=1
-          < tests/security-doctor-workflow-isolation.sql
+        run: |
+          python3 -c 'from pathlib import Path; f = Path("tests/security-doctor-workflow-isolation.sql").read_text(); marker = r"\i docs/security/doctor-workflow-grants-proposal-20261026.sql"; assert f.count(marker) == 1; print(f.replace(marker, Path("docs/security/doctor-workflow-grants-proposal-20261026.sql").read_text()))' \
+            | docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d atlas_acl_synthetic -v ON_ERROR_STOP=1
