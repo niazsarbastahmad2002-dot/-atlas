@@ -37,6 +37,17 @@ jobs:
             echo "Isolated QA tenant and session missing; refusing production access."
             exit 1
           fi
+      - name: Validate QA secret shape without printing values
+        shell: bash
+        run: |
+          if [[ ! "$ATLAS_QA_EMAIL" =~ ^atlas-qa-[a-z0-9-]+@example\\.invalid$ ]]; then
+            echo "QA email does not match synthetic-account format."
+            exit 1
+          fi
+          if (( ${#ATLAS_QA_PASSWORD} < 24 )); then
+            echo "QA password is shorter than the test's 24-character requirement."
+            exit 1
+          fi
       - name: Checkout
         uses: actions/checkout@v4
       - name: Use Node 24
