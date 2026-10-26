@@ -24,7 +24,12 @@ test("only a successful authorized finalization navigates to the confirmation vi
   assert.match(bookingForm, /href=\{`\/patient-account\?lang=\$\{props\.locale\}`\}/);
   assert.match(finalizer, /admin\.auth\.getUser\(token\)/);
   assert.match(finalizer, /finalize_verified_public_booking_service/);
-  assert.match(finalizer, /result\.result === "created" \|\| result\.result === "duplicate"/);
+  assert.match(finalizer, /result\.result === "created" && result\.appointment_id/);
+  assert.match(finalizer, /result\.result === "duplicate" && result\.appointment_id/);
+  assert.match(finalizer, /accountPath: \`\\/patient-account\\?lang=/);
+  assert.match(finalizer, /if \(!patientSession\) \{[\\s\\S]*return response\(\{ status: "uncertain" \}, 503\)/);
+  assert.match(bookingForm, /outcome === "existing" && typeof booking\?\.accountPath === "string"/);
+  assert.match(bookingForm, /destination\.pathname === "\\/patient-account"/);
   assert.match(finalizer, /patientPath: `\/patient\/\$\{patientToken\}/);
 });
 
