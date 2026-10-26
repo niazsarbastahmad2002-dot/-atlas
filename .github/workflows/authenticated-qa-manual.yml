@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   clinic-readonly:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/qa/authenticated-readonly-clinic-20261024'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
