@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import type { UiLocale } from "@/lib/i18n/ui";
 import { applyClinicTerminology } from "@/lib/i18n/terminology";
 
@@ -46,8 +47,14 @@ function normalizeSubtree(root: Node, locale: UiLocale) {
 }
 
 export function KurdishSecretaryTerminology({ locale }: { locale: UiLocale }) {
+  const pathname = usePathname();
+
   useEffect(() => {
     if (locale !== "ku" && locale !== "bd") return;
+    // The authenticated clinic workspace renders its localized text through React.
+    // Mutating its DOM here races streamed hydration, causing Kurdish-only #418.
+    // Keep legacy terminology normalization on non-workspace pages unchanged.
+    if (pathname.startsWith("/dashboard")) return;
 
     normalizeSubtree(document.body, locale);
 
@@ -74,7 +81,7 @@ export function KurdishSecretaryTerminology({ locale }: { locale: UiLocale }) {
     });
 
     return () => observer.disconnect();
-  }, [locale]);
+  }, [locale, pathname]);
 
   return null;
 }
