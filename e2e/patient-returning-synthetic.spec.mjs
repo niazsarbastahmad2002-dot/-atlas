@@ -70,7 +70,7 @@ test("existing patient signs in, but new registration stays closed in all four l
   }
   expect(otpPayloads).toHaveLength(4);
   expect(sessions).toBe(4);
-  const response = await request.get("http://127.0.0.1:54321/__qa/state");
+  const response = await request.get("http://127.0.0.1:54321/__qa/state", { maxRetries: 2 });
   expect(response.ok()).toBeTruthy();
   const state = await response.json();
   expect(state.syntheticPatientCount).toBe(1);
@@ -97,7 +97,7 @@ test("unknown number cannot create a patient account through returning sign-in",
   await expect(page.locator("#patient-account-otp")).toHaveCount(0);
   expect(otpPayloads).toHaveLength(1);
   expect(otpPayloads[0].create_user).toBe(false);
-  const response = await request.get("http://127.0.0.1:54321/__qa/state");
+  const response = await request.get("http://127.0.0.1:54321/__qa/state", { maxRetries: 2 });
   const state = await response.json();
   expect(state.syntheticPatientCount).toBe(1);
   expect(state.syntheticPatientCreatedCount).toBe(0);
