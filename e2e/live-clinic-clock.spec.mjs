@@ -34,6 +34,13 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
       await new Promise(resolve => setTimeout(resolve, 1500));
       await route.continue();
     });
+    // beforeAll creates this route after the Next dev server has started.
+    // Wait for its filesystem watcher to register the fixture before navigating.
+    // A first-request 404 is a test-harness race, not a clinic clock failure.
+    await expect.poll(async () => {
+      const probe = await page.request.get(`/e2e-clock-${worker.workerIndex}?locale=${locale}`);
+      return probe.status();
+    }, { message: "Local clock fixture route becomes ready", timeout: 20_000, intervals: [250, 500, 1000] }).toBe(200);
     const response = await page.goto(`/e2e-clock-${worker.workerIndex}?locale=${locale}`, { waitUntil: "commit" });
     expect(response?.status()).toBe(200);
     const html = await response.text();
