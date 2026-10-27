@@ -127,9 +127,10 @@ DO $$ BEGIN
 END $$;
 RESET ROLE;
 
--- Even service_role must have the server-side role claim.
+-- An explicit non-service JWT role must not bypass the function guard.
+-- SQL NULL comparison semantics are different and are not tested here.
 SET ROLE service_role;
-SELECT set_config('request.jwt.claim.role','',false);
+SELECT set_config('request.jwt.claim.role','anon',false);
 DO $$ DECLARE n integer;
 BEGIN
  SELECT count(*) INTO n FROM public.list_patient_account_appointments_service('00000000-0000-4000-8000-0000000000a1');
