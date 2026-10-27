@@ -120,6 +120,11 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
       return route.abort("blockedbyclient");
     });
     page.on("pageerror", (error) => errors.push(error.message));
+    if (diagnostic) page.on("console", (message) => {
+      if (message.type() === "error" && /hydrat|didn't match|did not match/i.test(message.text())) {
+        errors.push(message.text());
+      }
+    });
     page.on("response", (res) => {
       if (res.status() >= 500 && new URL(res.url()).origin === new URL(base).origin) {
         serverErrors.push(res.status() + " " + new URL(res.url()).pathname);
@@ -152,6 +157,9 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
         await expect(page.locator("form")).toHaveCount(0);
         await page.waitForLoadState("networkidle");
       }
+      // Keep every write blocked, including the dev overlay's stack resolver.
+      // Report the underlying hydration diff before those diagnostic POSTs.
+      if (diagnostic && errors.length) throw new Error("Local hydration diagnostics:\n" + errors.join("\n\n"));
       expect(writes, "No production mutations").toEqual([]);
       expect(serverErrors, "No server errors").toEqual([]);
       expect(errors, "No browser errors").toEqual([]);
