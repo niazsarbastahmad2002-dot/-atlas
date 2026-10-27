@@ -65,7 +65,17 @@ test("existing patient signs in, but new registration stays closed in all four l
     expect(otpPayloads.at(-1)?.phone).toBe("+9647500000000");
     expect(otpPayloads.at(-1)?.create_user).toBe(false);
     await page.locator("#patient-account-otp").fill("123456");
+    // The destination URL is already /patient-account on returning-user flows.
+    // Waiting for the actual full-page reload (not just a matching URL)
+    // prevents WebKit from racing the next locale against session creation.
+    const redirected = page.waitForEvent("framenavigated", {
+      predicate: (frame) => frame === page.mainFrame()
+        && new URL(frame.url()).pathname === "/patient-account"
+        && new URL(frame.url()).searchParams.get("lang") === id,
+    });
     await page.locator('.patient-account-login-form button[type="submit"]').click();
+    await redirected;
+    await page.waitForLoadState("load");
     await expect(page).toHaveURL(new RegExp("/patient-account\\?lang=" + id + "$"));
   }
   expect(otpPayloads).toHaveLength(4);
