@@ -50,7 +50,7 @@ test("existing patient signs in, but new registration stays closed in all four l
     expect(route.request().headers().authorization).toMatch(/^Bearer /);
     await route.fulfill({ status: 200, contentType: "application/json", body: '{"status":"ok"}' });
   });
-  for (const { id, dir } of locales) {
+  for (const [index, { id, dir }] of locales.entries()) {
     await page.goto("/patient-register?lang=" + id);
     await expect(page.locator("main.patient-register-page")).toHaveAttribute("dir", dir);
     await expect(page.locator(".patient-register-unavailable")).toBeVisible();
@@ -65,8 +65,23 @@ test("existing patient signs in, but new registration stays closed in all four l
     expect(otpPayloads.at(-1)?.phone).toBe("+9647500000000");
     expect(otpPayloads.at(-1)?.create_user).toBe(false);
     await page.locator("#patient-account-otp").fill("123456");
+    // A URL assertion alone can succeed before verify finishes: this form
+    // already lives at /patient-account?lang=<locale>. Wait for its actual
+    // server session POST AND subsequent full-document replacement.
+    const sessionResponse = page.waitForResponse((response) =>
+      response.request().method() === "POST"
+      && new URL(response.url()).pathname === "/patient-account/api/session",
+    );
+    const navigation = page.waitForEvent("framenavigated", {
+      predicate: (frame) => frame === page.mainFrame()
+        && new URL(frame.url()).pathname === "/patient-account"
+        && new URL(frame.url()).searchParams.get("lang") === id,
+    });
     await page.locator('.patient-account-login-form button[type="submit"]').click();
+    expect((await sessionResponse).status()).toBe(200);
+    await navigation;
     await expect(page).toHaveURL(new RegExp("/patient-account\\?lang=" + id + "$"));
+    await expect.poll(() => sessions).toBe(index + 1);
   }
   expect(otpPayloads).toHaveLength(4);
   expect(sessions).toBe(4);
