@@ -68,6 +68,17 @@ jobs:
         run: npm ci
       - name: Install pinned Playwright
         run: npm install --no-save --package-lock=false @playwright/test@1.62.1
+      # Local-only diagnostics run reviewed application source from pinned SHA
+      # without pushing app changes to this protected QA-only branch.
+      - name: Load reviewed hydration fixes into local diagnostic worktree
+        if: inputs.diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin 6ef75a3443aa5b13cff82e2a56a12c1fc8278f82
+          git fetch --no-tags origin a6e62670989ece77aac3fc985c151e1455187eaf
+          git show 6ef75a3443aa5b13cff82e2a56a12c1fc8278f82:app/dashboard/dashboard-client-polish.tsx > app/dashboard/dashboard-client-polish.tsx
+          git show a6e62670989ece77aac3fc985c151e1455187eaf:app/components/kurdish-secretary-terminology.tsx > app/components/kurdish-secretary-terminology.tsx
       - name: Start isolated local debug server
         if: inputs.diagnostics
         env:
