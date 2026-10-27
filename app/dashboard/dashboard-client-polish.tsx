@@ -336,6 +336,12 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       document.querySelectorAll<HTMLInputElement>('.app-shell input[type="tel"]').forEach(preparePhoneInput);
       document.querySelectorAll<HTMLFormElement>(".app-shell form.appointment-form").forEach(prepareAppointmentForm);
       if (locale === "en") return;
+      // The schedule and staff-access screens already render their translated
+      // copy on the server. Rewriting their React-owned text nodes from this
+      // parent layout effect can race hydration of streamed children, causing
+      // React #418 (especially in Sorani, Badini and Arabic).
+      // Keep non-text phone formatting/fast-save behavior above unchanged.
+      if (pathname === "/dashboard" || pathname === "/dashboard/staff") return;
       const shell = document.querySelector(".app-shell");
       if (!shell) return;
       const walker = document.createTreeWalker(shell, NodeFilter.SHOW_TEXT);
