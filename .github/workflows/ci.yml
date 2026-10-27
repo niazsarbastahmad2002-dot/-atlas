@@ -53,10 +53,10 @@ jobs:
       - name: Returning patient with registration OFF (local mock only)
         run: npx playwright test --config=playwright.patient-returning-qa.config.mjs
 
-      - name: Live public Atlas browser journeys (read-only Chromium)
+      - name: Live public Atlas browser journeys (read-only desktop/Android Chromium)
         env:
           ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
-        run: npx playwright test --config=playwright.production.config.mjs --project=desktop-chromium --grep 'live public|all four production|production version|signed-out clinic'
+        run: npx playwright test --config=playwright.production.config.mjs --project=desktop-chromium --project=galaxy-chromium --grep 'live public|all four production|production version|signed-out clinic'
 
       - name: Live public Atlas browser journeys (read-only WebKit iPhone/iPad)
         env:
