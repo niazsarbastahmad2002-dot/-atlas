@@ -47,6 +47,9 @@ jobs:
       - name: Browser E2E smoke tests
         run: npx playwright test
 
+      - name: Synthetic patient registration browser QA (local mock only)
+        run: npx playwright test --config=playwright.patient-registration-qa.config.mjs
+
       - name: Live public Atlas browser journeys (read-only Chromium)
         env:
           ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
