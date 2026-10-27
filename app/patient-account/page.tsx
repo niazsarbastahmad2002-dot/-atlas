@@ -342,10 +342,9 @@ export default async function PatientAccountPage({ searchParams }: PatientAccoun
     readiness?.reachable
     && readiness.supabasePhoneEnabled,
   );
-  const allowSignup = Boolean(
-    readiness?.openPhoneSignupEnabled
-    && !readiness.signupDisabled,
-  );
+  // The account login must not create a new Auth user while standalone
+  // patient registration is default-off, even if generic phone signup is on.
+  const allowSignup = registrationReady;
 
   const notice = query.notice === "session_expired"
     ? t.sessionExpired

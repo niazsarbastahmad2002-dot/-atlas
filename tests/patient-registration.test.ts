@@ -60,6 +60,10 @@ test("registration stays multilingual, RTL-ready, accessible, and unindexed", ()
   assert.match(page, /robots: \{ index: false, follow: false \}/);
   assert.match(portal, /const registrationReady = readiness \? canRegisterPatient\(readiness\) : false/);
   assert.match(portal, /registrationReady \? \(/);
+  // Login's shouldCreateUser must share the registration rollout gate.
+  // A generic provider-level phone signup flag alone is insufficient.
+  assert.match(portal, /const allowSignup = registrationReady;/);
+  assert.doesNotMatch(portal, /const allowSignup = Boolean\(/);
   // The session RPC falls back to Sorani without a saved patient profile.
   // A new patient must see the language used during registration, while a
   // patient with a saved profile keeps that explicit existing preference.
