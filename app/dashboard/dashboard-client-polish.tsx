@@ -205,7 +205,9 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       if (preparedInputs.has(input)) return;
       preparedInputs.add(input);
       let deletedFormattingSeparator = false;
+      let activated = false;
       const rememberBackwardDelete = (event: InputEvent) => {
+        activate();
         const cursor = input.selectionStart;
         deletedFormattingSeparator = event.inputType === "deleteContentBackward"
           && cursor !== null
@@ -213,6 +215,7 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
           && /\D/.test(toAsciiDigits(input.value[cursor - 1] ?? ""));
       };
       const update = () => {
+        if (!activated) { activate(); return; }
         const selectionStart = input.selectionStart;
         const trailingDigits = selectionStart === null
           ? 0
@@ -235,7 +238,6 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
       };
       // Descendant markup may still be hydrating when this layout effect runs.
       // Defer all attribute and value edits until the actual user interaction.
-      let activated = false;
       const activate = () => {
         if (activated) return;
         activated = true;
@@ -245,21 +247,13 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         input.placeholder = localizeDigits("0750 000 0000", locale);
         update();
       };
-      const onBeforeInput = (event: InputEvent) => {
-        activate();
-        rememberBackwardDelete(event);
-      };
-      const onInput = () => {
-        activate();
-        update();
-      };
       input.addEventListener("focus", activate);
-      input.addEventListener("beforeinput", onBeforeInput);
-      input.addEventListener("input", onInput);
+      input.addEventListener("beforeinput", rememberBackwardDelete);
+      input.addEventListener("input", update);
       listenerCleanups.set(input, () => {
         input.removeEventListener("focus", activate);
-        input.removeEventListener("beforeinput", onBeforeInput);
-        input.removeEventListener("input", onInput);
+        input.removeEventListener("beforeinput", rememberBackwardDelete);
+        input.removeEventListener("input", update);
       });
     };
     const prepareAppointmentForm = (form: HTMLFormElement) => {
