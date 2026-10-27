@@ -204,10 +204,6 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
     const preparePhoneInput = (input: HTMLInputElement) => {
       if (preparedInputs.has(input)) return;
       preparedInputs.add(input);
-      input.removeAttribute("pattern");
-      input.dir = "ltr";
-      input.style.textAlign = locale === "en" ? "left" : "right";
-      input.placeholder = localizeDigits("0750 000 0000", locale);
       let deletedFormattingSeparator = false;
       const rememberBackwardDelete = (event: InputEvent) => {
         const cursor = input.selectionStart;
@@ -237,12 +233,33 @@ export function DashboardClientPolish({ locale }: { locale: UiLocale }) {
         deletedFormattingSeparator = false;
         window.requestAnimationFrame(() => { try { input.setSelectionRange(cursor, cursor); } catch {} });
       };
-      update();
-      input.addEventListener("beforeinput", rememberBackwardDelete);
-      input.addEventListener("input", update);
+      // Descendant markup may still be hydrating when this layout effect runs.
+      // Defer all attribute and value edits until the actual user interaction.
+      let activated = false;
+      const activate = () => {
+        if (activated) return;
+        activated = true;
+        input.removeAttribute("pattern");
+        input.dir = "ltr";
+        input.style.textAlign = locale === "en" ? "left" : "right";
+        input.placeholder = localizeDigits("0750 000 0000", locale);
+        update();
+      };
+      const onBeforeInput = (event: InputEvent) => {
+        activate();
+        rememberBackwardDelete(event);
+      };
+      const onInput = () => {
+        activate();
+        update();
+      };
+      input.addEventListener("focus", activate);
+      input.addEventListener("beforeinput", onBeforeInput);
+      input.addEventListener("input", onInput);
       listenerCleanups.set(input, () => {
-        input.removeEventListener("beforeinput", rememberBackwardDelete);
-        input.removeEventListener("input", update);
+        input.removeEventListener("focus", activate);
+        input.removeEventListener("beforeinput", onBeforeInput);
+        input.removeEventListener("input", onInput);
       });
     };
     const prepareAppointmentForm = (form: HTMLFormElement) => {
