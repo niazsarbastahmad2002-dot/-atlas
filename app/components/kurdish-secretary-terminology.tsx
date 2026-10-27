@@ -48,12 +48,13 @@ function normalizeSubtree(root: Node, locale: UiLocale) {
 
 export function KurdishSecretaryTerminology({ locale }: { locale: UiLocale }) {
   const pathname = usePathname();
+
   useEffect(() => {
     if (locale !== "ku" && locale !== "bd") return;
-    // React already owns the localized schedule and staff text. Changing it
-    // before streamed descendants hydrate causes text mismatch error #418.
-    // Preserve legacy terminology normalization on the other pages.
-    if (pathname === "/dashboard" || pathname === "/dashboard/staff") return;
+    // The authenticated clinic workspace renders its localized text through React.
+    // Mutating its DOM here races streamed hydration, causing Kurdish-only #418.
+    // Keep legacy terminology normalization on non-workspace pages unchanged.
+    if (pathname.startsWith("/dashboard")) return;
 
     normalizeSubtree(document.body, locale);
 
