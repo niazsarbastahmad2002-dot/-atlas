@@ -82,13 +82,13 @@ test("existing verified patients can sign in even when new phone signup is close
   const login = source("app/patient-account/login-form.tsx");
 
   const signInReady = page.match(/const signInReady = Boolean\(([\s\S]*?)\);/)?.[1] ?? "";
-  const allowSignup = page.match(/const allowSignup = Boolean\(([\s\S]*?)\);/)?.[1] ?? "";
+  const allowSignup = page.match(/const allowSignup = registrationReady;/)?.[0] ?? "";
 
   assert.match(signInReady, /readiness\?\.reachable/);
   assert.match(signInReady, /readiness\.supabasePhoneEnabled/);
   assert.doesNotMatch(signInReady, /openPhoneSignupEnabled|signupDisabled/);
-  assert.match(allowSignup, /readiness\?\.openPhoneSignupEnabled/);
-  assert.match(allowSignup, /!readiness\.signupDisabled/);
+  assert.match(page, /const registrationReady = readiness \? canRegisterPatient\(readiness\) : false/);
+  assert.match(allowSignup, /const allowSignup = registrationReady;/);
   assert.match(login, /shouldCreateUser: allowSignup/);
 });
 
