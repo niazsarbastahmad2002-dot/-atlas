@@ -9,7 +9,7 @@ const source = readFileSync(
 test("private Doctor navigation never warms protected routes without an action", () => {
   assert.doesNotMatch(source, /router\.prefetch\s*\(/);
   assert.doesNotMatch(source, /warmCoreRoutes|onPointerDown=\{warm\(|onMouseEnter=\{warm\(/);
-  const links = [...source.matchAll(/<Link\b[^>]*>/gs)].map((match) => match[0]);
+  const links = [...source.matchAll(/<Link\b[^>]*>/g)].map((match) => match[0]);
   assert.ok(links.length >= 7, "doctor topbar and phone navigation still render");
   for (const link of links) {
     assert.match(link, /prefetch=\{false\}/, "do not prefetch private pages in the background");
