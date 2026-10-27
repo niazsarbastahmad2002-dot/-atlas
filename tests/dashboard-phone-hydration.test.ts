@@ -16,6 +16,8 @@ test("phone input mutations wait for user interaction instead of running during 
   assert.ok(activate >= 0 && remove > activate && placeholder > activate && focus > placeholder);
   assert.ok(!part.slice(0, activate).includes('input.removeAttribute("pattern")'));
   assert.ok(!part.slice(0, activate).includes("input.placeholder ="));
-  assert.ok(part.includes('input.addEventListener("input", onInput)'));
+  assert.ok(part.includes('input.addEventListener("input", update)'));
   assert.ok(part.includes('input.removeEventListener("focus", activate)'));
+  assert.ok(part.includes('input.addEventListener("beforeinput", rememberBackwardDelete)'));
+  assert.ok(part.includes('input.removeEventListener("input", update)'));
 });
