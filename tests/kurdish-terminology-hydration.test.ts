@@ -7,7 +7,7 @@ const source = readFileSync(new URL("../app/components/kurdish-secretary-termino
 
 test("global terminology never rewrites server-localized schedule or staff before hydration", () => {
   const effect = source.slice(source.indexOf("export function KurdishSecretaryTerminology"));
-  const pathCheck = effect.indexOf('if (pathname === "/dashboard" || pathname === "/dashboard/staff") return;');
+  const pathCheck = effect.indexOf('if (pathname.startsWith("/dashboard")) return;');
   const rewrite = effect.indexOf("normalizeSubtree(document.body, locale)");
   const observe = effect.indexOf("new MutationObserver(");
   assert.ok(pathCheck >= 0 && rewrite > pathCheck && observe > pathCheck);
