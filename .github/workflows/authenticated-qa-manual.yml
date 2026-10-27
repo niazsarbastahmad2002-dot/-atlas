@@ -3,7 +3,11 @@ on:
   workflow_dispatch:
     inputs:
       diagnostics:
-        description: Run one Sorani receptionist case on an isolated local debug server
+        description: Run read-only synthetic QA on an isolated local server
+        type: boolean
+        default: false
+      full_local_matrix:
+        description: With diagnostics enabled, exercise every synthetic role, locale and browser
         type: boolean
         default: false
 permissions:
@@ -23,6 +27,7 @@ jobs:
     env:
       ATLAS_PRODUCTION_URL: ${{ inputs.diagnostics && 'http://127.0.0.1:3100' || 'https://atlasclinic.dpdns.org' }}
       ATLAS_QA_LOCAL_DIAGNOSTICS: ${{ inputs.diagnostics && 'true' || 'false' }}
+      ATLAS_QA_FULL_LOCAL_MATRIX: ${{ inputs.diagnostics && inputs.full_local_matrix && 'true' || 'false' }}
       ATLAS_QA_CLINIC_ID: ${{ vars.ATLAS_QA_CLINIC_ID }}
       ATLAS_QA_CLINIC_NAME: ${{ vars.ATLAS_QA_CLINIC_NAME }}
       ATLAS_QA_USER_ID: ${{ vars.ATLAS_QA_USER_ID }}
@@ -78,6 +83,8 @@ jobs:
           git fetch --no-tags origin 095bbef11afaf713dc857e94d3f02c4d3755c2b7
           git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/dashboard/dashboard-client-polish.tsx > app/dashboard/dashboard-client-polish.tsx
           git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/components/kurdish-secretary-terminology.tsx > app/components/kurdish-secretary-terminology.tsx
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/dashboard/app-navigation.tsx > app/dashboard/app-navigation.tsx
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/dashboard/live-clinic-clock.tsx > app/dashboard/live-clinic-clock.tsx
       - name: Start isolated local debug server
         if: inputs.diagnostics
         env:
@@ -94,7 +101,7 @@ jobs:
           exit 1
       - name: Test authenticated synthetic clinic without writes
         run: |
-          if [[ "$ATLAS_QA_LOCAL_DIAGNOSTICS" == "true" ]]; then
+          if [[ "$ATLAS_QA_LOCAL_DIAGNOSTICS" == "true" && "$ATLAS_QA_FULL_LOCAL_MATRIX" != "true" ]]; then
             npx playwright test --config=playwright.clinic-qa.config.mjs --project=qa-desktop-chromium --grep 'receptionist.*ku'
           else
             npx playwright test --config=playwright.clinic-qa.config.mjs
