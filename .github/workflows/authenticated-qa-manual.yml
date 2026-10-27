@@ -1,0 +1,109 @@
+name: Atlas Authenticated QA (Manual)
+on:
+  workflow_dispatch:
+    inputs:
+      diagnostics:
+        description: Run read-only synthetic QA on an isolated local server
+        type: boolean
+        default: false
+      full_local_matrix:
+        description: With diagnostics enabled, exercise every synthetic role, locale and browser
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: atlas-authenticated-qa
+  cancel-in-progress: false
+jobs:
+  clinic-readonly:
+    if: github.ref == 'refs/heads/qa/authenticated-readonly-clinic-20261024'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
+    timeout-minutes: 15
+    environment: atlas-qa
+    env:
+      ATLAS_PRODUCTION_URL: ${{ inputs.diagnostics && 'http://127.0.0.1:3100' || 'https://atlasclinic.dpdns.org' }}
+      ATLAS_QA_LOCAL_DIAGNOSTICS: ${{ inputs.diagnostics && 'true' || 'false' }}
+      ATLAS_QA_FULL_LOCAL_MATRIX: ${{ inputs.diagnostics && inputs.full_local_matrix && 'true' || 'false' }}
+      ATLAS_QA_CLINIC_ID: ${{ vars.ATLAS_QA_CLINIC_ID }}
+      ATLAS_QA_CLINIC_NAME: ${{ vars.ATLAS_QA_CLINIC_NAME }}
+      ATLAS_QA_USER_ID: ${{ vars.ATLAS_QA_USER_ID }}
+      ATLAS_QA_SUPABASE_URL: ${{ vars.ATLAS_QA_SUPABASE_URL }}
+      ATLAS_QA_PUBLISHABLE_KEY: ${{ vars.ATLAS_QA_PUBLISHABLE_KEY }}
+      ATLAS_QA_EMAIL: ${{ secrets.ATLAS_QA_EMAIL }}
+      ATLAS_QA_PASSWORD: ${{ secrets.ATLAS_QA_PASSWORD }}
+      ATLAS_QA_RECEPTIONIST_EMAIL: ${{ secrets.ATLAS_QA_RECEPTIONIST_EMAIL }}
+      ATLAS_QA_RECEPTIONIST_PASSWORD: ${{ secrets.ATLAS_QA_RECEPTIONIST_PASSWORD }}
+      ATLAS_QA_RECEPTIONIST_USER_ID: 888a8688-fbc6-42fc-aff8-43a59aa2a306
+      ATLAS_QA_RECEPTIONIST_DOCTOR_ID: ece41ca6-f473-4eb9-9629-0f5441656d9e
+    steps:
+      - name: Require isolated QA identity
+        shell: bash
+        run: |
+          if [[ -z "$ATLAS_QA_EMAIL" || -z "$ATLAS_QA_PASSWORD" || -z "$ATLAS_QA_USER_ID" || -z "$ATLAS_QA_CLINIC_ID" || "$ATLAS_QA_CLINIC_NAME" != Atlas\ QA* ]]; then
+            echo "Isolated QA tenant and session missing; refusing production access."
+            exit 1
+          fi
+      - name: Validate QA secret shape without printing values
+        shell: bash
+        run: |
+          if [[ ! "$ATLAS_QA_EMAIL" =~ ^atlas-qa-[a-z0-9-]+@example\.invalid$ ]]; then
+            echo "QA email does not match synthetic-account format."
+            exit 1
+          fi
+          if (( ${#ATLAS_QA_PASSWORD} < 20 )); then
+            echo "QA password is shorter than the test's 20-character requirement."
+            exit 1
+          fi
+          if [[ ! "$ATLAS_QA_RECEPTIONIST_EMAIL" =~ ^atlas-qa-receptionist-[a-z0-9-]+@example\.invalid$ ]] || (( ${#ATLAS_QA_RECEPTIONIST_PASSWORD} < 20 )); then
+            echo "Separate synthetic receptionist credentials are required."
+            exit 1
+          fi
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install pinned Playwright
+        run: npm install --no-save --package-lock=false @playwright/test@1.62.1
+      # Local-only diagnostics run reviewed application source from pinned SHA
+      # without pushing app changes to this protected QA-only branch.
+      - name: Load reviewed hydration fixes into local diagnostic worktree
+        if: inputs.diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin 095bbef11afaf713dc857e94d3f02c4d3755c2b7
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/dashboard/dashboard-client-polish.tsx > app/dashboard/dashboard-client-polish.tsx
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/components/kurdish-secretary-terminology.tsx > app/components/kurdish-secretary-terminology.tsx
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/dashboard/app-navigation.tsx > app/dashboard/app-navigation.tsx
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/dashboard/live-clinic-clock.tsx > app/dashboard/live-clinic-clock.tsx
+      - name: Start isolated local debug server
+        if: inputs.diagnostics
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.ATLAS_QA_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.ATLAS_QA_PUBLISHABLE_KEY }}
+          SITE_URL: http://127.0.0.1:3100
+        run: |
+          npm run dev -- --hostname 127.0.0.1 --port 3100 > /tmp/atlas-qa-local.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:3100/api/version > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo "Local QA server did not become ready."
+          exit 1
+      - name: Test authenticated synthetic clinic without writes
+        run: |
+          if [[ "$ATLAS_QA_LOCAL_DIAGNOSTICS" == "true" && "$ATLAS_QA_FULL_LOCAL_MATRIX" != "true" ]]; then
+            npx playwright test --config=playwright.clinic-qa.config.mjs --project=qa-desktop-chromium --grep 'receptionist.*ku'
+          else
+            npx playwright test --config=playwright.clinic-qa.config.mjs
+          fi
+        shell: bash
