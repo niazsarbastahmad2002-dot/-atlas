@@ -34,15 +34,16 @@ test("Atlas AI and navigation chrome use the selected interface language", () =>
 });
 
 
-test("core route prefetch pauses while Atlas is hidden and warms on return", () => {
+test("private Atlas Doctor routes are fetched only through deliberate navigation", () => {
   const navigation = source("app/dashboard/app-navigation.tsx");
 
-  assert.match(navigation, /document\.visibilityState !== "visible"/);
-  assert.match(navigation, /window\.clearInterval\(timer\)/);
-  assert.match(navigation, /timer = window\.setInterval\(warmCoreRoutes, 20_000\)/);
-  assert.match(navigation, /const syncVisibility = \(\) => \{[\s\S]*warmCoreRoutes\(\);[\s\S]*start\(\)/);
-  assert.match(navigation, /document\.addEventListener\("visibilitychange", syncVisibility\)/);
-  assert.match(navigation, /document\.removeEventListener\("visibilitychange", syncVisibility\)/);
+  // Live synthetic receptionist WebKit QA reported background RSC access-control
+  // errors from automatic Settings/AI warming. Normal navigation stays available.
+  assert.doesNotMatch(navigation, /router\.prefetch\(/);
+  assert.doesNotMatch(navigation, /warmCoreRoutes/);
+  assert.match(navigation, /router\.push\(href, \{ scroll: true \}\)/);
+  assert.match(navigation, /prefetch=\{false\}/);
+  assert.match(navigation, /flushSettingWrites\(\)/);
 });
 
 
