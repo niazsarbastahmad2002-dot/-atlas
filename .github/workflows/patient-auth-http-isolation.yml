@@ -1,0 +1,97 @@
+name: Atlas Local Patient Auth HTTP Isolation (No SMS)
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/patient-auth-http-isolation.yml"
+      - "tests/isolated-patient-auth/**"
+      - "supabase/migrations/20261004160000_patient_account_portal.sql"
+      - "app/patient-account/**"
+      - "lib/patient-account-session.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-auth-patient-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      # Local nonfunctional provider credentials only. NEVER pass account secrets.
+      SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN: "local-fixture-not-an-auth-token"
+      ATLAS_PATIENT_REGISTRATION_ENABLED: "false"
+      NEXT_PUBLIC_ATLAS_PHONE_SIGNUP_ENABLED: "false"
+      NEXT_PUBLIC_ATLAS_WHATSAPP_OTP_ENABLED: "false"
+      SITE_URL: "http://127.0.0.1:3106"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked Atlas dependencies
+        run: npm ci
+
+      - name: Start real Supabase locally with fixed, no-SMS test OTP
+        working-directory: tests/isolated-patient-auth
+        run: |
+          set -euo pipefail
+          npm exec --yes --package=supabase@2.121.0 -- supabase --version
+          npm exec --yes --package=supabase@2.121.0 -- supabase start --exclude realtime,storage,functions,studio,mail,analytics,pooler
+
+      - name: Configure localhost-only ephemeral credentials
+        working-directory: tests/isolated-patient-auth
+        run: |
+          set -euo pipefail
+          umask 077
+          npm exec --yes --package=supabase@2.121.0 -- supabase status --output env > "$RUNNER_TEMP/atlas-local-supabase.env"
+          set -a
+          source "$RUNNER_TEMP/atlas-local-supabase.env"
+          set +a
+          test "$API_URL" = "http://127.0.0.1:54321"
+          test -n "${ANON_KEY:-}"
+          test -n "${SERVICE_ROLE_KEY:-}"
+          [[ "${DB_URL:-}" == *"@127.0.0.1:54322/"* ]]
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          echo "::add-mask::$ANON_KEY"
+          {
+            printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$API_URL"
+            printf 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n' "$ANON_KEY"
+            printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "$SERVICE_ROLE_KEY"
+            printf 'ATLAS_LOCAL_DB_URL=%s\n' "$DB_URL"
+          } >> "$GITHUB_ENV"
+
+      - name: Apply minimal synthetic fixture and exact patient-account SQL
+        run: |
+          set -euo pipefail
+          test "$NEXT_PUBLIC_SUPABASE_URL" = "http://127.0.0.1:54321"
+          psql "$ATLAS_LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/isolated-patient-auth/schema.sql
+          psql "$ATLAS_LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261004160000_patient_account_portal.sql
+          psql "$ATLAS_LOCAL_DB_URL" -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
+
+      - name: Start actual Atlas app against local Auth and PostgREST
+        run: |
+          set -euo pipefail
+          npm run dev -- --hostname 127.0.0.1 --port 3106 > "$RUNNER_TEMP/atlas-next-local.log" 2>&1 &
+          for _ in $(seq 1 90); do
+            if curl --silent --fail "http://127.0.0.1:3106/patient-account?lang=en" >/dev/null; then
+              echo "Atlas local patient account HTTP is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Local patient app failed to start" >&2
+          exit 1
+
+      - name: Verify two real Auth OTP sessions and cross-clinic HTTP isolation
+        run: node tests/isolated-patient-auth/run-http.mjs
+
+      - name: Destroy ephemeral Supabase containers
+        if: always()
+        working-directory: tests/isolated-patient-auth
+        run: npm exec --yes --package=supabase@2.121.0 -- supabase stop --no-backup || true

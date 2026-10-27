@@ -1,0 +1,35 @@
+# Disposable CI-only Supabase. NEVER link or push this project to a hosted account.
+project_id = "atlas-patient-auth-http-ci"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3106"
+enable_signup = true
+
+[auth.sms]
+enable_signup = true
+max_frequency = "1s"
+
+# The provider is a deliberately invalid, disconnected stub.
+# No real Twilio account / tokens may ever be supplied to this local test.
+[auth.sms.twilio]
+enabled = true
+account_sid = "AC00000000000000000000000000000000"
+message_service_sid = "MG00000000000000000000000000000000"
+auth_token = "NOT_A_REAL_TOKEN_LOCAL_CI_ONLY"
+
+# Only these unassigned synthetic numbers can get a working OTP.
+# GoTrue will NOT send SMS for numbers in this table.
+[auth.sms.test_otp]
+"9647500000011" = "231451"
+"9647500000022" = "665432"
