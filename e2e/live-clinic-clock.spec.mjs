@@ -37,7 +37,12 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
     const response = await page.goto(`/e2e-clock-${worker.workerIndex}?locale=${locale}`, { waitUntil: "commit" });
     expect(response?.status()).toBe(200);
     const html = await response.text();
-    expect(html).toMatch(/class="[^"]*atlas-live-clock[^"]*"[^>]*aria-hidden="true"/);
+    // React/Next may serialize aria-hidden before class. Check the clock's
+    // own opening tag without assuming attribute order, while retaining the
+    // pre-hydration accessibility assertion and post-hydration error gate.
+    const clockStartTag = html.match(/<div\\b[^>]*class="[^"]*atlas-live-clock"[^>]*>/)?.[0];
+    expect(clockStartTag, "Server HTML must contain the clinic clock").toBeDefined();
+    expect(clockStartTag).toContain('aria-hidden="true"');
     const clock = page.locator(".atlas-live-clock");
     await expect(clock).not.toHaveAttribute("aria-hidden", "true");
     const seconds = page.locator(".atlas-live-clock-seconds");
