@@ -8,7 +8,9 @@ const siteOrigin = "http://127.0.0.1:3101";
 const allowedPhone = "+9647500000000"; // A dummy value; NEVER delivered to any provider.
 const otp = "123456"; // A dummy value accepted ONLY by this local test server.
 const userId = "11111111-1111-4111-8111-111111111111";
-const accounts = new Map();
+const existingOnly = process.env.ATLAS_SYNTHETIC_EXISTING_ONLY === "true";
+const accounts = new Map(existingOnly ? [[allowedPhone, userId]] : []);
+let syntheticPatientCreatedCount = 0;
 let otpRequests = 0;
 let successfulVerifications = 0;
 
@@ -67,6 +69,7 @@ createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/__qa/state") {
     return reply(res, 200, {
       syntheticPatientCount: accounts.size,
+      syntheticPatientCreatedCount,
       syntheticClinicMembershipCount: 0,
       syntheticAppointmentCount: 0,
       otpRequests,
@@ -77,12 +80,19 @@ createServer(async (req, res) => {
   if (req.method === "POST" && url.pathname === "/auth/v1/otp") {
     try {
       const payload = await parseBody(req);
-      if (payload.phone !== allowedPhone || payload.create_user !== true ||
+      if (payload.phone !== allowedPhone || typeof payload.create_user !== "boolean" ||
           (payload.channel && payload.channel !== "sms")) {
         return reply(res, 400, { code: "invalid_credentials", msg: "Synthetic QA phone/flow only" });
       }
-      // An already-seen phone keeps the same synthetic identity.
-      if (!accounts.has(allowedPhone)) accounts.set(allowedPhone, userId);
+      // Existing patients can request OTP with create_user=false; unknown
+      // patients cannot be silently enrolled through sign-in.
+      if (!accounts.has(allowedPhone)) {
+        if (payload.create_user !== true) {
+          return reply(res, 400, { code: "signup_disabled", msg: "Unknown synthetic patient" });
+        }
+        accounts.set(allowedPhone, userId);
+        syntheticPatientCreatedCount++;
+      }
       otpRequests++;
       return reply(res, 200, {});
     } catch {

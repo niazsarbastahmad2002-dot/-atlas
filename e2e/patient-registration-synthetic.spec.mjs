@@ -72,6 +72,7 @@ test("synthetic phone OTP verifies and preserves all four chosen languages", asy
   expect(result.ok()).toBeTruthy();
   const state = await result.json();
   expect(state.syntheticPatientCount).toBe(1); // Repeated phone never creates a second synthetic account.
+  expect(state.syntheticPatientCreatedCount).toBe(1);
   expect(state.syntheticClinicMembershipCount).toBe(0);
   expect(state.syntheticAppointmentCount).toBe(0);
   expect(state.successfulVerifications).toBeGreaterThanOrEqual(4);

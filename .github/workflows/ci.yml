@@ -50,6 +50,9 @@ jobs:
       - name: Synthetic patient registration browser QA (local mock only)
         run: npx playwright test --config=playwright.patient-registration-qa.config.mjs
 
+      - name: Returning patient with registration OFF (local mock only)
+        run: npx playwright test --config=playwright.patient-returning-qa.config.mjs
+
       - name: Live public Atlas browser journeys (read-only Chromium)
         env:
           ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org

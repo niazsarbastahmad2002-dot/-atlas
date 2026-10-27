@@ -5,7 +5,7 @@ const baseURL = "http://127.0.0.1:3100";
 export default defineConfig({
   testDir: "./e2e",
   // Production-only test suite must not run against the local test server.
-  testIgnore: ["live-public-journeys.spec.mjs", "patient-registration-synthetic.spec.mjs"],
+  testIgnore: ["live-public-journeys.spec.mjs", "patient-registration-synthetic.spec.mjs", "patient-returning-synthetic.spec.mjs"],
   timeout: 30_000,
   expect: { timeout: 8_000 },
   fullyParallel: false,
