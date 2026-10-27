@@ -10,6 +10,7 @@ import {
   type AppointmentStatus,
 } from "@/lib/appointments";
 import type { UiLocale } from "@/lib/i18n/ui";
+import { nextReceptionQuickAction } from "@/lib/reception-quick-action";
 import {
   archiveAppointmentInline,
   updateAppointmentStatusInline,
@@ -61,12 +62,16 @@ function actionFeedback(locale: UiLocale, reason: AppointmentMutationFailure) {
 
 const workflowCopy: Record<UiLocale, {
   status: string;
+  confirmArrival: string;
+  finishVisit: string;
+  updating: string;
   remove: string;
   removeQuestion: string;
   labels: Record<AppointmentStatus, string>;
 }> = {
   en: {
     status: "Patient status",
+    confirmArrival: "Confirm arrival", finishVisit: "Complete visit", updating: "Updating…",
     remove: "Remove",
     removeQuestion: "Remove this appointment from the schedule? Atlas will keep its history.",
     labels: {
@@ -79,6 +84,7 @@ const workflowCopy: Record<UiLocale, {
   },
   ku: {
     status: "دۆخی نەخۆش",
+    confirmArrival: "هاتن پشتڕاست بکە", finishVisit: "سەردان تەواو بکە", updating: "نوێ دەکرێتەوە…",
     remove: "لابردن",
     removeQuestion: "ئەم مەوعیدە لە خشتە لاببرێت؟ مێژووەکەی لە Atlas دەپارێزرێت.",
     labels: {
@@ -91,6 +97,7 @@ const workflowCopy: Record<UiLocale, {
   },
   bd: {
     status: "بارێ نەخۆشی",
+    confirmArrival: "هاتنێ پشتڕاست بکە", finishVisit: "سەردانێ تەمام بکە", updating: "دهێتە نووکرن…",
     remove: "لابرن",
     removeQuestion: "ئەڤ مەوعید ژ خشتەیێ لاببەین؟ Atlas مێژوویا وێ دپارێزیت.",
     labels: {
@@ -103,6 +110,7 @@ const workflowCopy: Record<UiLocale, {
   },
   ar: {
     status: "حالة المريض",
+    confirmArrival: "تأكيد الحضور", finishVisit: "إنهاء الزيارة", updating: "جارٍ التحديث…",
     remove: "إزالة",
     removeQuestion: "إزالة هذا الموعد من الجدول؟ سيحتفظ Atlas بسجله.",
     labels: {
@@ -256,9 +264,18 @@ export function AppointmentActions({
 
   const transitions = allowedAppointmentTransitions(optimisticStatus).filter(shouldShowTransition);
   const options = [optimisticStatus, ...transitions.filter((item) => item !== optimisticStatus)];
+  const quickNextStatus = nextReceptionQuickAction(optimisticStatus, !tooEarlyForAttendance, !tooEarlyForOutcome);
+  const quickActionLabel = quickNextStatus === "confirmed" ? workflow.confirmArrival : workflow.finishVisit;
 
   return (
     <div className="row-actions polished-actions appointment-action-bar" role="group" aria-label={statusLabel} aria-busy={pending}>
+      {quickNextStatus ? <button
+        className={`appointment-quick-action is-${quickNextStatus}`}
+        type="button"
+        disabled={pending}
+        onClick={(event) => changeStatus(quickNextStatus, event.currentTarget)}
+        aria-label={`${quickActionLabel}: ${patientName}`}
+      >{pending ? workflow.updating : quickActionLabel}</button> : null}
       <div className="appointment-status-control">
         <label className="sr-only" htmlFor={`appointment-status-${appointmentId}`}>{statusLabel}</label>
         <select
@@ -293,20 +310,41 @@ export function AppointmentActions({
         .polished-appointment .appointment-details > div:nth-child(3) { display: none; }
 
         .appointment-action-bar {
-          display: grid;
-          grid-template-columns: minmax(220px, 300px) auto auto;
+          display: flex;
+          flex-wrap: wrap;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
         }
-        .appointment-status-control { min-width: 0; }
+        .appointment-status-control { flex: 1 1 180px; min-width: 0; max-width: 340px; }
+        .row-actions button.appointment-quick-action {
+          flex: 1 1 160px;
+          min-width: 160px;
+          min-height: 46px;
+          border: 1px solid #096649;
+          border-radius: 12px;
+          padding: 11px 18px;
+          background: #087653;
+          color: #fff;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 850;
+          line-height: 1.25;
+          text-align: center;
+          cursor: pointer;
+          touch-action: manipulation;
+        }
+        .row-actions button.appointment-quick-action.is-completed { border-color: #144e65; background: #185f7b; }
+        .row-actions button.appointment-quick-action:hover:not(:disabled) { filter: brightness(1.08); }
+        .row-actions button.appointment-quick-action:disabled { opacity: .65; cursor: wait; }
+        .row-actions button.appointment-quick-action:focus-visible { outline: 3px solid #dc9b31; outline-offset: 3px; }
         .appointment-status-select {
-          min-height: 38px;
-          height: 38px;
-          border-radius: 10px;
-          padding-block: 6px;
-          font-size: 11.5px;
+          width: 100%;
+          min-height: 46px;
+          border-radius: 12px;
+          padding-block: 10px;
+          font-size: 12.5px;
           font-weight: 780;
-          line-height: 1.2;
+          line-height: 1.25;
           box-shadow: none;
         }
         .appointment-status-select.is-pending { color: #6d5615; background: #fff7e5; border-color: #ead7a0; }
@@ -317,12 +355,12 @@ export function AppointmentActions({
         .appointment-action-feedback { grid-column: 1 / -1; color: var(--danger); font-size: 10.5px; line-height: 1.4; }
 
         .row-actions button.appointment-remove-action {
-          min-height: 38px;
-          border: 1px solid #d76d6d;
+          min-height: 44px;
+          border: 1px solid #dfb7b7;
           border-radius: 10px;
           padding: 7px 12px;
-          background: #ffe1e1;
-          color: #a61b1b;
+          background: #fff3f3;
+          color: #9b2424;
           font-size: 11px;
           font-weight: 820;
           line-height: 1;
@@ -333,14 +371,12 @@ export function AppointmentActions({
 
         @media (max-width: 720px) {
           .polished-appointment .appointment-details { grid-template-columns: 1fr 1fr; }
-          .appointment-action-bar { grid-template-columns: minmax(0, 1fr) auto auto; }
-          .appointment-status-select { width: 100%; }
+          .appointment-status-control { max-width: none; }
         }
         @media (max-width: 520px) {
           .polished-appointment .appointment-details { grid-template-columns: 1fr; }
-          .appointment-action-bar { grid-template-columns: minmax(0, 1fr) auto; }
-          .appointment-status-control { grid-column: 1 / -1; }
-          .row-actions button.appointment-remove-action { justify-self: end; }
+          .row-actions button.appointment-quick-action { flex-basis: 100%; }
+          .appointment-status-control { flex-basis: 100%; }
         }
       `}</style>
     </div>

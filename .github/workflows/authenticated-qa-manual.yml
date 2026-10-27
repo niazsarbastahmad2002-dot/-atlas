@@ -1,6 +1,11 @@
 name: Atlas Authenticated QA (Manual)
 on:
   workflow_dispatch:
+    inputs:
+      diagnostics:
+        description: Run one Sorani receptionist case on an isolated local debug server
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -16,7 +21,8 @@ jobs:
     timeout-minutes: 15
     environment: atlas-qa
     env:
-      ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
+      ATLAS_PRODUCTION_URL: ${{ inputs.diagnostics && 'http://127.0.0.1:3100' || 'https://atlasclinic.dpdns.org' }}
+      ATLAS_QA_LOCAL_DIAGNOSTICS: ${{ inputs.diagnostics && 'true' || 'false' }}
       ATLAS_QA_CLINIC_ID: ${{ vars.ATLAS_QA_CLINIC_ID }}
       ATLAS_QA_CLINIC_NAME: ${{ vars.ATLAS_QA_CLINIC_NAME }}
       ATLAS_QA_USER_ID: ${{ vars.ATLAS_QA_USER_ID }}
@@ -62,5 +68,25 @@ jobs:
         run: npm ci
       - name: Install pinned Playwright
         run: npm install --no-save --package-lock=false @playwright/test@1.62.1
+      - name: Start isolated local debug server
+        if: inputs.diagnostics
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.ATLAS_QA_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.ATLAS_QA_PUBLISHABLE_KEY }}
+          SITE_URL: http://127.0.0.1:3100
+        run: |
+          npm run dev -- --hostname 127.0.0.1 --port 3100 > /tmp/atlas-qa-local.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:3100/api/version > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo "Local QA server did not become ready."
+          exit 1
       - name: Test authenticated synthetic clinic without writes
-        run: npx playwright test --config=playwright.clinic-qa.config.mjs
+        run: |
+          if [[ "$ATLAS_QA_LOCAL_DIAGNOSTICS" == "true" ]]; then
+            npx playwright test --config=playwright.clinic-qa.config.mjs --project=qa-desktop-chromium --grep 'receptionist.*ku'
+          else
+            npx playwright test --config=playwright.clinic-qa.config.mjs
+          fi
+        shell: bash

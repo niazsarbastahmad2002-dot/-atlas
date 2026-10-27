@@ -56,3 +56,28 @@ jobs:
         env:
           ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
         run: npx playwright test --config=playwright.production.config.mjs --project=iphone-webkit --project=ipad-webkit --grep 'live public|all four production|production version|signed-out clinic'
+
+  # Disposable PostgreSQL 17 database, synthetic clinics/users only.
+  # No Atlas secrets, no Supabase project, no production SQL operations.
+  doctor-workflow-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: atlas_acl_synthetic
+          POSTGRES_PASSWORD: atlas_ci_synthetic_only
+        options: >-
+          --health-cmd "pg_isready -U postgres -d atlas_acl_synthetic"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Isolated two-clinic PostgreSQL authorization tests
+        run: |
+          python3 -c 'from pathlib import Path; f = Path("tests/security-doctor-workflow-isolation.sql").read_text(); marker = r"\i docs/security/doctor-workflow-grants-proposal-20261026.sql"; assert f.count(marker) == 1; print(f.replace(marker, Path("docs/security/doctor-workflow-grants-proposal-20261026.sql").read_text()))' \
+            | docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d atlas_acl_synthetic -v ON_ERROR_STOP=1

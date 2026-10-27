@@ -3,6 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 
 // Only for a separate synthetic QA clinic. Real patients and founder sessions are forbidden.
 const base = process.env.ATLAS_PRODUCTION_URL ?? "https://atlasclinic.dpdns.org";
+const diagnostic = process.env.ATLAS_QA_LOCAL_DIAGNOSTICS === "true";
+const expectedOrigin = diagnostic ? "http://127.0.0.1:3100" : "https://atlasclinic.dpdns.org";
 
 async function qaSession(role) {
   const id = process.env.ATLAS_QA_CLINIC_ID;
@@ -16,7 +18,7 @@ async function qaSession(role) {
   const url = process.env.ATLAS_QA_SUPABASE_URL;
   const key = process.env.ATLAS_QA_PUBLISHABLE_KEY;
   const uuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value ?? "");
-  if (new URL(base).hostname !== "atlasclinic.dpdns.org" || !uuid(id) || !uuid(userId) ||
+  if (new URL(base).origin !== expectedOrigin || !uuid(id) || !uuid(userId) ||
       !uuid(ownerId) || (receptionist && (!uuid(doctorId) || userId === ownerId)) ||
       !name?.startsWith("Atlas QA") ||
       !/^atlas-qa-[a-z0-9-]+@example\.invalid$/i.test(email ?? "") ||
@@ -28,7 +30,7 @@ async function qaSession(role) {
   }
   const values = new Map();
   const client = createServerClient(url, key, {
-    cookieOptions: { path: "/", sameSite: "lax", secure: true },
+    cookieOptions: { path: "/", sameSite: "lax", secure: !diagnostic },
     cookies: {
       getAll: () => [...values].map(([name, value]) => ({ name, value })),
       setAll: (items) => {
@@ -84,7 +86,7 @@ async function qaSession(role) {
   }
   const cookies = [...values].map(([name, value]) => ({
     name, value, domain: new URL(base).hostname, path: "/", expires: -1,
-    httpOnly: false, secure: true, sameSite: "Lax",
+    httpOnly: false, secure: !diagnostic, sameSite: "Lax",
   }));
   values.clear();
   if (!cookies.some((cookie) => cookie.name.includes("-auth-token"))) {
@@ -124,7 +126,7 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
       }
     });
     try {
-        await context.addCookies([{ name: "atlas_ui_locale", value: locale, domain: new URL(base).hostname, path: "/", secure: true, sameSite: "Lax" }]);
+        await context.addCookies([{ name: "atlas_ui_locale", value: locale, domain: new URL(base).hostname, path: "/", secure: !diagnostic, sameSite: "Lax" }]);
         const response = await page.goto("/dashboard?clinic=" + encodeURIComponent(id), {
           waitUntil: "domcontentloaded",
         });
