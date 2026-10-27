@@ -116,6 +116,14 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
           requestURL.pathname === "/api/analytics") {
         return route.abort("blockedbyclient");
       }
+      // Only localhost's Next.js dev overlay stack lookup is framework
+      // diagnostics, not an application write. Block it nonetheless. All
+      // clinic mutations remain recorded and forbidden in both modes.
+      if (diagnostic && route.request().method() === "POST" &&
+          requestURL.origin === expectedOrigin &&
+          requestURL.pathname === "/__nextjs_original-stack-frames") {
+        return route.abort("blockedbyclient");
+      }
       writes.push(route.request().method() + " " + requestURL.pathname);
       return route.abort("blockedbyclient");
     });
