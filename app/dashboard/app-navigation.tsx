@@ -247,46 +247,6 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
     setSettingsHref(currentClinic ? `/dashboard/settings?${new URLSearchParams({ clinic: currentClinic })}` : "/dashboard/settings");
   }, [pathname, searchKey]);
 
-  useEffect(() => {
-    const warmCoreRoutes = () => {
-      if (
-        document.visibilityState !== "visible"
-        || hasPendingSettingWrite()
-        || needsFreshSettingNavigation()
-      ) return;
-      router.prefetch(scheduleHref);
-      router.prefetch(settingsHref);
-      router.prefetch(assistantHref);
-    };
-
-    let timer: number | null = null;
-    const stop = () => {
-      if (timer === null) return;
-      window.clearInterval(timer);
-      timer = null;
-    };
-    const start = () => {
-      if (document.visibilityState !== "visible" || timer !== null) return;
-      timer = window.setInterval(warmCoreRoutes, 20_000);
-    };
-    const syncVisibility = () => {
-      if (document.visibilityState !== "visible") {
-        stop();
-        return;
-      }
-      warmCoreRoutes();
-      start();
-    };
-
-    syncVisibility();
-    document.addEventListener("visibilitychange", syncVisibility);
-
-    return () => {
-      stop();
-      document.removeEventListener("visibilitychange", syncVisibility);
-    };
-  }, [router, scheduleHref, settingsHref, assistantHref]);
-
   const go = (href: string, interaction: "topbar" | "bottom_nav" | "brand") => async (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainNavigation(event)) return;
     event.preventDefault();
@@ -308,35 +268,28 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       return;
     }
 
-    router.prefetch(href);
     router.push(href, { scroll: true });
   };
 
-  const warm = (href: string) => () => {
-    const targetPath = new URL(href, window.location.origin).pathname;
-    const coreTarget = targetPath === "/dashboard" || targetPath === "/dashboard/settings";
-    if (coreTarget && (hasPendingSettingWrite() || needsFreshSettingNavigation())) return;
-    router.prefetch(href);
-  };
   const addHref = typeof window === "undefined" ? "/dashboard#new-appointment" : withHash(scheduleHref, "new-appointment");
 
   return (
     <>
       <header className="app-topbar">
         <div className="app-topbar-inner shell">
-          <Link className="app-brand" href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "brand")} aria-label={`${nav.doctorSide}. ${t.openSchedule}`}>
+          <Link className="app-brand" href={scheduleHref} prefetch={false} scroll={true} onClick={go(scheduleHref, "brand")} aria-label={`${nav.doctorSide}. ${t.openSchedule}`}>
             <span className="app-brand-mark" aria-hidden="true">A</span>
             <span className="app-brand-word">Atlas</span>
             <span className="app-brand-product" aria-hidden="true">Doctor</span>
           </Link>
           <nav className="app-top-actions" aria-label={nav.navigation}>
-            <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onMouseEnter={warm(scheduleHref)} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} aria-current={onSchedule ? "page" : undefined} title={t.schedule}>
+            <Link className={`icon-button ${onSchedule ? "is-active" : ""}`} href={scheduleHref} prefetch={false} scroll={true} onClick={go(scheduleHref, "topbar")} aria-label={t.openSchedule} aria-current={onSchedule ? "page" : undefined} title={t.schedule}>
               <CalendarIcon /><span className="icon-button-label">{t.schedule}</span>
             </Link>
-            <Link className={`icon-button ${onAssistant ? "is-active" : ""}`} href={assistantHref} prefetch={true} scroll={true} onPointerDown={warm(assistantHref)} onMouseEnter={warm(assistantHref)} onClick={go(assistantHref, "topbar")} aria-label={nav.askAtlas} aria-current={onAssistant ? "page" : undefined} title="Atlas AI">
+            <Link className={`icon-button ${onAssistant ? "is-active" : ""}`} href={assistantHref} prefetch={false} scroll={true} onClick={go(assistantHref, "topbar")} aria-label={nav.askAtlas} aria-current={onAssistant ? "page" : undefined} title="Atlas AI">
               <SparkleIcon /><span className="icon-button-label">Atlas AI</span>
             </Link>
-            <Link className={`icon-button ${onSettings ? "is-active" : ""}`} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onMouseEnter={warm(settingsHref)} onClick={go(settingsHref, "topbar")} aria-label={t.openSettings} aria-current={onSettings ? "page" : undefined} title={t.settings}>
+            <Link className={`icon-button ${onSettings ? "is-active" : ""}`} href={settingsHref} prefetch={false} scroll={true} onClick={go(settingsHref, "topbar")} aria-label={t.openSettings} aria-current={onSettings ? "page" : undefined} title={t.settings}>
               <GearIcon /><span className="icon-button-label">{t.settings}</span>
             </Link>
           </nav>
@@ -346,7 +299,7 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       {onSchedule ? (
         <>
           <div className="atlas-ai-launcher shell">
-            <Link href={assistantHref} prefetch={true} onPointerDown={warm(assistantHref)}>
+            <Link href={assistantHref} prefetch={false}>
               <SparkleIcon />
               <span>{nav.askAtlas}</span>
               <small>{nav.beta}</small>
@@ -356,13 +309,13 @@ export function AppNavigation({ locale }: { locale: UiLocale }) {
       ) : null}
 
       <nav className="app-bottom-nav" aria-label={nav.mobileNavigation}>
-        <Link className={onSchedule ? "is-active" : ""} href={scheduleHref} prefetch={true} scroll={true} onPointerDown={warm(scheduleHref)} onClick={go(scheduleHref, "bottom_nav")} aria-current={onSchedule ? "page" : undefined}>
+        <Link className={onSchedule ? "is-active" : ""} href={scheduleHref} prefetch={false} scroll={true} onClick={go(scheduleHref, "bottom_nav")} aria-current={onSchedule ? "page" : undefined}>
           <CalendarIcon /><span>{t.schedule}</span>
         </Link>
-        <Link className="app-bottom-add" href={addHref} prefetch={true} scroll={true} onClick={go(addHref, "bottom_nav")}>
+        <Link className="app-bottom-add" href={addHref} prefetch={false} scroll={true} onClick={go(addHref, "bottom_nav")}>
           <span className="app-bottom-add-circle"><PlusIcon /></span><span>{t.add}</span>
         </Link>
-        <Link className={onSettings ? "is-active" : ""} href={settingsHref} prefetch={true} scroll={true} onPointerDown={warm(settingsHref)} onClick={go(settingsHref, "bottom_nav")} aria-current={onSettings ? "page" : undefined}>
+        <Link className={onSettings ? "is-active" : ""} href={settingsHref} prefetch={false} scroll={true} onClick={go(settingsHref, "bottom_nav")} aria-current={onSettings ? "page" : undefined}>
           <GearIcon /><span>{t.settings}</span>
         </Link>
       </nav>
