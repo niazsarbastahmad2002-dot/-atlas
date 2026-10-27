@@ -21,7 +21,9 @@ function timeParts(date: Date, locale: string) {
 }
 
 export function LiveClinicClock({ locale }: { locale: UiLocale }) {
-  const [now, setNow] = useState(() => new Date());
+  // The server and first browser render must match, even after a slow load or
+  // across midnight. Start the live Baghdad clock only after hydration.
+  const [now, setNow] = useState<Date | null>(null);
   const dateLocale = uiLocaleMeta[locale].dateLocale;
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
     };
   }, []);
 
-  const date = useMemo(() => locale === "bd"
+  const date = useMemo(() => now === null ? "\u00a0" : locale === "bd"
     ? formatBaghdadDay(now, locale)
     : new Intl.DateTimeFormat(dateLocale, {
       timeZone: "Asia/Baghdad",
@@ -59,20 +61,22 @@ export function LiveClinicClock({ locale }: { locale: UiLocale }) {
       day: "numeric",
     }).format(now), [dateLocale, locale, now]);
 
-  const clock = useMemo(() => timeParts(now, dateLocale), [dateLocale, now]);
-  const baghdadHour = useMemo(() => Number(new Intl.DateTimeFormat("en-GB", {
+  const clock = useMemo(() => now === null
+    ? { hour: "--", minute: "--", second: "--" }
+    : timeParts(now, dateLocale), [dateLocale, now]);
+  const baghdadHour = useMemo(() => now === null ? null : Number(new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Baghdad",
     hour: "2-digit",
     hourCycle: "h23",
   }).format(now)), [now]);
-  const dayPeriod = formatDayPeriod(baghdadHour < 12 ? "am" : "pm", locale);
+  const dayPeriod = baghdadHour === null ? "" : formatDayPeriod(baghdadHour < 12 ? "am" : "pm", locale);
   const accessibleTime = [
     `${clock.hour}:${clock.minute}:${clock.second}`,
     dayPeriod,
   ].filter(Boolean).join(" ");
 
   return (
-    <div className="atlas-live-clock" aria-label={`${date} ${accessibleTime}`}>
+    <div className="atlas-live-clock" aria-hidden={now === null ? true : undefined} aria-label={now === null ? undefined : `${date} ${accessibleTime}`}>
       <div className="atlas-live-clock-orbit" aria-hidden="true"><span /></div>
       <div className="atlas-live-clock-time" dir="ltr">
         <strong dir="ltr">
