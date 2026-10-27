@@ -63,7 +63,17 @@ test("synthetic phone OTP verifies and preserves all four chosen languages", asy
     await expect(page.locator(".patient-account-login-form")).toBeVisible();
     await submitPhone(page);
     await page.locator("#patient-account-otp").fill("123456");
+    // The destination URL is already /patient-account on returning-user flows.
+    // Waiting for the actual full-page reload (not just a matching URL)
+    // prevents WebKit from racing the next locale against session creation.
+    const redirected = page.waitForEvent("framenavigated", {
+      predicate: (frame) => frame === page.mainFrame()
+        && new URL(frame.url()).pathname === "/patient-account"
+        && new URL(frame.url()).searchParams.get("lang") === locale.id,
+    });
     await page.locator('.patient-account-login-form button[type="submit"]').click();
+    await redirected;
+    await page.waitForLoadState("load");
     await expect(page).toHaveURL(new RegExp("/patient-account\\?lang=" + locale.id + "$"));
   }
 
