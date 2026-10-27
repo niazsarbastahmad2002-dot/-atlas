@@ -75,9 +75,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags origin 3251f769b5a01137e7e8bd5bb7082089cb51dfac
-          git show 3251f769b5a01137e7e8bd5bb7082089cb51dfac:app/dashboard/dashboard-client-polish.tsx > app/dashboard/dashboard-client-polish.tsx
-          git show 3251f769b5a01137e7e8bd5bb7082089cb51dfac:app/components/kurdish-secretary-terminology.tsx > app/components/kurdish-secretary-terminology.tsx
+          git fetch --no-tags origin 095bbef11afaf713dc857e94d3f02c4d3755c2b7
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/dashboard/dashboard-client-polish.tsx > app/dashboard/dashboard-client-polish.tsx
+          git show 095bbef11afaf713dc857e94d3f02c4d3755c2b7:app/components/kurdish-secretary-terminology.tsx > app/components/kurdish-secretary-terminology.tsx
       - name: Start isolated local debug server
         if: inputs.diagnostics
         env:
