@@ -40,7 +40,7 @@ for (const locale of ["en", "ku", "bd", "ar"]) {
     // React/Next may serialize aria-hidden before class. Check the clock's
     // own opening tag without assuming attribute order, while retaining the
     // pre-hydration accessibility assertion and post-hydration error gate.
-    const clockStartTag = html.match(/<div\\b[^>]*class="[^"]*atlas-live-clock"[^>]*>/)?.[0];
+    const clockStartTag = html.match(/<div\b[^>]*class="[^"]*\batlas-live-clock\b[^"]*"[^>]*>/)?.[0];
     expect(clockStartTag, "Server HTML must contain the clinic clock").toBeDefined();
     expect(clockStartTag).toContain('aria-hidden="true"');
     const clock = page.locator(".atlas-live-clock");
