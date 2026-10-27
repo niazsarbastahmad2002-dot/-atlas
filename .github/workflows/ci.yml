@@ -47,6 +47,12 @@ jobs:
       - name: Browser E2E smoke tests
         run: npx playwright test
 
+      - name: Synthetic patient registration browser QA (local mock only)
+        run: npx playwright test --config=playwright.patient-registration-qa.config.mjs
+
+      - name: Returning patient with registration OFF (local mock only)
+        run: npx playwright test --config=playwright.patient-returning-qa.config.mjs
+
       - name: Live public Atlas browser journeys (read-only Chromium)
         env:
           ATLAS_PRODUCTION_URL: https://atlasclinic.dpdns.org
@@ -81,3 +87,28 @@ jobs:
         run: |
           python3 -c 'from pathlib import Path; f = Path("tests/security-doctor-workflow-isolation.sql").read_text(); marker = r"\i docs/security/doctor-workflow-grants-proposal-20261026.sql"; assert f.count(marker) == 1; print(f.replace(marker, Path("docs/security/doctor-workflow-grants-proposal-20261026.sql").read_text()))' \
             | docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d atlas_acl_synthetic -v ON_ERROR_STOP=1
+
+  # Disposable Postgres 17; actual patient-account migration, synthetic data.
+  # No Supabase keys, real appointments or production database access.
+  patient-appointment-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: atlas_patient_synthetic
+          POSTGRES_PASSWORD: atlas_ci_synthetic_only
+        options: >-
+          --health-cmd "pg_isready -U postgres -d atlas_patient_synthetic"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Actual patient-account SQL RPC ownership and clinic isolation
+        run: |
+          python3 -c 'from pathlib import Path; f = Path("tests/security-patient-appointment-isolation.sql").read_text(); marker = r"\i supabase/migrations/20261004160000_patient_account_portal.sql"; assert f.count(marker) == 1; print(f.replace(marker, Path("supabase/migrations/20261004160000_patient_account_portal.sql").read_text()))' \
+            | docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d atlas_patient_synthetic -v ON_ERROR_STOP=1
