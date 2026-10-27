@@ -139,7 +139,7 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
 
   useEffect(() => {
     const form = rootRef.current?.closest("form");
-    const doctor = form?.querySelector<HTMLSelectElement>("#doctor_id");
+    const doctor = form?.querySelector<HTMLSelectElement | HTMLInputElement>("#doctor_id");
     const clinic = form?.querySelector<HTMLInputElement>('input[name="clinic_id"]');
     if (!form || !doctor) return;
 
@@ -151,6 +151,23 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
       setSavedAdvance(false);
       controller?.abort();
       if (!clinic?.value || !nextDoctor) return;
+      const languageSelect = form.querySelector<HTMLSelectElement>('select[name="reminder_language"]');
+      let savedLanguage: string | null = null;
+      try {
+        savedLanguage = window.localStorage.getItem(`atlas:last-reminder-language:${clinic.value}`);
+      } catch {
+        // Preference memory is optional in restrictive/private browsers.
+      }
+      // The locked doctor is already resolved on the server: intervalMinutes
+      // and reminder_language have been supplied with this rendered form.
+      // Avoid an unnecessary background settings GET, which can be interrupted
+      // by Safari navigation. Keep the clinic-scoped saved language preference.
+      if (doctor instanceof HTMLInputElement && doctor.type === "hidden") {
+        if (savedLanguage && languageSelect?.querySelector(`option[value="${savedLanguage}"]`)) {
+          languageSelect.value = savedLanguage;
+        }
+        return;
+      }
       controller = new AbortController();
       fetch(`/api/settings/doctor-workflow?clinic_id=${encodeURIComponent(clinic.value)}&doctor_id=${encodeURIComponent(nextDoctor)}`, { credentials: "same-origin", cache: "no-store", signal: controller.signal })
         .then((response) => response.ok ? response.json() : null)
@@ -158,15 +175,6 @@ export function AppointmentTimeField({ intervalMinutes, min, max, initialDate, o
           const value = Number(data?.appointmentIntervalMinutes);
           if ([5, 10, 15, 20, 30].includes(value)) setInterval(value);
           const language = data?.defaultReminderLanguage;
-          const languageSelect = form.querySelector<HTMLSelectElement>('select[name="reminder_language"]');
-          let savedLanguage: string | null = null;
-          if (clinic?.value) {
-            try {
-              savedLanguage = window.localStorage.getItem(`atlas:last-reminder-language:${clinic.value}`);
-            } catch {
-              // Preference memory is optional in restrictive/private browsers.
-            }
-          }
           const preferredLanguage = savedLanguage && languageSelect?.querySelector(`option[value="${savedLanguage}"]`)
             ? savedLanguage
             : language;
