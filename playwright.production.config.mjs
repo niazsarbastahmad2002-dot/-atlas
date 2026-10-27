@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.ATLAS_PRODUCTION_URL ?? "https://atlasclinic.dpdns.org";
 
@@ -18,6 +18,8 @@ export default defineConfig({
   projects: [
     { name: "iphone-webkit", use: { browserName: "webkit", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
     { name: "ipad-webkit", use: { browserName: "webkit", viewport: { width: 1024, height: 1366 }, hasTouch: true } },
+    // Emulated Android Chrome only; this is NOT physical Samsung / Samsung Internet QA.
+    { name: "galaxy-chromium", use: { ...devices["Galaxy S9+"], browserName: "chromium" } },
     { name: "desktop-chromium", use: { browserName: "chromium", viewport: { width: 1440, height: 900 } } },
   ],
 });
